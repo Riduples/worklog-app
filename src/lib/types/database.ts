@@ -1,4 +1,1125 @@
-// Placeholder until Phase 2 migrations are applied, then regenerated via
-// the Supabase `generate_typescript_types` tool. Do not hand-edit after that.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type Database = any;
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
+
+export type Database = {
+  __InternalSupabase: {
+    PostgrestVersion: "14.5"
+  }
+  public: {
+    Tables: {
+      bookings: {
+        Row: {
+          balance_due: number | null
+          booking_date: string
+          booking_time: string | null
+          client_contact_id: string | null
+          client_name: string
+          created_at: string | null
+          deleted_at: string | null
+          deposit_paid: number | null
+          id: string
+          service: string | null
+          status: string
+          total_price: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          balance_due?: number | null
+          booking_date: string
+          booking_time?: string | null
+          client_contact_id?: string | null
+          client_name: string
+          created_at?: string | null
+          deleted_at?: string | null
+          deposit_paid?: number | null
+          id?: string
+          service?: string | null
+          status?: string
+          total_price?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          balance_due?: number | null
+          booking_date?: string
+          booking_time?: string | null
+          client_contact_id?: string | null
+          client_name?: string
+          created_at?: string | null
+          deleted_at?: string | null
+          deposit_paid?: number | null
+          id?: string
+          service?: string | null
+          status?: string
+          total_price?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_client_contact_id_fkey"
+            columns: ["client_contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      business_profiles: {
+        Row: {
+          address: string | null
+          created_at: string | null
+          email: string | null
+          id: string
+          name: string | null
+          phone: string | null
+          updated_at: string | null
+          user_id: string
+          vat_number: string | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          name?: string | null
+          phone?: string | null
+          updated_at?: string | null
+          user_id: string
+          vat_number?: string | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          name?: string | null
+          phone?: string | null
+          updated_at?: string | null
+          user_id?: string
+          vat_number?: string | null
+        }
+        Relationships: []
+      }
+      chair_rentals: {
+        Row: {
+          commission_amt: number | null
+          commission_pct: number | null
+          created_at: string | null
+          deleted_at: string | null
+          id: string
+          period_date: string
+          product_sales: number | null
+          stylist_name: string
+          total_due: number | null
+          updated_at: string | null
+          user_id: string
+          weekly_rental: number | null
+        }
+        Insert: {
+          commission_amt?: number | null
+          commission_pct?: number | null
+          created_at?: string | null
+          deleted_at?: string | null
+          id?: string
+          period_date: string
+          product_sales?: number | null
+          stylist_name: string
+          total_due?: number | null
+          updated_at?: string | null
+          user_id: string
+          weekly_rental?: number | null
+        }
+        Update: {
+          commission_amt?: number | null
+          commission_pct?: number | null
+          created_at?: string | null
+          deleted_at?: string | null
+          id?: string
+          period_date?: string
+          product_sales?: number | null
+          stylist_name?: string
+          total_due?: number | null
+          updated_at?: string | null
+          user_id?: string
+          weekly_rental?: number | null
+        }
+        Relationships: []
+      }
+      contacts: {
+        Row: {
+          contact_type: string
+          created_at: string | null
+          deleted_at: string | null
+          email: string | null
+          id: string
+          name: string
+          notes: string | null
+          payment_behaviour: string | null
+          payment_terms: string | null
+          phone: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          contact_type: string
+          created_at?: string | null
+          deleted_at?: string | null
+          email?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          payment_behaviour?: string | null
+          payment_terms?: string | null
+          phone?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          contact_type?: string
+          created_at?: string | null
+          deleted_at?: string | null
+          email?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          payment_behaviour?: string | null
+          payment_terms?: string | null
+          phone?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      expenses: {
+        Row: {
+          amount: number
+          created_at: string | null
+          deleted_at: string | null
+          details: string | null
+          id: string
+          matched_document_id: string | null
+          matched_document_type: string | null
+          paid_to: string | null
+          paid_to_contact_id: string | null
+          payment_method: string | null
+          sars_category: string | null
+          source: string | null
+          transaction_date: string
+          updated_at: string | null
+          user_id: string
+          what_for: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          deleted_at?: string | null
+          details?: string | null
+          id?: string
+          matched_document_id?: string | null
+          matched_document_type?: string | null
+          paid_to?: string | null
+          paid_to_contact_id?: string | null
+          payment_method?: string | null
+          sars_category?: string | null
+          source?: string | null
+          transaction_date: string
+          updated_at?: string | null
+          user_id: string
+          what_for?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          deleted_at?: string | null
+          details?: string | null
+          id?: string
+          matched_document_id?: string | null
+          matched_document_type?: string | null
+          paid_to?: string | null
+          paid_to_contact_id?: string | null
+          payment_method?: string | null
+          sars_category?: string | null
+          source?: string | null
+          transaction_date?: string
+          updated_at?: string | null
+          user_id?: string
+          what_for?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expenses_paid_to_contact_id_fkey"
+            columns: ["paid_to_contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      generated_documents: {
+        Row: {
+          document_type: string
+          file_path: string
+          file_url: string | null
+          generated_at: string | null
+          id: string
+          source_id: string
+          user_id: string
+        }
+        Insert: {
+          document_type: string
+          file_path: string
+          file_url?: string | null
+          generated_at?: string | null
+          id?: string
+          source_id: string
+          user_id: string
+        }
+        Update: {
+          document_type?: string
+          file_path?: string
+          file_url?: string | null
+          generated_at?: string | null
+          id?: string
+          source_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      income: {
+        Row: {
+          amount: number
+          created_at: string | null
+          deleted_at: string | null
+          details: string | null
+          id: string
+          matched_invoice_id: string | null
+          payment_method: string | null
+          received_from: string | null
+          received_from_contact_id: string | null
+          sars_category: string | null
+          source: string | null
+          tax_jar_amount: number | null
+          transaction_date: string
+          updated_at: string | null
+          user_id: string
+          what_for: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          deleted_at?: string | null
+          details?: string | null
+          id?: string
+          matched_invoice_id?: string | null
+          payment_method?: string | null
+          received_from?: string | null
+          received_from_contact_id?: string | null
+          sars_category?: string | null
+          source?: string | null
+          tax_jar_amount?: number | null
+          transaction_date: string
+          updated_at?: string | null
+          user_id: string
+          what_for?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          deleted_at?: string | null
+          details?: string | null
+          id?: string
+          matched_invoice_id?: string | null
+          payment_method?: string | null
+          received_from?: string | null
+          received_from_contact_id?: string | null
+          sars_category?: string | null
+          source?: string | null
+          tax_jar_amount?: number | null
+          transaction_date?: string
+          updated_at?: string | null
+          user_id?: string
+          what_for?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "income_matched_invoice_id_fkey"
+            columns: ["matched_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "income_received_from_contact_id_fkey"
+            columns: ["received_from_contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          balance_due: number
+          client_contact_id: string | null
+          client_name: string
+          converted_from_quote_id: string | null
+          created_at: string | null
+          deleted_at: string | null
+          deposit_received: number | null
+          doc_number: string
+          due_date: string | null
+          id: string
+          invoice_amount: number
+          issue_date: string
+          line_items: Json
+          paid_date: string | null
+          status: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          balance_due?: number
+          client_contact_id?: string | null
+          client_name: string
+          converted_from_quote_id?: string | null
+          created_at?: string | null
+          deleted_at?: string | null
+          deposit_received?: number | null
+          doc_number: string
+          due_date?: string | null
+          id?: string
+          invoice_amount?: number
+          issue_date: string
+          line_items?: Json
+          paid_date?: string | null
+          status?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          balance_due?: number
+          client_contact_id?: string | null
+          client_name?: string
+          converted_from_quote_id?: string | null
+          created_at?: string | null
+          deleted_at?: string | null
+          deposit_received?: number | null
+          doc_number?: string
+          due_date?: string | null
+          id?: string
+          invoice_amount?: number
+          issue_date?: string
+          line_items?: Json
+          paid_date?: string | null
+          status?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_client_contact_id_fkey"
+            columns: ["client_contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_converted_from_quote_id_fkey"
+            columns: ["converted_from_quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ledger_entries: {
+        Row: {
+          amount: number
+          created_at: string | null
+          deleted_at: string | null
+          entry_date: string
+          id: string
+          ledger_type: string
+          note: string | null
+          paid_date: string | null
+          party_contact_id: string | null
+          party_name: string
+          status: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          deleted_at?: string | null
+          entry_date: string
+          id?: string
+          ledger_type: string
+          note?: string | null
+          paid_date?: string | null
+          party_contact_id?: string | null
+          party_name: string
+          status?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          deleted_at?: string | null
+          entry_date?: string
+          id?: string
+          ledger_type?: string
+          note?: string | null
+          paid_date?: string | null
+          party_contact_id?: string | null
+          party_name?: string
+          status?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ledger_entries_party_contact_id_fkey"
+            columns: ["party_contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mileage_trips: {
+        Row: {
+          created_at: string | null
+          deleted_at: string | null
+          id: string
+          km_travelled: number
+          odometer_end: number
+          odometer_start: number
+          purpose: string | null
+          sars_deduction: number | null
+          trip_date: string
+          trip_type: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          deleted_at?: string | null
+          id?: string
+          km_travelled: number
+          odometer_end: number
+          odometer_start: number
+          purpose?: string | null
+          sars_deduction?: number | null
+          trip_date: string
+          trip_type?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          deleted_at?: string | null
+          id?: string
+          km_travelled?: number
+          odometer_end?: number
+          odometer_start?: number
+          purpose?: string | null
+          sars_deduction?: number | null
+          trip_date?: string
+          trip_type?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      purchase_orders: {
+        Row: {
+          created_at: string | null
+          deleted_at: string | null
+          doc_number: string
+          id: string
+          issue_date: string
+          line_items: Json
+          requested_delivery: string | null
+          status: string
+          supplier_contact_id: string | null
+          supplier_name: string
+          total_amount: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          deleted_at?: string | null
+          doc_number: string
+          id?: string
+          issue_date: string
+          line_items?: Json
+          requested_delivery?: string | null
+          status?: string
+          supplier_contact_id?: string | null
+          supplier_name: string
+          total_amount?: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          deleted_at?: string | null
+          doc_number?: string
+          id?: string
+          issue_date?: string
+          line_items?: Json
+          requested_delivery?: string | null
+          status?: string
+          supplier_contact_id?: string | null
+          supplier_name?: string
+          total_amount?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_orders_supplier_contact_id_fkey"
+            columns: ["supplier_contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quotes: {
+        Row: {
+          client_contact_id: string | null
+          client_name: string
+          converted_to_invoice_id: string | null
+          created_at: string | null
+          deleted_at: string | null
+          deposit_requested: number | null
+          doc_number: string
+          id: string
+          issue_date: string
+          line_items: Json
+          status: string
+          total_amount: number
+          updated_at: string | null
+          user_id: string
+          valid_until: string | null
+        }
+        Insert: {
+          client_contact_id?: string | null
+          client_name: string
+          converted_to_invoice_id?: string | null
+          created_at?: string | null
+          deleted_at?: string | null
+          deposit_requested?: number | null
+          doc_number: string
+          id?: string
+          issue_date: string
+          line_items?: Json
+          status?: string
+          total_amount?: number
+          updated_at?: string | null
+          user_id: string
+          valid_until?: string | null
+        }
+        Update: {
+          client_contact_id?: string | null
+          client_name?: string
+          converted_to_invoice_id?: string | null
+          created_at?: string | null
+          deleted_at?: string | null
+          deposit_requested?: number | null
+          doc_number?: string
+          id?: string
+          issue_date?: string
+          line_items?: Json
+          status?: string
+          total_amount?: number
+          updated_at?: string | null
+          user_id?: string
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_quotes_converted_invoice"
+            columns: ["converted_to_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotes_client_contact_id_fkey"
+            columns: ["client_contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recipes: {
+        Row: {
+          cost_per_serving: number | null
+          created_at: string | null
+          deleted_at: string | null
+          dish_name: string
+          id: string
+          ingredients: Json
+          markup_pct: number | null
+          servings: number
+          suggested_price: number | null
+          total_cost: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          cost_per_serving?: number | null
+          created_at?: string | null
+          deleted_at?: string | null
+          dish_name: string
+          id?: string
+          ingredients?: Json
+          markup_pct?: number | null
+          servings?: number
+          suggested_price?: number | null
+          total_cost?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          cost_per_serving?: number | null
+          created_at?: string | null
+          deleted_at?: string | null
+          dish_name?: string
+          id?: string
+          ingredients?: Json
+          markup_pct?: number | null
+          servings?: number
+          suggested_price?: number | null
+          total_cost?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      stock_items: {
+        Row: {
+          cost_price: number | null
+          created_at: string | null
+          deleted_at: string | null
+          id: string
+          margin_pct: number | null
+          name: string
+          qty: number
+          reorder_level: number | null
+          sell_price: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          cost_price?: number | null
+          created_at?: string | null
+          deleted_at?: string | null
+          id?: string
+          margin_pct?: number | null
+          name: string
+          qty?: number
+          reorder_level?: number | null
+          sell_price?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          cost_price?: number | null
+          created_at?: string | null
+          deleted_at?: string | null
+          id?: string
+          margin_pct?: number | null
+          name?: string
+          qty?: number
+          reorder_level?: number | null
+          sell_price?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      supplier_invoices: {
+        Row: {
+          balance_due: number
+          created_at: string | null
+          deleted_at: string | null
+          due_date: string | null
+          id: string
+          invoice_amount: number
+          issue_date: string
+          line_items: Json
+          linked_po_id: string | null
+          paid_amount: number | null
+          paid_date: string | null
+          status: string
+          supplier_contact_id: string | null
+          supplier_name: string
+          supplier_ref_number: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          balance_due?: number
+          created_at?: string | null
+          deleted_at?: string | null
+          due_date?: string | null
+          id?: string
+          invoice_amount?: number
+          issue_date: string
+          line_items?: Json
+          linked_po_id?: string | null
+          paid_amount?: number | null
+          paid_date?: string | null
+          status?: string
+          supplier_contact_id?: string | null
+          supplier_name: string
+          supplier_ref_number?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          balance_due?: number
+          created_at?: string | null
+          deleted_at?: string | null
+          due_date?: string | null
+          id?: string
+          invoice_amount?: number
+          issue_date?: string
+          line_items?: Json
+          linked_po_id?: string | null
+          paid_amount?: number | null
+          paid_date?: string | null
+          status?: string
+          supplier_contact_id?: string | null
+          supplier_name?: string
+          supplier_ref_number?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_invoices_linked_po_id_fkey"
+            columns: ["linked_po_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_invoices_supplier_contact_id_fkey"
+            columns: ["supplier_contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tax_records: {
+        Row: {
+          amount: number
+          created_at: string | null
+          entry_date: string
+          id: string
+          notes: string | null
+          period: string | null
+          record_type: string
+          tax_year: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          entry_date: string
+          id?: string
+          notes?: string | null
+          period?: string | null
+          record_type: string
+          tax_year?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          entry_date?: string
+          id?: string
+          notes?: string | null
+          period?: string | null
+          record_type?: string
+          tax_year?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      time_entries: {
+        Row: {
+          amount_to_bill: number | null
+          bill_type: string
+          client_contact_id: string | null
+          client_name: string | null
+          created_at: string | null
+          deleted_at: string | null
+          description: string | null
+          entry_date: string
+          hourly_rate: number | null
+          hours_worked: number
+          id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          amount_to_bill?: number | null
+          bill_type?: string
+          client_contact_id?: string | null
+          client_name?: string | null
+          created_at?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          entry_date: string
+          hourly_rate?: number | null
+          hours_worked: number
+          id?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          amount_to_bill?: number | null
+          bill_type?: string
+          client_contact_id?: string | null
+          client_name?: string | null
+          created_at?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          entry_date?: string
+          hourly_rate?: number | null
+          hours_worked?: number
+          id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "time_entries_client_contact_id_fkey"
+            columns: ["client_contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_profiles: {
+        Row: {
+          created_at: string | null
+          id: string
+          phone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id: string
+          phone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          phone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      worker_payments: {
+        Row: {
+          created_at: string | null
+          daily_wage: number
+          days_worked: number
+          deleted_at: string | null
+          id: string
+          payment_date: string
+          total_wages: number
+          uif_due: number
+          updated_at: string | null
+          user_id: string
+          worker_name: string
+        }
+        Insert: {
+          created_at?: string | null
+          daily_wage: number
+          days_worked?: number
+          deleted_at?: string | null
+          id?: string
+          payment_date: string
+          total_wages: number
+          uif_due: number
+          updated_at?: string | null
+          user_id: string
+          worker_name: string
+        }
+        Update: {
+          created_at?: string | null
+          daily_wage?: number
+          days_worked?: number
+          deleted_at?: string | null
+          id?: string
+          payment_date?: string
+          total_wages?: number
+          uif_due?: number
+          updated_at?: string | null
+          user_id?: string
+          worker_name?: string
+        }
+        Relationships: []
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      [_ in never]: never
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
+}
+
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {},
+  },
+} as const

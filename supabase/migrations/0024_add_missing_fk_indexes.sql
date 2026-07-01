@@ -1,0 +1,17 @@
+CREATE INDEX idx_bookings_client_contact ON bookings(client_contact_id);
+CREATE INDEX idx_chair_rentals_user ON chair_rentals(user_id);
+CREATE INDEX idx_expenses_paid_to_contact ON expenses(paid_to_contact_id);
+CREATE INDEX idx_generated_documents_user ON generated_documents(user_id);
+CREATE INDEX idx_income_matched_invoice ON income(matched_invoice_id);
+CREATE INDEX idx_income_received_from_contact ON income(received_from_contact_id);
+CREATE INDEX idx_invoices_client_contact ON invoices(client_contact_id);
+CREATE INDEX idx_invoices_converted_from_quote ON invoices(converted_from_quote_id);
+CREATE INDEX idx_ledger_party_contact ON ledger_entries(party_contact_id);
+CREATE INDEX idx_po_supplier_contact ON purchase_orders(supplier_contact_id);
+CREATE INDEX idx_quotes_converted_to_invoice ON quotes(converted_to_invoice_id);
+CREATE INDEX idx_quotes_client_contact ON quotes(client_contact_id);
+CREATE INDEX idx_recipes_user ON recipes(user_id);
+CREATE INDEX idx_supplier_invoices_linked_po ON supplier_invoices(linked_po_id);
+CREATE INDEX idx_supplier_invoices_supplier_contact ON supplier_invoices(supplier_contact_id);
+CREATE INDEX idx_tax_records_user ON tax_records(user_id);
+CREATE INDEX idx_time_entries_client_contact ON time_entries(client_contact_id);
