@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireBusinessProfile } from "@/lib/auth";
 import { greeting } from "@/lib/format";
 import { LogoutButton } from "@/components/auth/LogoutButton";
@@ -18,8 +19,25 @@ export default async function DashboardPage() {
           <LogoutButton />
         </div>
       </div>
-      <div style={{ padding: 20, fontSize: 13, color: "#64748b" }}>
-        Dashboard content (income/expense stats, quick actions, tool categories) lands in Phase 5.
+      <div style={{ padding: 20 }}>
+        <Link
+          href="/contacts"
+          style={{
+            display: "block",
+            background: "#fff",
+            borderRadius: 13,
+            padding: "14px 16px",
+            fontSize: 14,
+            fontWeight: 700,
+            color: "#1B4332",
+            boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
+          }}
+        >
+          👥 Contacts
+        </Link>
+        <div style={{ fontSize: 13, color: "#64748b", marginTop: 16 }}>
+          Income/expense stats, quick actions, and remaining tool categories land in Phase 5.
+        </div>
       </div>
     </div>
   );

@@ -1,15 +1,19 @@
+import { QueryProvider } from "@/components/providers/QueryProvider";
+
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "#f0fdf4",
-        fontFamily: "'Inter','Segoe UI',system-ui,sans-serif",
-        maxWidth: 480,
-        margin: "0 auto",
-      }}
-    >
-      {children}
-    </div>
+    <QueryProvider>
+      <div
+        style={{
+          minHeight: "100vh",
+          background: "#f0fdf4",
+          fontFamily: "'Inter','Segoe UI',system-ui,sans-serif",
+          maxWidth: 480,
+          margin: "0 auto",
+        }}
+      >
+        {children}
+      </div>
+    </QueryProvider>
   );
 }
