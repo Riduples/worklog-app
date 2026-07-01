@@ -20,21 +20,38 @@ export default async function DashboardPage() {
         </div>
       </div>
       <div style={{ padding: 20 }}>
-        <Link
-          href="/contacts"
-          style={{
-            display: "block",
-            background: "#fff",
-            borderRadius: 13,
-            padding: "14px 16px",
-            fontSize: 14,
-            fontWeight: 700,
-            color: "#1B4332",
-            boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
-          }}
-        >
-          👥 Contacts
-        </Link>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+          <Link
+            href="/contacts"
+            style={{
+              display: "block",
+              background: "#fff",
+              borderRadius: 13,
+              padding: "14px 16px",
+              fontSize: 14,
+              fontWeight: 700,
+              color: "#1B4332",
+              boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
+            }}
+          >
+            👥 Contacts
+          </Link>
+          <Link
+            href="/stock"
+            style={{
+              display: "block",
+              background: "#fff",
+              borderRadius: 13,
+              padding: "14px 16px",
+              fontSize: 14,
+              fontWeight: 700,
+              color: "#1B4332",
+              boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
+            }}
+          >
+            📦 Stock
+          </Link>
+        </div>
         <div style={{ fontSize: 13, color: "#64748b", marginTop: 16 }}>
           Income/expense stats, quick actions, and remaining tool categories land in Phase 5.
         </div>
