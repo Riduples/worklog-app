@@ -383,6 +383,8 @@ export type Database = {
           status: string
           updated_at: string | null
           user_id: string
+          vat_amount: number | null
+          vat_rate: number | null
         }
         Insert: {
           balance_due?: number
@@ -402,6 +404,8 @@ export type Database = {
           status?: string
           updated_at?: string | null
           user_id: string
+          vat_amount?: number | null
+          vat_rate?: number | null
         }
         Update: {
           balance_due?: number
@@ -421,6 +425,8 @@ export type Database = {
           status?: string
           updated_at?: string | null
           user_id?: string
+          vat_amount?: number | null
+          vat_rate?: number | null
         }
         Relationships: [
           {
@@ -555,6 +561,8 @@ export type Database = {
           total_amount: number
           updated_at: string | null
           user_id: string
+          vat_amount: number | null
+          vat_rate: number | null
         }
         Insert: {
           created_at?: string | null
@@ -570,6 +578,8 @@ export type Database = {
           total_amount?: number
           updated_at?: string | null
           user_id: string
+          vat_amount?: number | null
+          vat_rate?: number | null
         }
         Update: {
           created_at?: string | null
@@ -585,6 +595,8 @@ export type Database = {
           total_amount?: number
           updated_at?: string | null
           user_id?: string
+          vat_amount?: number | null
+          vat_rate?: number | null
         }
         Relationships: [
           {
@@ -613,6 +625,8 @@ export type Database = {
           updated_at: string | null
           user_id: string
           valid_until: string | null
+          vat_amount: number | null
+          vat_rate: number | null
         }
         Insert: {
           client_contact_id?: string | null
@@ -630,6 +644,8 @@ export type Database = {
           updated_at?: string | null
           user_id: string
           valid_until?: string | null
+          vat_amount?: number | null
+          vat_rate?: number | null
         }
         Update: {
           client_contact_id?: string | null
@@ -647,6 +663,8 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
           valid_until?: string | null
+          vat_amount?: number | null
+          vat_rate?: number | null
         }
         Relationships: [
           {
@@ -771,6 +789,8 @@ export type Database = {
           supplier_ref_number: string | null
           updated_at: string | null
           user_id: string
+          vat_amount: number | null
+          vat_rate: number | null
         }
         Insert: {
           balance_due?: number
@@ -790,6 +810,8 @@ export type Database = {
           supplier_ref_number?: string | null
           updated_at?: string | null
           user_id: string
+          vat_amount?: number | null
+          vat_rate?: number | null
         }
         Update: {
           balance_due?: number
@@ -809,6 +831,8 @@ export type Database = {
           supplier_ref_number?: string | null
           updated_at?: string | null
           user_id?: string
+          vat_amount?: number | null
+          vat_rate?: number | null
         }
         Relationships: [
           {
@@ -990,7 +1014,46 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      convert_quote_to_invoice: {
+        Args: {
+          p_deposit_received: number
+          p_doc_number: string
+          p_due_date: string
+          p_invoice_amount: number
+          p_issue_date: string
+          p_line_items: Json
+          p_quote_id: string
+          p_vat_amount: number
+          p_vat_rate: number
+        }
+        Returns: {
+          balance_due: number
+          client_contact_id: string | null
+          client_name: string
+          converted_from_quote_id: string | null
+          created_at: string | null
+          deleted_at: string | null
+          deposit_received: number | null
+          doc_number: string
+          due_date: string | null
+          id: string
+          invoice_amount: number
+          issue_date: string
+          line_items: Json
+          paid_date: string | null
+          status: string
+          updated_at: string | null
+          user_id: string
+          vat_amount: number | null
+          vat_rate: number | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "invoices"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
     }
     Enums: {
       [_ in never]: never

@@ -10,6 +10,7 @@ import { PaymentMethodPicker } from "@/components/ui/PaymentMethodPicker";
 import { SarsSuggestionDropdown } from "@/components/ui/SarsSuggestionDropdown";
 import { getSarsIncomeMatch, type SarsCategory } from "@/lib/sarsCategories";
 import { fmt, todayStr } from "@/lib/format";
+import { useTaxRates } from "@/lib/taxRates";
 import { useCreateIncome } from "@/lib/supabase/hooks/useIncome";
 import { useContacts } from "@/lib/supabase/hooks/useContacts";
 
@@ -27,9 +28,10 @@ export function IncomeModal({ onClose }: { onClose: () => void }) {
 
   const { data: contacts } = useContacts();
   const createIncome = useCreateIncome();
+  const { TAX_JAR_RATE } = useTaxRates();
 
   const amountNum = parseFloat(amount) || 0;
-  const taxJar = amountNum * 0.28;
+  const taxJar = amountNum * TAX_JAR_RATE;
 
   const handleSave = () => {
     if (!amountNum || amountNum <= 0) {
@@ -108,7 +110,7 @@ export function IncomeModal({ onClose }: { onClose: () => void }) {
 
       {amountNum > 0 && (
         <div style={{ background: "#f0fdf4", borderRadius: 12, padding: "12px 14px", marginBottom: 16, fontSize: 13, color: "#166534" }}>
-          🏦 {fmt(taxJar)} set aside for SARS (28% tax jar)
+          🏦 {fmt(taxJar)} set aside for SARS ({(TAX_JAR_RATE * 100).toFixed(0)}% tax jar)
         </div>
       )}
 

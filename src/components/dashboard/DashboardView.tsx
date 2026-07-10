@@ -8,6 +8,7 @@ import { useStockItems } from "@/lib/supabase/hooks/useStock";
 import { IncomeModal } from "@/components/modals/IncomeModal";
 import { ExpenseModal } from "@/components/modals/ExpenseModal";
 import { LogoutButton } from "@/components/auth/LogoutButton";
+import { ToolTile } from "@/components/dashboard/ToolTile";
 import { fmt, greeting } from "@/lib/format";
 import type { Tables } from "@/lib/types/database";
 
@@ -103,36 +104,12 @@ export function DashboardView({ businessName }: { businessName: string }) {
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
-          <Link
-            href="/contacts"
-            style={{
-              display: "block",
-              background: "#fff",
-              borderRadius: 13,
-              padding: "14px 16px",
-              fontSize: 14,
-              fontWeight: 700,
-              color: "#1B4332",
-              boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
-            }}
-          >
-            👥 Contacts
-          </Link>
-          <Link
-            href="/stock"
-            style={{
-              display: "block",
-              background: "#fff",
-              borderRadius: 13,
-              padding: "14px 16px",
-              fontSize: 14,
-              fontWeight: 700,
-              color: "#1B4332",
-              boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
-            }}
-          >
-            📦 Stock
-          </Link>
+          <ToolTile href="/contacts" icon="👥" label="Contacts" />
+          <ToolTile href="/stock" icon="📦" label="Stock" />
+          <ToolTile href="/quotes" icon="📋" label="Quotes" />
+          <ToolTile href="/invoices" icon="📤" label="Invoices" />
+          <ToolTile href="/purchase-orders" icon="🛒" label="Purchase Orders" />
+          <ToolTile href="/supplier-invoices" icon="📥" label="Supplier Invoices" />
         </div>
 
         {lowStock.length > 0 && (
