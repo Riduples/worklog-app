@@ -4,12 +4,14 @@ import { useState } from "react";
 import Link from "next/link";
 import { useStockItems, useUpdateStockItem, type StockItem } from "@/lib/supabase/hooks/useStock";
 import { StockModal } from "@/components/modals/StockModal";
+import { CSVImportModal } from "@/components/modals/CSVImportModal";
 import { fmt } from "@/lib/format";
 
 export function StockView() {
   const { data: items, isLoading } = useStockItems();
   const updateStockItem = useUpdateStockItem();
   const [modalState, setModalState] = useState<{ open: boolean; item?: StockItem }>({ open: false });
+  const [importOpen, setImportOpen] = useState(false);
 
   const handleSoftDelete = (id: string) => {
     if (!confirm("Remove this stock item?")) return;
@@ -25,21 +27,38 @@ export function StockView() {
           </Link>
           <h1 style={{ fontSize: 20, fontWeight: 800, color: "#1B4332", margin: "4px 0 0" }}>Stock</h1>
         </div>
-        <button
-          onClick={() => setModalState({ open: true })}
-          style={{
-            background: "#1B4332",
-            color: "#fff",
-            border: "none",
-            borderRadius: 12,
-            padding: "10px 16px",
-            fontSize: 13,
-            fontWeight: 700,
-            cursor: "pointer",
-          }}
-        >
-          + Add
-        </button>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button
+            onClick={() => setImportOpen(true)}
+            style={{
+              background: "#f0fdf4",
+              color: "#166534",
+              border: "1.5px solid #d1fae5",
+              borderRadius: 12,
+              padding: "10px 14px",
+              fontSize: 13,
+              fontWeight: 700,
+              cursor: "pointer",
+            }}
+          >
+            ⬆ Import
+          </button>
+          <button
+            onClick={() => setModalState({ open: true })}
+            style={{
+              background: "#1B4332",
+              color: "#fff",
+              border: "none",
+              borderRadius: 12,
+              padding: "10px 16px",
+              fontSize: 13,
+              fontWeight: 700,
+              cursor: "pointer",
+            }}
+          >
+            + Add
+          </button>
+        </div>
       </div>
 
       {isLoading && <p style={{ color: "#94a3b8", fontSize: 13 }}>Loading...</p>}
@@ -86,6 +105,7 @@ export function StockView() {
       })}
 
       {modalState.open && <StockModal item={modalState.item} onClose={() => setModalState({ open: false })} />}
+      {importOpen && <CSVImportModal type="stock" onClose={() => setImportOpen(false)} />}
     </div>
   );
 }

@@ -4,15 +4,19 @@ import { useState } from "react";
 import Link from "next/link";
 import { useContacts, useUpdateContact, type Contact } from "@/lib/supabase/hooks/useContacts";
 import { ContactModal } from "@/components/modals/ContactModal";
+import { CSVImportModal } from "@/components/modals/CSVImportModal";
 
 export function ContactsView() {
   const { data: contacts, isLoading } = useContacts();
   const updateContact = useUpdateContact();
   const [typeFilter, setTypeFilter] = useState<"all" | "client" | "supplier">("all");
   const [search, setSearch] = useState("");
+  const [importOpen, setImportOpen] = useState(false);
   const [modalState, setModalState] = useState<{ open: boolean; contact?: Contact; defaultType?: "client" | "supplier" }>({
     open: false,
   });
+
+  const importType = typeFilter === "supplier" ? "supplier" : "client";
 
   const filtered = (contacts ?? []).filter((c) => {
     if (typeFilter !== "all" && c.contact_type !== typeFilter) return false;
@@ -34,21 +38,38 @@ export function ContactsView() {
           </Link>
           <h1 style={{ fontSize: 20, fontWeight: 800, color: "#1B4332", margin: "4px 0 0" }}>Contacts</h1>
         </div>
-        <button
-          onClick={() => setModalState({ open: true })}
-          style={{
-            background: "#1B4332",
-            color: "#fff",
-            border: "none",
-            borderRadius: 12,
-            padding: "10px 16px",
-            fontSize: 13,
-            fontWeight: 700,
-            cursor: "pointer",
-          }}
-        >
-          + Add
-        </button>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button
+            onClick={() => setImportOpen(true)}
+            style={{
+              background: "#f0fdf4",
+              color: "#166534",
+              border: "1.5px solid #d1fae5",
+              borderRadius: 12,
+              padding: "10px 14px",
+              fontSize: 13,
+              fontWeight: 700,
+              cursor: "pointer",
+            }}
+          >
+            ⬆ Import
+          </button>
+          <button
+            onClick={() => setModalState({ open: true })}
+            style={{
+              background: "#1B4332",
+              color: "#fff",
+              border: "none",
+              borderRadius: 12,
+              padding: "10px 16px",
+              fontSize: 13,
+              fontWeight: 700,
+              cursor: "pointer",
+            }}
+          >
+            + Add
+          </button>
+        </div>
       </div>
 
       <input
@@ -148,6 +169,7 @@ export function ContactsView() {
           onClose={() => setModalState({ open: false })}
         />
       )}
+      {importOpen && <CSVImportModal type={importType} onClose={() => setImportOpen(false)} />}
     </div>
   );
 }
