@@ -110,6 +110,11 @@ export function DashboardView({ businessName }: { businessName: string }) {
           <ToolTile href="/invoices" icon="📤" label="Invoices" />
           <ToolTile href="/purchase-orders" icon="🛒" label="Purchase Orders" />
           <ToolTile href="/supplier-invoices" icon="📥" label="Supplier Invoices" />
+          <ToolTile href="/recipes" icon="🍳" label="Cost Calculator" />
+          <ToolTile href="/bookings" icon="📅" label="Bookings" />
+          <ToolTile href="/time" icon="⏱️" label="Time Tracker" />
+          <ToolTile href="/mileage" icon="🚗" label="Mileage" />
+          <ToolTile href="/ledger" icon="📒" label="Ledgers" />
         </div>
 
         {lowStock.length > 0 && (
