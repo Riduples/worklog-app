@@ -117,6 +117,15 @@ export function DashboardView({ businessName }: { businessName: string }) {
           <ToolTile href="/ledger" icon="📒" label="Ledgers" />
         </div>
 
+        <div style={{ fontSize: 12, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 1, margin: "6px 0 10px" }}>
+          Reports
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
+          <ToolTile href="/tax" icon="🧾" label="Tax & SARS" />
+          <ToolTile href="/cashflow" icon="📊" label="Cash Flow" />
+          <ToolTile href="/profit-loss" icon="📈" label="Profit & Loss" />
+        </div>
+
         {lowStock.length > 0 && (
           <div
             style={{
