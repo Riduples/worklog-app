@@ -1,8 +1,9 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import type { Tables } from "@/lib/types/database";
+import type { Plan } from "@/lib/tiers";
 
 export type BusinessProfile = Tables<"business_profiles">;
 
@@ -18,5 +19,20 @@ export function useBusinessProfile() {
       if (error) throw error;
       return data as BusinessProfile;
     },
+  });
+}
+
+export function useUpdateBusinessPlan() {
+  const supabase = createClient();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ businessId, plan }: { businessId: string; plan: Plan }) => {
+      const { error } = await supabase.rpc("update_business_plan", {
+        target_business_id: businessId,
+        new_plan: plan,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["business_profile"] }),
   });
 }

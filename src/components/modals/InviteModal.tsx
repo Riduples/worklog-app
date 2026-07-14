@@ -6,10 +6,14 @@ import { Field } from "@/components/ui/Field";
 import { Input } from "@/components/ui/Input";
 import { SaveBtn } from "@/components/ui/SaveBtn";
 import { useCreateInvite } from "@/lib/supabase/hooks/useInvites";
+import { PermissionsEditor } from "@/components/team/PermissionsEditor";
+import { DEFAULT_PERMISSIONS, PERMISSION_PRESETS, matchesPreset, type Permissions } from "@/lib/permissions";
 
 export function InviteModal({ onClose }: { onClose: () => void }) {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"owner" | "member">("member");
+  const [permissions, setPermissions] = useState<Permissions>(() => PERMISSION_PRESETS[0].build());
+  const [customizing, setCustomizing] = useState(false);
   const [error, setError] = useState("");
   const [link, setLink] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -23,7 +27,7 @@ export function InviteModal({ onClose }: { onClose: () => void }) {
     }
     setError("");
     createInvite.mutate(
-      { email: email.trim(), role },
+      { email: email.trim(), role, permissions: role === "owner" ? DEFAULT_PERMISSIONS() : permissions },
       {
         onSuccess: (invite) => {
           setLink(`${window.location.origin}/accept-invite?token=${invite.token}`);
@@ -44,6 +48,20 @@ export function InviteModal({ onClose }: { onClose: () => void }) {
       // is still shown in the box below for manual copy.
     }
   };
+
+  if (customizing) {
+    return (
+      <PermissionsEditor
+        memberName={email.trim() || "new user"}
+        initialPermissions={permissions}
+        onBack={() => setCustomizing(false)}
+        onSave={(perms) => {
+          setPermissions(perms);
+          setCustomizing(false);
+        }}
+      />
+    );
+  }
 
   if (link) {
     return (
@@ -77,6 +95,8 @@ export function InviteModal({ onClose }: { onClose: () => void }) {
     );
   }
 
+  const activePresetId = PERMISSION_PRESETS.find((p) => matchesPreset(permissions, p.build()))?.id ?? null;
+
   return (
     <Modal title="Invite a team member" onClose={onClose}>
       <Field label="Email">
@@ -108,6 +128,47 @@ export function InviteModal({ onClose }: { onClose: () => void }) {
           ))}
         </div>
       </Field>
+
+      {role === "member" && (
+        <Field label="Access">
+          <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 4 }}>
+            {PERMISSION_PRESETS.map((preset) => {
+              const active = activePresetId === preset.id;
+              return (
+                <button
+                  key={preset.id}
+                  type="button"
+                  onClick={() => setPermissions(preset.build())}
+                  style={{
+                    textAlign: "left",
+                    padding: "10px 12px",
+                    borderRadius: 10,
+                    border: `1.5px solid ${active ? "#0C4A6E" : "#e2e8f0"}`,
+                    background: active ? "#F0F9FF" : "#fff",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                  }}
+                >
+                  <span style={{ fontSize: 18 }}>{preset.icon}</span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: active ? "#0C4A6E" : "#111" }}>{preset.label}</div>
+                  </div>
+                  {active && <span style={{ color: "#0C4A6E" }}>✓</span>}
+                </button>
+              );
+            })}
+            <button
+              type="button"
+              onClick={() => setCustomizing(true)}
+              style={{ textAlign: "center", padding: "8px", background: "none", border: "none", color: "#64748b", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
+            >
+              {activePresetId ? "Customize per tool instead" : "✓ Customized — tap to edit"}
+            </button>
+          </div>
+        </Field>
+      )}
 
       {error && <p style={{ color: "#dc2626", fontSize: 13, marginBottom: 12 }}>{error}</p>}
       <SaveBtn

@@ -129,6 +129,7 @@ export type Database = {
           id: string
           name: string | null
           phone: string | null
+          plan: string
           updated_at: string | null
           user_id: string
           vat_number: string | null
@@ -140,6 +141,7 @@ export type Database = {
           id?: string
           name?: string | null
           phone?: string | null
+          plan?: string
           updated_at?: string | null
           user_id: string
           vat_number?: string | null
@@ -151,6 +153,7 @@ export type Database = {
           id?: string
           name?: string | null
           phone?: string | null
+          plan?: string
           updated_at?: string | null
           user_id?: string
           vat_number?: string | null
@@ -1323,6 +1326,14 @@ export type Database = {
       is_business_member: {
         Args: { target_business_id: string }
         Returns: boolean
+      }
+      update_business_plan: {
+        Args: { new_plan: string; target_business_id: string }
+        Returns: undefined
+      }
+      update_member_permissions: {
+        Args: { new_permissions: Json; target_member_id: string }
+        Returns: undefined
       }
     }
     Enums: {

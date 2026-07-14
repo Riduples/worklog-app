@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { getCurrentBusinessId } from "@/lib/supabase/currentBusiness";
 import type { Tables } from "@/lib/types/database";
+import type { Permissions } from "@/lib/permissions";
 
 export type Invite = Tables<"invites">;
 
@@ -29,7 +30,15 @@ export function useCreateInvite() {
   const supabase = createClient();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ email, role }: { email: string; role: "owner" | "member" }) => {
+    mutationFn: async ({
+      email,
+      role,
+      permissions,
+    }: {
+      email: string;
+      role: "owner" | "member";
+      permissions: Permissions;
+    }) => {
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -37,7 +46,7 @@ export function useCreateInvite() {
       const businessId = await getCurrentBusinessId(supabase);
       const { data, error } = await supabase
         .from("invites")
-        .insert({ business_id: businessId, email: email.trim().toLowerCase(), role, invited_by: user.id })
+        .insert({ business_id: businessId, email: email.trim().toLowerCase(), role, permissions, invited_by: user.id })
         .select()
         .single();
       if (error) throw error;

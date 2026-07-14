@@ -5,12 +5,17 @@ import Link from "next/link";
 import { useIncome } from "@/lib/supabase/hooks/useIncome";
 import { useExpenses } from "@/lib/supabase/hooks/useExpenses";
 import { useStockItems } from "@/lib/supabase/hooks/useStock";
+import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
+import { useCurrentMember } from "@/lib/supabase/hooks/useCurrentMember";
 import { IncomeModal } from "@/components/modals/IncomeModal";
 import { ExpenseModal } from "@/components/modals/ExpenseModal";
 import { QuickLogModal } from "@/components/modals/QuickLogModal";
+import { UpgradeModal } from "@/components/modals/UpgradeModal";
 import { LogoutButton } from "@/components/auth/LogoutButton";
 import { ToolTile } from "@/components/dashboard/ToolTile";
 import { fmt, greeting } from "@/lib/format";
+import { canSee, type ToolId } from "@/lib/permissions";
+import { isLocked, type Plan } from "@/lib/tiers";
 import type { Tables } from "@/lib/types/database";
 
 const isThisMonth = (dateStr: string) => {
@@ -23,7 +28,19 @@ export function DashboardView({ businessName }: { businessName: string }) {
   const { data: income } = useIncome();
   const { data: expenses } = useExpenses();
   const { data: stock } = useStockItems();
+  const { data: business } = useBusinessProfile();
+  const { data: currentMember } = useCurrentMember();
   const [modal, setModal] = useState<"income" | "expense" | "quicklog" | null>(null);
+  const [upgradeFeature, setUpgradeFeature] = useState<ToolId | "team" | null>(null);
+
+  // Default to full access while the membership row is still loading, so the
+  // (overwhelmingly common) single-owner case never flashes hidden tiles.
+  const member = currentMember ?? { role: "owner", permissions: {} };
+  const plan = (business?.plan ?? "shoebox") as Plan;
+  const isOwner = member.role === "owner";
+
+  const gate = (toolId: ToolId) => canSee(member, toolId);
+  const tierLocked = (toolId: ToolId) => isLocked(plan, toolId);
 
   const monthIncome = (income ?? []).filter((r) => isThisMonth(r.transaction_date)).reduce((s, r) => s + Number(r.amount), 0);
   const monthExpense = (expenses ?? []).filter((r) => isThisMonth(r.transaction_date)).reduce((s, r) => s + Number(r.amount), 0);
@@ -68,6 +85,7 @@ export function DashboardView({ businessName }: { businessName: string }) {
       </div>
 
       <div style={{ padding: "16px 16px 100px" }}>
+        {(gate("income") || gate("expense")) && (
         <button
           onClick={() => setModal("quicklog")}
           style={{
@@ -94,8 +112,10 @@ export function DashboardView({ businessName }: { businessName: string }) {
             </div>
           </div>
         </button>
+        )}
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+          {gate("income") && (
           <button
             onClick={() => setModal("income")}
             style={{
@@ -113,6 +133,8 @@ export function DashboardView({ businessName }: { businessName: string }) {
             <div style={{ fontSize: 16, fontWeight: 800 }}>Money In</div>
             <div style={{ fontSize: 12, color: "#A7F3D0", marginTop: 2 }}>Log income</div>
           </button>
+          )}
+          {gate("expense") && (
           <button
             onClick={() => setModal("expense")}
             style={{
@@ -129,30 +151,47 @@ export function DashboardView({ businessName }: { businessName: string }) {
             <div style={{ fontSize: 16, fontWeight: 800 }}>Money Out</div>
             <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>Log expense</div>
           </button>
+          )}
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
-          <ToolTile href="/contacts" icon="👥" label="Contacts" />
-          <ToolTile href="/stock" icon="📦" label="Stock" />
-          <ToolTile href="/quotes" icon="📋" label="Quotes" />
-          <ToolTile href="/invoices" icon="📤" label="Invoices" />
-          <ToolTile href="/purchase-orders" icon="🛒" label="Purchase Orders" />
-          <ToolTile href="/supplier-invoices" icon="📥" label="Supplier Invoices" />
-          <ToolTile href="/recipes" icon="🍳" label="Cost Calculator" />
-          <ToolTile href="/bookings" icon="📅" label="Bookings" />
-          <ToolTile href="/time" icon="⏱️" label="Time Tracker" />
-          <ToolTile href="/mileage" icon="🚗" label="Mileage" />
+          {(gate("clients") || gate("suppliers")) && <ToolTile href="/contacts" icon="👥" label="Contacts" />}
+          {gate("stock") && <ToolTile href="/stock" icon="📦" label="Stock" />}
+          {gate("quote") && <ToolTile href="/quotes" icon="📋" label="Quotes" />}
+          {gate("invoice") && <ToolTile href="/invoices" icon="📤" label="Invoices" />}
+          {gate("purchaseorder") && (
+            <ToolTile
+              href="/purchase-orders"
+              icon="🛒"
+              label="Purchase Orders"
+              locked={tierLocked("purchaseorder")}
+              onLockedClick={() => setUpgradeFeature("purchaseorder")}
+            />
+          )}
+          {gate("supplierinvoice") && (
+            <ToolTile
+              href="/supplier-invoices"
+              icon="📥"
+              label="Supplier Invoices"
+              locked={tierLocked("supplierinvoice")}
+              onLockedClick={() => setUpgradeFeature("supplierinvoice")}
+            />
+          )}
+          {gate("recipe") && <ToolTile href="/recipes" icon="🍳" label="Cost Calculator" />}
+          {gate("booking") && <ToolTile href="/bookings" icon="📅" label="Bookings" />}
+          {gate("timetrack") && <ToolTile href="/time" icon="⏱️" label="Time Tracker" />}
+          {gate("mileage") && <ToolTile href="/mileage" icon="🚗" label="Mileage" />}
           <ToolTile href="/ledger" icon="📒" label="Ledgers" />
-          <ToolTile href="/team" icon="👤" label="Team" />
+          {isOwner && <ToolTile href="/team" icon="👤" label="Team" />}
         </div>
 
         <div style={{ fontSize: 12, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 1, margin: "6px 0 10px" }}>
           Reports
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
-          <ToolTile href="/tax" icon="🧾" label="Tax & SARS" />
-          <ToolTile href="/cashflow" icon="📊" label="Cash Flow" />
-          <ToolTile href="/profit-loss" icon="📈" label="Profit & Loss" />
+          {gate("tax") && <ToolTile href="/tax" icon="🧾" label="Tax & SARS" />}
+          {gate("profit") && <ToolTile href="/cashflow" icon="📊" label="Cash Flow" />}
+          {gate("profitloss") && <ToolTile href="/profit-loss" icon="📈" label="Profit & Loss" />}
         </div>
 
         {lowStock.length > 0 && (
@@ -247,6 +286,15 @@ export function DashboardView({ businessName }: { businessName: string }) {
       {modal === "income" && <IncomeModal onClose={() => setModal(null)} />}
       {modal === "expense" && <ExpenseModal onClose={() => setModal(null)} />}
       {modal === "quicklog" && <QuickLogModal onClose={() => setModal(null)} />}
+      {upgradeFeature && business && (
+        <UpgradeModal
+          feature={upgradeFeature}
+          currentPlan={plan}
+          businessId={business.id}
+          isOwner={isOwner}
+          onClose={() => setUpgradeFeature(null)}
+        />
+      )}
     </div>
   );
 }
