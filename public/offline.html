@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>WORKLOG — Offline</title>
+    <style>
+      html, body {
+        margin: 0;
+        height: 100%;
+        background: #1b4332;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      }
+      .wrap {
+        min-height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 32px;
+        box-sizing: border-box;
+        text-align: center;
+      }
+      .badge {
+        width: 64px;
+        height: 64px;
+        border-radius: 16px;
+        background: #f59e0b;
+        color: #1b4332;
+        font-weight: 800;
+        font-size: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 20px;
+      }
+      h1 {
+        color: #fff;
+        font-size: 18px;
+        margin: 0 0 8px;
+      }
+      p {
+        color: #a7f3d0;
+        font-size: 14px;
+        line-height: 1.6;
+        margin: 0 0 24px;
+        max-width: 320px;
+      }
+      button {
+        background: #f59e0b;
+        color: #1b4332;
+        border: none;
+        border-radius: 12px;
+        padding: 14px 24px;
+        font-size: 15px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="badge">W</div>
+      <h1>You're offline</h1>
+      <p>WORKLOG needs an internet connection to load your data. Check your connection and try again.</p>
+      <button onclick="location.reload()">Retry</button>
+    </div>
+  </body>
+</html>
