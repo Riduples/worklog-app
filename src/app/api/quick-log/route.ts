@@ -104,7 +104,7 @@ export async function POST(request: Request) {
 
   try {
     const response = await client.messages.create({
-      model: "claude-opus-4-8",
+      model: "claude-haiku-4-5",
       max_tokens: 500,
       system: buildSystemPrompt(contactNames, stockNames),
       output_config: { format: { type: "json_schema", schema: QUICK_LOG_SCHEMA } },
