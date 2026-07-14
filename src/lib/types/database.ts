@@ -1257,6 +1257,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_invite: { Args: { p_token: string }; Returns: string }
       convert_quote_to_invoice: {
         Args: {
           p_deposit_received: number
@@ -1297,6 +1298,27 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      get_business_members: {
+        Args: { target_business_id: string }
+        Returns: {
+          created_at: string
+          email: string
+          id: string
+          permissions: Json
+          role: string
+          user_id: string
+        }[]
+      }
+      get_invite_preview: {
+        Args: { p_token: string }
+        Returns: {
+          business_name: string
+          invite_email: string
+          is_accepted: boolean
+          is_expired: boolean
+          role: string
+        }[]
       }
       is_business_member: {
         Args: { target_business_id: string }

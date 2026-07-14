@@ -33,7 +33,10 @@ export async function updateSession(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
   const isAuthRoute = AUTH_PATHS.some((p) => pathname.startsWith(p));
-  const isPublicRoute = pathname === "/" || isAuthRoute;
+  // /accept-invite must work both logged-out (preview + login/signup prompt)
+  // and logged-in (accept button) — it's public but not an "auth route" (an
+  // already-logged-in user should NOT be bounced away from it like /login).
+  const isPublicRoute = pathname === "/" || isAuthRoute || pathname.startsWith("/accept-invite");
 
   if (!user && !isPublicRoute) {
     const url = request.nextUrl.clone();

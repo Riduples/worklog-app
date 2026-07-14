@@ -143,6 +143,7 @@ export function DashboardView({ businessName }: { businessName: string }) {
           <ToolTile href="/time" icon="⏱️" label="Time Tracker" />
           <ToolTile href="/mileage" icon="🚗" label="Mileage" />
           <ToolTile href="/ledger" icon="📒" label="Ledgers" />
+          <ToolTile href="/team" icon="👤" label="Team" />
         </div>
 
         <div style={{ fontSize: 12, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 1, margin: "6px 0 10px" }}>
