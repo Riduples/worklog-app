@@ -6,7 +6,7 @@
 import { fmt, todayStr } from "@/lib/format";
 import type { BusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 
-export type DocKind = "quote" | "invoice" | "purchaseorder";
+export type DocKind = "quote" | "invoice" | "purchaseorder" | "payslip";
 
 export type DocForRender = {
   doc_number: string;
@@ -26,9 +26,10 @@ export type DocForRender = {
 export function buildDocumentHTML(doc: DocForRender, business: BusinessProfile, kind: DocKind): string {
   const isInvoice = kind === "invoice";
   const isPO = kind === "purchaseorder";
-  const hasVat = !!business.vat_number && doc.vat_rate != null;
-  const docTitle = isPO ? "PURCHASE ORDER" : isInvoice ? (business.vat_number ? "TAX INVOICE" : "INVOICE") : "QUOTE";
-  const recipientLabel = isPO ? "To (Supplier)" : isInvoice ? "Bill To" : "Quote For";
+  const isPayslip = kind === "payslip";
+  const hasVat = !isPayslip && !!business.vat_number && doc.vat_rate != null;
+  const docTitle = isPayslip ? "PAYSLIP" : isPO ? "PURCHASE ORDER" : isInvoice ? (business.vat_number ? "TAX INVOICE" : "INVOICE") : "QUOTE";
+  const recipientLabel = isPayslip ? "Employee" : isPO ? "To (Supplier)" : isInvoice ? "Bill To" : "Quote For";
 
   const rows = doc.line_items
     .map((i) => {
@@ -60,7 +61,7 @@ export function buildDocumentHTML(doc: DocForRender, business: BusinessProfile, 
          <div class="totals-row"><span>Deposit ${isInvoice ? "received" : "required"}</span><span>−${fmt(doc.deposit)}</span></div>`
       : "",
     `<div class="totals-row final">
-       <span>${isInvoice ? (doc.deposit > 0 ? "Balance Due" : "Total Due") : "Total"}${hasVat ? " (incl. VAT)" : ""}</span>
+       <span>${isPayslip ? "NET PAY" : isInvoice ? (doc.deposit > 0 ? "Balance Due" : "Total Due") : "Total"}${hasVat ? " (incl. VAT)" : ""}</span>
        <span>${fmt(finalDue)}</span>
      </div>`,
   ].join("");
@@ -130,7 +131,8 @@ export function buildDocumentHTML(doc: DocForRender, business: BusinessProfile, 
       </div>
       ${isInvoice && doc.due_date ? `<div class="vat-note" style="margin-top:8px;"><strong>Due date:</strong> ${doc.due_date}</div>` : ""}
       ${isPO && doc.requested_delivery ? `<div class="vat-note" style="margin-top:8px;"><strong>Requested delivery:</strong> ${doc.requested_delivery}</div>` : ""}
-      ${!isInvoice && !isPO && doc.valid_until ? `<div class="vat-note" style="margin-top:8px;">Valid until ${doc.valid_until}</div>` : ""}
+      ${!isInvoice && !isPO && !isPayslip && doc.valid_until ? `<div class="vat-note" style="margin-top:8px;">Valid until ${doc.valid_until}</div>` : ""}
+      ${isPayslip && doc.due_date ? `<div class="vat-note" style="margin-top:8px;"><strong>Pay date:</strong> ${doc.due_date}</div>` : ""}
     </div>
   </div>
 
@@ -151,11 +153,13 @@ export function buildDocumentHTML(doc: DocForRender, business: BusinessProfile, 
 
   <div class="footer">
     ${
-      isPO
-        ? "This purchase order is subject to the terms agreed with the supplier."
-        : isInvoice
-          ? "Please make payment by the due date above. Thank you for your business."
-          : `This quote is valid until ${doc.valid_until || "30 days from the issue date"}. Reply to accept or for any questions.`
+      isPayslip
+        ? "This is a computer-generated payslip. Retain it for your records."
+        : isPO
+          ? "This purchase order is subject to the terms agreed with the supplier."
+          : isInvoice
+            ? "Please make payment by the due date above. Thank you for your business."
+            : `This quote is valid until ${doc.valid_until || "30 days from the issue date"}. Reply to accept or for any questions.`
     }
     <br/>Generated via WORKLOG — worklog.co.za
   </div>

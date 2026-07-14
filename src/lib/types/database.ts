@@ -719,6 +719,114 @@ export type Database = {
           },
         ]
       }
+      pay_runs: {
+        Row: {
+          allowances_amount: number | null
+          approved_at: string | null
+          approved_by: string | null
+          base_rate: number | null
+          business_id: string
+          created_at: string | null
+          gross_wages: number
+          id: string
+          leave_days: number | null
+          leave_type: string | null
+          loan_deducted: number | null
+          net_pay: number
+          other_deduction_desc: string | null
+          other_deductions: number | null
+          overtime_amount: number | null
+          pay_date: string
+          pay_period: string
+          paye: number | null
+          sdl: number | null
+          staff_id: string | null
+          status: string
+          uif_employee: number | null
+          uif_employer: number | null
+          uif_total: number | null
+          units_worked: number | null
+          updated_at: string | null
+          user_id: string
+          worker_name: string
+        }
+        Insert: {
+          allowances_amount?: number | null
+          approved_at?: string | null
+          approved_by?: string | null
+          base_rate?: number | null
+          business_id: string
+          created_at?: string | null
+          gross_wages?: number
+          id?: string
+          leave_days?: number | null
+          leave_type?: string | null
+          loan_deducted?: number | null
+          net_pay?: number
+          other_deduction_desc?: string | null
+          other_deductions?: number | null
+          overtime_amount?: number | null
+          pay_date: string
+          pay_period: string
+          paye?: number | null
+          sdl?: number | null
+          staff_id?: string | null
+          status?: string
+          uif_employee?: number | null
+          uif_employer?: number | null
+          uif_total?: number | null
+          units_worked?: number | null
+          updated_at?: string | null
+          user_id: string
+          worker_name: string
+        }
+        Update: {
+          allowances_amount?: number | null
+          approved_at?: string | null
+          approved_by?: string | null
+          base_rate?: number | null
+          business_id?: string
+          created_at?: string | null
+          gross_wages?: number
+          id?: string
+          leave_days?: number | null
+          leave_type?: string | null
+          loan_deducted?: number | null
+          net_pay?: number
+          other_deduction_desc?: string | null
+          other_deductions?: number | null
+          overtime_amount?: number | null
+          pay_date?: string
+          pay_period?: string
+          paye?: number | null
+          sdl?: number | null
+          staff_id?: string | null
+          status?: string
+          uif_employee?: number | null
+          uif_employer?: number | null
+          uif_total?: number | null
+          units_worked?: number | null
+          updated_at?: string | null
+          user_id?: string
+          worker_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pay_runs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pay_runs_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff_register"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       purchase_orders: {
         Row: {
           business_id: string
@@ -925,6 +1033,92 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "recipes_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      staff_register: {
+        Row: {
+          business_id: string
+          contact_number: string | null
+          contract_end_date: string | null
+          created_at: string | null
+          daily_wage: number | null
+          days_per_week: number | null
+          deleted_at: string | null
+          employment_type: string
+          first_name: string
+          full_name: string
+          hourly_rate: number | null
+          hours_per_day: number | null
+          id: string
+          id_number: string | null
+          is_contractor: boolean
+          last_name: string
+          monthly_salary: number | null
+          pay_type: string
+          start_date: string | null
+          tax_number: string | null
+          trading_name: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          business_id: string
+          contact_number?: string | null
+          contract_end_date?: string | null
+          created_at?: string | null
+          daily_wage?: number | null
+          days_per_week?: number | null
+          deleted_at?: string | null
+          employment_type?: string
+          first_name: string
+          full_name: string
+          hourly_rate?: number | null
+          hours_per_day?: number | null
+          id?: string
+          id_number?: string | null
+          is_contractor?: boolean
+          last_name: string
+          monthly_salary?: number | null
+          pay_type?: string
+          start_date?: string | null
+          tax_number?: string | null
+          trading_name?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          business_id?: string
+          contact_number?: string | null
+          contract_end_date?: string | null
+          created_at?: string | null
+          daily_wage?: number | null
+          days_per_week?: number | null
+          deleted_at?: string | null
+          employment_type?: string
+          first_name?: string
+          full_name?: string
+          hourly_rate?: number | null
+          hours_per_day?: number | null
+          id?: string
+          id_number?: string | null
+          is_contractor?: boolean
+          last_name?: string
+          monthly_salary?: number | null
+          pay_type?: string
+          start_date?: string | null
+          tax_number?: string | null
+          trading_name?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_register_business_id_fkey"
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "business_profiles"
@@ -1213,6 +1407,114 @@ export type Database = {
         }
         Relationships: []
       }
+      worker_leave: {
+        Row: {
+          business_id: string
+          created_at: string | null
+          days: number
+          id: string
+          leave_type: string
+          note: string | null
+          staff_id: string | null
+          start_date: string
+          user_id: string
+          worker_name: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string | null
+          days: number
+          id?: string
+          leave_type: string
+          note?: string | null
+          staff_id?: string | null
+          start_date: string
+          user_id: string
+          worker_name: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string | null
+          days?: number
+          id?: string
+          leave_type?: string
+          note?: string | null
+          staff_id?: string | null
+          start_date?: string
+          user_id?: string
+          worker_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "worker_leave_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "worker_leave_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff_register"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      worker_loans: {
+        Row: {
+          amount: number
+          business_id: string
+          created_at: string | null
+          entry_date: string
+          id: string
+          loan_type: string
+          note: string | null
+          staff_id: string | null
+          user_id: string
+          worker_name: string
+        }
+        Insert: {
+          amount: number
+          business_id: string
+          created_at?: string | null
+          entry_date?: string
+          id?: string
+          loan_type: string
+          note?: string | null
+          staff_id?: string | null
+          user_id: string
+          worker_name: string
+        }
+        Update: {
+          amount?: number
+          business_id?: string
+          created_at?: string | null
+          entry_date?: string
+          id?: string
+          loan_type?: string
+          note?: string | null
+          staff_id?: string | null
+          user_id?: string
+          worker_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "worker_loans_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "worker_loans_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff_register"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       worker_payments: {
         Row: {
           created_at: string | null
@@ -1298,6 +1600,67 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "invoices"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      create_pay_run: {
+        Args: {
+          p_allowances_amount: number
+          p_base_rate: number
+          p_business_id: string
+          p_gross_wages: number
+          p_leave_days: number
+          p_leave_type: string
+          p_loan_deducted: number
+          p_net_pay: number
+          p_other_deduction_desc: string
+          p_other_deductions: number
+          p_overtime_amount: number
+          p_pay_date: string
+          p_pay_period: string
+          p_paye: number
+          p_sdl: number
+          p_staff_id: string
+          p_status: string
+          p_uif_employee: number
+          p_uif_employer: number
+          p_units_worked: number
+          p_worker_name: string
+        }
+        Returns: {
+          allowances_amount: number | null
+          approved_at: string | null
+          approved_by: string | null
+          base_rate: number | null
+          business_id: string
+          created_at: string | null
+          gross_wages: number
+          id: string
+          leave_days: number | null
+          leave_type: string | null
+          loan_deducted: number | null
+          net_pay: number
+          other_deduction_desc: string | null
+          other_deductions: number | null
+          overtime_amount: number | null
+          pay_date: string
+          pay_period: string
+          paye: number | null
+          sdl: number | null
+          staff_id: string | null
+          status: string
+          uif_employee: number | null
+          uif_employer: number | null
+          uif_total: number | null
+          units_worked: number | null
+          updated_at: string | null
+          user_id: string
+          worker_name: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "pay_runs"
           isOneToOne: true
           isSetofReturn: false
         }

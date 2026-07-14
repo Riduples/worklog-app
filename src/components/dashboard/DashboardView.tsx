@@ -185,6 +185,34 @@ export function DashboardView({ businessName }: { businessName: string }) {
           {isOwner && <ToolTile href="/team" icon="👤" label="Team" />}
         </div>
 
+        {(gate("staffregister") || gate("payrun") || gate("advances") || gate("leave")) && (
+          <>
+            <div style={{ fontSize: 12, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 1, margin: "6px 0 10px" }}>
+              Payroll
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
+              {gate("staffregister") && (
+                <ToolTile
+                  href="/staff"
+                  icon="👤"
+                  label="Staff Register"
+                  locked={tierLocked("staffregister")}
+                  onLockedClick={() => setUpgradeFeature("staffregister")}
+                />
+              )}
+              {gate("payrun") && (
+                <ToolTile href="/payroll" icon="💵" label="Pay Run" locked={tierLocked("payrun")} onLockedClick={() => setUpgradeFeature("payrun")} />
+              )}
+              {gate("advances") && (
+                <ToolTile href="/advances" icon="💰" label="Advances" locked={tierLocked("advances")} onLockedClick={() => setUpgradeFeature("advances")} />
+              )}
+              {gate("leave") && (
+                <ToolTile href="/leave" icon="🏖️" label="Leave" locked={tierLocked("leave")} onLockedClick={() => setUpgradeFeature("leave")} />
+              )}
+            </div>
+          </>
+        )}
+
         <div style={{ fontSize: 12, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 1, margin: "6px 0 10px" }}>
           Reports
         </div>
