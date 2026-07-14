@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/client";
+import { getCurrentBusinessId } from "@/lib/supabase/currentBusiness";
 import type { DocKind } from "@/lib/docgen/buildDocumentHTML";
 
 // window.open()/print() is the ideal path but is unreliable in sandboxed
@@ -61,6 +62,7 @@ export async function archiveGeneratedDocument(html: string, kind: DocKind, sour
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return;
+  const businessId = await getCurrentBusinessId(supabase);
 
   const filePath = `${user.id}/${kind}/${sourceId}.html`;
   const blob = new Blob([html], { type: "text/html" });
@@ -74,6 +76,7 @@ export async function archiveGeneratedDocument(html: string, kind: DocKind, sour
 
   const { error: insertError } = await supabase.from("generated_documents").insert({
     user_id: user.id,
+    business_id: businessId,
     document_type: kind,
     source_id: sourceId,
     file_path: filePath,

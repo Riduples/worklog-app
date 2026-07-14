@@ -56,15 +56,11 @@ export function InvoiceModal({ sourceQuote, onClose }: { sourceQuote?: Quote; on
       setError("Add at least one line item.");
       return;
     }
+    if (!business) return;
     setError("");
 
     const supabase = createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return;
-
-    const docNumber = await getNextDocNumber(supabase, user.id, "INV");
+    const docNumber = await getNextDocNumber(supabase, business.id, "INV");
     const filteredItems = items.filter((it) => it.desc || it.labour || it.materials);
 
     if (sourceQuote) {

@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
+import { getCurrentBusinessId } from "@/lib/supabase/currentBusiness";
 import type { Json, Tables, TablesInsert, TablesUpdate } from "@/lib/types/database";
 
 export type Invoice = Tables<"invoices">;
@@ -28,14 +29,15 @@ export function useCreateInvoice() {
   const supabase = createClient();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (invoice: Omit<TablesInsert<"invoices">, "user_id">) => {
+    mutationFn: async (invoice: Omit<TablesInsert<"invoices">, "user_id" | "business_id">) => {
       const {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
+      const businessId = await getCurrentBusinessId(supabase);
       const { data, error } = await supabase
         .from("invoices")
-        .insert({ ...invoice, user_id: user.id })
+        .insert({ ...invoice, user_id: user.id, business_id: businessId })
         .select()
         .single();
       if (error) throw error;

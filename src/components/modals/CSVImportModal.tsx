@@ -14,8 +14,8 @@ import {
 import { useCsvImport, fetchExistingNames } from "@/lib/supabase/hooks/useCsvImport";
 import type { TablesInsert } from "@/lib/types/database";
 
-type StockRow = Omit<TablesInsert<"stock_items">, "user_id">;
-type ContactRow = Omit<TablesInsert<"contacts">, "user_id">;
+type StockRow = Omit<TablesInsert<"stock_items">, "user_id" | "business_id">;
+type ContactRow = Omit<TablesInsert<"contacts">, "user_id" | "business_id">;
 type ParsedRow = { row: StockRow | ContactRow; name: string; issues: string[]; duplicate: boolean };
 
 const num = (v: unknown) => {

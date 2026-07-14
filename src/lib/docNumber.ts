@@ -8,17 +8,20 @@ const TABLE_BY_PREFIX = {
 
 export async function getNextDocNumber(
   supabase: SupabaseClient,
-  userId: string,
+  businessId: string,
   prefix: keyof typeof TABLE_BY_PREFIX
 ): Promise<string> {
   const year = new Date().getFullYear();
   const table = TABLE_BY_PREFIX[prefix];
   const yearPrefix = `${prefix}-${year}-`;
 
+  // Scoped by business (not the individual user) so every team member shares
+  // one sequence — two members generating a doc number concurrently should
+  // never collide within the same business.
   const { data, error } = await supabase
     .from(table)
     .select("doc_number")
-    .eq("user_id", userId)
+    .eq("business_id", businessId)
     .like("doc_number", `${yearPrefix}%`);
   if (error) throw error;
 

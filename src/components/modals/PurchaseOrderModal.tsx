@@ -42,15 +42,11 @@ export function PurchaseOrderModal({ onClose }: { onClose: () => void }) {
       setError("Add at least one line item.");
       return;
     }
+    if (!business) return;
     setError("");
 
     const supabase = createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return;
-
-    const docNumber = await getNextDocNumber(supabase, user.id, "PO");
+    const docNumber = await getNextDocNumber(supabase, business.id, "PO");
 
     createPO.mutate(
       {

@@ -2,12 +2,13 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
+import { getCurrentBusinessId } from "@/lib/supabase/currentBusiness";
 import type { TablesInsert } from "@/lib/types/database";
 import type { CsvImportType } from "@/lib/csvTemplates";
 
 type ImportPayload =
-  | { type: "stock"; rows: Omit<TablesInsert<"stock_items">, "user_id">[] }
-  | { type: "client" | "supplier"; rows: Omit<TablesInsert<"contacts">, "user_id">[] };
+  | { type: "stock"; rows: Omit<TablesInsert<"stock_items">, "user_id" | "business_id">[] }
+  | { type: "client" | "supplier"; rows: Omit<TablesInsert<"contacts">, "user_id" | "business_id">[] };
 
 export function useCsvImport() {
   const supabase = createClient();
@@ -18,11 +19,12 @@ export function useCsvImport() {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
+      const businessId = await getCurrentBusinessId(supabase);
 
       if (payload.type === "stock") {
         const { data, error } = await supabase
           .from("stock_items")
-          .insert(payload.rows.map((r) => ({ ...r, user_id: user.id })))
+          .insert(payload.rows.map((r) => ({ ...r, user_id: user.id, business_id: businessId })))
           .select();
         if (error) throw error;
         return data.length;
@@ -30,7 +32,7 @@ export function useCsvImport() {
 
       const { data, error } = await supabase
         .from("contacts")
-        .insert(payload.rows.map((r) => ({ ...r, user_id: user.id })))
+        .insert(payload.rows.map((r) => ({ ...r, user_id: user.id, business_id: businessId })))
         .select();
       if (error) throw error;
       return data.length;

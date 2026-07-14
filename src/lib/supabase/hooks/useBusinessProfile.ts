@@ -11,15 +11,10 @@ export function useBusinessProfile() {
   return useQuery({
     queryKey: ["business_profile"],
     queryFn: async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
-      const { data, error } = await supabase
-        .from("business_profiles")
-        .select("*")
-        .eq("user_id", user.id)
-        .single();
+      // No explicit filter — RLS (business membership) scopes this to the
+      // caller's own business, so this also works for invited members whose
+      // own user_id doesn't match business_profiles.user_id (the owner's).
+      const { data, error } = await supabase.from("business_profiles").select("*").single();
       if (error) throw error;
       return data as BusinessProfile;
     },
