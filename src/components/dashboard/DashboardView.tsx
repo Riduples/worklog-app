@@ -7,6 +7,7 @@ import { useExpenses } from "@/lib/supabase/hooks/useExpenses";
 import { useStockItems } from "@/lib/supabase/hooks/useStock";
 import { IncomeModal } from "@/components/modals/IncomeModal";
 import { ExpenseModal } from "@/components/modals/ExpenseModal";
+import { QuickLogModal } from "@/components/modals/QuickLogModal";
 import { LogoutButton } from "@/components/auth/LogoutButton";
 import { ToolTile } from "@/components/dashboard/ToolTile";
 import { fmt, greeting } from "@/lib/format";
@@ -22,7 +23,7 @@ export function DashboardView({ businessName }: { businessName: string }) {
   const { data: income } = useIncome();
   const { data: expenses } = useExpenses();
   const { data: stock } = useStockItems();
-  const [modal, setModal] = useState<"income" | "expense" | null>(null);
+  const [modal, setModal] = useState<"income" | "expense" | "quicklog" | null>(null);
 
   const monthIncome = (income ?? []).filter((r) => isThisMonth(r.transaction_date)).reduce((s, r) => s + Number(r.amount), 0);
   const monthExpense = (expenses ?? []).filter((r) => isThisMonth(r.transaction_date)).reduce((s, r) => s + Number(r.amount), 0);
@@ -67,6 +68,33 @@ export function DashboardView({ businessName }: { businessName: string }) {
       </div>
 
       <div style={{ padding: "16px 16px 100px" }}>
+        <button
+          onClick={() => setModal("quicklog")}
+          style={{
+            width: "100%",
+            background: "#F59E0B",
+            borderRadius: 18,
+            padding: "18px 16px",
+            border: "none",
+            color: "#fff",
+            cursor: "pointer",
+            textAlign: "left",
+            marginBottom: 12,
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            boxShadow: "0 4px 16px rgba(245,158,11,0.28)",
+          }}
+        >
+          <span style={{ fontSize: 26 }}>✨</span>
+          <div>
+            <div style={{ fontSize: 16, fontWeight: 800 }}>Quick Log</div>
+            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.85)", marginTop: 1 }}>
+              Type, speak, or snap a photo — WORKLOG logs it for you
+            </div>
+          </div>
+        </button>
+
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
           <button
             onClick={() => setModal("income")}
@@ -217,6 +245,7 @@ export function DashboardView({ businessName }: { businessName: string }) {
 
       {modal === "income" && <IncomeModal onClose={() => setModal(null)} />}
       {modal === "expense" && <ExpenseModal onClose={() => setModal(null)} />}
+      {modal === "quicklog" && <QuickLogModal onClose={() => setModal(null)} />}
     </div>
   );
 }
