@@ -128,11 +128,14 @@ export type Database = {
           email: string | null
           id: string
           name: string | null
+          paye_ref: string | null
           phone: string | null
           plan: string
+          sdl_registered: boolean
           updated_at: string | null
           user_id: string
           vat_number: string | null
+          vat_period: string
         }
         Insert: {
           address?: string | null
@@ -140,11 +143,14 @@ export type Database = {
           email?: string | null
           id?: string
           name?: string | null
+          paye_ref?: string | null
           phone?: string | null
           plan?: string
+          sdl_registered?: boolean
           updated_at?: string | null
           user_id: string
           vat_number?: string | null
+          vat_period?: string
         }
         Update: {
           address?: string | null
@@ -152,11 +158,14 @@ export type Database = {
           email?: string | null
           id?: string
           name?: string | null
+          paye_ref?: string | null
           phone?: string | null
           plan?: string
+          sdl_registered?: boolean
           updated_at?: string | null
           user_id?: string
           vat_number?: string | null
+          vat_period?: string
         }
         Relationships: []
       }
@@ -1266,6 +1275,47 @@ export type Database = {
             columns: ["supplier_contact_id"]
             isOneToOne: false
             referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tax_filings: {
+        Row: {
+          amount: number
+          business_id: string
+          created_at: string | null
+          filed_date: string
+          filing_type: string
+          id: string
+          period_label: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          business_id: string
+          created_at?: string | null
+          filed_date?: string
+          filing_type: string
+          id?: string
+          period_label: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          business_id?: string
+          created_at?: string | null
+          filed_date?: string
+          filing_type?: string
+          id?: string
+          period_label?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tax_filings_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_profiles"
             referencedColumns: ["id"]
           },
         ]

@@ -220,6 +220,15 @@ export function DashboardView({ businessName }: { businessName: string }) {
           {gate("tax") && <ToolTile href="/tax" icon="🧾" label="Tax & SARS" />}
           {gate("profit") && <ToolTile href="/cashflow" icon="📊" label="Cash Flow" />}
           {gate("profitloss") && <ToolTile href="/profit-loss" icon="📈" label="Profit & Loss" />}
+          {gate("ageanalysis") && (
+            <ToolTile
+              href="/age-analysis"
+              icon="⏳"
+              label="Age Analysis"
+              locked={tierLocked("ageanalysis")}
+              onLockedClick={() => setUpgradeFeature("ageanalysis")}
+            />
+          )}
         </div>
 
         {lowStock.length > 0 && (

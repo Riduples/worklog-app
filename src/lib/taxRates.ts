@@ -20,6 +20,9 @@ const UIF_EMPLOYEE_RATE = 0.01;
 const UIF_EMPLOYER_RATE = 0.01;
 const UIF_CEILING = 17712;
 const SDL_RATE = 0.01;
+const COMPANY_TAX_RATE = 0.27;
+const MEDICAL_CREDIT_FIRST_TWO = 364;
+const MEDICAL_CREDIT_ADDITIONAL = 246;
 
 const RATES = {
   VAT_RATE: 0.15,
@@ -30,6 +33,11 @@ const RATES = {
   UIF_CEILING,
   SDL_RATE,
   PAYE_MONTHLY_THRESHOLD,
+  PRIMARY_REBATE,
+  COMPANY_TAX_RATE,
+  MEDICAL_CREDIT_FIRST_TWO,
+  MEDICAL_CREDIT_ADDITIONAL,
+  TAX_YEAR: "2025/26",
 };
 
 function calcPAYE(annualIncome: number): number {
@@ -61,6 +69,17 @@ function calcUIF(grossWages: number): { employee: number; employer: number; tota
   };
 }
 
+// Annual medical tax credit: a flat amount for each of the first two members,
+// a lower amount for every member after that.
+function calcMedicalCredit(members: number): number {
+  if (members <= 0) return 0;
+  const monthly =
+    members <= 2
+      ? members * MEDICAL_CREDIT_FIRST_TWO
+      : 2 * MEDICAL_CREDIT_FIRST_TWO + (members - 2) * MEDICAL_CREDIT_ADDITIONAL;
+  return monthly * 12;
+}
+
 export function useTaxRates() {
-  return { ...RATES, calcPAYE, calcMonthlyPAYE, calcUIF };
+  return { ...RATES, calcPAYE, calcMonthlyPAYE, calcUIF, calcMedicalCredit };
 }
