@@ -27,7 +27,13 @@ export const SHOEBOX_LOCKED: (ToolId | "team")[] = [
 // Tools with restrictions on Solo (work, but with limits).
 export const SOLO_RESTRICTED: Partial<Record<ToolId, { limit?: number; recurring?: boolean; message: string }>> = {
   staffregister: { limit: 2, message: "Solo includes up to 2 employees. Upgrade to Business for unlimited staff." },
-  payrun: { message: "Solo includes basic pay calculation. Upgrade to Business for PAYE, SDL and payslip sharing." },
+  // Solo genuinely calculates PAYE, UIF and SDL — withholding statutory
+  // deductions to drive an upsell would hand Solo users a non-compliant
+  // payroll. The real Business-only extras are payslip sharing and EMP201.
+  payrun: { message: "Solo calculates PAYE, UIF and SDL in full. Upgrade to Business to share payslips and generate the EMP201 return." },
+  // NOT YET IMPLEMENTED — recurring invoices don't exist yet. Kept as the spec
+  // for when they're built; deliberately not surfaced anywhere, so we don't
+  // advertise a feature an upgrade wouldn't actually deliver.
   invoice: { recurring: true, message: "Recurring invoices are a Business feature. Upgrade to auto-invoice your monthly accounts." },
 };
 
@@ -38,7 +44,7 @@ export const UPGRADE_DETAILS: Partial<Record<ToolId | "team" | "invoice_recurrin
   emp201: { title: "EMP201 Payroll Return", desc: "Generate your monthly SARS EMP201 return with PAYE, UIF and SDL per employee.", icon: "👷" },
   team: { title: "Multi-user & Roles", desc: "Invite your team, assign roles and control who sees what — ideal for growing businesses.", icon: "👥" },
   staffregister: { title: "Staff & Payroll", desc: "Add employees, calculate wages and generate payslips. Free on Solo for up to 2 employees.", icon: "👤" },
-  payrun: { title: "Full Payroll Features", desc: "Upgrade to Business to unlock PAYE, SDL, professional payslips and WhatsApp sharing.", icon: "💵" },
+  payrun: { title: "Full Payroll Features", desc: "Share professional payslips with your staff, generate the monthly EMP201 return, and run payroll for unlimited employees.", icon: "💵" },
   advances: { title: "Staff Advances", desc: "Track employee loans and repayments once you're paying staff.", icon: "💰" },
   leave: { title: "Leave Tracking", desc: "Track employee leave once you're paying staff.", icon: "🏖️" },
   vat201: { title: "VAT201 Returns", desc: "Generate your SARS VAT return once you're registered for VAT.", icon: "🏦" },

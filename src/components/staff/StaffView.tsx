@@ -14,7 +14,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Row } from "@/components/ui/Row";
 import { fmt } from "@/lib/format";
 import { calcLeaveBalances, getLoanBalance, rateLabel } from "@/lib/payroll";
-import type { Plan } from "@/lib/tiers";
+import { isRestricted, TIERS, type Plan } from "@/lib/tiers";
 
 const EMPLOYMENT_BADGE: Record<string, { label: string; bg: string; fg: string; border: string }> = {
   contractor: { label: "🧾 Contractor", bg: "#fff7ed", fg: "#92400e", border: "#fed7aa" },
@@ -155,7 +155,11 @@ export function StaffView() {
   const isOwner = (currentMember ?? { role: "owner" }).role === "owner";
   const plan = (business?.plan ?? "shoebox") as Plan;
   const staffCount = (staff ?? []).length;
-  const soloCapped = plan === "solo" && staffCount >= 2;
+  // The cap and its wording live in SOLO_RESTRICTED so the plan's limits are
+  // defined in one place rather than duplicated across every gated view.
+  const restriction = isRestricted(plan, "staffregister");
+  const staffLimit = restriction?.limit;
+  const soloCapped = staffLimit !== undefined && staffCount >= staffLimit;
 
   const handleAddClick = () => {
     if (soloCapped) setShowUpgrade(true);
@@ -244,9 +248,9 @@ export function StaffView() {
         );
       })}
 
-      {plan === "solo" && (
+      {restriction && staffLimit !== undefined && (
         <div style={{ background: soloCapped ? "#fff1f2" : "#F0F9FF", border: `1.5px solid ${soloCapped ? "#fecdd3" : "#BAE6FD"}`, borderRadius: 10, padding: "9px 12px", marginTop: 4, fontSize: 12, color: soloCapped ? "#be123c" : "#0369A1" }}>
-          {soloCapped ? "Solo plan limit reached (2 employees). Upgrade to Business for unlimited staff." : `Solo plan: ${staffCount}/2 employees used.`}
+          {soloCapped ? restriction.message : `${TIERS[plan].label} plan: ${staffCount}/${staffLimit} employees used.`}
         </div>
       )}
 

@@ -6,18 +6,22 @@ import { TIERS, UPGRADE_DETAILS, upgradeTargetPlan, type Plan } from "@/lib/tier
 import type { ToolId } from "@/lib/permissions";
 import { useUpdateBusinessPlan } from "@/lib/supabase/hooks/useBusinessProfile";
 
+// Keep these honest against tiers.ts: anything listed here as Business-only
+// must actually be in SOLO_LOCKED (or genuinely gated in the UI). PAYE/UIF/SDL
+// are calculated on every plan, and Age Analysis is deliberately unlocked on
+// Solo — so neither belongs in the Business list.
 const SOLO_FEATURES = [
   "Everything in Shoebox",
   "Quotes, invoices & staff register for up to 2 employees",
-  "Basic payroll, VAT201, provisional tax & age analysis",
+  "Full pay calculation — PAYE, UIF & SDL",
+  "VAT201, provisional tax & age analysis",
   "Purchase orders & supplier invoices",
 ];
 const BUSINESS_FEATURES = [
-  "Unlimited employees + full payroll (PAYE, SDL, payslips)",
+  "Unlimited employees",
+  "Share professional payslips with your staff",
   "EMP201 monthly payroll return for SARS",
-  "Recurring invoices — monthly, quarterly, annual",
   "Multi-user team access with permission control",
-  "Age Analysis — debtors & creditors aged report",
 ];
 
 export function UpgradeModal({

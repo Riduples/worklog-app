@@ -11,6 +11,7 @@ export type ToolId =
   | "profit"
   | "bankstatement"
   | "cashup"
+  | "ledger"
   | "quote"
   | "invoice"
   | "statement"
@@ -73,7 +74,9 @@ export const TOOL_CATEGORIES: { id: string; label: string; icon: string; desc: s
   { id: "purchases", label: "Purchases", icon: "📥", desc: "Purchase orders & supplier invoices you receive", tools: ["purchaseorder", "supplierinvoice", "remittance"] },
   { id: "bookings", label: "Scheduling System", icon: "📅", desc: "Diary, appointments, time & travel — manage how you spend your day", tools: ["booking", "timetrack", "mileage"] },
   { id: "workers", label: "Payroll", icon: "💼", desc: "Employees, wages, payslips & advances", tools: ["staffregister", "payrun", "advances", "leave"] },
-  { id: "money", label: "Money", icon: "💰", desc: "Track what comes in and goes out", tools: ["income", "expense", "bankstatement", "cashup"] },
+  // "ledger" isn't in the source prototype's categories (it dropped Ledgers
+  // from the matrix) but the tool exists here, so it needs a home to be gated.
+  { id: "money", label: "Money", icon: "💰", desc: "Track what comes in and goes out", tools: ["income", "expense", "bankstatement", "cashup", "ledger"] },
   { id: "taxcompliance", label: "Tax & Compliance", icon: "💡", desc: "Everything tax, SARS and compliance — your complete financial overview", tools: ["taxdashboard", "vat201", "emp201", "provtax", "taxjar", "profitloss", "profit", "ageanalysis", "compliance", "tax"] },
 ];
 
@@ -83,6 +86,7 @@ export const TOOL_LABELS: Partial<Record<ToolId, { icon: string; label: string; 
   profit: { icon: "💵", label: "Cash Position", desc: "Actual cash in vs out — unpaid invoices and what you owe shown separately" },
   bankstatement: { icon: "🏦", label: "Import Statement", desc: "Upload your bank statement — auto-extracts every transaction" },
   cashup: { icon: "🧮", label: "Daily Cash-Up", desc: "Count your till at the end of the day and check it matches what you logged" },
+  ledger: { icon: "📒", label: "Ledgers", desc: "Track who owes you and who you owe on account" },
   quote: { icon: "📋", label: "Quote", desc: "Send a price to a customer before the job" },
   invoice: { icon: "📤", label: "Invoice", desc: "Bill a customer and track payment" },
   statement: { icon: "📃", label: "Statement", desc: "A summary you can send a customer showing everything they've bought and what they still owe" },

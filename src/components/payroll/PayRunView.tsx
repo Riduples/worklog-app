@@ -17,7 +17,7 @@ import { DocumentActions } from "@/components/ui/DocumentActions";
 import { fmt, todayStr } from "@/lib/format";
 import { calcLeaveBalances, getLoanBalance } from "@/lib/payroll";
 import { canApprove } from "@/lib/permissions";
-import type { Plan } from "@/lib/tiers";
+import { isRestricted, TIERS, type Plan } from "@/lib/tiers";
 import { useTaxRates } from "@/lib/taxRates";
 import type { DocForRender } from "@/lib/docgen/buildDocumentHTML";
 
@@ -92,6 +92,7 @@ export function PayRunView() {
   const [leaveType, setLeaveType] = useState("Annual");
 
   const plan = (business?.plan ?? "shoebox") as Plan;
+  const payRunRestriction = isRestricted(plan, "payrun");
   const member = currentMember ?? { role: "owner", permissions: {} };
   const canApproveRun = canApprove(member, "payrun");
 
@@ -126,9 +127,9 @@ export function PayRunView() {
   const allowancesAmt = parseFloat(allowances || "0");
   const grossWages = grossBase + overtimeAmt + allowancesAmt;
   const uifCalc = !isContractor ? taxRates.calcUIF(grossWages) : { employee: 0, employer: 0, total: 0 };
-  // SDL only applies once a business registers for it (>R500k annual payroll) —
-  // deferred until a business-settings page exists to toggle this.
-  const sdl = 0;
+  // SDL is employer-only and applies once the business registers for it
+  // (required over ~R500k annual payroll). Contractors are exempt.
+  const sdl = !isContractor && business?.sdl_registered ? grossWages * taxRates.SDL_RATE : 0;
   const monthlyEquiv = payPeriod === "Weekly" ? grossWages * 4.33 : payPeriod === "Fortnightly" ? grossWages * 2.17 : grossWages;
   const paye = !isContractor ? taxRates.calcMonthlyPAYE(monthlyEquiv, "Monthly") : 0;
   const loanDeductionAmt = parseFloat(loanDeduction || "0");
@@ -536,12 +537,13 @@ export function PayRunView() {
       <div style={{ background: "#f8fafc", border: "1.5px solid #e2e8f0", borderRadius: 12, padding: "11px 14px", marginBottom: 14 }}>
         <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>Your cost to SARS — pay by 7th</div>
         <Row label="UIF employer (1%)" value={fmt(uifCalc.employer)} />
-        <Row label="Total" value={fmt(uifCalc.total)} bold />
+        {sdl > 0 && <Row label="SDL (1%)" value={fmt(sdl)} />}
+        <Row label="Total" value={fmt(uifCalc.total + sdl)} bold />
       </div>
 
-      {plan === "solo" && (
+      {payRunRestriction && (
         <div style={{ background: "#fff7ed", border: "1.5px solid #fed7aa", borderRadius: 10, padding: "9px 12px", marginBottom: 10, fontSize: 12, color: "#92400e" }}>
-          <span style={{ fontWeight: 700 }}>Solo plan</span> — Basic pay calculation only. PAYE, SDL and payslip sharing available on Business.
+          <span style={{ fontWeight: 700 }}>{TIERS[plan].label} plan</span> — {payRunRestriction.message}
         </div>
       )}
 

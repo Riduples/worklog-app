@@ -211,7 +211,7 @@ export function DashboardView({ businessName }: { businessName: string }) {
           {gate("booking") && <ToolTile href="/bookings" icon="📅" label="Bookings" />}
           {gate("timetrack") && <ToolTile href="/time" icon="⏱️" label="Time Tracker" />}
           {gate("mileage") && <ToolTile href="/mileage" icon="🚗" label="Mileage" />}
-          <ToolTile href="/ledger" icon="📒" label="Ledgers" />
+          {gate("ledger") && <ToolTile href="/ledger" icon="📒" label="Ledgers" />}
           {isOwner && <ToolTile href="/team" icon="👤" label="Team" />}
         </div>
 
