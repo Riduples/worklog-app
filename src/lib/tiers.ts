@@ -31,9 +31,6 @@ export const SOLO_RESTRICTED: Partial<Record<ToolId, { limit?: number; recurring
   // deductions to drive an upsell would hand Solo users a non-compliant
   // payroll. The real Business-only extras are payslip sharing and EMP201.
   payrun: { message: "Solo calculates PAYE, UIF and SDL in full. Upgrade to Business to share payslips and generate the EMP201 return." },
-  // NOT YET IMPLEMENTED — recurring invoices don't exist yet. Kept as the spec
-  // for when they're built; deliberately not surfaced anywhere, so we don't
-  // advertise a feature an upgrade wouldn't actually deliver.
   invoice: { recurring: true, message: "Recurring invoices are a Business feature. Upgrade to auto-invoice your monthly accounts." },
 };
 

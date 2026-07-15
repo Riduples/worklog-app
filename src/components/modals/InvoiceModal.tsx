@@ -15,6 +15,8 @@ import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 import { useCreateInvoice, useConvertQuoteToInvoice } from "@/lib/supabase/hooks/useInvoices";
 import type { Quote, QuoteLineItem } from "@/lib/supabase/hooks/useQuotes";
 import { createClient } from "@/lib/supabase/client";
+import { RECURRENCE_OPTIONS, recurrenceNext, type Recurrence } from "@/lib/recurrence";
+import { UPGRADE_DETAILS, type Plan } from "@/lib/tiers";
 
 const addDays = (dateStr: string, days: number) => {
   const d = new Date(dateStr);
@@ -31,6 +33,7 @@ export function InvoiceModal({ sourceQuote, onClose }: { sourceQuote?: Quote; on
     (sourceQuote?.line_items as QuoteLineItem[]) ?? [{ desc: "", qty: 1, labour: 0, materials: 0 }]
   );
   const [depositReceived, setDepositReceived] = useState(String(sourceQuote?.deposit_requested ?? 0));
+  const [recurrence, setRecurrence] = useState<Recurrence>("none");
   const [error, setError] = useState("");
 
   const { data: contacts } = useContacts();
@@ -46,6 +49,19 @@ export function InvoiceModal({ sourceQuote, onClose }: { sourceQuote?: Quote; on
   const totalInclVat = subtotal + vatAmount;
   const depositNum = parseFloat(depositReceived) || 0;
   const balanceDue = subtotal - depositNum;
+
+  // Recurring is a Business feature. Gate on "is Business", not on
+  // isRestricted() — that only describes the Solo plan, so on Shoebox it
+  // returns nothing and the gate falls open, offering a picker whose choice
+  // the save path would then silently discard.
+  //
+  // Converting a quote stays once-off: convert_quote_to_invoice takes no
+  // recurrence params, and a quote is a one-time agreement anyway.
+  const plan = (business?.plan ?? "shoebox") as Plan;
+  const canRecur = !sourceQuote && plan === "business";
+  // The template is itself the first invoice, so the next run is one interval
+  // after its issue date — never the issue date itself, which would double-bill.
+  const nextRunDate = recurrence === "none" ? null : recurrenceNext(issueDate, recurrence);
 
   const handleSave = async () => {
     if (!client.trim()) {
@@ -93,6 +109,8 @@ export function InvoiceModal({ sourceQuote, onClose }: { sourceQuote?: Quote; on
           status: "unpaid",
           vat_rate: isVatRegistered ? VAT_RATE : null,
           vat_amount: vatAmount,
+          recurrence: canRecur ? recurrence : "none",
+          next_run_date: canRecur ? nextRunDate : null,
         },
         { onSuccess: onClose }
       );
@@ -119,6 +137,47 @@ export function InvoiceModal({ sourceQuote, onClose }: { sourceQuote?: Quote; on
       <Field label="Due date">
         <Input value={dueDate} onChange={setDueDate} type="date" />
       </Field>
+
+      {!sourceQuote && (
+        <Field label="Repeat this invoice">
+          {!canRecur ? (
+            <div style={{ background: "#fff7ed", border: "1.5px solid #fed7aa", borderRadius: 12, padding: "11px 14px", fontSize: 12, color: "#92400e", lineHeight: 1.5 }}>
+              🔁 <span style={{ fontWeight: 700 }}>{UPGRADE_DETAILS.invoice_recurring?.title} are a Business feature.</span>{" "}
+              {UPGRADE_DETAILS.invoice_recurring?.desc}
+            </div>
+          ) : (
+            <>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {RECURRENCE_OPTIONS.map((o) => (
+                  <button
+                    key={o.id}
+                    type="button"
+                    onClick={() => setRecurrence(o.id)}
+                    style={{
+                      padding: "9px 14px",
+                      borderRadius: 20,
+                      border: `1.5px solid ${recurrence === o.id ? "#1B4332" : "#e2e8f0"}`,
+                      background: recurrence === o.id ? "#1B4332" : "#fff",
+                      color: recurrence === o.id ? "#fff" : "#374151",
+                      fontSize: 13,
+                      fontWeight: 600,
+                      cursor: "pointer",
+                    }}
+                  >
+                    {o.label}
+                  </button>
+                ))}
+              </div>
+              {nextRunDate && (
+                <div style={{ background: "#F0F9FF", border: "1.5px solid #BAE6FD", borderRadius: 10, padding: "9px 12px", marginTop: 8, fontSize: 12, color: "#0369A1", lineHeight: 1.5 }}>
+                  🔁 This invoice goes out now. WORKLOG then creates the next one automatically on{" "}
+                  <strong>{nextRunDate}</strong>, and every {RECURRENCE_OPTIONS.find((o) => o.id === recurrence)?.every} after that.
+                </div>
+              )}
+            </>
+          )}
+        </Field>
+      )}
 
       <SalesLineItemsEditor items={items} onChange={setItems} />
 

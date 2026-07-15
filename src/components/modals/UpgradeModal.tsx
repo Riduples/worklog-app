@@ -21,6 +21,7 @@ const BUSINESS_FEATURES = [
   "Unlimited employees",
   "Share professional payslips with your staff",
   "EMP201 monthly payroll return for SARS",
+  "Recurring invoices — weekly, monthly, quarterly or annual",
   "Multi-user team access with permission control",
 ];
 

@@ -7,6 +7,7 @@ import { useInvoices, type Invoice } from "@/lib/supabase/hooks/useInvoices";
 import { useQuotes } from "@/lib/supabase/hooks/useQuotes";
 import { InvoiceModal } from "@/components/modals/InvoiceModal";
 import { InvoiceActionsModal, displayStatus } from "@/components/modals/InvoiceActionsModal";
+import { RECURRENCE_LABEL, type Recurrence } from "@/lib/recurrence";
 import { fmt } from "@/lib/format";
 
 export function InvoicesView() {
@@ -67,9 +68,18 @@ export function InvoicesView() {
             }}
           >
             <div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: "#111" }}>{inv.client_name}</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <span style={{ fontSize: 14, fontWeight: 700, color: "#111" }}>{inv.client_name}</span>
+                {inv.recurrence !== "none" && (
+                  <span style={{ fontSize: 10, fontWeight: 700, padding: "1px 6px", borderRadius: 5, background: "#F0F9FF", color: "#0369A1", border: "1px solid #BAE6FD" }}>
+                    🔁 {RECURRENCE_LABEL[inv.recurrence as Recurrence]}
+                  </span>
+                )}
+              </div>
               <div style={{ fontSize: 11, color: "#94a3b8" }}>
                 {inv.doc_number} · {inv.issue_date}
+                {inv.recurrence !== "none" && inv.next_run_date ? ` · next ${inv.next_run_date}` : ""}
+                {inv.recurrence_parent_id ? " · auto-created" : ""}
               </div>
             </div>
             <div style={{ textAlign: "right" }}>
