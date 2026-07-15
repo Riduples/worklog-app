@@ -219,51 +219,6 @@ export type Database = {
           },
         ]
       }
-      chair_rentals: {
-        Row: {
-          commission_amt: number | null
-          commission_pct: number | null
-          created_at: string | null
-          deleted_at: string | null
-          id: string
-          period_date: string
-          product_sales: number | null
-          stylist_name: string
-          total_due: number | null
-          updated_at: string | null
-          user_id: string
-          weekly_rental: number | null
-        }
-        Insert: {
-          commission_amt?: number | null
-          commission_pct?: number | null
-          created_at?: string | null
-          deleted_at?: string | null
-          id?: string
-          period_date: string
-          product_sales?: number | null
-          stylist_name: string
-          total_due?: number | null
-          updated_at?: string | null
-          user_id: string
-          weekly_rental?: number | null
-        }
-        Update: {
-          commission_amt?: number | null
-          commission_pct?: number | null
-          created_at?: string | null
-          deleted_at?: string | null
-          id?: string
-          period_date?: string
-          product_sales?: number | null
-          stylist_name?: string
-          total_due?: number | null
-          updated_at?: string | null
-          user_id?: string
-          weekly_rental?: number | null
-        }
-        Relationships: []
-      }
       contacts: {
         Row: {
           business_id: string
@@ -581,7 +536,10 @@ export type Database = {
           invoice_amount: number
           issue_date: string
           line_items: Json
+          next_run_date: string | null
           paid_date: string | null
+          recurrence: string
+          recurrence_parent_id: string | null
           status: string
           updated_at: string | null
           user_id: string
@@ -603,7 +561,10 @@ export type Database = {
           invoice_amount?: number
           issue_date: string
           line_items?: Json
+          next_run_date?: string | null
           paid_date?: string | null
+          recurrence?: string
+          recurrence_parent_id?: string | null
           status?: string
           updated_at?: string | null
           user_id: string
@@ -625,7 +586,10 @@ export type Database = {
           invoice_amount?: number
           issue_date?: string
           line_items?: Json
+          next_run_date?: string | null
           paid_date?: string | null
+          recurrence?: string
+          recurrence_parent_id?: string | null
           status?: string
           updated_at?: string | null
           user_id?: string
@@ -652,6 +616,13 @@ export type Database = {
             columns: ["converted_from_quote_id"]
             isOneToOne: false
             referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_recurrence_parent_id_fkey"
+            columns: ["recurrence_parent_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
             referencedColumns: ["id"]
           },
         ]
@@ -1615,48 +1586,6 @@ export type Database = {
           },
         ]
       }
-      worker_payments: {
-        Row: {
-          created_at: string | null
-          daily_wage: number
-          days_worked: number
-          deleted_at: string | null
-          id: string
-          payment_date: string
-          total_wages: number
-          uif_due: number
-          updated_at: string | null
-          user_id: string
-          worker_name: string
-        }
-        Insert: {
-          created_at?: string | null
-          daily_wage: number
-          days_worked?: number
-          deleted_at?: string | null
-          id?: string
-          payment_date: string
-          total_wages: number
-          uif_due: number
-          updated_at?: string | null
-          user_id: string
-          worker_name: string
-        }
-        Update: {
-          created_at?: string | null
-          daily_wage?: number
-          days_worked?: number
-          deleted_at?: string | null
-          id?: string
-          payment_date?: string
-          total_wages?: number
-          uif_due?: number
-          updated_at?: string | null
-          user_id?: string
-          worker_name?: string
-        }
-        Relationships: []
-      }
     }
     Views: {
       [_ in never]: never
@@ -1690,7 +1619,10 @@ export type Database = {
           invoice_amount: number
           issue_date: string
           line_items: Json
+          next_run_date: string | null
           paid_date: string | null
+          recurrence: string
+          recurrence_parent_id: string | null
           status: string
           updated_at: string | null
           user_id: string
@@ -1765,6 +1697,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      generate_recurring_invoices: { Args: never; Returns: number }
       get_business_members: {
         Args: { target_business_id: string }
         Returns: {
@@ -1789,6 +1722,10 @@ export type Database = {
       is_business_member: {
         Args: { target_business_id: string }
         Returns: boolean
+      }
+      recurrence_next: {
+        Args: { p_from: string; p_recurrence: string }
+        Returns: string
       }
       update_business_plan: {
         Args: { new_plan: string; target_business_id: string }
