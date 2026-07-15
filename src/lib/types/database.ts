@@ -169,6 +169,56 @@ export type Database = {
         }
         Relationships: []
       }
+      cash_ups: {
+        Row: {
+          business_id: string
+          cash_in: number
+          cash_out: number
+          cash_up_date: string
+          counted: number
+          created_at: string | null
+          expected: number
+          id: string
+          notes: string | null
+          user_id: string
+          variance: number
+        }
+        Insert: {
+          business_id: string
+          cash_in?: number
+          cash_out?: number
+          cash_up_date: string
+          counted?: number
+          created_at?: string | null
+          expected?: number
+          id?: string
+          notes?: string | null
+          user_id: string
+          variance?: number
+        }
+        Update: {
+          business_id?: string
+          cash_in?: number
+          cash_out?: number
+          cash_up_date?: string
+          counted?: number
+          created_at?: string | null
+          expected?: number
+          id?: string
+          notes?: string | null
+          user_id?: string
+          variance?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cash_ups_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chair_rentals: {
         Row: {
           commission_amt: number | null

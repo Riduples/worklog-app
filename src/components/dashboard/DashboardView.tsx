@@ -11,6 +11,7 @@ import { IncomeModal } from "@/components/modals/IncomeModal";
 import { ExpenseModal } from "@/components/modals/ExpenseModal";
 import { QuickLogModal } from "@/components/modals/QuickLogModal";
 import { UpgradeModal } from "@/components/modals/UpgradeModal";
+import { HelpAssistantModal } from "@/components/modals/HelpAssistantModal";
 import { LogoutButton } from "@/components/auth/LogoutButton";
 import { ToolTile } from "@/components/dashboard/ToolTile";
 import { fmt, greeting } from "@/lib/format";
@@ -30,7 +31,7 @@ export function DashboardView({ businessName }: { businessName: string }) {
   const { data: stock } = useStockItems();
   const { data: business } = useBusinessProfile();
   const { data: currentMember } = useCurrentMember();
-  const [modal, setModal] = useState<"income" | "expense" | "quicklog" | null>(null);
+  const [modal, setModal] = useState<"income" | "expense" | "quicklog" | "help" | null>(null);
   const [upgradeFeature, setUpgradeFeature] = useState<ToolId | "team" | null>(null);
 
   // Default to full access while the membership row is still loading, so the
@@ -66,7 +67,16 @@ export function DashboardView({ businessName }: { businessName: string }) {
               {greeting()}, {businessName || "there"}
             </div>
           </div>
-          <LogoutButton />
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <button
+              onClick={() => setModal("help")}
+              aria-label="Help"
+              style={{ background: "rgba(255,255,255,0.12)", border: "none", borderRadius: 10, width: 34, height: 34, fontSize: 15, cursor: "pointer", color: "#fff" }}
+            >
+              ?
+            </button>
+            <LogoutButton />
+          </div>
         </div>
         <div style={{ display: "flex", gap: 10 }}>
           {[
@@ -159,6 +169,17 @@ export function DashboardView({ businessName }: { businessName: string }) {
           {gate("stock") && <ToolTile href="/stock" icon="📦" label="Stock" />}
           {gate("quote") && <ToolTile href="/quotes" icon="📋" label="Quotes" />}
           {gate("invoice") && <ToolTile href="/invoices" icon="📤" label="Invoices" />}
+          {gate("statement") && (
+            <ToolTile
+              href="/statement"
+              icon="📃"
+              label="Statements"
+              locked={tierLocked("statement")}
+              onLockedClick={() => setUpgradeFeature("statement")}
+            />
+          )}
+          {gate("bankstatement") && <ToolTile href="/bank-statement" icon="🏦" label="Import Statement" />}
+          {gate("cashup") && <ToolTile href="/cash-up" icon="🧮" label="Daily Cash-Up" />}
           {gate("purchaseorder") && (
             <ToolTile
               href="/purchase-orders"
@@ -175,6 +196,15 @@ export function DashboardView({ businessName }: { businessName: string }) {
               label="Supplier Invoices"
               locked={tierLocked("supplierinvoice")}
               onLockedClick={() => setUpgradeFeature("supplierinvoice")}
+            />
+          )}
+          {gate("remittance") && (
+            <ToolTile
+              href="/remittance"
+              icon="🧾"
+              label="Remittance"
+              locked={tierLocked("remittance")}
+              onLockedClick={() => setUpgradeFeature("remittance")}
             />
           )}
           {gate("recipe") && <ToolTile href="/recipes" icon="🍳" label="Cost Calculator" />}
@@ -323,6 +353,7 @@ export function DashboardView({ businessName }: { businessName: string }) {
       {modal === "income" && <IncomeModal onClose={() => setModal(null)} />}
       {modal === "expense" && <ExpenseModal onClose={() => setModal(null)} />}
       {modal === "quicklog" && <QuickLogModal onClose={() => setModal(null)} />}
+      {modal === "help" && <HelpAssistantModal onClose={() => setModal(null)} />}
       {upgradeFeature && business && (
         <UpgradeModal
           feature={upgradeFeature}
