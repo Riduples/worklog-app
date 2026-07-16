@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@/lib/supabase/server";
 import { TOOL_LABELS, type ToolId } from "@/lib/permissions";
+import { TAX_RATES } from "@/lib/taxRates";
+import { TIERS } from "@/lib/tiers";
 
 export const runtime = "nodejs";
 
@@ -21,6 +23,14 @@ const HELP_SCHEMA = {
   required: ["answer", "followups", "tool"],
   additionalProperties: false,
 } as const;
+
+// Every rate below is interpolated from the same constants the app calculates
+// with, never typed as prose. The assistant is the one place a stale figure is
+// invisible — a wrong number in a report gets noticed, a wrong number in
+// friendly advice just gets believed. Percentages are formatted rather than
+// written out so a rate change can't leave the words disagreeing with the maths.
+const pct = (r: number) => `${(r * 100).toFixed(0)}%`;
+const rand = (n: number) => `R${n.toLocaleString("en-ZA")}`;
 
 const SYSTEM_PROMPT = `You are the WORKLOG help assistant — a friendly, knowledgeable helper built into WORKLOG, a South African bookkeeping app for tradespeople, freelancers, spaza shops, hairdressers, and small business owners.
 
@@ -43,17 +53,17 @@ WORKLOG TOOLS:
 KEY FACTS:
 - Best starting order: Price List → Contacts → Quotes → Invoices
 - Quick Log (the gold button on the home screen) is the fastest way to log anything — type, speak, or snap a photo
-- VAT: set your VAT number in Tax & SARS → Business tax details. Quotes, invoices and supplier invoices then show 15% VAT automatically
-- UIF: 1% employee + 1% employer, on gross wages capped at R17,712/month. It applies to EVERY employee from the first rand — there is no earnings threshold, and it is unrelated to the PAYE threshold. Due by the 7th via EMP201
-- PAYE: unlike UIF, this only applies above R7,979/month. Auto-calculated in Pay Run
-- SDL: 1% of gross wages, employer only, once annual payroll exceeds R500,000. Toggle it in Business tax details
-- SARS mileage: R4.84/km (2025/26). Log trips in Trip Log
-- Tax jar: WORKLOG sets aside 28% of every income entry as a tax provision
+- VAT: set your VAT number in Tax & SARS → Business tax details. Quotes, invoices and supplier invoices then show ${pct(TAX_RATES.VAT_RATE)} VAT automatically. Cash income you log is treated as VAT-inclusive — WORKLOG works the VAT out of it for your VAT201
+- UIF: ${pct(TAX_RATES.UIF_EMPLOYEE_RATE)} employee + ${pct(TAX_RATES.UIF_EMPLOYER_RATE)} employer, on gross wages capped at ${rand(TAX_RATES.UIF_CEILING)}/month. It applies to EVERY employee from the first rand — there is no earnings threshold, and it is unrelated to the PAYE threshold. Due by the 7th via EMP201
+- PAYE: unlike UIF, this only applies above ${rand(TAX_RATES.PAYE_MONTHLY_THRESHOLD)}/month. Auto-calculated in Pay Run
+- SDL: ${pct(TAX_RATES.SDL_RATE)} of gross wages, employer only, once annual payroll exceeds R500,000. Toggle it in Business tax details
+- SARS mileage: R${TAX_RATES.MILEAGE_RATE}/km (${TAX_RATES.TAX_YEAR}). Log trips in Trip Log
+- Tax jar: WORKLOG sets aside ${pct(TAX_RATES.TAX_JAR_RATE)} of every income entry as an income tax provision (on the amount after VAT, if you are VAT-registered). See it in Tax & SARS → Tax Jar
 - BCEA leave: Annual 15 days/year (accrues 1.25/month), Sick 30 days per 3-year cycle, Family responsibility 3 days/year
 - Leave tip: record leave in the Leave tool first — Pay Run then auto-suggests it
 - VAT201 = output VAT (invoices) minus input VAT (supplier invoices) = what you pay SARS, due by the 25th
 - EMP201 = PAYE + UIF + SDL for the month, due by the 7th
-- Plans: Shoebox (R50) covers Money, basic Sales and Diary. Solo (R99) adds quotes, invoices, up to 2 staff, VAT201, provisional tax, POs. Business (R199) adds unlimited staff, full payroll, EMP201, team access.
+- Plans: Shoebox (${TIERS.shoebox.price}) covers Money, basic Sales and Diary. Solo (${TIERS.solo.price}) adds quotes, invoices, up to 2 staff, VAT201, provisional tax, POs. Business (${TIERS.business.price}) adds unlimited staff, full payroll, EMP201, team access.
 
 Respond with:
 - answer: your reply, in plain language

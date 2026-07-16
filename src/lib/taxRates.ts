@@ -24,7 +24,10 @@ const COMPANY_TAX_RATE = 0.27;
 const MEDICAL_CREDIT_FIRST_TWO = 364;
 const MEDICAL_CREDIT_ADDITIONAL = 246;
 
-const RATES = {
+// Exported as plain values as well as via the hook: server code (the help
+// assistant's system prompt) needs the same figures, and must not call a
+// use*-prefixed function to get them.
+export const TAX_RATES = {
   VAT_RATE: 0.15,
   MILEAGE_RATE: 4.84,
   TAX_JAR_RATE: 0.28,
@@ -99,7 +102,7 @@ function calcMedicalCredit(members: number): number {
 }
 
 export function useTaxRates() {
-  return { ...RATES, calcPAYE, calcMonthlyPAYE, calcUIF, calcMedicalCredit, vatFromGross, netOfVat };
+  return { ...TAX_RATES, calcPAYE, calcMonthlyPAYE, calcUIF, calcMedicalCredit, vatFromGross, netOfVat };
 }
 
 // Reports read income rows straight from the database rather than through the

@@ -420,8 +420,14 @@ export function PayRunView() {
             </div>
           ) : (
             <>
-              <Row label="UIF (employee 1%)" value={`−${fmt(uifCalc.employee)}`} />
-              {paye > 0 ? <Row label="PAYE" value={`−${fmt(paye)}`} bold /> : <div style={{ fontSize: 11, color: "#0369A1", marginTop: 4 }}>✅ No PAYE — below R7,979/month threshold</div>}
+              <Row label={`UIF (employee ${(taxRates.UIF_EMPLOYEE_RATE * 100).toFixed(0)}%)`} value={`−${fmt(uifCalc.employee)}`} />
+              {paye > 0 ? (
+                <Row label="PAYE" value={`−${fmt(paye)}`} bold />
+              ) : (
+                <div style={{ fontSize: 11, color: "#0369A1", marginTop: 4 }}>
+                  {`✅ No PAYE — below ${fmt(taxRates.PAYE_MONTHLY_THRESHOLD)}/month threshold`}
+                </div>
+              )}
             </>
           )}
         </div>

@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/Input";
 import { Chips } from "@/components/ui/Chips";
 import { SaveBtn } from "@/components/ui/SaveBtn";
 import { useCreateStaffMember } from "@/lib/supabase/hooks/useStaffRegister";
+import { useTaxRates } from "@/lib/taxRates";
 import { fmt, todayStr } from "@/lib/format";
 
 const EMPLOYMENT_TYPES = [
@@ -20,6 +21,7 @@ type EmploymentType = (typeof EMPLOYMENT_TYPES)[number]["value"];
 
 export function StaffModal({ onClose }: { onClose: () => void }) {
   const createStaffMember = useCreateStaffMember();
+  const { PAYE_MONTHLY_THRESHOLD, calcUIF } = useTaxRates();
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -42,6 +44,13 @@ export function StaffModal({ onClose }: { onClose: () => void }) {
   const rateNum = parseFloat(rate || "0");
   const estimatedMonthly = payType === "Daily" ? rateNum * daysPerMonth : payType === "Hourly" ? rateNum * hoursPerMonth : rateNum;
   const isContractor = employmentType === "contractor";
+
+  // Preview the same way the Pay Run will actually calculate. This used to
+  // hardcode 2% of the full wage, which ignored the UIF ceiling — so anyone
+  // above it was quoted more UIF here than Pay Run would ever deduct, and the
+  // PAYE threshold was a literal that would drift the next time SARS moved it.
+  const uifPreview = calcUIF(estimatedMonthly);
+  const payeApplies = estimatedMonthly > PAYE_MONTHLY_THRESHOLD;
 
   const handleSave = () => {
     if (!firstName.trim() || !lastName.trim() || !rate) {
@@ -161,11 +170,13 @@ export function StaffModal({ onClose }: { onClose: () => void }) {
             <div style={{ fontSize: 11, color: "#0369A1" }}>🧾 Log as expense when you pay them — no PAYE, UIF or leave required</div>
           ) : (
             <div>
-              <div style={{ fontSize: 11, color: estimatedMonthly > 7979 ? "#b45309" : "#0369A1", marginBottom: 3 }}>
-                UIF: {fmt(estimatedMonthly * 0.02)}/mo (employee 1% + employer 1%)
+              <div style={{ fontSize: 11, color: payeApplies ? "#b45309" : "#0369A1", marginBottom: 3 }}>
+                {`UIF: ${fmt(uifPreview.total)}/mo (employee ${fmt(uifPreview.employee)} + employer ${fmt(uifPreview.employer)})`}
               </div>
-              <div style={{ fontSize: 11, color: estimatedMonthly > 7979 ? "#b45309" : "#0369A1" }}>
-                {estimatedMonthly > 7979 ? "⚠️ PAYE will apply — calculated in Pay Run" : "✅ Below PAYE threshold (R7,979/mo)"}
+              <div style={{ fontSize: 11, color: payeApplies ? "#b45309" : "#0369A1" }}>
+                {payeApplies
+                  ? "⚠️ PAYE will apply — calculated in Pay Run"
+                  : `✅ Below PAYE threshold (${fmt(PAYE_MONTHLY_THRESHOLD)}/mo)`}
               </div>
               {employmentType === "casual" && (
                 <div style={{ fontSize: 11, color: "#0369A1", marginTop: 3 }}>ℹ️ Casual workers: UIF and leave apply from day 1 even for short engagements</div>
