@@ -6,8 +6,11 @@ import { useSupplierInvoices, type SupplierInvoice } from "@/lib/supabase/hooks/
 import { SupplierInvoiceModal } from "@/components/modals/SupplierInvoiceModal";
 import { SupplierInvoiceActionsModal, supplierInvoiceDisplayStatus } from "@/components/modals/SupplierInvoiceActionsModal";
 import { fmt } from "@/lib/format";
+import { ReadOnlyNotice } from "@/components/ui/ReadOnlyNotice";
+import { useToolAccess } from "@/lib/supabase/hooks/useToolAccess";
 
 export function SupplierInvoicesView() {
+  const access = useToolAccess("supplierinvoice");
   const { data: invoices, isLoading } = useSupplierInvoices();
   const [showNew, setShowNew] = useState(false);
   const [selected, setSelected] = useState<SupplierInvoice | null>(null);
@@ -21,13 +24,17 @@ export function SupplierInvoicesView() {
           </Link>
           <h1 style={{ fontSize: 20, fontWeight: 800, color: "#1B4332", margin: "4px 0 0" }}>Supplier Invoices</h1>
         </div>
-        <button
-          onClick={() => setShowNew(true)}
-          style={{ background: "#1B4332", color: "#fff", border: "none", borderRadius: 12, padding: "10px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
-        >
-          + New
-        </button>
+        {access.canEdit && (
+          <button
+            onClick={() => setShowNew(true)}
+            style={{ background: "#1B4332", color: "#fff", border: "none", borderRadius: 12, padding: "10px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+          >
+            + New
+          </button>
+        )}
       </div>
+
+      {!access.loading && !access.canEdit && <ReadOnlyNotice level={access.level} what="supplier invoices" />}
 
       {isLoading && <p style={{ color: "#94a3b8", fontSize: 13 }}>Loading...</p>}
       {!isLoading && (invoices ?? []).length === 0 && (

@@ -5,10 +5,18 @@ import Link from "next/link";
 import { useContacts, useUpdateContact, type Contact } from "@/lib/supabase/hooks/useContacts";
 import { ContactModal } from "@/components/modals/ContactModal";
 import { CSVImportModal } from "@/components/modals/CSVImportModal";
+import { ReadOnlyNotice } from "@/components/ui/ReadOnlyNotice";
+import { useToolAccess } from "@/lib/supabase/hooks/useToolAccess";
 
 export function ContactsView() {
   const { data: contacts, isLoading } = useContacts();
   const updateContact = useUpdateContact();
+  // Contacts is one table but two tools: RLS picks clients/suppliers per row
+  // via contact_type. The UI can't be that precise on a mixed list, so the
+  // controls follow whichever side the user has rights to and RLS still has
+  // the final say per row.
+  const clientAccess = useToolAccess("clients");
+  const supplierAccess = useToolAccess("suppliers");
   const [typeFilter, setTypeFilter] = useState<"all" | "client" | "supplier">("all");
   const [search, setSearch] = useState("");
   const [importOpen, setImportOpen] = useState(false);
@@ -17,6 +25,13 @@ export function ContactsView() {
   });
 
   const importType = typeFilter === "supplier" ? "supplier" : "client";
+
+  // "Can I add anything here?" — the add button targets the filtered type, so
+  // follow that; on the "all" tab either right is enough to justify showing it.
+  const addAccess = typeFilter === "supplier" ? supplierAccess : clientAccess;
+  const canAddAny = typeFilter === "all" ? clientAccess.canEdit || supplierAccess.canEdit : addAccess.canEdit;
+  const canDeleteContact = (c: Contact) => (c.contact_type === "supplier" ? supplierAccess : clientAccess).canDelete;
+  const accessLoading = clientAccess.loading || supplierAccess.loading;
 
   const filtered = (contacts ?? []).filter((c) => {
     if (typeFilter !== "all" && c.contact_type !== typeFilter) return false;
@@ -38,6 +53,7 @@ export function ContactsView() {
           </Link>
           <h1 style={{ fontSize: 20, fontWeight: 800, color: "#1B4332", margin: "4px 0 0" }}>Contacts</h1>
         </div>
+        {canAddAny && (
         <div style={{ display: "flex", gap: 8 }}>
           <button
             onClick={() => setImportOpen(true)}
@@ -70,7 +86,10 @@ export function ContactsView() {
             + Add
           </button>
         </div>
+        )}
       </div>
+
+      {!accessLoading && !canAddAny && <ReadOnlyNotice level={clientAccess.level} what="contacts" />}
 
       <input
         value={search}
@@ -152,6 +171,7 @@ export function ContactsView() {
           >
             {c.contact_type === "client" ? "Client" : "Supplier"}
           </span>
+          {canDeleteContact(c) && (
           <button
             onClick={() => handleSoftDelete(c.id)}
             style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer", fontSize: 14, padding: 4 }}
@@ -159,6 +179,7 @@ export function ContactsView() {
           >
             ✕
           </button>
+          )}
         </div>
       ))}
 

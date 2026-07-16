@@ -5,11 +5,14 @@ import Link from "next/link";
 import { useStockItems, useUpdateStockItem, type StockItem } from "@/lib/supabase/hooks/useStock";
 import { StockModal } from "@/components/modals/StockModal";
 import { CSVImportModal } from "@/components/modals/CSVImportModal";
+import { ReadOnlyNotice } from "@/components/ui/ReadOnlyNotice";
+import { useToolAccess } from "@/lib/supabase/hooks/useToolAccess";
 import { fmt } from "@/lib/format";
 
 export function StockView() {
   const { data: items, isLoading } = useStockItems();
   const updateStockItem = useUpdateStockItem();
+  const access = useToolAccess("stock");
   const [modalState, setModalState] = useState<{ open: boolean; item?: StockItem }>({ open: false });
   const [importOpen, setImportOpen] = useState(false);
 
@@ -27,39 +30,43 @@ export function StockView() {
           </Link>
           <h1 style={{ fontSize: 20, fontWeight: 800, color: "#1B4332", margin: "4px 0 0" }}>Stock</h1>
         </div>
-        <div style={{ display: "flex", gap: 8 }}>
-          <button
-            onClick={() => setImportOpen(true)}
-            style={{
-              background: "#f0fdf4",
-              color: "#166534",
-              border: "1.5px solid #d1fae5",
-              borderRadius: 12,
-              padding: "10px 14px",
-              fontSize: 13,
-              fontWeight: 700,
-              cursor: "pointer",
-            }}
-          >
-            ⬆ Import
-          </button>
-          <button
-            onClick={() => setModalState({ open: true })}
-            style={{
-              background: "#1B4332",
-              color: "#fff",
-              border: "none",
-              borderRadius: 12,
-              padding: "10px 16px",
-              fontSize: 13,
-              fontWeight: 700,
-              cursor: "pointer",
-            }}
-          >
-            + Add
-          </button>
-        </div>
+        {access.canEdit && (
+          <div style={{ display: "flex", gap: 8 }}>
+            <button
+              onClick={() => setImportOpen(true)}
+              style={{
+                background: "#f0fdf4",
+                color: "#166534",
+                border: "1.5px solid #d1fae5",
+                borderRadius: 12,
+                padding: "10px 14px",
+                fontSize: 13,
+                fontWeight: 700,
+                cursor: "pointer",
+              }}
+            >
+              ⬆ Import
+            </button>
+            <button
+              onClick={() => setModalState({ open: true })}
+              style={{
+                background: "#1B4332",
+                color: "#fff",
+                border: "none",
+                borderRadius: 12,
+                padding: "10px 16px",
+                fontSize: 13,
+                fontWeight: 700,
+                cursor: "pointer",
+              }}
+            >
+              + Add
+            </button>
+          </div>
+        )}
       </div>
+
+      {!access.loading && !access.canEdit && <ReadOnlyNotice level={access.level} what="stock items" />}
 
       {isLoading && <p style={{ color: "#94a3b8", fontSize: 13 }}>Loading...</p>}
       {!isLoading && (items ?? []).length === 0 && (
@@ -93,13 +100,15 @@ export function StockView() {
                 {item.margin_pct != null ? ` · ${Number(item.margin_pct).toFixed(0)}% margin` : ""}
               </div>
             </button>
-            <button
-              onClick={() => handleSoftDelete(item.id)}
-              style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer", fontSize: 14, padding: 4 }}
-              aria-label="Remove stock item"
-            >
-              ✕
-            </button>
+            {access.canDelete && (
+              <button
+                onClick={() => handleSoftDelete(item.id)}
+                style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer", fontSize: 14, padding: 4 }}
+                aria-label="Remove stock item"
+              >
+                ✕
+              </button>
+            )}
           </div>
         );
       })}

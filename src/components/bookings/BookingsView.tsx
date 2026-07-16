@@ -7,6 +7,8 @@ import { BookingModal } from "@/components/modals/BookingModal";
 import { Modal } from "@/components/ui/Modal";
 import { Row } from "@/components/ui/Row";
 import { fmt } from "@/lib/format";
+import { ReadOnlyNotice } from "@/components/ui/ReadOnlyNotice";
+import { useToolAccess } from "@/lib/supabase/hooks/useToolAccess";
 
 const STATUS_COLORS: Record<string, { bg: string; fg: string }> = {
   confirmed: { bg: "#f0fdf4", fg: "#166534" },
@@ -63,6 +65,7 @@ function BookingActionsModal({ booking, onClose }: { booking: Booking; onClose: 
 }
 
 export function BookingsView() {
+  const access = useToolAccess("booking");
   const { data: bookings, isLoading } = useBookings();
   const [showNew, setShowNew] = useState(false);
   const [selected, setSelected] = useState<Booking | null>(null);
@@ -76,13 +79,17 @@ export function BookingsView() {
           </Link>
           <h1 style={{ fontSize: 20, fontWeight: 800, color: "#1B4332", margin: "4px 0 0" }}>Bookings</h1>
         </div>
-        <button
-          onClick={() => setShowNew(true)}
-          style={{ background: "#1B4332", color: "#fff", border: "none", borderRadius: 12, padding: "10px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
-        >
-          + New
-        </button>
+        {access.canEdit && (
+          <button
+            onClick={() => setShowNew(true)}
+            style={{ background: "#1B4332", color: "#fff", border: "none", borderRadius: 12, padding: "10px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+          >
+            + New
+          </button>
+        )}
       </div>
+
+      {!access.loading && !access.canEdit && <ReadOnlyNotice level={access.level} what="bookings" />}
 
       {isLoading && <p style={{ color: "#94a3b8", fontSize: 13 }}>Loading...</p>}
       {!isLoading && (bookings ?? []).length === 0 && (

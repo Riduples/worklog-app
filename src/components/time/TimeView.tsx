@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useTimeEntries, useUpdateTimeEntry, type TimeEntry } from "@/lib/supabase/hooks/useTimeEntries";
 import { TimeModal } from "@/components/modals/TimeModal";
 import { fmt } from "@/lib/format";
+import { ReadOnlyNotice } from "@/components/ui/ReadOnlyNotice";
+import { useToolAccess } from "@/lib/supabase/hooks/useToolAccess";
 
 const TYPE_COLORS: Record<string, { bg: string; fg: string }> = {
   Billable: { bg: "#f0fdf4", fg: "#166534" },
@@ -14,6 +16,7 @@ const TYPE_COLORS: Record<string, { bg: string; fg: string }> = {
 };
 
 export function TimeView() {
+  const access = useToolAccess("timetrack");
   const { data: entries, isLoading } = useTimeEntries();
   const updateEntry = useUpdateTimeEntry();
   const [showNew, setShowNew] = useState(false);
@@ -37,13 +40,17 @@ export function TimeView() {
           </Link>
           <h1 style={{ fontSize: 20, fontWeight: 800, color: "#1B4332", margin: "4px 0 0" }}>Time Tracker</h1>
         </div>
-        <button
-          onClick={() => setShowNew(true)}
-          style={{ background: "#1B4332", color: "#fff", border: "none", borderRadius: 12, padding: "10px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
-        >
-          + New
-        </button>
+        {access.canEdit && (
+          <button
+            onClick={() => setShowNew(true)}
+            style={{ background: "#1B4332", color: "#fff", border: "none", borderRadius: 12, padding: "10px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+          >
+            + New
+          </button>
+        )}
       </div>
+
+      {!access.loading && !access.canEdit && <ReadOnlyNotice level={access.level} what="time entries" />}
 
       {(entries ?? []).length > 0 && (
         <div style={{ background: "#f0fdf4", borderRadius: 12, padding: "12px 14px", marginBottom: 16, fontSize: 13, color: "#166534", display: "flex", justifyContent: "space-between" }}>
@@ -87,13 +94,15 @@ export function TimeView() {
             <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: color.bg, color: color.fg, marginRight: 8 }}>
               {e.bill_type}
             </span>
-            <button
-              onClick={() => handleSoftDelete(e.id)}
-              style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer", fontSize: 14, padding: 4 }}
-              aria-label="Remove time entry"
-            >
-              ✕
-            </button>
+            {access.canDelete && (
+              <button
+                onClick={() => handleSoftDelete(e.id)}
+                style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer", fontSize: 14, padding: 4 }}
+                aria-label="Remove time entry"
+              >
+                ✕
+              </button>
+            )}
           </div>
         );
       })}

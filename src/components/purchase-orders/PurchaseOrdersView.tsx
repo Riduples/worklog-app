@@ -6,8 +6,11 @@ import { usePurchaseOrders, type PurchaseOrder } from "@/lib/supabase/hooks/useP
 import { PurchaseOrderModal } from "@/components/modals/PurchaseOrderModal";
 import { PurchaseOrderActionsModal, PO_STATUS_COLORS } from "@/components/modals/PurchaseOrderActionsModal";
 import { fmt } from "@/lib/format";
+import { ReadOnlyNotice } from "@/components/ui/ReadOnlyNotice";
+import { useToolAccess } from "@/lib/supabase/hooks/useToolAccess";
 
 export function PurchaseOrdersView() {
+  const access = useToolAccess("purchaseorder");
   const { data: pos, isLoading } = usePurchaseOrders();
   const [showNew, setShowNew] = useState(false);
   const [selected, setSelected] = useState<PurchaseOrder | null>(null);
@@ -21,13 +24,17 @@ export function PurchaseOrdersView() {
           </Link>
           <h1 style={{ fontSize: 20, fontWeight: 800, color: "#1B4332", margin: "4px 0 0" }}>Purchase Orders</h1>
         </div>
-        <button
-          onClick={() => setShowNew(true)}
-          style={{ background: "#1B4332", color: "#fff", border: "none", borderRadius: 12, padding: "10px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
-        >
-          + New
-        </button>
+        {access.canEdit && (
+          <button
+            onClick={() => setShowNew(true)}
+            style={{ background: "#1B4332", color: "#fff", border: "none", borderRadius: 12, padding: "10px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+          >
+            + New
+          </button>
+        )}
       </div>
+
+      {!access.loading && !access.canEdit && <ReadOnlyNotice level={access.level} what="purchase orders" />}
 
       {isLoading && <p style={{ color: "#94a3b8", fontSize: 13 }}>Loading...</p>}
       {!isLoading && (pos ?? []).length === 0 && (

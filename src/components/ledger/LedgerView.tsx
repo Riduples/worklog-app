@@ -5,8 +5,11 @@ import Link from "next/link";
 import { useLedgerEntries, useUpdateLedgerEntry, type LedgerEntry } from "@/lib/supabase/hooks/useLedger";
 import { LedgerModal } from "@/components/modals/LedgerModal";
 import { fmt, todayStr } from "@/lib/format";
+import { ReadOnlyNotice } from "@/components/ui/ReadOnlyNotice";
+import { useToolAccess } from "@/lib/supabase/hooks/useToolAccess";
 
 export function LedgerView() {
+  const access = useToolAccess("ledger");
   const { data: entries, isLoading } = useLedgerEntries();
   const updateEntry = useUpdateLedgerEntry();
   const [showNew, setShowNew] = useState(false);
@@ -31,13 +34,17 @@ export function LedgerView() {
           </Link>
           <h1 style={{ fontSize: 20, fontWeight: 800, color: "#1B4332", margin: "4px 0 0" }}>Ledgers</h1>
         </div>
-        <button
-          onClick={() => setShowNew(true)}
-          style={{ background: "#1B4332", color: "#fff", border: "none", borderRadius: 12, padding: "10px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
-        >
-          + New
-        </button>
+        {access.canEdit && (
+          <button
+            onClick={() => setShowNew(true)}
+            style={{ background: "#1B4332", color: "#fff", border: "none", borderRadius: 12, padding: "10px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+          >
+            + New
+          </button>
+        )}
       </div>
+
+      {!access.loading && !access.canEdit && <ReadOnlyNotice level={access.level} what="ledger entries" />}
 
       <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
         <div style={{ flex: 1, background: "#f0fdf4", borderRadius: 12, padding: "12px 14px" }}>
@@ -87,13 +94,15 @@ export function LedgerView() {
               </button>
             )}
           </div>
-          <button
-            onClick={() => handleSoftDelete(e.id)}
-            style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer", fontSize: 14, padding: 4 }}
-            aria-label="Remove ledger entry"
-          >
-            ✕
-          </button>
+          {access.canDelete && (
+            <button
+              onClick={() => handleSoftDelete(e.id)}
+              style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer", fontSize: 14, padding: 4 }}
+              aria-label="Remove ledger entry"
+            >
+              ✕
+            </button>
+          )}
         </div>
       ))}
 

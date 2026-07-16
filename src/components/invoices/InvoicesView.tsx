@@ -7,12 +7,15 @@ import { useInvoices, type Invoice } from "@/lib/supabase/hooks/useInvoices";
 import { useQuotes } from "@/lib/supabase/hooks/useQuotes";
 import { InvoiceModal } from "@/components/modals/InvoiceModal";
 import { InvoiceActionsModal, displayStatus } from "@/components/modals/InvoiceActionsModal";
+import { ReadOnlyNotice } from "@/components/ui/ReadOnlyNotice";
+import { useToolAccess } from "@/lib/supabase/hooks/useToolAccess";
 import { RECURRENCE_LABEL, type Recurrence } from "@/lib/recurrence";
 import { fmt } from "@/lib/format";
 
 export function InvoicesView() {
   const { data: invoices, isLoading } = useInvoices();
   const { data: quotes } = useQuotes();
+  const access = useToolAccess("invoice");
   const [showNew, setShowNew] = useState(false);
   const [selected, setSelected] = useState<Invoice | null>(null);
   const searchParams = useSearchParams();
@@ -32,13 +35,17 @@ export function InvoicesView() {
           </Link>
           <h1 style={{ fontSize: 20, fontWeight: 800, color: "#1B4332", margin: "4px 0 0" }}>Invoices</h1>
         </div>
-        <button
-          onClick={() => setShowNew(true)}
-          style={{ background: "#1B4332", color: "#fff", border: "none", borderRadius: 12, padding: "10px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
-        >
-          + New
-        </button>
+        {access.canEdit && (
+          <button
+            onClick={() => setShowNew(true)}
+            style={{ background: "#1B4332", color: "#fff", border: "none", borderRadius: 12, padding: "10px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+          >
+            + New
+          </button>
+        )}
       </div>
+
+      {!access.loading && !access.canEdit && <ReadOnlyNotice level={access.level} what="invoices" />}
 
       {isLoading && <p style={{ color: "#94a3b8", fontSize: 13 }}>Loading...</p>}
       {!isLoading && (invoices ?? []).length === 0 && (

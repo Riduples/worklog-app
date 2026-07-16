@@ -6,6 +6,7 @@ import { DocumentActions } from "@/components/ui/DocumentActions";
 import { buildInvoiceText } from "@/lib/docgen/shareText";
 import type { DocForRender } from "@/lib/docgen/buildDocumentHTML";
 import { fmt, todayStr } from "@/lib/format";
+import { useToolAccess } from "@/lib/supabase/hooks/useToolAccess";
 import { useUpdateInvoice, type Invoice } from "@/lib/supabase/hooks/useInvoices";
 
 export function displayStatus(invoice: Invoice): { label: string; bg: string; fg: string } {
@@ -19,6 +20,7 @@ export function displayStatus(invoice: Invoice): { label: string; bg: string; fg
 
 export function InvoiceActionsModal({ invoice, onClose }: { invoice: Invoice; onClose: () => void }) {
   const updateInvoice = useUpdateInvoice();
+  const access = useToolAccess("invoice");
   const items = (invoice.line_items as Array<{ desc: string; qty: number; labour: number; materials: number }>) ?? [];
   const status = displayStatus(invoice);
   const totalInclVat = Number(invoice.invoice_amount) + Number(invoice.vat_amount ?? 0);
@@ -85,7 +87,7 @@ export function InvoiceActionsModal({ invoice, onClose }: { invoice: Invoice; on
         }
       />
 
-      {invoice.status !== "paid" && (
+      {invoice.status !== "paid" && access.canEdit && (
         <button
           onClick={() =>
             updateInvoice.mutate(
