@@ -9,6 +9,7 @@ import { Field } from "@/components/ui/Field";
 import { Input } from "@/components/ui/Input";
 import { buildStatementHTML, type StatementLine } from "@/lib/docgen/buildLedgerHTML";
 import { openDocumentForPrinting, shareDocumentText } from "@/lib/docgen/shareDocument";
+import { renderPdf, downloadBlob } from "@/lib/docgen/renderPdf";
 import { fmt } from "@/lib/format";
 
 export function StatementView() {
@@ -18,6 +19,7 @@ export function StatementView() {
 
   const [selectedClient, setSelectedClient] = useState("");
   const [showPicker, setShowPicker] = useState(false);
+  const [busy, setBusy] = useState(false);
 
   const clientNames = [
     ...new Set([
@@ -45,8 +47,9 @@ export function StatementView() {
       .filter((i) => i.client_name === name && i.status !== "paid")
       .reduce((s, i) => s + Number(i.balance_due) + Number(i.vat_amount ?? 0), 0);
 
-  const handlePrint = () => {
-    if (!business) return;
+  const handlePrint = async () => {
+    if (!business || busy) return;
+    setBusy(true);
     const lines: StatementLine[] = clientInvoices.map((i) => ({
       date: i.issue_date,
       reference: i.doc_number,
@@ -54,14 +57,17 @@ export function StatementView() {
       balance: Number(i.balance_due) + Number(i.vat_amount ?? 0),
       paid: i.status === "paid",
     }));
-    const html = buildStatementHTML(
-      business,
-      selectedClient,
-      lines,
-      { invoiced: totalInvoiced, received: totalReceived, outstanding: totalOutstanding },
-      asAt
-    );
-    openDocumentForPrinting(html, `statement-${selectedClient.replace(/\s+/g, "-")}`);
+    const totals = { invoiced: totalInvoiced, received: totalReceived, outstanding: totalOutstanding };
+    const filename = `statement-${selectedClient.replace(/\s+/g, "-")}`;
+    try {
+      const blob = await renderPdf({ kind: "statement", clientName: selectedClient, lines, totals, asAt });
+      downloadBlob(blob, filename);
+    } catch {
+      // Fall back to the print flow rather than leaving the user stuck.
+      openDocumentForPrinting(buildStatementHTML(business, selectedClient, lines, totals, asAt), filename);
+    } finally {
+      setBusy(false);
+    }
   };
 
   const handleShare = async () => {
@@ -167,10 +173,10 @@ export function StatementView() {
           <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
             <button
               onClick={handlePrint}
-              disabled={!business}
+              disabled={!business || busy}
               style={{ flex: 1, background: "#f0fdf4", color: "#1B4332", border: "1.5px solid #d1fae5", borderRadius: 12, padding: 13, fontWeight: 700, fontSize: 13, cursor: "pointer" }}
             >
-              🖨️ Save as PDF / Print
+              {busy ? "📄 Preparing..." : "📄 Download PDF"}
             </button>
             <button
               onClick={handleShare}

@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/Input";
 import { PaymentMethodPicker } from "@/components/ui/PaymentMethodPicker";
 import { buildRemittanceHTML, type RemittanceLine } from "@/lib/docgen/buildLedgerHTML";
 import { openDocumentForPrinting, shareDocumentText } from "@/lib/docgen/shareDocument";
+import { renderPdf, downloadBlob } from "@/lib/docgen/renderPdf";
 import { fmt, todayStr } from "@/lib/format";
 
 export function RemittanceView() {
@@ -24,6 +25,7 @@ export function RemittanceView() {
   const [paymentMethod, setPaymentMethod] = useState("EFT / Bank transfer");
   const [paymentDate, setPaymentDate] = useState(todayStr());
   const [paymentRef, setPaymentRef] = useState("");
+  const [busy, setBusy] = useState(false);
 
   const supplierNames = [
     ...new Set([
@@ -56,15 +58,20 @@ export function RemittanceView() {
       amountPaying: balanceOf(si),
     }));
 
-  const handlePrint = () => {
-    if (!business) return;
-    const html = buildRemittanceHTML(business, selectedSupplier, lines(), {
-      method: paymentMethod,
-      date: paymentDate,
-      reference: paymentRef.trim(),
-      total: paymentTotal,
-    });
-    openDocumentForPrinting(html, `remittance-${selectedSupplier.replace(/\s+/g, "-")}`);
+  const handlePrint = async () => {
+    if (!business || busy) return;
+    setBusy(true);
+    const payment = { method: paymentMethod, date: paymentDate, reference: paymentRef.trim(), total: paymentTotal };
+    const filename = `remittance-${selectedSupplier.replace(/\s+/g, "-")}`;
+    try {
+      const blob = await renderPdf({ kind: "remittance", supplierName: selectedSupplier, lines: lines(), payment });
+      downloadBlob(blob, filename);
+    } catch {
+      // Fall back to the print flow rather than leaving the user stuck.
+      openDocumentForPrinting(buildRemittanceHTML(business, selectedSupplier, lines(), payment), filename);
+    } finally {
+      setBusy(false);
+    }
   };
 
   const handleShare = async () => {
@@ -195,10 +202,10 @@ export function RemittanceView() {
               <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
                 <button
                   onClick={handlePrint}
-                  disabled={!business}
+                  disabled={!business || busy}
                   style={{ flex: 1, background: "#f0fdf4", color: "#1B4332", border: "1.5px solid #d1fae5", borderRadius: 12, padding: 13, fontWeight: 700, fontSize: 13, cursor: "pointer" }}
                 >
-                  🖨️ Save as PDF / Print
+                  {busy ? "📄 Preparing..." : "📄 Download PDF"}
                 </button>
                 <button
                   onClick={handleShare}

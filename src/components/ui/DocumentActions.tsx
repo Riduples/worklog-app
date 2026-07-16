@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { buildDocumentHTML, type DocForRender, type DocKind } from "@/lib/docgen/buildDocumentHTML";
 import { openDocumentForPrinting, shareDocumentText, archiveGeneratedDocument } from "@/lib/docgen/shareDocument";
+import { renderPdf, downloadBlob } from "@/lib/docgen/renderPdf";
 import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 
 export function DocumentActions({
@@ -24,8 +25,15 @@ export function DocumentActions({
     setBusy(true);
     try {
       const html = buildDocumentHTML(doc, business, kind);
-      openDocumentForPrinting(html, `${kind}-${doc.doc_number}`);
-      // Archive is best-effort record-keeping; never block the print flow on it.
+      try {
+        const blob = await renderPdf({ kind, doc });
+        downloadBlob(blob, `${kind}-${doc.doc_number}`);
+      } catch {
+        // Chromium can be cold, absent locally, or time out. The print flow
+        // already yields a correct document, so fall back rather than fail.
+        openDocumentForPrinting(html, `${kind}-${doc.doc_number}`);
+      }
+      // Archive is best-effort record-keeping; never block the flow on it.
       await archiveGeneratedDocument(html, kind, sourceId).catch(() => {});
     } finally {
       setBusy(false);
@@ -62,7 +70,7 @@ export function DocumentActions({
           cursor: "pointer",
         }}
       >
-        🖨️ Save as PDF / Print
+        {busy ? "📄 Preparing PDF..." : "📄 Download PDF"}
       </button>
       <button
         onClick={handleShare}
