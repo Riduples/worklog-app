@@ -124,6 +124,7 @@ export type Database = {
       business_profiles: {
         Row: {
           address: string | null
+          business_type: string | null
           created_at: string | null
           email: string | null
           id: string
@@ -132,6 +133,7 @@ export type Database = {
           phone: string | null
           plan: string
           sdl_registered: boolean
+          show_all_tools: boolean
           updated_at: string | null
           user_id: string
           vat_number: string | null
@@ -139,6 +141,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          business_type?: string | null
           created_at?: string | null
           email?: string | null
           id?: string
@@ -147,6 +150,7 @@ export type Database = {
           phone?: string | null
           plan?: string
           sdl_registered?: boolean
+          show_all_tools?: boolean
           updated_at?: string | null
           user_id: string
           vat_number?: string | null
@@ -154,6 +158,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          business_type?: string | null
           created_at?: string | null
           email?: string | null
           id?: string
@@ -162,6 +167,7 @@ export type Database = {
           phone?: string | null
           plan?: string
           sdl_registered?: boolean
+          show_all_tools?: boolean
           updated_at?: string | null
           user_id?: string
           vat_number?: string | null

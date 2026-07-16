@@ -13,6 +13,7 @@ import { UpgradeModal } from "@/components/modals/UpgradeModal";
 import { useTaxRates } from "@/lib/taxRates";
 import { fmt } from "@/lib/format";
 import { canSee, type ToolId } from "@/lib/permissions";
+import { coreToolsFor, isCoreTool } from "@/lib/businessTypes";
 import { isLocked, type Plan } from "@/lib/tiers";
 
 const TOOLS: { id: ToolId; href: string; icon: string; label: string }[] = [
@@ -37,6 +38,7 @@ export function TaxView() {
 
   const member = currentMember ?? { role: "owner", permissions: {} };
   const plan = (business?.plan ?? "shoebox") as Plan;
+  const coreTools = coreToolsFor(business);
   const isOwner = member.role === "owner";
 
   const totalIncome = (income ?? []).reduce((s, r) => s + Number(r.amount), 0);
@@ -100,7 +102,7 @@ export function TaxView() {
         Tax &amp; compliance tools
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 20 }}>
-        {TOOLS.filter((t) => canSee(member, t.id)).map((t) => {
+        {TOOLS.filter((t) => canSee(member, t.id) && isCoreTool(coreTools, t.id)).map((t) => {
           const locked = isLocked(plan, t.id);
           const style: React.CSSProperties = {
             display: "block",

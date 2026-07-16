@@ -12,11 +12,13 @@ import { ExpenseModal } from "@/components/modals/ExpenseModal";
 import { QuickLogModal } from "@/components/modals/QuickLogModal";
 import { UpgradeModal } from "@/components/modals/UpgradeModal";
 import { HelpAssistantModal } from "@/components/modals/HelpAssistantModal";
+import { BusinessDetailsModal } from "@/components/modals/BusinessDetailsModal";
 import { LogoutButton } from "@/components/auth/LogoutButton";
 import { ToolTile } from "@/components/dashboard/ToolTile";
 import { fmt, greeting } from "@/lib/format";
 import { incomeNet } from "@/lib/taxRates";
 import { canSee, type ToolId } from "@/lib/permissions";
+import { coreToolsFor, isCoreTool } from "@/lib/businessTypes";
 import { isLocked, type Plan } from "@/lib/tiers";
 import type { Tables } from "@/lib/types/database";
 
@@ -32,7 +34,7 @@ export function DashboardView({ businessName }: { businessName: string }) {
   const { data: stock } = useStockItems();
   const { data: business } = useBusinessProfile();
   const { data: currentMember } = useCurrentMember();
-  const [modal, setModal] = useState<"income" | "expense" | "quicklog" | "help" | null>(null);
+  const [modal, setModal] = useState<"income" | "expense" | "quicklog" | "help" | "business" | null>(null);
   const [upgradeFeature, setUpgradeFeature] = useState<ToolId | "team" | null>(null);
 
   // Default to full access while the membership row is still loading, so the
@@ -41,7 +43,12 @@ export function DashboardView({ businessName }: { businessName: string }) {
   const plan = (business?.plan ?? "shoebox") as Plan;
   const isOwner = member.role === "owner";
 
-  const gate = (toolId: ToolId) => canSee(member, toolId);
+  // Two independent filters, in the prototype's order: permission decides what
+  // you're ALLOWED to see, business type decides what's WORTH showing you.
+  // Type filtering hides rather than locks — a tool it removes is still fully
+  // reachable by its URL and by turning on "Show every tool".
+  const coreTools = coreToolsFor(business);
+  const gate = (toolId: ToolId) => canSee(member, toolId) && isCoreTool(coreTools, toolId);
   const tierLocked = (toolId: ToolId) => isLocked(plan, toolId);
 
   // Net of VAT, so PROFIT is what the business actually earned rather than
@@ -74,6 +81,15 @@ export function DashboardView({ businessName }: { businessName: string }) {
             </div>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {isOwner && business && (
+              <button
+                onClick={() => setModal("business")}
+                aria-label="Business details"
+                style={{ background: "rgba(255,255,255,0.12)", border: "none", borderRadius: 10, width: 34, height: 34, fontSize: 15, cursor: "pointer", color: "#fff" }}
+              >
+                ⚙
+              </button>
+            )}
             <button
               onClick={() => setModal("help")}
               aria-label="Help"
@@ -249,23 +265,30 @@ export function DashboardView({ businessName }: { businessName: string }) {
           </>
         )}
 
-        <div style={{ fontSize: 12, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 1, margin: "6px 0 10px" }}>
-          Reports
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
-          {gate("tax") && <ToolTile href="/tax" icon="🧾" label="Tax & SARS" />}
-          {gate("profit") && <ToolTile href="/cashflow" icon="📊" label="Cash Flow" />}
-          {gate("profitloss") && <ToolTile href="/profit-loss" icon="📈" label="Profit & Loss" />}
-          {gate("ageanalysis") && (
-            <ToolTile
-              href="/age-analysis"
-              icon="⏳"
-              label="Age Analysis"
-              locked={tierLocked("ageanalysis")}
-              onLockedClick={() => setUpgradeFeature("ageanalysis")}
-            />
-          )}
-        </div>
+        {/* Guarded like Payroll above: a "Can log only" member has no report
+            access at all, so this heading has always been able to render over
+            an empty grid. Business-type filtering makes that easier to hit. */}
+        {(gate("tax") || gate("profit") || gate("profitloss") || gate("ageanalysis")) && (
+          <>
+            <div style={{ fontSize: 12, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 1, margin: "6px 0 10px" }}>
+              Reports
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
+              {gate("tax") && <ToolTile href="/tax" icon="🧾" label="Tax & SARS" />}
+              {gate("profit") && <ToolTile href="/cashflow" icon="📊" label="Cash Flow" />}
+              {gate("profitloss") && <ToolTile href="/profit-loss" icon="📈" label="Profit & Loss" />}
+              {gate("ageanalysis") && (
+                <ToolTile
+                  href="/age-analysis"
+                  icon="⏳"
+                  label="Age Analysis"
+                  locked={tierLocked("ageanalysis")}
+                  onLockedClick={() => setUpgradeFeature("ageanalysis")}
+                />
+              )}
+            </div>
+          </>
+        )}
 
         {lowStock.length > 0 && (
           <div
@@ -360,6 +383,7 @@ export function DashboardView({ businessName }: { businessName: string }) {
       {modal === "expense" && <ExpenseModal onClose={() => setModal(null)} />}
       {modal === "quicklog" && <QuickLogModal onClose={() => setModal(null)} />}
       {modal === "help" && <HelpAssistantModal onClose={() => setModal(null)} />}
+      {modal === "business" && business && <BusinessDetailsModal business={business} onClose={() => setModal(null)} />}
       {upgradeFeature && business && (
         <UpgradeModal
           feature={upgradeFeature}
