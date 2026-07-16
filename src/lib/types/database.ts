@@ -124,10 +124,15 @@ export type Database = {
       business_profiles: {
         Row: {
           address: string | null
+          bank_account: string | null
+          bank_branch: string | null
+          bank_name: string | null
+          bank_ref: string | null
           business_type: string | null
           created_at: string | null
           email: string | null
           id: string
+          logo_url: string | null
           name: string | null
           paye_ref: string | null
           phone: string | null
@@ -141,10 +146,15 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          bank_account?: string | null
+          bank_branch?: string | null
+          bank_name?: string | null
+          bank_ref?: string | null
           business_type?: string | null
           created_at?: string | null
           email?: string | null
           id?: string
+          logo_url?: string | null
           name?: string | null
           paye_ref?: string | null
           phone?: string | null
@@ -158,10 +168,15 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          bank_account?: string | null
+          bank_branch?: string | null
+          bank_name?: string | null
+          bank_ref?: string | null
           business_type?: string | null
           created_at?: string | null
           email?: string | null
           id?: string
+          logo_url?: string | null
           name?: string | null
           paye_ref?: string | null
           phone?: string | null

@@ -23,6 +23,22 @@ export type DocForRender = {
   requested_delivery?: string | null;
 };
 
+// Every interpolated value below is somebody's free text — a business name, a
+// client name, a bank reference. openDocumentForPrinting() hands this markup to
+// win.document.write(), which executes scripts, so an unescaped name containing
+// markup would run: a member with edit rights on Contacts could store a payload
+// that fires when the owner prints an invoice. Escaping at the boundary is the
+// fix; nothing here should ever interpolate raw.
+function esc(value: unknown): string {
+  if (value == null) return "";
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 export function buildDocumentHTML(doc: DocForRender, business: BusinessProfile, kind: DocKind): string {
   const isInvoice = kind === "invoice";
   const isPO = kind === "purchaseorder";
@@ -38,8 +54,8 @@ export function buildDocumentHTML(doc: DocForRender, business: BusinessProfile, 
         : Number(i.labour || 0) + Number(i.materials || 0);
       return `
       <tr>
-        <td style="padding:10px 8px;border-bottom:1px solid #e5e7eb;font-size:13px;color:#111;">${i.desc || "Item"}</td>
-        <td style="padding:10px 8px;border-bottom:1px solid #e5e7eb;font-size:13px;color:#374151;text-align:center;">${i.qty || 1}</td>
+        <td style="padding:10px 8px;border-bottom:1px solid #e5e7eb;font-size:13px;color:#111;">${esc(i.desc || "Item")}</td>
+        <td style="padding:10px 8px;border-bottom:1px solid #e5e7eb;font-size:13px;color:#374151;text-align:center;">${esc(i.qty || 1)}</td>
         <td style="padding:10px 8px;border-bottom:1px solid #e5e7eb;font-size:13px;color:#374151;text-align:right;">${fmt(lineTotal)}</td>
       </tr>`;
     })
@@ -66,12 +82,36 @@ export function buildDocumentHTML(doc: DocForRender, business: BusinessProfile, 
      </div>`,
   ].join("");
 
+  // Ported from worklog-v65.jsx:414-425. Needs both a bank and an account to be
+  // worth printing — a bank name with no number tells the customer nothing.
+  //
+  // Shown on invoices and quotes, NOT purchase orders. The prototype put it on
+  // invoices and POs; the schema comment says "shown on invoices/quotes". They
+  // disagree, so this follows the intent of each: an invoice and a quote both
+  // ask the customer for money (a quote carries a deposit), while on a PO the
+  // business is the buyer — its own account number has no purpose there, and
+  // printing it for every supplier is needless exposure.
+  const hasBanking = !!business.bank_name && !!business.bank_account;
+  const bankingHTML =
+    hasBanking && (isInvoice || kind === "quote")
+      ? `
+  <div style="margin-top:24px;padding:14px 16px;background:#F0F9FF;border-radius:8px;border-left:4px solid #0C4A6E;">
+    <div style="font-size:11px;font-weight:700;color:#0C4A6E;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Payment details — please use these to pay</div>
+    <table style="width:100%;border-collapse:collapse;font-size:12px;">
+      <tr><td style="padding:3px 0;color:#64748b;width:120px;">Bank</td><td style="padding:3px 0;font-weight:600;color:#111;">${esc(business.bank_name)}</td></tr>
+      <tr><td style="padding:3px 0;color:#64748b;">Account no.</td><td style="padding:3px 0;font-weight:600;color:#111;">${esc(business.bank_account)}</td></tr>
+      ${business.bank_branch ? `<tr><td style="padding:3px 0;color:#64748b;">Branch code</td><td style="padding:3px 0;font-weight:600;color:#111;">${esc(business.bank_branch)}</td></tr>` : ""}
+      <tr><td style="padding:3px 0;color:#64748b;">Reference</td><td style="padding:3px 0;font-weight:700;color:#0C4A6E;">${esc(business.bank_ref ? `${business.bank_ref} / ${doc.doc_number}` : doc.doc_number)}</td></tr>
+    </table>
+  </div>`
+      : "";
+
   return `
 <!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8" />
-<title>${docTitle} ${doc.doc_number}</title>
+<title>${esc(docTitle)} ${esc(doc.doc_number)}</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #fff; color: #111; padding: 40px; width: 700px; }
@@ -108,8 +148,8 @@ export function buildDocumentHTML(doc: DocForRender, business: BusinessProfile, 
       </div>
     </div>
     <div>
-      <div class="doc-title">${docTitle}</div>
-      <div class="doc-number">${doc.doc_number} &nbsp;·&nbsp; ${doc.issue_date || todayStr()}</div>
+      <div class="doc-title">${esc(docTitle)}</div>
+      <div class="doc-number">${esc(doc.doc_number)} &nbsp;·&nbsp; ${esc(doc.issue_date || todayStr())}</div>
     </div>
   </div>
 
@@ -117,22 +157,22 @@ export function buildDocumentHTML(doc: DocForRender, business: BusinessProfile, 
     <div class="meta-block">
       <div class="meta-label">From</div>
       <div class="meta-value">
-        <strong>${business.name || "Your Business Name"}</strong><br/>
-        ${business.address ? business.address + "<br/>" : ""}
-        ${business.phone ? business.phone + "<br/>" : ""}
-        ${business.email ? business.email : ""}
+        <strong>${esc(business.name || "Your Business Name")}</strong><br/>
+        ${business.address ? esc(business.address) + "<br/>" : ""}
+        ${business.phone ? esc(business.phone) + "<br/>" : ""}
+        ${business.email ? esc(business.email) : ""}
       </div>
-      ${business.vat_number ? `<div class="vat-note">VAT Reg No: ${business.vat_number}</div>` : ""}
+      ${business.vat_number ? `<div class="vat-note">VAT Reg No: ${esc(business.vat_number)}</div>` : ""}
     </div>
     <div class="meta-block">
-      <div class="meta-label">${recipientLabel}</div>
+      <div class="meta-label">${esc(recipientLabel)}</div>
       <div class="meta-value">
-        <strong>${doc.recipient_name}</strong>
+        <strong>${esc(doc.recipient_name)}</strong>
       </div>
-      ${isInvoice && doc.due_date ? `<div class="vat-note" style="margin-top:8px;"><strong>Due date:</strong> ${doc.due_date}</div>` : ""}
-      ${isPO && doc.requested_delivery ? `<div class="vat-note" style="margin-top:8px;"><strong>Requested delivery:</strong> ${doc.requested_delivery}</div>` : ""}
-      ${!isInvoice && !isPO && !isPayslip && doc.valid_until ? `<div class="vat-note" style="margin-top:8px;">Valid until ${doc.valid_until}</div>` : ""}
-      ${isPayslip && doc.due_date ? `<div class="vat-note" style="margin-top:8px;"><strong>Pay date:</strong> ${doc.due_date}</div>` : ""}
+      ${isInvoice && doc.due_date ? `<div class="vat-note" style="margin-top:8px;"><strong>Due date:</strong> ${esc(doc.due_date)}</div>` : ""}
+      ${isPO && doc.requested_delivery ? `<div class="vat-note" style="margin-top:8px;"><strong>Requested delivery:</strong> ${esc(doc.requested_delivery)}</div>` : ""}
+      ${!isInvoice && !isPO && !isPayslip && doc.valid_until ? `<div class="vat-note" style="margin-top:8px;">Valid until ${esc(doc.valid_until)}</div>` : ""}
+      ${isPayslip && doc.due_date ? `<div class="vat-note" style="margin-top:8px;"><strong>Pay date:</strong> ${esc(doc.due_date)}</div>` : ""}
     </div>
   </div>
 
@@ -150,7 +190,7 @@ export function buildDocumentHTML(doc: DocForRender, business: BusinessProfile, 
       ${totalsRows}
     </div>
   </div>
-
+${bankingHTML}
   <div class="footer">
     ${
       isPayslip
@@ -158,8 +198,10 @@ export function buildDocumentHTML(doc: DocForRender, business: BusinessProfile, 
         : isPO
           ? "This purchase order is subject to the terms agreed with the supplier."
           : isInvoice
-            ? "Please make payment by the due date above. Thank you for your business."
-            : `This quote is valid until ${doc.valid_until || "30 days from the issue date"}. Reply to accept or for any questions.`
+            ? hasBanking
+              ? "Please pay by the due date above using the payment details shown. Thank you for your business."
+              : "Please make payment by the due date above. Thank you for your business."
+            : `This quote is valid until ${esc(doc.valid_until || "30 days from the issue date")}. Reply to accept or for any questions.`
     }
     <br/>Generated via WORKLOG — worklog.co.za
   </div>

@@ -17,6 +17,10 @@ export function BusinessDetailsModal({ business, onClose }: { business: Business
   const [address, setAddress] = useState(business.address ?? "");
   const [phone, setPhone] = useState(business.phone ?? "");
   const [email, setEmail] = useState(business.email ?? "");
+  const [bankName, setBankName] = useState(business.bank_name ?? "");
+  const [bankAccount, setBankAccount] = useState(business.bank_account ?? "");
+  const [bankBranch, setBankBranch] = useState(business.bank_branch ?? "");
+  const [bankRef, setBankRef] = useState(business.bank_ref ?? "");
   const [error, setError] = useState("");
 
   // Preview the effect of the current choices rather than making the owner save
@@ -36,6 +40,10 @@ export function BusinessDetailsModal({ business, onClose }: { business: Business
           address: address.trim() || null,
           phone: phone.trim() || null,
           email: email.trim() || null,
+          bank_name: bankName.trim() || null,
+          bank_account: bankAccount.trim() || null,
+          bank_branch: bankBranch.trim() || null,
+          bank_ref: bankRef.trim() || null,
         },
       },
       {
@@ -104,6 +112,32 @@ export function BusinessDetailsModal({ business, onClose }: { business: Business
       </Field>
       <Field label="Email">
         <Input value={email} onChange={setEmail} placeholder="you@example.com" type="email" />
+      </Field>
+
+      <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 0.6, margin: "18px 0 10px" }}>
+        How customers pay you
+      </div>
+      <div style={{ background: "#F0F9FF", border: "1.5px solid #BAE6FD", borderRadius: 12, padding: "10px 14px", marginBottom: 14, fontSize: 12, color: "#0369A1", lineHeight: 1.5 }}>
+        These print on your invoices and quotes so a customer knows where to send the money. Fill in at least the bank and
+        account number, or the block is left off.
+      </div>
+
+      <Field label="Bank">
+        <Input value={bankName} onChange={setBankName} placeholder="e.g. FNB, Capitec, Standard Bank" />
+      </Field>
+      <Field label="Account number">
+        <Input value={bankAccount} onChange={setBankAccount} placeholder="Your business account number" />
+      </Field>
+      <Field label="Branch code (optional)">
+        <Input value={bankBranch} onChange={setBankBranch} placeholder="e.g. 250655" />
+      </Field>
+      <Field label="Payment reference (optional)">
+        <Input value={bankRef} onChange={setBankRef} placeholder="e.g. your trading name" />
+        <p style={{ fontSize: 11, color: "#64748b", marginTop: 6, lineHeight: 1.5 }}>
+          {bankRef.trim()
+            ? `Customers will be asked to use "${bankRef.trim()} / INV-2026-0001" so you can match the payment.`
+            : "Leave blank and the document number alone is used as the reference."}
+        </p>
       </Field>
 
       {error && <p style={{ color: "#dc2626", fontSize: 13, marginBottom: 12 }}>{error}</p>}
