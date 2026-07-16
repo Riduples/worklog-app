@@ -1,0 +1,217 @@
+"use client";
+
+import { useState } from "react";
+import { Field } from "@/components/ui/Field";
+import { fmt } from "@/lib/format";
+import type { Invoice } from "@/lib/supabase/hooks/useInvoices";
+
+// Links a logged payment to the invoice it settles. Ported from worklog-v65's
+// DocumentMatcher, narrowed to invoices: income.matched_invoice_id is the only
+// link column we have, and invoices are the only thing Profit & Loss de-dupes
+// against.
+//
+// This link is what stops Profit & Loss counting the same money twice. The
+// report is accrual — it counts an invoice when issued — so a payment against
+// an invoice already counted must be excluded, or revenue doubles.
+//
+// v65 also decremented the invoice balance here and auto-marked it paid. That
+// is deliberately NOT ported: it subtracted the incl-VAT cash the user typed
+// from an excl-VAT balance, so any partial payment on a VAT invoice landed
+// wrong. Marking paid stays an explicit action on the invoice itself.
+export function InvoiceMatcher({
+  invoices,
+  matchedId,
+  onMatch,
+  filterByClient,
+  onAutoFillClient,
+}: {
+  invoices: Invoice[];
+  matchedId: string | null;
+  onMatch: (id: string | null) => void;
+  filterByClient?: string;
+  onAutoFillClient?: (client: string) => void;
+}) {
+  const [show, setShow] = useState(false);
+  const [search, setSearch] = useState("");
+
+  const totalOf = (i: Invoice) => Number(i.invoice_amount) + Number(i.vat_amount ?? 0);
+
+  if (invoices.length === 0) return null;
+
+  const matched = invoices.find((i) => i.id === matchedId) ?? null;
+
+  const named = (filterByClient ?? "").trim().toLowerCase();
+  const isFor = (i: Invoice) => (i.client_name ?? "").toLowerCase() === named;
+  const clientDocs = named ? invoices.filter(isFor) : [];
+  const otherDocs = named ? invoices.filter((i) => !isFor(i)) : invoices;
+
+  const bySearch = (list: Invoice[]) =>
+    list.filter((i) => {
+      if (!search) return true;
+      const s = search.toLowerCase();
+      return (
+        (i.client_name ?? "").toLowerCase().includes(s) ||
+        (i.doc_number ?? "").toLowerCase().includes(s) ||
+        String(totalOf(i)).includes(s)
+      );
+    });
+
+  const shownClientDocs = bySearch(clientDocs);
+  const shownOtherDocs = bySearch(otherDocs);
+
+  const renderDoc = (i: Invoice) => {
+    const paid = i.status === "paid";
+    return (
+      <button
+        key={i.id}
+        onClick={() => {
+          onMatch(i.id);
+          if (onAutoFillClient && i.client_name) onAutoFillClient(i.client_name);
+          setShow(false);
+        }}
+        style={{
+          width: "100%",
+          padding: "12px 14px",
+          border: "none",
+          borderBottom: "1px solid #f8fafc",
+          background: matchedId === i.id ? "#F0F9FF" : "#fff",
+          cursor: "pointer",
+          textAlign: "left",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <div>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
+            <span style={{ fontSize: 13 }}>📄</span>
+            <span style={{ fontSize: 14, fontWeight: 700, color: "#111" }}>{i.client_name}</span>
+            <span style={{ fontSize: 10, padding: "2px 7px", borderRadius: 10, background: "#fff7ed", color: "#b45309", fontWeight: 700 }}>
+              {i.doc_number}
+            </span>
+          </div>
+          <div style={{ fontSize: 11, color: "#94a3b8" }}>
+            {i.issue_date}
+            {i.due_date ? ` · Due ${i.due_date}` : ""}
+          </div>
+        </div>
+        <div style={{ textAlign: "right", flexShrink: 0, marginLeft: 10 }}>
+          <div style={{ fontSize: 14, fontWeight: 800, color: "#0C4A6E" }}>{fmt(totalOf(i))}</div>
+          {paid ? (
+            <div style={{ fontSize: 11, color: "#0369A1", fontWeight: 600 }}>✓ Paid</div>
+          ) : (
+            <div style={{ fontSize: 11, color: "#b45309", fontWeight: 600 }}>
+              {fmt(Number(i.balance_due) + Number(i.vat_amount ?? 0))} due
+            </div>
+          )}
+        </div>
+      </button>
+    );
+  };
+
+  const hint =
+    named && clientDocs.length > 0
+      ? `⚡ ${clientDocs.length} invoice${clientDocs.length === 1 ? "" : "s"} for ${filterByClient} — tap to view`
+      : "Tap to find an invoice...";
+
+  return (
+    <Field label="Is this payment for an invoice? (optional)">
+      <div style={{ position: "relative" }}>
+        <button
+          onClick={() => {
+            setShow((p) => !p);
+            setSearch("");
+          }}
+          style={{
+            width: "100%",
+            padding: "12px 14px",
+            borderRadius: 12,
+            border: `1.5px solid ${matched ? "#0C4A6E" : named && clientDocs.length > 0 ? "#F59E0B" : "#e2e8f0"}`,
+            background: matched ? "#F0F9FF" : named && clientDocs.length > 0 ? "#fffbeb" : "#f8fafc",
+            cursor: "pointer",
+            textAlign: "left",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <span style={{ fontSize: 14, color: matched ? "#0C4A6E" : "#94a3b8", fontWeight: matched ? 700 : 400 }}>
+            {matched ? `📄 ${matched.doc_number} — ${matched.client_name} — ${fmt(totalOf(matched))}` : hint}
+          </span>
+          <span style={{ fontSize: 13, color: "#94a3b8" }}>{show ? "▲" : "▼"}</span>
+        </button>
+
+        {show && (
+          <div
+            style={{
+              position: "absolute",
+              top: "100%",
+              left: 0,
+              right: 0,
+              zIndex: 60,
+              background: "#fff",
+              border: "1.5px solid #BAE6FD",
+              borderRadius: 12,
+              marginTop: 4,
+              boxShadow: "0 8px 20px rgba(0,0,0,0.12)",
+              overflow: "hidden",
+            }}
+          >
+            <div style={{ padding: "8px 10px", borderBottom: "1px solid #e2e8f0" }}>
+              <input
+                autoFocus
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search by customer, number or amount..."
+                style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 13, boxSizing: "border-box" }}
+              />
+            </div>
+            <div style={{ maxHeight: 280, overflowY: "auto" }}>
+              {matchedId && (
+                <button
+                  onClick={() => {
+                    onMatch(null);
+                    setShow(false);
+                  }}
+                  style={{ width: "100%", padding: "10px 14px", border: "none", borderBottom: "1px solid #f8fafc", background: "#fff7ed", cursor: "pointer", textAlign: "left", fontSize: 13, color: "#b45309", fontWeight: 600 }}
+                >
+                  ✕ Remove link
+                </button>
+              )}
+              {shownClientDocs.length === 0 && shownOtherDocs.length === 0 && (
+                <div style={{ padding: "12px 14px", fontSize: 13, color: "#94a3b8", textAlign: "center" }}>No invoices found</div>
+              )}
+              {shownClientDocs.length > 0 && (
+                <>
+                  <div style={{ padding: "7px 14px", fontSize: 10, fontWeight: 700, color: "#b45309", textTransform: "uppercase", letterSpacing: 0.6, background: "#fffbeb" }}>
+                    {filterByClient}&apos;s invoices
+                  </div>
+                  {shownClientDocs.map(renderDoc)}
+                </>
+              )}
+              {shownOtherDocs.length > 0 && (
+                <>
+                  <div style={{ padding: "7px 14px", fontSize: 10, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.6, background: "#f8fafc" }}>
+                    {named ? "Other invoices" : "All invoices"}
+                  </div>
+                  {shownOtherDocs.map(renderDoc)}
+                </>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {matched && (
+        <div style={{ marginTop: 6, padding: "7px 12px", background: "#F0F9FF", borderRadius: 8, fontSize: 11, color: "#0C4A6E", fontWeight: 600, lineHeight: 1.5 }}>
+          {/* One template string, not JSX text: JSX strips the space between an
+              expression and the text that follows it, which ate the one before
+              the em dash. */}
+          {`✅ Linked to ${matched.doc_number} — kept out of Profit & Loss so this payment isn't counted twice.${
+            matched.status !== "paid" ? " Mark the invoice paid from the invoice itself." : ""
+          }`}
+        </div>
+      )}
+    </Field>
+  );
+}

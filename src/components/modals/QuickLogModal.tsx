@@ -4,10 +4,12 @@ import { useRef, useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { Field } from "@/components/ui/Field";
 import { Row } from "@/components/ui/Row";
+import { InvoiceMatcher } from "@/components/ui/InvoiceMatcher";
 import { fmt, todayStr } from "@/lib/format";
 import { useTaxRates } from "@/lib/taxRates";
 import { parseQuickLog, fileToBase64, type QuickLogDraft, type QuickLogImage } from "@/lib/quickLog";
 import { useCreateIncome } from "@/lib/supabase/hooks/useIncome";
+import { useInvoices } from "@/lib/supabase/hooks/useInvoices";
 import { useCreateExpense } from "@/lib/supabase/hooks/useExpenses";
 
 const EXAMPLES = [
@@ -27,6 +29,7 @@ export function QuickLogModal({ onClose }: { onClose: () => void }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [draft, setDraft] = useState<QuickLogDraft | null>(null);
+  const [matchedInvoiceId, setMatchedInvoiceId] = useState<string | null>(null);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -34,6 +37,7 @@ export function QuickLogModal({ onClose }: { onClose: () => void }) {
   const { TAX_JAR_RATE } = useTaxRates();
   const createIncome = useCreateIncome();
   const createExpense = useCreateExpense();
+  const { data: invoices } = useInvoices();
 
   const startListening = () => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -94,6 +98,9 @@ export function QuickLogModal({ onClose }: { onClose: () => void }) {
     const onSuccess = () => {
       setHistory((h) => [...h, { role: "assistant", text: `✅ Logged ${draft.type} of ${fmt(amount)}` }]);
       setDraft(null);
+      // Clear the link too — the modal stays open for the next entry, and a
+      // stale match would silently attach it to the previous invoice.
+      setMatchedInvoiceId(null);
       setText("");
       setImageData(null);
       setImagePreview(null);
@@ -108,6 +115,7 @@ export function QuickLogModal({ onClose }: { onClose: () => void }) {
           payment_method: draft.method || null,
           transaction_date: todayStr(),
           tax_jar_amount: amount * TAX_JAR_RATE,
+          matched_invoice_id: matchedInvoiceId,
           source: "quick_log",
         },
         { onSuccess }
@@ -129,6 +137,7 @@ export function QuickLogModal({ onClose }: { onClose: () => void }) {
 
   const discardDraft = () => {
     setDraft(null);
+    setMatchedInvoiceId(null);
     setText("");
     setImageData(null);
     setImagePreview(null);
@@ -206,6 +215,19 @@ export function QuickLogModal({ onClose }: { onClose: () => void }) {
               label={`Tax jar (${Math.round(TAX_JAR_RATE * 100)}%)`}
               value={fmt((draft.amount ?? 0) * TAX_JAR_RATE)}
             />
+          )}
+          {/* Quick Log income needs the same invoice link as the Income modal:
+              without it, logging a payment for an invoice already issued
+              double-counts the revenue on Profit & Loss. */}
+          {draft.type === "income" && (
+            <div style={{ marginTop: 12 }}>
+              <InvoiceMatcher
+                invoices={invoices ?? []}
+                matchedId={matchedInvoiceId}
+                onMatch={setMatchedInvoiceId}
+                filterByClient={draft.person ?? ""}
+              />
+            </div>
           )}
           <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
             <button

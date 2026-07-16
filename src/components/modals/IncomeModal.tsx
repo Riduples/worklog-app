@@ -8,10 +8,12 @@ import { SaveBtn } from "@/components/ui/SaveBtn";
 import { ContactPicker } from "@/components/ui/ContactPicker";
 import { PaymentMethodPicker } from "@/components/ui/PaymentMethodPicker";
 import { SarsSuggestionDropdown } from "@/components/ui/SarsSuggestionDropdown";
+import { InvoiceMatcher } from "@/components/ui/InvoiceMatcher";
 import { getSarsIncomeMatch, type SarsCategory } from "@/lib/sarsCategories";
 import { fmt, todayStr } from "@/lib/format";
 import { useTaxRates } from "@/lib/taxRates";
 import { useCreateIncome } from "@/lib/supabase/hooks/useIncome";
+import { useInvoices } from "@/lib/supabase/hooks/useInvoices";
 import { useContacts } from "@/lib/supabase/hooks/useContacts";
 
 export function IncomeModal({ onClose }: { onClose: () => void }) {
@@ -24,9 +26,11 @@ export function IncomeModal({ onClose }: { onClose: () => void }) {
   const [details, setDetails] = useState("");
   const [method, setMethod] = useState("Cash");
   const [date, setDate] = useState(todayStr());
+  const [matchedInvoiceId, setMatchedInvoiceId] = useState<string | null>(null);
   const [error, setError] = useState("");
 
   const { data: contacts } = useContacts();
+  const { data: invoices } = useInvoices();
   const createIncome = useCreateIncome();
   const { TAX_JAR_RATE } = useTaxRates();
 
@@ -51,6 +55,7 @@ export function IncomeModal({ onClose }: { onClose: () => void }) {
         payment_method: method || null,
         transaction_date: date,
         tax_jar_amount: taxJar,
+        matched_invoice_id: matchedInvoiceId,
         source: "manual",
       },
       { onSuccess: onClose }
@@ -96,6 +101,16 @@ export function IncomeModal({ onClose }: { onClose: () => void }) {
         }}
         contacts={contacts ?? []}
         placeholder="Name (optional)"
+      />
+
+      <InvoiceMatcher
+        invoices={invoices ?? []}
+        matchedId={matchedInvoiceId}
+        onMatch={setMatchedInvoiceId}
+        filterByClient={receivedFrom}
+        onAutoFillClient={(client) => {
+          if (!receivedFrom.trim()) setReceivedFrom(client);
+        }}
       />
 
       <PaymentMethodPicker selected={method} onSelect={setMethod} />

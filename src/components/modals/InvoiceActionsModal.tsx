@@ -22,7 +22,11 @@ export function InvoiceActionsModal({ invoice, onClose }: { invoice: Invoice; on
   const items = (invoice.line_items as Array<{ desc: string; qty: number; labour: number; materials: number }>) ?? [];
   const status = displayStatus(invoice);
   const totalInclVat = Number(invoice.invoice_amount) + Number(invoice.vat_amount ?? 0);
-  const balanceInclVat = Number(invoice.balance_due) + Number(invoice.vat_amount ?? 0);
+  // Marking an invoice paid zeroes balance_due but leaves vat_amount alone, so
+  // adding the two would show a paid VAT invoice as still owing the VAT.
+  // Nothing is outstanding once balance_due is zero.
+  const balanceDue = Number(invoice.balance_due);
+  const balanceInclVat = balanceDue > 0 ? balanceDue + Number(invoice.vat_amount ?? 0) : 0;
 
   return (
     <Modal title={invoice.doc_number} onClose={onClose}>
