@@ -31,7 +31,6 @@ export type ToolId =
   | "mileage"
   | "profitloss"
   | "ageanalysis"
-  | "taxdashboard"
   | "compliance"
   | "vat201"
   | "emp201"
@@ -77,7 +76,10 @@ export const TOOL_CATEGORIES: { id: string; label: string; icon: string; desc: s
   // "ledger" isn't in the source prototype's categories (it dropped Ledgers
   // from the matrix) but the tool exists here, so it needs a home to be gated.
   { id: "money", label: "Money", icon: "💰", desc: "Track what comes in and goes out", tools: ["income", "expense", "bankstatement", "cashup", "ledger"] },
-  { id: "taxcompliance", label: "Tax & Compliance", icon: "💡", desc: "Everything tax, SARS and compliance — your complete financial overview", tools: ["taxdashboard", "vat201", "emp201", "provtax", "taxjar", "profitloss", "profit", "ageanalysis", "compliance", "tax"] },
+  // "taxdashboard" is deliberately absent: the /tax hub it described is gated
+  // by "tax", so a second id for the same page was a toggle that controlled
+  // nothing. Every id below reaches a real screen.
+  { id: "taxcompliance", label: "Tax & Compliance", icon: "💡", desc: "Everything tax, SARS and compliance — your complete financial overview", tools: ["vat201", "emp201", "provtax", "taxjar", "profitloss", "profit", "ageanalysis", "compliance", "tax"] },
 ];
 
 export const TOOL_LABELS: Partial<Record<ToolId, { icon: string; label: string; desc?: string }>> = {
@@ -106,7 +108,6 @@ export const TOOL_LABELS: Partial<Record<ToolId, { icon: string; label: string; 
   mileage: { icon: "🚗", label: "Trip Log", desc: "Log business trips — SARS deduction auto-calculated" },
   profitloss: { icon: "📈", label: "Profit & Loss", desc: "The official summary of what your business earned vs spent — needed for SARS and for loan/funding applications" },
   ageanalysis: { icon: "⏳", label: "Age Analysis", desc: "See who still owes you money (and who you still owe), sorted by how overdue it is — mainly for businesses that let customers pay later" },
-  taxdashboard: { icon: "💡", label: "Tax & Compliance", desc: "Your complete tax picture — SARS, compliance status and all numbers in one place" },
   compliance: { icon: "✅", label: "Compliance Dashboard", desc: "Every SA business obligation — SARS, Labour, CIPC, POPIA — due dates and status in one place" },
   vat201: { icon: "🏦", label: "VAT201", desc: "The monthly/bi-monthly SARS return for VAT-registered businesses — you only need this if you're registered for VAT" },
   emp201: { icon: "👷", label: "EMP201", desc: "The monthly SARS return for tax deducted from employee wages — only needed once you have staff on payroll" },

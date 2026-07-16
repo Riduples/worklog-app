@@ -84,11 +84,26 @@ export const SARS_CATEGORIES: SarsCategory[] = [
   { label: "Books & reference material", sars: "Training — Educational material", group: "Training" },
   { label: "VAT paid over to SARS", sars: "Tax — VAT payable", group: "Tax & Compliance" },
   { label: "PAYE paid over to SARS", sars: "Tax — PAYE payable", group: "Tax & Compliance" },
+  { label: "Income tax paid to SARS", sars: "Tax — Income tax payable", group: "Tax & Compliance" },
+  { label: "Provisional tax paid to SARS", sars: "Tax — Provisional tax payable", group: "Tax & Compliance" },
   { label: "Tax practitioner fee", sars: "Tax — Professional fees", group: "Tax & Compliance" },
   { label: "Bad debt written off", sars: "Other — Bad debts (section 11(a))", group: "Other" },
   { label: "Donations (approved PBO)", sars: "Other — Donations (section 18A)", group: "Other" },
   { label: "Other business expense", sars: "Other — Sundry expenses", group: "Other" },
 ];
+
+// What the tax jar provisions for: income tax, and the provisional payments
+// that settle it. VAT and PAYE are deliberately excluded -- VAT is collected on
+// a customer's behalf and PAYE is employees' tax, so neither is settled out of
+// an income tax provision. Matched exactly on the stored `sars` value, not by
+// searching for "SARS" in free text, which would sweep both of those in.
+export const INCOME_TAX_PAYMENT_CATEGORIES: string[] = [
+  "Tax — Income tax payable",
+  "Tax — Provisional tax payable",
+];
+
+export const isIncomeTaxPayment = (sarsCategory: string | null | undefined): boolean =>
+  !!sarsCategory && INCOME_TAX_PAYMENT_CATEGORIES.includes(sarsCategory);
 
 export const ALL_PAYMENT_METHODS = [
   "Cash",

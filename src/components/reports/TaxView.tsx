@@ -19,6 +19,7 @@ const TOOLS: { id: ToolId; href: string; icon: string; label: string }[] = [
   { id: "vat201", href: "/vat201", icon: "🏦", label: "VAT201" },
   { id: "emp201", href: "/emp201", icon: "👷", label: "EMP201" },
   { id: "provtax", href: "/provtax", icon: "📅", label: "Prov Tax" },
+  { id: "taxjar", href: "/taxjar", icon: "🫙", label: "Tax Jar" },
   { id: "compliance", href: "/compliance", icon: "✅", label: "Compliance" },
   { id: "ageanalysis", href: "/age-analysis", icon: "⏳", label: "Age Analysis" },
   { id: "profitloss", href: "/profit-loss", icon: "📈", label: "Profit & Loss" },
