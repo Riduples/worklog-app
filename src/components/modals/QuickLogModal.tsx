@@ -4,13 +4,14 @@ import { useRef, useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { Field } from "@/components/ui/Field";
 import { Row } from "@/components/ui/Row";
-import { InvoiceMatcher } from "@/components/ui/InvoiceMatcher";
+import { InvoiceMatcher, paymentSettlesInvoice } from "@/components/ui/InvoiceMatcher";
 import { fmt, todayStr } from "@/lib/format";
 import { useTaxRates } from "@/lib/taxRates";
 import { parseQuickLog, fileToBase64, type QuickLogDraft, type QuickLogImage } from "@/lib/quickLog";
 import { useCreateIncome } from "@/lib/supabase/hooks/useIncome";
-import { useInvoices } from "@/lib/supabase/hooks/useInvoices";
+import { useInvoices, useUpdateInvoice } from "@/lib/supabase/hooks/useInvoices";
 import { useCreateExpense } from "@/lib/supabase/hooks/useExpenses";
+import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 
 const EXAMPLES = [
   "R450 cash from Thabo for the gate fix",
@@ -30,14 +31,25 @@ export function QuickLogModal({ onClose }: { onClose: () => void }) {
   const [error, setError] = useState("");
   const [draft, setDraft] = useState<QuickLogDraft | null>(null);
   const [matchedInvoiceId, setMatchedInvoiceId] = useState<string | null>(null);
+  const [markPaid, setMarkPaid] = useState(false);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
-  const { TAX_JAR_RATE } = useTaxRates();
+  const { TAX_JAR_RATE, VAT_RATE, vatFromGross } = useTaxRates();
   const createIncome = useCreateIncome();
   const createExpense = useCreateExpense();
   const { data: invoices } = useInvoices();
+  const { data: business } = useBusinessProfile();
+  const updateInvoice = useUpdateInvoice();
+
+  // Quick Log amounts are what the user says arrived, so VAT is inside them.
+  const isVatRegistered = !!business?.vat_number;
+  const draftVat = draft?.type === "income" && isVatRegistered ? vatFromGross(draft.amount ?? 0, VAT_RATE) : 0;
+  const draftNet = (draft?.amount ?? 0) - draftVat;
+
+  const matchedInvoice = (invoices ?? []).find((i) => i.id === matchedInvoiceId) ?? null;
+  const settlesInvoice = paymentSettlesInvoice(matchedInvoice, draft?.amount ?? 0);
 
   const startListening = () => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -95,15 +107,36 @@ export function QuickLogModal({ onClose }: { onClose: () => void }) {
     const whatFor = draft.whatFor || null;
     const person = draft.person || null;
 
+    const settledDoc = markPaid && settlesInvoice ? matchedInvoice?.doc_number : null;
+
     const onSuccess = () => {
-      setHistory((h) => [...h, { role: "assistant", text: `✅ Logged ${draft.type} of ${fmt(amount)}` }]);
+      setHistory((h) => [
+        ...h,
+        {
+          role: "assistant",
+          text: `✅ Logged ${draft.type} of ${fmt(amount)}${settledDoc ? ` · ${settledDoc} marked paid` : ""}`,
+        },
+      ]);
       setDraft(null);
       // Clear the link too — the modal stays open for the next entry, and a
       // stale match would silently attach it to the previous invoice.
       setMatchedInvoiceId(null);
+      setMarkPaid(false);
       setText("");
       setImageData(null);
       setImagePreview(null);
+    };
+
+    const onIncomeSuccess = async () => {
+      // Settle only after the income row is saved: if this fails the payment is
+      // still recorded and the invoice can be marked paid by hand, which beats
+      // losing the entry.
+      if (matchedInvoiceId && markPaid && settlesInvoice) {
+        await updateInvoice
+          .mutateAsync({ id: matchedInvoiceId, changes: { status: "paid", paid_date: todayStr(), balance_due: 0 } })
+          .catch(() => {});
+      }
+      onSuccess();
     };
 
     if (draft.type === "income") {
@@ -114,11 +147,15 @@ export function QuickLogModal({ onClose }: { onClose: () => void }) {
           received_from: person,
           payment_method: draft.method || null,
           transaction_date: todayStr(),
-          tax_jar_amount: amount * TAX_JAR_RATE,
+          // Provision on income after VAT — the VAT portion is SARS's, not the
+          // business's, so provisioning on the gross would over-save.
+          tax_jar_amount: draftNet * TAX_JAR_RATE,
+          vat_rate: isVatRegistered ? VAT_RATE : null,
+          vat_amount: draftVat,
           matched_invoice_id: matchedInvoiceId,
           source: "quick_log",
         },
-        { onSuccess }
+        { onSuccess: onIncomeSuccess }
       );
     } else {
       createExpense.mutate(
@@ -138,6 +175,7 @@ export function QuickLogModal({ onClose }: { onClose: () => void }) {
   const discardDraft = () => {
     setDraft(null);
     setMatchedInvoiceId(null);
+    setMarkPaid(false);
     setText("");
     setImageData(null);
     setImagePreview(null);
@@ -210,11 +248,14 @@ export function QuickLogModal({ onClose }: { onClose: () => void }) {
           <Row label="What for" value={draft.whatFor || "—"} />
           <Row label={draft.type === "income" ? "From" : "To"} value={draft.person || "—"} />
           <Row label="Method" value={draft.method || "—"} />
+          {draft.type === "income" && isVatRegistered && (
+            <>
+              <Row label={`VAT included (${(VAT_RATE * 100).toFixed(0)}%)`} value={`−${fmt(draftVat)}`} />
+              <Row label="Your income" value={fmt(draftNet)} bold />
+            </>
+          )}
           {draft.type === "income" && (
-            <Row
-              label={`Tax jar (${Math.round(TAX_JAR_RATE * 100)}%)`}
-              value={fmt((draft.amount ?? 0) * TAX_JAR_RATE)}
-            />
+            <Row label={`Tax jar (${Math.round(TAX_JAR_RATE * 100)}%)`} value={fmt(draftNet * TAX_JAR_RATE)} />
           )}
           {/* Quick Log income needs the same invoice link as the Income modal:
               without it, logging a payment for an invoice already issued
@@ -224,8 +265,14 @@ export function QuickLogModal({ onClose }: { onClose: () => void }) {
               <InvoiceMatcher
                 invoices={invoices ?? []}
                 matchedId={matchedInvoiceId}
-                onMatch={setMatchedInvoiceId}
+                onMatch={(id) => {
+                  setMatchedInvoiceId(id);
+                  setMarkPaid(!!id);
+                }}
                 filterByClient={draft.person ?? ""}
+                paymentAmount={draft.amount ?? 0}
+                markPaid={markPaid}
+                onMarkPaidChange={setMarkPaid}
               />
             </div>
           )}

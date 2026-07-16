@@ -409,6 +409,8 @@ export type Database = {
           transaction_date: string
           updated_at: string | null
           user_id: string
+          vat_amount: number
+          vat_rate: number | null
           what_for: string | null
         }
         Insert: {
@@ -428,6 +430,8 @@ export type Database = {
           transaction_date: string
           updated_at?: string | null
           user_id: string
+          vat_amount?: number
+          vat_rate?: number | null
           what_for?: string | null
         }
         Update: {
@@ -447,6 +451,8 @@ export type Database = {
           transaction_date?: string
           updated_at?: string | null
           user_id?: string
+          vat_amount?: number
+          vat_rate?: number | null
           what_for?: string | null
         }
         Relationships: [
@@ -1719,6 +1725,10 @@ export type Database = {
           role: string
         }[]
       }
+      has_tool_access: {
+        Args: { p_business_id: string; p_min_level: string; p_tool: string }
+        Returns: boolean
+      }
       is_business_member: {
         Args: { target_business_id: string }
         Returns: boolean
@@ -1727,6 +1737,7 @@ export type Database = {
         Args: { p_from: string; p_recurrence: string }
         Returns: string
       }
+      tool_access_rank: { Args: { p_level: string }; Returns: number }
       update_business_plan: {
         Args: { new_plan: string; target_business_id: string }
         Returns: undefined

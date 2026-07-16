@@ -40,6 +40,24 @@ const RATES = {
   TAX_YEAR: "2025/26",
 };
 
+// The VAT contained *within* an amount already received, as opposed to VAT
+// added on top of a subtotal.
+//
+// Documents are built up: invoice_amount is ex-VAT and VAT is added, so
+// vat = subtotal * rate. Cash income is observed the other way round -- the
+// user types what landed in their hand, and the bank-statement import supplies
+// the actual transaction amount, neither of which can know an ex-VAT figure.
+// So the VAT has to be extracted back out: R1,150 gross at 15% holds R150 VAT
+// (1150 * 15/115), not R172.50 (1150 * 15%).
+function vatFromGross(gross: number, rate: number): number {
+  if (!gross || !rate) return 0;
+  return gross * (rate / (1 + rate));
+}
+
+function netOfVat(gross: number, vat: number): number {
+  return gross - vat;
+}
+
 function calcPAYE(annualIncome: number): number {
   if (annualIncome <= 0) return 0;
   for (let i = PAYE_BRACKETS.length - 1; i >= 0; i--) {
@@ -81,5 +99,16 @@ function calcMedicalCredit(members: number): number {
 }
 
 export function useTaxRates() {
-  return { ...RATES, calcPAYE, calcMonthlyPAYE, calcUIF, calcMedicalCredit };
+  return { ...RATES, calcPAYE, calcMonthlyPAYE, calcUIF, calcMedicalCredit, vatFromGross, netOfVat };
+}
+
+// Reports read income rows straight from the database rather than through the
+// hook, so expose the same arithmetic as plain functions. vat_amount is a
+// snapshot: a row keeps the VAT worked out at the rate that applied when it was
+// logged, so never re-derive it from the current rate here.
+export { vatFromGross, netOfVat };
+
+/** Net (ex-VAT) revenue in a cash income row. Pre-VAT rows have vat_amount 0. */
+export function incomeNet(row: { amount: number | string; vat_amount?: number | string | null }): number {
+  return Number(row.amount) - Number(row.vat_amount ?? 0);
 }

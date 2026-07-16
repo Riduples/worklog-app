@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import Link from "next/link";
 import { useCreateIncome } from "@/lib/supabase/hooks/useIncome";
 import { useCreateExpense } from "@/lib/supabase/hooks/useExpenses";
+import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 import { useTaxRates } from "@/lib/taxRates";
 import { fmt } from "@/lib/format";
 
@@ -22,7 +23,9 @@ type Step = "consent" | "upload" | "processing" | "review" | "done";
 export function BankStatementView() {
   const createIncome = useCreateIncome();
   const createExpense = useCreateExpense();
-  const { TAX_JAR_RATE } = useTaxRates();
+  const { TAX_JAR_RATE, VAT_RATE, vatFromGross } = useTaxRates();
+  const { data: business } = useBusinessProfile();
+  const isVatRegistered = !!business?.vat_number;
 
   const [step, setStep] = useState<Step>("consent");
   const [fileData, setFileData] = useState<{ base64: string; mediaType: string } | null>(null);
@@ -74,6 +77,10 @@ export function BankStatementView() {
     try {
       for (const t of toSave) {
         if (t.type === "income") {
+          // A bank statement only ever shows the gross amount that landed, so
+          // any VAT is inside it and has to be extracted rather than added.
+          const vatAmount = isVatRegistered ? vatFromGross(t.amount, VAT_RATE) : 0;
+          const net = t.amount - vatAmount;
           await createIncome.mutateAsync({
             amount: t.amount,
             transaction_date: t.date,
@@ -82,7 +89,9 @@ export function BankStatementView() {
             payment_method: t.method,
             sars_category: t.category,
             source: "bank_statement",
-            tax_jar_amount: t.amount * TAX_JAR_RATE,
+            vat_rate: isVatRegistered ? VAT_RATE : null,
+            vat_amount: vatAmount,
+            tax_jar_amount: net * TAX_JAR_RATE,
           });
         } else {
           await createExpense.mutateAsync({

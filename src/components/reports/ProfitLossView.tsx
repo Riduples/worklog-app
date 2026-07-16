@@ -9,6 +9,7 @@ import { useInvoices } from "@/lib/supabase/hooks/useInvoices";
 import { useLedgerEntries } from "@/lib/supabase/hooks/useLedger";
 import { useMileageTrips } from "@/lib/supabase/hooks/useMileage";
 import { inPeriod, type Period } from "@/lib/period";
+import { incomeNet } from "@/lib/taxRates";
 import { fmt } from "@/lib/format";
 
 export function ProfitLossView() {
@@ -23,13 +24,18 @@ export function ProfitLossView() {
 
   // Accrual revenue: invoices issued (even if unpaid) + cash income NOT already
   // tied to an invoice (avoids double-counting a paid invoice's income row).
+  //
+  // Everything here is ex-VAT. invoice_amount already is; cash income is gross,
+  // so it goes through incomeNet() — VAT collected on a sale is SARS's money
+  // passing through, never revenue. Both income terms must be net or the
+  // subtraction wouldn't cancel.
   const invoicesIssued = (invoices ?? [])
     .filter((i) => within(i.issue_date))
     .reduce((s, i) => s + Number(i.invoice_amount), 0);
-  const cashIncome = (income ?? []).filter((r) => within(r.transaction_date)).reduce((s, r) => s + Number(r.amount), 0);
+  const cashIncome = (income ?? []).filter((r) => within(r.transaction_date)).reduce((s, r) => s + incomeNet(r), 0);
   const incomeLinkedToInvoice = (income ?? [])
     .filter((r) => within(r.transaction_date) && r.matched_invoice_id)
-    .reduce((s, r) => s + Number(r.amount), 0);
+    .reduce((s, r) => s + incomeNet(r), 0);
   const totalRevenue = invoicesIssued + (cashIncome - incomeLinkedToInvoice);
 
   const cashExpense = (expenses ?? []).filter((r) => within(r.transaction_date)).reduce((s, r) => s + Number(r.amount), 0);

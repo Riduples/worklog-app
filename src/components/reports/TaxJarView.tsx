@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useIncome } from "@/lib/supabase/hooks/useIncome";
 import { useExpenses } from "@/lib/supabase/hooks/useExpenses";
 import { isIncomeTaxPayment } from "@/lib/sarsCategories";
-import { useTaxRates } from "@/lib/taxRates";
+import { useTaxRates, incomeNet } from "@/lib/taxRates";
 import { fmt } from "@/lib/format";
 
 // Ported from worklog-v65's TaxJarModal. Every income entry sets aside a
@@ -21,7 +21,10 @@ export function TaxJarView() {
   const { TAX_JAR_RATE } = useTaxRates();
 
   const rows = income ?? [];
-  const totalIncome = rows.reduce((s, r) => s + Number(r.amount || 0), 0);
+  // Net of VAT throughout: the provision is against income tax, and the VAT
+  // portion of a sale was never the business's to be taxed on. For a business
+  // that isn't VAT-registered vat_amount is 0, so this is just the amount.
+  const totalIncome = rows.reduce((s, r) => s + incomeNet(r), 0);
   const totalTaxJar = rows.reduce((s, r) => s + Number(r.tax_jar_amount || 0), 0);
   // The effective rate is derived, not assumed: historical entries keep the
   // rate that applied when they were logged, so this can differ from the
@@ -38,7 +41,7 @@ export function TaxJarView() {
     const m = (r.transaction_date || "").slice(0, 7);
     if (!m) return;
     const cur = byMonth.get(m) ?? { income: 0, jar: 0 };
-    cur.income += Number(r.amount || 0);
+    cur.income += incomeNet(r);
     cur.jar += Number(r.tax_jar_amount || 0);
     byMonth.set(m, cur);
   });

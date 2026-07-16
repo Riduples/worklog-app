@@ -18,18 +18,45 @@ import type { Invoice } from "@/lib/supabase/hooks/useInvoices";
 // is deliberately NOT ported: it subtracted the incl-VAT cash the user typed
 // from an excl-VAT balance, so any partial payment on a VAT invoice landed
 // wrong. Marking paid stays an explicit action on the invoice itself.
+/**
+ * What the customer still has to hand over, VAT included. balance_due is
+ * ex-VAT, and zero once paid — adding vat_amount to a zero balance would claim
+ * the VAT is still owed.
+ */
+export function invoiceBalanceInclVat(i: Invoice): number {
+  const balance = Number(i.balance_due);
+  return balance > 0 ? balance + Number(i.vat_amount ?? 0) : 0;
+}
+
+/**
+ * Whether a gross payment settles an invoice outright. Exported so the modal
+ * deciding to write status='paid' and the matcher offering the checkbox share
+ * one definition instead of drifting apart. A cent short is still settled.
+ */
+export function paymentSettlesInvoice(i: Invoice | null | undefined, paymentAmount: number): boolean {
+  if (!i || i.status === "paid" || paymentAmount <= 0) return false;
+  return paymentAmount + 0.01 >= invoiceBalanceInclVat(i);
+}
+
 export function InvoiceMatcher({
   invoices,
   matchedId,
   onMatch,
   filterByClient,
   onAutoFillClient,
+  paymentAmount = 0,
+  markPaid = false,
+  onMarkPaidChange,
 }: {
   invoices: Invoice[];
   matchedId: string | null;
   onMatch: (id: string | null) => void;
   filterByClient?: string;
   onAutoFillClient?: (client: string) => void;
+  /** Gross payment being logged, used to see whether it settles the invoice. */
+  paymentAmount?: number;
+  markPaid?: boolean;
+  onMarkPaidChange?: (next: boolean) => void;
 }) {
   const [show, setShow] = useState(false);
   const [search, setSearch] = useState("");
@@ -39,6 +66,7 @@ export function InvoiceMatcher({
   if (invoices.length === 0) return null;
 
   const matched = invoices.find((i) => i.id === matchedId) ?? null;
+  const settles = paymentSettlesInvoice(matched, paymentAmount);
 
   const named = (filterByClient ?? "").trim().toLowerCase();
   const isFor = (i: Invoice) => (i.client_name ?? "").toLowerCase() === named;
@@ -100,9 +128,7 @@ export function InvoiceMatcher({
           {paid ? (
             <div style={{ fontSize: 11, color: "#0369A1", fontWeight: 600 }}>✓ Paid</div>
           ) : (
-            <div style={{ fontSize: 11, color: "#b45309", fontWeight: 600 }}>
-              {fmt(Number(i.balance_due) + Number(i.vat_amount ?? 0))} due
-            </div>
+            <div style={{ fontSize: 11, color: "#b45309", fontWeight: 600 }}>{fmt(invoiceBalanceInclVat(i))} due</div>
           )}
         </div>
       </button>
@@ -207,9 +233,41 @@ export function InvoiceMatcher({
           {/* One template string, not JSX text: JSX strips the space between an
               expression and the text that follows it, which ate the one before
               the em dash. */}
-          {`✅ Linked to ${matched.doc_number} — kept out of Profit & Loss so this payment isn't counted twice.${
-            matched.status !== "paid" ? " Mark the invoice paid from the invoice itself." : ""
-          }`}
+          {`✅ Linked to ${matched.doc_number} — kept out of Profit & Loss so this payment isn't counted twice.`}
+        </div>
+      )}
+
+      {/* Only offered when the payment actually settles the balance. A short
+          payment is recorded as a link and nothing else: splitting it across
+          net and VAT needs a rule balance_due (which is ex-VAT) can't express,
+          and guessing wrong on someone's books is worse than not guessing. */}
+      {matched && settles && onMarkPaidChange && (
+        <button
+          onClick={() => onMarkPaidChange(!markPaid)}
+          style={{
+            width: "100%",
+            marginTop: 6,
+            padding: "9px 12px",
+            borderRadius: 8,
+            border: `1.5px solid ${markPaid ? "#1B4332" : "#d1fae5"}`,
+            background: markPaid ? "#f0fdf4" : "#fff",
+            cursor: "pointer",
+            textAlign: "left",
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+          }}
+        >
+          <span style={{ fontSize: 14, color: markPaid ? "#1B4332" : "#cbd5e1" }}>{markPaid ? "☑" : "☐"}</span>
+          <span style={{ fontSize: 11, color: "#166534", fontWeight: 700, lineHeight: 1.5 }}>
+            {`This covers the full ${fmt(invoiceBalanceInclVat(matched))} balance — mark ${matched.doc_number} as paid`}
+          </span>
+        </button>
+      )}
+
+      {matched && !settles && matched.status !== "paid" && paymentAmount > 0 && (
+        <div style={{ marginTop: 6, padding: "7px 12px", background: "#fff7ed", borderRadius: 8, fontSize: 11, color: "#92400e", fontWeight: 600, lineHeight: 1.5 }}>
+          {`Part payment — ${fmt(invoiceBalanceInclVat(matched) - paymentAmount)} of the ${fmt(invoiceBalanceInclVat(matched))} balance would still be outstanding, so ${matched.doc_number} stays unpaid.`}
         </div>
       )}
     </Field>

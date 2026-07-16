@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useInvoices } from "@/lib/supabase/hooks/useInvoices";
+import { useIncome } from "@/lib/supabase/hooks/useIncome";
 import { useSupplierInvoices } from "@/lib/supabase/hooks/useSupplierInvoices";
 import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 import { useTaxFilings, useMarkFiled } from "@/lib/supabase/hooks/useTaxFilings";
@@ -24,6 +25,7 @@ function periodRange(year: number, startMonth0: number, monthly: boolean) {
 export function Vat201View() {
   const { data: business } = useBusinessProfile();
   const { data: invoices } = useInvoices();
+  const { data: income } = useIncome();
   const { data: supplierInvoices } = useSupplierInvoices();
   const { data: filings } = useTaxFilings();
   const markFiled = useMarkFiled();
@@ -51,9 +53,21 @@ export function Vat201View() {
     setStartMonth0(m);
   };
 
-  const outputVAT = (invoices ?? [])
+  const invoicedVAT = (invoices ?? [])
     .filter((r) => r.issue_date >= fromDate && r.issue_date <= toDate)
     .reduce((s, r) => s + Number(r.vat_amount ?? 0), 0);
+
+  // Sales that never became an invoice — a till sale, a card tap, a line off a
+  // bank statement — still carry output VAT. Leaving them out under-declared it.
+  //
+  // Income linked to an invoice is excluded: that invoice already contributed
+  // its own vat_amount above, so counting the payment too would declare the
+  // same VAT twice.
+  const cashSalesVAT = (income ?? [])
+    .filter((r) => !r.matched_invoice_id && r.transaction_date >= fromDate && r.transaction_date <= toDate)
+    .reduce((s, r) => s + Number(r.vat_amount ?? 0), 0);
+
+  const outputVAT = invoicedVAT + cashSalesVAT;
   const inputVAT = (supplierInvoices ?? [])
     .filter((r) => r.issue_date >= fromDate && r.issue_date <= toDate)
     .reduce((s, r) => s + Number(r.vat_amount ?? 0), 0);

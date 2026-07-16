@@ -15,6 +15,7 @@ import { HelpAssistantModal } from "@/components/modals/HelpAssistantModal";
 import { LogoutButton } from "@/components/auth/LogoutButton";
 import { ToolTile } from "@/components/dashboard/ToolTile";
 import { fmt, greeting } from "@/lib/format";
+import { incomeNet } from "@/lib/taxRates";
 import { canSee, type ToolId } from "@/lib/permissions";
 import { isLocked, type Plan } from "@/lib/tiers";
 import type { Tables } from "@/lib/types/database";
@@ -43,7 +44,12 @@ export function DashboardView({ businessName }: { businessName: string }) {
   const gate = (toolId: ToolId) => canSee(member, toolId);
   const tierLocked = (toolId: ToolId) => isLocked(plan, toolId);
 
-  const monthIncome = (income ?? []).filter((r) => isThisMonth(r.transaction_date)).reduce((s, r) => s + Number(r.amount), 0);
+  // Net of VAT, so PROFIT is what the business actually earned rather than
+  // being inflated by VAT it is only holding for SARS — and IN − OUT still
+  // equals PROFIT. Cash Flow deliberately stays gross: it answers "what moved
+  // through the account", which is a different question. Nothing changes for a
+  // business that isn't VAT-registered (vat_amount is 0).
+  const monthIncome = (income ?? []).filter((r) => isThisMonth(r.transaction_date)).reduce((s, r) => s + incomeNet(r), 0);
   const monthExpense = (expenses ?? []).filter((r) => isThisMonth(r.transaction_date)).reduce((s, r) => s + Number(r.amount), 0);
   const profit = monthIncome - monthExpense;
   const taxJar = (income ?? []).reduce((s, r) => s + Number(r.tax_jar_amount || 0), 0);

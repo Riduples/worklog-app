@@ -8,13 +8,14 @@ import { SaveBtn } from "@/components/ui/SaveBtn";
 import { ContactPicker } from "@/components/ui/ContactPicker";
 import { PaymentMethodPicker } from "@/components/ui/PaymentMethodPicker";
 import { SarsSuggestionDropdown } from "@/components/ui/SarsSuggestionDropdown";
-import { InvoiceMatcher } from "@/components/ui/InvoiceMatcher";
+import { InvoiceMatcher, paymentSettlesInvoice } from "@/components/ui/InvoiceMatcher";
 import { getSarsIncomeMatch, type SarsCategory } from "@/lib/sarsCategories";
 import { fmt, todayStr } from "@/lib/format";
 import { useTaxRates } from "@/lib/taxRates";
 import { useCreateIncome } from "@/lib/supabase/hooks/useIncome";
-import { useInvoices } from "@/lib/supabase/hooks/useInvoices";
+import { useInvoices, useUpdateInvoice } from "@/lib/supabase/hooks/useInvoices";
 import { useContacts } from "@/lib/supabase/hooks/useContacts";
+import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 
 export function IncomeModal({ onClose }: { onClose: () => void }) {
   const [amount, setAmount] = useState("");
@@ -27,15 +28,29 @@ export function IncomeModal({ onClose }: { onClose: () => void }) {
   const [method, setMethod] = useState("Cash");
   const [date, setDate] = useState(todayStr());
   const [matchedInvoiceId, setMatchedInvoiceId] = useState<string | null>(null);
+  const [markPaid, setMarkPaid] = useState(false);
   const [error, setError] = useState("");
 
   const { data: contacts } = useContacts();
   const { data: invoices } = useInvoices();
+  const { data: business } = useBusinessProfile();
   const createIncome = useCreateIncome();
-  const { TAX_JAR_RATE } = useTaxRates();
+  const updateInvoice = useUpdateInvoice();
+  const { TAX_JAR_RATE, VAT_RATE, vatFromGross } = useTaxRates();
 
+  // The amount typed is the cash that arrived, so any VAT is already inside it
+  // and has to be taken back out — unlike an invoice, which is built up from an
+  // ex-VAT subtotal with VAT added on top.
   const amountNum = parseFloat(amount) || 0;
-  const taxJar = amountNum * TAX_JAR_RATE;
+  const isVatRegistered = !!business?.vat_number;
+  const vatAmount = isVatRegistered ? vatFromGross(amountNum, VAT_RATE) : 0;
+  const netAmount = amountNum - vatAmount;
+  // Provision income tax on what the business actually earned. The VAT portion
+  // is SARS's money being held, not income, so it must not be provisioned twice.
+  const taxJar = netAmount * TAX_JAR_RATE;
+
+  const matchedInvoice = (invoices ?? []).find((i) => i.id === matchedInvoiceId) ?? null;
+  const settlesInvoice = paymentSettlesInvoice(matchedInvoice, amountNum);
 
   const handleSave = () => {
     if (!amountNum || amountNum <= 0) {
@@ -55,10 +70,24 @@ export function IncomeModal({ onClose }: { onClose: () => void }) {
         payment_method: method || null,
         transaction_date: date,
         tax_jar_amount: taxJar,
+        vat_rate: isVatRegistered ? VAT_RATE : null,
+        vat_amount: vatAmount,
         matched_invoice_id: matchedInvoiceId,
         source: "manual",
       },
-      { onSuccess: onClose }
+      {
+        onSuccess: async () => {
+          // Settle the invoice only once the income row is safely saved. If
+          // this fails the payment is still recorded and the invoice can be
+          // marked paid by hand, which beats losing the income entry.
+          if (matchedInvoiceId && markPaid && settlesInvoice) {
+            await updateInvoice
+              .mutateAsync({ id: matchedInvoiceId, changes: { status: "paid", paid_date: date, balance_due: 0 } })
+              .catch(() => {});
+          }
+          onClose();
+        },
+      }
     );
   };
 
@@ -106,11 +135,19 @@ export function IncomeModal({ onClose }: { onClose: () => void }) {
       <InvoiceMatcher
         invoices={invoices ?? []}
         matchedId={matchedInvoiceId}
-        onMatch={setMatchedInvoiceId}
+        onMatch={(id) => {
+          setMatchedInvoiceId(id);
+          // Default to marking paid when they pick an invoice; the matcher only
+          // shows the option when the payment actually covers it.
+          setMarkPaid(!!id);
+        }}
         filterByClient={receivedFrom}
         onAutoFillClient={(client) => {
           if (!receivedFrom.trim()) setReceivedFrom(client);
         }}
+        paymentAmount={amountNum}
+        markPaid={markPaid}
+        onMarkPaidChange={setMarkPaid}
       />
 
       <PaymentMethodPicker selected={method} onSelect={setMethod} />
@@ -123,9 +160,29 @@ export function IncomeModal({ onClose }: { onClose: () => void }) {
         <Input value={details} onChange={setDetails} placeholder="Extra description" />
       </Field>
 
+      {amountNum > 0 && isVatRegistered && (
+        <div style={{ background: "#F0F9FF", border: "1.5px solid #BAE6FD", borderRadius: 12, padding: "12px 14px", marginBottom: 10, fontSize: 12, color: "#0C4A6E", lineHeight: 1.6 }}>
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <span>Received</span>
+            <span style={{ fontWeight: 700 }}>{fmt(amountNum)}</span>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <span>{`VAT included (${(VAT_RATE * 100).toFixed(0)}%)`}</span>
+            <span style={{ fontWeight: 700 }}>−{fmt(vatAmount)}</span>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", borderTop: "1px solid #BAE6FD", marginTop: 6, paddingTop: 6 }}>
+            <span style={{ fontWeight: 700 }}>Your income</span>
+            <span style={{ fontWeight: 800 }}>{fmt(netAmount)}</span>
+          </div>
+          <div style={{ fontSize: 11, color: "#0369A1", marginTop: 6 }}>
+            The VAT is SARS&apos;s — it goes on your VAT201, not your profit.
+          </div>
+        </div>
+      )}
+
       {amountNum > 0 && (
         <div style={{ background: "#f0fdf4", borderRadius: 12, padding: "12px 14px", marginBottom: 16, fontSize: 13, color: "#166534" }}>
-          🏦 {fmt(taxJar)} set aside for SARS ({(TAX_JAR_RATE * 100).toFixed(0)}% tax jar)
+          {`🏦 ${fmt(taxJar)} set aside for SARS (${(TAX_JAR_RATE * 100).toFixed(0)}% tax jar${isVatRegistered ? " on your income after VAT" : ""})`}
         </div>
       )}
 
