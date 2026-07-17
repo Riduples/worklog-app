@@ -21,7 +21,6 @@ const shell = (children: React.ReactNode) => (
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      fontFamily: "'Inter','Segoe UI',system-ui,sans-serif",
       padding: 20,
     }}
   >
