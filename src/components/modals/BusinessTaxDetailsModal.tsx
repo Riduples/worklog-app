@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/Input";
 import { Chips } from "@/components/ui/Chips";
 import { SaveBtn } from "@/components/ui/SaveBtn";
 import { useUpdateBusinessProfile, type BusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
+import { TAX_RATES } from "@/lib/taxRates";
+import { fmt } from "@/lib/format";
 
 export function BusinessTaxDetailsModal({ business, onClose }: { business: BusinessProfile; onClose: () => void }) {
   const updateProfile = useUpdateBusinessProfile();
@@ -75,7 +77,9 @@ export function BusinessTaxDetailsModal({ business, onClose }: { business: Busin
           <span style={{ fontSize: 18 }}>{sdlRegistered ? "✅" : "⬜"}</span>
           <div>
             <div style={{ fontSize: 13, fontWeight: 700, color: sdlRegistered ? "#0C4A6E" : "#111" }}>Registered for SDL</div>
-            <div style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>Required once your annual payroll exceeds R500,000</div>
+            <div style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>
+              {`Required once your annual payroll exceeds ${fmt(TAX_RATES.SDL_ANNUAL_THRESHOLD)}`}
+            </div>
           </div>
         </button>
       </Field>

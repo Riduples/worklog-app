@@ -14,12 +14,21 @@ const PAYE_BRACKETS = [
   { from: 1817000, base: 644489, rate: 0.45 },
 ];
 
+// SARS grants an age-based rebate on top of the primary one. They stack: a
+// 76-year-old gets all three. The published tax thresholds fall straight out of
+// them — 17,235/0.18 = R95,750 under 65, (17,235+9,444)/0.18 = R148,217 at
+// 65-74, (17,235+9,444+3,145)/0.18 = R165,689 at 75+ — which is what the tests
+// assert, so a typo here can't pass quietly.
 const PRIMARY_REBATE = 17235;
+const SECONDARY_REBATE = 9444; // additional, from age 65
+const TERTIARY_REBATE = 3145; // additional again, from age 75
 const PAYE_MONTHLY_THRESHOLD = 7979;
 const UIF_EMPLOYEE_RATE = 0.01;
 const UIF_EMPLOYER_RATE = 0.01;
 const UIF_CEILING = 17712;
 const SDL_RATE = 0.01;
+// Annual payroll above which SDL registration is required.
+const SDL_ANNUAL_THRESHOLD = 500000;
 const COMPANY_TAX_RATE = 0.27;
 const MEDICAL_CREDIT_FIRST_TWO = 364;
 const MEDICAL_CREDIT_ADDITIONAL = 246;
@@ -35,8 +44,11 @@ export const TAX_RATES = {
   UIF_EMPLOYER_RATE,
   UIF_CEILING,
   SDL_RATE,
+  SDL_ANNUAL_THRESHOLD,
   PAYE_MONTHLY_THRESHOLD,
   PRIMARY_REBATE,
+  SECONDARY_REBATE,
+  TERTIARY_REBATE,
   COMPANY_TAX_RATE,
   MEDICAL_CREDIT_FIRST_TWO,
   MEDICAL_CREDIT_ADDITIONAL,
@@ -81,6 +93,29 @@ function calcMonthlyPAYE(monthlyGross: number, payPeriod: "Weekly" | "Fortnightl
   return monthly;
 }
 
+/** The age bands SARS rebates step at. */
+export type AgeBand = "under65" | "65to74" | "75plus";
+
+export const AGE_BANDS: { id: AgeBand; label: string }[] = [
+  { id: "under65", label: "Under 65" },
+  { id: "65to74", label: "65 – 74" },
+  { id: "75plus", label: "75 or older" },
+];
+
+/**
+ * Total annual rebate for an individual. The rebates stack, so someone over 75
+ * receives all three.
+ *
+ * Only individuals get rebates — a company pays a flat rate with none, which is
+ * why the caller decides whether to apply this at all.
+ */
+function calcRebate(ageBand: AgeBand = "under65"): number {
+  let total = PRIMARY_REBATE;
+  if (ageBand === "65to74" || ageBand === "75plus") total += SECONDARY_REBATE;
+  if (ageBand === "75plus") total += TERTIARY_REBATE;
+  return total;
+}
+
 function calcUIF(grossWages: number): { employee: number; employer: number; total: number } {
   const base = Math.min(grossWages, UIF_CEILING);
   return {
@@ -101,8 +136,19 @@ function calcMedicalCredit(members: number): number {
   return monthly * 12;
 }
 
+// The calculations are plain functions and are exported as such — the build
+// spec asks for "a well-tested /lib/tax module", and a module you can only
+// reach through a use*-prefixed wrapper isn't one: server code can't call it,
+// and a test importing it trips rules-of-hooks.
+//
+// useTaxRates() stays as the component-facing convenience, bundling the rates
+// and the helpers together. It is not a real hook (no state, no effects) and
+// only carries the prefix to match the prototype's API, so that a later swap to
+// DB-backed rates is a drop-in rather than a call-site rewrite.
+export { calcPAYE, calcMonthlyPAYE, calcUIF, calcMedicalCredit, calcRebate };
+
 export function useTaxRates() {
-  return { ...TAX_RATES, calcPAYE, calcMonthlyPAYE, calcUIF, calcMedicalCredit, vatFromGross, netOfVat };
+  return { ...TAX_RATES, calcPAYE, calcMonthlyPAYE, calcUIF, calcMedicalCredit, calcRebate, vatFromGross, netOfVat };
 }
 
 // Reports read income rows straight from the database rather than through the
