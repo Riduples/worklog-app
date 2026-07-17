@@ -3,6 +3,7 @@
 // map onto buildDocumentHTML's subtotal/VAT/deposit shape, so they get their
 // own builder (matching the source prototype, which did the same).
 import { fmt } from "@/lib/format";
+import { esc } from "@/lib/docgen/esc";
 import type { BusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 
 const SHARED_CSS = `
@@ -28,19 +29,34 @@ const SHARED_CSS = `
   .vat-note { font-size: 10px; color: #94a3b8; margin-top: 4px; }
 `;
 
+// The letterhead is the BUSINESS's, not ours. A statement goes from them to
+// their customer and a remittance from them to their supplier, so heading either
+// with Worklog's mark put our name on their correspondence. buildDocumentHTML
+// was fixed for this; this builder was missed, so it kept printing "W" /
+// "Worklog" / "worklog.co.za" while ignoring the `business` it was handed. Our
+// credit stays in the footer, where attribution belongs.
+//
+// logo_url must already be renderable by the time it arrives here: the PDF route
+// inlines it as a data: URI first, because that page has its network blocked.
+// See /api/render-pdf, which passes the same inlined profile to every builder.
 function header(business: BusinessProfile, title: string, dateLabel: string) {
+  const initial = (business.name || "W").trim().charAt(0).toUpperCase();
+  const logoHTML = business.logo_url
+    ? `<img src="${esc(business.logo_url)}" alt="" style="width:44px;height:44px;object-fit:contain;border-radius:8px;" />`
+    : `<div class="brand-mark">${esc(initial)}</div>`;
+
   return `
   <div class="header">
     <div class="brand">
-      <div class="brand-mark">W</div>
+      ${logoHTML}
       <div>
-        <div class="brand-name">Worklog</div>
-        <div style="font-size:10px;color:#94a3b8;">worklog.co.za</div>
+        <div class="brand-name">${esc(business.name || "Your Business")}</div>
+        <div style="font-size:10px;color:#94a3b8;">${esc(business.phone || business.email || "")}</div>
       </div>
     </div>
     <div>
-      <div class="doc-title">${title}</div>
-      <div class="doc-date">${dateLabel}</div>
+      <div class="doc-title">${esc(title)}</div>
+      <div class="doc-date">${esc(dateLabel)}</div>
     </div>
   </div>`;
 }
@@ -48,14 +64,14 @@ function header(business: BusinessProfile, title: string, dateLabel: string) {
 function fromBlock(business: BusinessProfile, label: string) {
   return `
     <div>
-      <div class="meta-label">${label}</div>
+      <div class="meta-label">${esc(label)}</div>
       <div class="meta-value">
-        <strong>${business.name || "Your Business"}</strong><br/>
-        ${business.address ? business.address + "<br/>" : ""}
-        ${business.phone ? business.phone + "<br/>" : ""}
-        ${business.email ?? ""}
+        <strong>${esc(business.name || "Your Business")}</strong><br/>
+        ${business.address ? esc(business.address) + "<br/>" : ""}
+        ${business.phone ? esc(business.phone) + "<br/>" : ""}
+        ${esc(business.email ?? "")}
       </div>
-      ${business.vat_number ? `<div class="vat-note">VAT Reg No: ${business.vat_number}</div>` : ""}
+      ${business.vat_number ? `<div class="vat-note">VAT Reg No: ${esc(business.vat_number)}</div>` : ""}
     </div>`;
 }
 
@@ -78,8 +94,8 @@ export function buildStatementHTML(
     .map(
       (l) => `
       <tr>
-        <td>${l.date}</td>
-        <td>${l.reference}</td>
+        <td>${esc(l.date)}</td>
+        <td>${esc(l.reference)}</td>
         <td>Invoice issued</td>
         <td style="text-align:right;">${fmt(l.amount)}</td>
         <td style="text-align:right;color:${l.paid ? "#0369A1" : "#b45309"};">${l.paid ? "✓ Paid" : fmt(l.balance) + " due"}</td>
@@ -89,14 +105,14 @@ export function buildStatementHTML(
 
   return `<!DOCTYPE html>
 <html>
-<head><meta charset="utf-8" /><title>Statement — ${clientName}</title><style>${SHARED_CSS}</style></head>
+<head><meta charset="utf-8" /><title>Statement — ${esc(clientName)}</title><style>${SHARED_CSS}</style></head>
 <body>
   ${header(business, "ACCOUNT STATEMENT", `As at ${asAt}`)}
   <div class="meta-row">
     ${fromBlock(business, "From")}
     <div style="text-align:right;">
       <div class="meta-label">Statement For</div>
-      <div style="font-size:20px;font-weight:800;">${clientName}</div>
+      <div style="font-size:20px;font-weight:800;">${esc(clientName)}</div>
     </div>
   </div>
   <table>
@@ -136,8 +152,8 @@ export function buildRemittanceHTML(
     .map(
       (l) => `
       <tr>
-        <td>${l.date}</td>
-        <td>${l.reference}</td>
+        <td>${esc(l.date)}</td>
+        <td>${esc(l.reference)}</td>
         <td style="text-align:right;">${fmt(l.invoiceAmount)}</td>
         <td style="text-align:right;font-weight:700;color:#0C4A6E;">${fmt(l.amountPaying)}</td>
       </tr>`
@@ -146,25 +162,25 @@ export function buildRemittanceHTML(
 
   return `<!DOCTYPE html>
 <html>
-<head><meta charset="utf-8" /><title>Remittance Advice — ${supplierName}</title><style>${SHARED_CSS}</style></head>
+<head><meta charset="utf-8" /><title>Remittance Advice — ${esc(supplierName)}</title><style>${SHARED_CSS}</style></head>
 <body>
   ${header(business, "REMITTANCE ADVICE", payment.date)}
   <div class="meta-row">
     ${fromBlock(business, "Payment From")}
     <div style="text-align:right;">
       <div class="meta-label">Payment To</div>
-      <div style="font-size:20px;font-weight:800;">${supplierName}</div>
+      <div style="font-size:20px;font-weight:800;">${esc(supplierName)}</div>
     </div>
   </div>
   <div style="background:#fff7ed;border-radius:12px;padding:16px 20px;margin-bottom:24px;display:flex;justify-content:space-between;align-items:center;">
     <div>
       <div style="font-size:11px;color:#b45309;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:4px;">Payment method</div>
-      <div style="font-size:15px;font-weight:700;">${payment.method}</div>
-      ${payment.reference ? `<div style="font-size:12px;color:#64748b;margin-top:2px;">Ref: ${payment.reference}</div>` : ""}
+      <div style="font-size:15px;font-weight:700;">${esc(payment.method)}</div>
+      ${payment.reference ? `<div style="font-size:12px;color:#64748b;margin-top:2px;">Ref: ${esc(payment.reference)}</div>` : ""}
     </div>
     <div style="text-align:right;">
       <div style="font-size:11px;color:#b45309;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:4px;">Payment date</div>
-      <div style="font-size:15px;font-weight:700;">${payment.date}</div>
+      <div style="font-size:15px;font-weight:700;">${esc(payment.date)}</div>
     </div>
   </div>
   <div style="font-size:11px;font-weight:700;color:#b45309;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;">Invoices being settled</div>

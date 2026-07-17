@@ -4,6 +4,7 @@
 // 2. Data comes from the production schema's column names (client_name,
 //    total_amount, line_items, ...) instead of the prototype's local state shape.
 import { fmt, todayStr } from "@/lib/format";
+import { esc } from "@/lib/docgen/esc";
 import type { BusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 
 export type DocKind = "quote" | "invoice" | "purchaseorder" | "payslip";
@@ -23,21 +24,6 @@ export type DocForRender = {
   requested_delivery?: string | null;
 };
 
-// Every interpolated value below is somebody's free text — a business name, a
-// client name, a bank reference. openDocumentForPrinting() hands this markup to
-// win.document.write(), which executes scripts, so an unescaped name containing
-// markup would run: a member with edit rights on Contacts could store a payload
-// that fires when the owner prints an invoice. Escaping at the boundary is the
-// fix; nothing here should ever interpolate raw.
-function esc(value: unknown): string {
-  if (value == null) return "";
-  return String(value)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
 
 export function buildDocumentHTML(doc: DocForRender, business: BusinessProfile, kind: DocKind): string {
   const isInvoice = kind === "invoice";
