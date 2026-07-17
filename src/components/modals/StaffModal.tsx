@@ -6,7 +6,7 @@ import { Field } from "@/components/ui/Field";
 import { Input } from "@/components/ui/Input";
 import { Chips } from "@/components/ui/Chips";
 import { SaveBtn } from "@/components/ui/SaveBtn";
-import { useCreateStaffMember } from "@/lib/supabase/hooks/useStaffRegister";
+import { useCreateStaffMember, useUpdateStaffMember, type StaffMember } from "@/lib/supabase/hooks/useStaffRegister";
 import { useTaxRates } from "@/lib/taxRates";
 import { fmt, todayStr } from "@/lib/format";
 
@@ -19,23 +19,43 @@ const EMPLOYMENT_TYPES = [
 
 type EmploymentType = (typeof EMPLOYMENT_TYPES)[number]["value"];
 
-export function StaffModal({ onClose }: { onClose: () => void }) {
-  const createStaffMember = useCreateStaffMember();
-  const { PAYE_MONTHLY_THRESHOLD, calcUIF } = useTaxRates();
+/** The one rate field, read back out of whichever column the pay type uses. */
+const rateOf = (s: StaffMember) => {
+  const r = s.pay_type === "Hourly" ? s.hourly_rate : s.pay_type === "Monthly" ? s.monthly_salary : s.daily_wage;
+  return r ? String(r) : "";
+};
 
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [employmentType, setEmploymentType] = useState<EmploymentType>("permanent");
-  const [payType, setPayType] = useState("Daily");
-  const [rate, setRate] = useState("");
-  const [startDate, setStartDate] = useState(todayStr());
-  const [contractEndDate, setContractEndDate] = useState("");
-  const [tradingName, setTradingName] = useState("");
-  const [idNumber, setIdNumber] = useState("");
-  const [taxNumber, setTaxNumber] = useState("");
-  const [contactNumber, setContactNumber] = useState("");
-  const [daysPerWeek, setDaysPerWeek] = useState("5");
-  const [hoursPerDay, setHoursPerDay] = useState("8");
+/**
+ * Add a staff member, or edit one.
+ *
+ * Editing is safe in a way that isn't obvious: pay_runs snapshots worker_name,
+ * base_rate and every computed figure at the moment it is created, so it never
+ * reads back through here. Changing a wage moves future pay runs and leaves
+ * every past one exactly as it was paid — which is the only correct answer, and
+ * why this needs no effective-date table.
+ *
+ * Without it the only way to give someone a raise was to delete them and type
+ * them in again, losing their start date, ID and tax reference in the process.
+ */
+export function StaffModal({ staff, onClose }: { staff?: StaffMember; onClose: () => void }) {
+  const createStaffMember = useCreateStaffMember();
+  const updateStaffMember = useUpdateStaffMember();
+  const { PAYE_MONTHLY_THRESHOLD, calcUIF } = useTaxRates();
+  const isEdit = !!staff;
+
+  const [firstName, setFirstName] = useState(staff?.first_name ?? "");
+  const [lastName, setLastName] = useState(staff?.last_name ?? "");
+  const [employmentType, setEmploymentType] = useState<EmploymentType>((staff?.employment_type as EmploymentType) ?? "permanent");
+  const [payType, setPayType] = useState(staff?.pay_type ?? "Daily");
+  const [rate, setRate] = useState(staff ? rateOf(staff) : "");
+  const [startDate, setStartDate] = useState(staff?.start_date ?? todayStr());
+  const [contractEndDate, setContractEndDate] = useState(staff?.contract_end_date ?? "");
+  const [tradingName, setTradingName] = useState(staff?.trading_name ?? "");
+  const [idNumber, setIdNumber] = useState(staff?.id_number ?? "");
+  const [taxNumber, setTaxNumber] = useState(staff?.tax_number ?? "");
+  const [contactNumber, setContactNumber] = useState(staff?.contact_number ?? "");
+  const [daysPerWeek, setDaysPerWeek] = useState(String(staff?.days_per_week ?? 5));
+  const [hoursPerDay, setHoursPerDay] = useState(String(staff?.hours_per_day ?? 8));
   const [showExtras, setShowExtras] = useState(false);
   const [error, setError] = useState("");
 
@@ -52,41 +72,68 @@ export function StaffModal({ onClose }: { onClose: () => void }) {
   const uifPreview = calcUIF(estimatedMonthly);
   const payeApplies = estimatedMonthly > PAYE_MONTHLY_THRESHOLD;
 
+  // The one edit the app can't make safe on its own. Past pay runs keep their
+  // snapshot either way, so nothing already paid moves — but reclassifying
+  // someone between employee and contractor part-way through a tax year changes
+  // what SARS is owed and expects, and that conversation is with SARS, not us.
+  const reclassifying = isEdit && staff.is_contractor !== isContractor;
+
+  const saving = createStaffMember.isPending || updateStaffMember.isPending;
+
   const handleSave = () => {
     if (!firstName.trim() || !lastName.trim() || !rate) {
       setError("Enter a first name, last name and rate.");
       return;
     }
     setError("");
-    createStaffMember.mutate(
-      {
-        full_name: `${firstName.trim()} ${lastName.trim()}`,
-        first_name: firstName.trim(),
-        last_name: lastName.trim(),
-        employment_type: employmentType,
-        is_contractor: isContractor,
-        trading_name: isContractor ? tradingName.trim() || null : null,
-        id_number: idNumber || null,
-        tax_number: !isContractor ? taxNumber || null : null,
-        contact_number: contactNumber || null,
-        start_date: !isContractor ? startDate : null,
-        contract_end_date: employmentType === "fixed_term" ? contractEndDate || null : null,
-        pay_type: payType,
-        daily_wage: payType === "Daily" ? rateNum : 0,
-        hourly_rate: payType === "Hourly" ? rateNum : 0,
-        monthly_salary: payType === "Monthly" ? rateNum : 0,
-        days_per_week: parseFloat(daysPerWeek || "5"),
-        hours_per_day: parseFloat(hoursPerDay || "8"),
-      },
-      {
-        onSuccess: () => onClose(),
-        onError: (e) => setError(e instanceof Error ? e.message : "Couldn't save."),
-      }
-    );
+
+    const values = {
+      full_name: `${firstName.trim()} ${lastName.trim()}`,
+      first_name: firstName.trim(),
+      last_name: lastName.trim(),
+      employment_type: employmentType,
+      is_contractor: isContractor,
+      trading_name: isContractor ? tradingName.trim() || null : null,
+      id_number: idNumber || null,
+      tax_number: !isContractor ? taxNumber || null : null,
+      contact_number: contactNumber || null,
+      start_date: !isContractor ? startDate : null,
+      contract_end_date: employmentType === "fixed_term" ? contractEndDate || null : null,
+      pay_type: payType,
+      daily_wage: payType === "Daily" ? rateNum : 0,
+      hourly_rate: payType === "Hourly" ? rateNum : 0,
+      monthly_salary: payType === "Monthly" ? rateNum : 0,
+      days_per_week: parseFloat(daysPerWeek || "5"),
+      hours_per_day: parseFloat(hoursPerDay || "8"),
+    };
+
+    const handlers = {
+      onSuccess: () => onClose(),
+      onError: (e: unknown) => setError(e instanceof Error ? e.message : "Couldn't save."),
+    };
+
+    if (isEdit) updateStaffMember.mutate({ id: staff.id, changes: values }, handlers);
+    else createStaffMember.mutate(values, handlers);
   };
 
   return (
-    <Modal title="Add Staff Member" onClose={onClose}>
+    <Modal title={isEdit ? `Edit ${staff.first_name || "staff member"}` : "Add Staff Member"} onClose={onClose}>
+      {isEdit && (
+        <div style={{ background: "#F0F9FF", border: "1.5px solid #BAE6FD", borderRadius: 12, padding: "10px 14px", marginBottom: 14, fontSize: 11, color: "#0369A1", lineHeight: 1.6 }}>
+          Changes apply to pay runs from here on. Everything you have already paid keeps the rate it was paid at.
+        </div>
+      )}
+
+      {reclassifying && (
+        <div style={{ background: "#fff7ed", border: "1.5px solid #fed7aa", borderRadius: 12, padding: "12px 14px", marginBottom: 14, fontSize: 12, color: "#92400e", lineHeight: 1.6 }}>
+          <span style={{ fontWeight: 700 }}>⚠️ You&apos;re changing {staff.first_name || "this person"} from a{staff.is_contractor ? " contractor to an employee" : "n employee to a contractor"}.</span>{" "}
+          {staff.is_contractor
+            ? "From now on their pay will have PAYE and UIF deducted, and leave will accrue."
+            : "From now on there will be no PAYE, no UIF and no leave — they invoice you and handle their own tax."}{" "}
+          Past pay runs are untouched. Mid-tax-year changes affect your EMP201 and their IRP5, so check with your accountant or SARS first.
+        </div>
+      )}
+
       <div style={{ marginBottom: 16 }}>
         <div style={{ fontSize: 12, fontWeight: 700, color: "#374151", marginBottom: 8 }}>What type of worker is this?</div>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -232,10 +279,10 @@ export function StaffModal({ onClose }: { onClose: () => void }) {
 
       {error && <p style={{ color: "#dc2626", fontSize: 13, marginBottom: 12 }}>{error}</p>}
       <SaveBtn
-        label={createStaffMember.isPending ? "Saving..." : isContractor ? "Save Contractor" : "Save Employee"}
+        label={saving ? "Saving..." : isEdit ? "Save changes" : isContractor ? "Save Contractor" : "Save Employee"}
         icon="👤"
         onClick={handleSave}
-        disabled={createStaffMember.isPending}
+        disabled={saving}
       />
     </Modal>
   );

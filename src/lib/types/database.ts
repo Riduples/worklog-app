@@ -1616,27 +1616,6 @@ export type Database = {
           },
         ]
       }
-      user_profiles: {
-        Row: {
-          created_at: string | null
-          id: string
-          phone: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          id: string
-          phone?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          phone?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
       worker_leave: {
         Row: {
           business_id: string

@@ -1,36 +1,58 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Worklog
 
-## Getting Started
+Bookkeeping for South African small and informal businesses — tradespeople, freelancers, salons, spaza shops.
 
-First, run the development server:
+A mobile-first PWA (Next.js App Router + TypeScript) on Supabase, deployed to Vercel. Phones are the point; the desktop layout is an enhancement on top of it, not the other way round.
+
+## Getting started
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev          # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+You need a `.env.local` before it will do anything. Copy `.env.example` and fill it in:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Variable | What it's for |
+|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key — safe in the browser; RLS is the boundary |
+| `ANTHROPIC_API_KEY` | Quick Log, the help assistant, bank-statement parsing. Server-only — never `NEXT_PUBLIC_*` |
+| `PUPPETEER_EXECUTABLE_PATH` | Local Chrome, for PDF rendering. Vercel uses `@sparticuz/chromium` instead |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+`.env.local` is gitignored and must stay that way.
 
-## Learn More
+## Checks
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm run lint         # must exit 0
+npx tsc --noEmit     # must be silent
+npm test             # vitest
+npm run build
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+All four are expected to pass. Lint has no allowed baseline — if it reports anything, that's a regression.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+The test suite runs at `Africa/Johannesburg` (set in `vitest.config.ts`). That's deliberate: it's the only timezone the app is used in, and a whole class of date bug here is invisible at UTC. Don't "fix" it by removing the setting.
 
-## Deploy on Vercel
+## How it fits together
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- **`src/app/(app)/`** — the app, behind auth. `proxy.ts` redirects anyone unauthenticated to `/login`.
+- **`src/app/(auth)/`** — login and signup.
+- **`src/app/api/`** — four routes: `quick-log`, `help-assistant`, `parse-statement` (all Anthropic) and `render-pdf` (Chromium). All rate-limited per user, per hour.
+- **`src/components/`** — one view per tool, plus modals. Styling is inline, ported from the prototype; only layout that needs a media query lives in `globals.css`, because a style attribute can't hold one.
+- **`src/lib/`** — the money and tax rules, and the Supabase hooks. Anything arithmetic belongs here where it can be tested.
+- **`supabase/migrations/`** — every schema change, in order. Applied straight to production; there is no staging.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Things worth knowing before you change something
+
+- **RLS is the security boundary**, not the UI. `useToolAccess` and `useToolGate` only decide what's worth showing; the database decides what's allowed. Never treat a UI check as a control.
+- **VAT runs in two directions.** An invoice's `invoice_amount` is ex-VAT and VAT is added on top; cash `income.amount` is gross and VAT is extracted from within it. This is not a bug — see `src/lib/taxRates.ts`.
+- **`balance_due` is ex-VAT and goes to zero when paid, while `vat_amount` stays.** Always use `balanceInclVat()`; adding the two by hand says a paid invoice still owes you the VAT.
+- **Dates are calendar days, not instants.** Use `toLocalIsoDate()`. `toISOString()` converts to UTC first and names the wrong day at UTC+2.
+- **Money is `NUMERIC(12,2)`** — a deliberate deviation from the spec's BIGINT-cents.
+- **Green is reserved for WhatsApp.** Navy `#0C4A6E` is primary, sky-blue means success.
+
+## Deployment
+
+Push to `main`; Vercel builds and deploys. Env vars are configured in Vercel, not here.

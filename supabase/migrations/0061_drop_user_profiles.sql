@@ -1,0 +1,31 @@
+-- Drop user_profiles and the trigger that fed it.
+--
+-- It was created in 0001 from the schema doc and has never been read. Verified
+-- before dropping, not assumed:
+--
+--   * no reference anywhere in src/ — get_business_members joins auth.users for
+--     the email, so even the Team screen doesn't want it
+--   * the only database object that touches it is handle_new_user(), which
+--     writes and never reads
+--   * 6 rows, one per user, and its only payload column is `phone`
+--   * 0 of those 6 have a phone
+--
+-- That last pair is the whole story. The table exists to hold a phone number,
+-- and `phone` is always NULL because it comes from new.phone on auth.users and
+-- v1 auth is email/password plus magic link — phone OTP was deferred, it needs
+-- a paid SMS provider. So a trigger has been firing on every signup since day
+-- one to store a NULL that nothing ever asks for.
+--
+-- Nor is a phone wanted here later: v65 puts the WhatsApp number on the
+-- BUSINESS ("WhatsApp number for logging" in Business Details), not the user.
+--
+-- The argument for keeping it was that it's the natural home for a display name
+-- or an avatar. True, and neither is being built: the only thing it would change
+-- today is Team showing "Sarah Dlamini" instead of an email that already
+-- identifies her, at the cost of a signup field in an app whose whole design is
+-- about not asking for one. Bringing it back is this migration in reverse.
+--
+-- Nothing is lost. Six rows of (uuid, NULL, timestamp, timestamp).
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+DROP FUNCTION IF EXISTS public.handle_new_user();
+DROP TABLE IF EXISTS public.user_profiles;

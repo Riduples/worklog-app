@@ -7,6 +7,7 @@ import { useWorkerLeave } from "@/lib/supabase/hooks/useWorkerLeave";
 import { usePayRuns } from "@/lib/supabase/hooks/usePayRuns";
 import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 import { useCurrentMember } from "@/lib/supabase/hooks/useCurrentMember";
+import { useToolAccess } from "@/lib/supabase/hooks/useToolAccess";
 import { StaffModal } from "@/components/modals/StaffModal";
 import { UpgradeModal } from "@/components/modals/UpgradeModal";
 import { Modal } from "@/components/ui/Modal";
@@ -22,7 +23,7 @@ const EMPLOYMENT_BADGE: Record<string, { label: string; bg: string; fg: string; 
   casual: { label: "🔁 Casual", bg: "#F0F9FF", fg: "#0369A1", border: "#BAE6FD" },
 };
 
-function StaffDetailModal({ staff, onClose }: { staff: StaffMember; onClose: () => void }) {
+function StaffDetailModal({ staff, onClose, onEdit }: { staff: StaffMember; onClose: () => void; onEdit: (() => void) | null }) {
   const { data: loans } = useWorkerLoans();
   const { data: leave } = useWorkerLeave();
   const { data: payRuns } = usePayRuns();
@@ -137,6 +138,33 @@ function StaffDetailModal({ staff, onClose }: { staff: StaffMember; onClose: () 
           ))}
         </>
       )}
+
+      {/* The way to give someone a raise. Until now the register was write-once,
+          so the only route was deleting them and typing them in again — losing
+          their start date, ID and tax reference, and with them the leave accrual
+          that start date drives.
+          Absent for a view-only member: RLS would refuse the update anyway
+          (0047 wants 'edit'), and a button that fails on save is worse than no
+          button. */}
+      {onEdit && (
+      <button
+        onClick={onEdit}
+        style={{
+          width: "100%",
+          marginTop: 16,
+          background: "#fff",
+          border: "1.5px solid #BAE6FD",
+          borderRadius: 12,
+          padding: "12px",
+          fontSize: 13,
+          fontWeight: 700,
+          color: "#0C4A6E",
+          cursor: "pointer",
+        }}
+      >
+        ✏️ Edit details
+      </button>
+      )}
     </Modal>
   );
 }
@@ -148,9 +176,13 @@ export function StaffView() {
   const { data: payRuns } = usePayRuns();
   const { data: business } = useBusinessProfile();
   const { data: currentMember } = useCurrentMember();
+  // Keeps the UI honest about what RLS will accept — the same question every
+  // other view asks before offering a write.
+  const access = useToolAccess("staffregister");
   const [showAdd, setShowAdd] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [selected, setSelected] = useState<StaffMember | null>(null);
+  const [editing, setEditing] = useState<StaffMember | null>(null);
 
   const isOwner = (currentMember ?? { role: "owner" }).role === "owner";
   const plan = (business?.plan ?? "shoebox") as Plan;
@@ -256,7 +288,25 @@ export function StaffView() {
       {showUpgrade && business && (
         <UpgradeModal feature="staffregister" currentPlan={plan} isOwner={isOwner} onClose={() => setShowUpgrade(false)} />
       )}
-      {selected && <StaffDetailModal staff={selected} onClose={() => setSelected(null)} />}
+      {selected && (
+        <StaffDetailModal
+          staff={selected}
+          onClose={() => setSelected(null)}
+          // Swap detail for edit rather than stacking one modal on another.
+          // Null for a view-only member, so the button isn't there at all.
+          onEdit={
+            access.canEdit
+              ? () => {
+                  setEditing(selected);
+                  setSelected(null);
+                }
+              : null
+          }
+        />
+      )}
+      {/* Keyed on the row's id so the form remounts — and therefore re-reads its
+          initial state — if a different person is opened without unmounting. */}
+      {editing && <StaffModal key={editing.id} staff={editing} onClose={() => setEditing(null)} />}
     </div>
   );
 }
