@@ -53,9 +53,9 @@ export function ComplianceView() {
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8, marginBottom: 14 }}>
         {[
-          { label: "WORKLOG tools ready", val: count("green"), s: STATUS_STYLE.green },
-          { label: "Action needed", val: count("amber"), s: STATUS_STYLE.amber },
-          { label: "Requires registration", val: count("red"), s: STATUS_STYLE.red },
+          { label: "WORKLOG tools ready", val: count("ready"), s: STATUS_STYLE.ready },
+          { label: "Action needed", val: count("action"), s: STATUS_STYLE.action },
+          { label: "Requires registration", val: count("register"), s: STATUS_STYLE.register },
         ].map((c) => (
           <div key={c.label} style={{ background: c.s.bg, border: `1.5px solid ${c.s.border}`, borderRadius: 10, padding: "10px 12px", textAlign: "center" }}>
             <div style={{ fontSize: 22, fontWeight: 800, color: c.s.color }}>{c.val}</div>

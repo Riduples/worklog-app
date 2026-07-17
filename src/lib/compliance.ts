@@ -3,7 +3,11 @@
 // tax_filings recency, rather than the prototype's registration-status-only
 // checks. Reference URLs and penalty notes are the prototype's copy verbatim.
 
-export type ComplianceStatus = "green" | "amber" | "red" | "blue" | "grey";
+// Named for what they mean, not what they look like. These were once "green" /
+// "amber" / "red" / "blue" / "grey", which stopped being true when the app went
+// navy: "green" rendered sky-blue and sat next to a separate "blue". The names
+// below are the labels the dashboard already puts on screen.
+export type ComplianceStatus = "ready" | "action" | "register" | "elsewhere" | "na";
 
 export type Obligation = {
   group: string;
@@ -21,11 +25,11 @@ export type Obligation = {
 };
 
 export const STATUS_STYLE: Record<ComplianceStatus, { color: string; bg: string; border: string; dot: string }> = {
-  green: { color: "#0369A1", bg: "#F0F9FF", border: "#BAE6FD", dot: "#0EA5E9" },
-  amber: { color: "#92400e", bg: "#fffbeb", border: "#fde68a", dot: "#d97706" },
-  red: { color: "#9a3412", bg: "#fff7ed", border: "#fed7aa", dot: "#ea580c" },
-  blue: { color: "#1e40af", bg: "#eff6ff", border: "#bfdbfe", dot: "#2a78d6" },
-  grey: { color: "#374151", bg: "#f8fafc", border: "#e2e8f0", dot: "#94a3b8" },
+  ready: { color: "#0369A1", bg: "#F0F9FF", border: "#BAE6FD", dot: "#0EA5E9" },
+  action: { color: "#92400e", bg: "#fffbeb", border: "#fde68a", dot: "#d97706" },
+  register: { color: "#9a3412", bg: "#fff7ed", border: "#fed7aa", dot: "#ea580c" },
+  elsewhere: { color: "#1e40af", bg: "#eff6ff", border: "#bfdbfe", dot: "#2a78d6" },
+  na: { color: "#374151", bg: "#f8fafc", border: "#e2e8f0", dot: "#94a3b8" },
 };
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -66,7 +70,7 @@ export function buildObligations(ctx: ComplianceContext): Obligation[] {
       title: "VAT201 Return",
       freq: "Monthly or bi-monthly",
       due: ctx.hasVat ? vatDue : "Not registered",
-      status: ctx.hasVat ? (isRecent(ctx.lastVat201Date, 35) ? "green" : "amber") : needsVat ? "red" : "grey",
+      status: ctx.hasVat ? (isRecent(ctx.lastVat201Date, 35) ? "ready" : "action") : needsVat ? "register" : "na",
       where: ctx.hasVat ? "worklog" : "external",
       href: "/vat201",
       note: ctx.hasVat
@@ -84,7 +88,7 @@ export function buildObligations(ctx: ComplianceContext): Obligation[] {
       title: "EMP201 Payroll Return",
       freq: "Monthly by 7th",
       due: ctx.hasEmployees ? emp201Due : "No employees",
-      status: ctx.hasEmployees && ctx.hasPaye ? (isRecent(ctx.lastEmp201Date, 35) ? "green" : "amber") : ctx.hasEmployees ? "amber" : "grey",
+      status: ctx.hasEmployees && ctx.hasPaye ? (isRecent(ctx.lastEmp201Date, 35) ? "ready" : "action") : ctx.hasEmployees ? "action" : "na",
       where: ctx.hasEmployees ? "worklog" : "external",
       href: "/emp201",
       note: ctx.hasEmployees
@@ -100,7 +104,7 @@ export function buildObligations(ctx: ComplianceContext): Obligation[] {
       title: "Provisional Tax (IRP6)",
       freq: "Twice yearly — Aug and Feb",
       due: provDue,
-      status: "green",
+      status: "ready",
       where: "worklog",
       href: "/provtax",
       note: "Period 1 (P1) due 31 August — based on first 6 months income. Period 2 (P2) due last day of February — full year. Penalty: 20% if estimate is more than 20% below actual tax. WORKLOG estimates your amount due — submit the actual return via eFiling or your accountant.",
@@ -113,7 +117,7 @@ export function buildObligations(ctx: ComplianceContext): Obligation[] {
       title: "Annual Income Tax (ITR12 / ITR14)",
       freq: "Once yearly",
       due: `Last day of Feb ${year + 1}`,
-      status: "blue",
+      status: "elsewhere",
       where: "accountant",
       note: "Filed via eFiling or your tax practitioner. ITR12 for individuals and sole proprietors. ITR14 for companies. Requires proper treatment of deductions, depreciation (wear and tear), home office claims, and capital gains. Your WORKLOG P&L and expense records are the source data — export them for your accountant.",
       cta: "Open eFiling",
@@ -126,7 +130,7 @@ export function buildObligations(ctx: ComplianceContext): Obligation[] {
       title: "UIF Monthly Declaration (UIF-2)",
       freq: "Monthly by 7th",
       due: ctx.hasEmployees ? emp201Due : "No employees",
-      status: ctx.hasEmployees ? "amber" : "grey",
+      status: ctx.hasEmployees ? "action" : "na",
       where: "external",
       note: ctx.hasEmployees
         ? "Declare each employee and their UIF contributions monthly via uFiling (ufiling.labour.gov.za). The same deadline as EMP201 — 7th of the month. A UIF Compliance Certificate is required for any government tender. Non-compliance means your employees have no UIF cover when they need it — and you remain personally liable for those contributions."
@@ -141,7 +145,7 @@ export function buildObligations(ctx: ComplianceContext): Obligation[] {
       title: "COIDA Return of Earnings (W.Cl.2)",
       freq: "Annually — 31 March",
       due: `31 Mar ${year + 1}`,
-      status: ctx.hasEmployees ? "amber" : "grey",
+      status: ctx.hasEmployees ? "action" : "na",
       where: "external",
       note: ctx.hasEmployees
         ? "Declare your annual payroll to the Compensation Fund every March. Your WORKLOG payroll records have the figures you need. File on the CompEasy portal (workmanscomp.co.za). Without a valid Letter of Good Standing: you are personally liable for all workplace injury costs, and you cannot win any government or private-sector tender."
@@ -156,7 +160,7 @@ export function buildObligations(ctx: ComplianceContext): Obligation[] {
       title: "COIDA Letter of Good Standing",
       freq: "Renewed annually",
       due: "Renew after Return of Earnings filed",
-      status: ctx.hasEmployees ? "amber" : "grey",
+      status: ctx.hasEmployees ? "action" : "na",
       where: "external",
       note: "Issued by the Compensation Fund after your Return of Earnings is filed and assessment paid. Required for government tenders, construction sites, and most principal contractor agreements. Download from CompEasy once issued. Keep a copy — inspectors check this on site visits.",
       cta: "Go to CompEasy",
@@ -169,7 +173,7 @@ export function buildObligations(ctx: ComplianceContext): Obligation[] {
       title: "CIPC Annual Return",
       freq: "Annually — anniversary of registration",
       due: "Annual — check BizPortal",
-      status: "blue",
+      status: "elsewhere",
       where: "external",
       note: "For registered companies (Pty Ltd, NPC, CC) only. Filed and fee paid on BizPortal (bizportal.gov.za). Fee is turnover-based — R100–R3,000 depending on size. A deregistered company cannot sign contracts or open bank accounts. Sole traders and partnerships do not need this.",
       cta: "Go to BizPortal",
@@ -182,7 +186,7 @@ export function buildObligations(ctx: ComplianceContext): Obligation[] {
       title: "Beneficial Ownership Declaration",
       freq: "Annually (with Annual Return)",
       due: "Annual — check BizPortal",
-      status: "blue",
+      status: "elsewhere",
       where: "external",
       note: "Declared on BizPortal alongside the Annual Return. Lists all individuals who ultimately own or control 5% or more of the company. Required since April 2024. Has been blocking Annual Return filings when outstanding — resolve on BizPortal before your Annual Return.",
       cta: "Go to BizPortal",
@@ -195,7 +199,7 @@ export function buildObligations(ctx: ComplianceContext): Obligation[] {
       title: "Information Officer Registration",
       freq: "Once — then maintain",
       due: "Register once — check status",
-      status: "amber",
+      status: "action",
       where: "external",
       note: "Every business that handles personal data (client names, emails, phone numbers — which every WORKLOG user does) must register an Information Officer with the Information Regulator. By default this is the owner/CEO. Register on the Information Regulator portal (justice.gov.za/inforeg). Fines up to R10 million. One-off task: takes about 30 minutes.",
       cta: "Go to InfoReg",
