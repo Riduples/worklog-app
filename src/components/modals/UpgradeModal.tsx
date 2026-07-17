@@ -5,16 +5,18 @@ import { Modal } from "@/components/ui/Modal";
 import { PLAN_FEATURES, TIERS, UPGRADE_DETAILS, upgradeTargetPlan, type Plan } from "@/lib/tiers";
 import type { ToolId } from "@/lib/permissions";
 
+// No businessId. This modal used to change the plan itself, so it needed one.
+// Migration 0054 made a plan something only a verified payment can grant, so it
+// stopped writing anything and started linking to checkout — and the prop has
+// been carried, and passed by five call sites, ever since without being read.
 export function UpgradeModal({
   feature,
   currentPlan,
-  businessId,
   isOwner,
   onClose,
 }: {
   feature: ToolId | "team";
   currentPlan: Plan;
-  businessId: string;
   isOwner: boolean;
   onClose: () => void;
 }) {

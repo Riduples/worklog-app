@@ -179,7 +179,7 @@ export function TeamView() {
 
       {inviteOpen && <InviteModal onClose={() => setInviteOpen(false)} />}
       {upgradeOpen && business && (
-        <UpgradeModal feature="team" currentPlan={plan} businessId={business.id} isOwner={isOwner} onClose={() => setUpgradeOpen(false)} />
+        <UpgradeModal feature="team" currentPlan={plan} isOwner={isOwner} onClose={() => setUpgradeOpen(false)} />
       )}
       {permissionsFor && (
         <PermissionsEditor

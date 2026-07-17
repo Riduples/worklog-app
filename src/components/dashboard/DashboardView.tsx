@@ -390,7 +390,6 @@ export function DashboardView({ businessName }: { businessName: string }) {
         <UpgradeModal
           feature={upgradeFeature}
           currentPlan={plan}
-          businessId={business.id}
           isOwner={isOwner}
           onClose={() => setUpgradeFeature(null)}
         />

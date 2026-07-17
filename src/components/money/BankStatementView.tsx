@@ -21,6 +21,19 @@ type ParsedTxn = {
 
 type Step = "consent" | "upload" | "processing" | "review" | "done";
 
+// Out here, not inside the component. Declared during render it was a new
+// function on every pass, so React saw a different component type each time and
+// threw the subtree away rather than updating it. Harmless for a link and a
+// heading — until someone puts a field in it and the focus starts jumping out
+// mid-keystroke. It closes over nothing, so there was never a reason for it to
+// be in there.
+const Header = () => (
+  <>
+    <BackLink />
+    <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 18px" }}>Import Bank Statement</h1>
+  </>
+);
+
 export function BankStatementView() {
   const createIncome = useCreateIncome();
   const createExpense = useCreateExpense();
@@ -117,13 +130,6 @@ export function BankStatementView() {
   const totalIncome = transactions.reduce((s, t, i) => s + (selected[i] && t.type === "income" ? t.amount : 0), 0);
   const totalExpense = transactions.reduce((s, t, i) => s + (selected[i] && t.type === "expense" ? t.amount : 0), 0);
   const saving = createIncome.isPending || createExpense.isPending;
-
-  const Header = () => (
-    <>
-      <BackLink />
-      <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 18px" }}>Import Bank Statement</h1>
-    </>
-  );
 
   // ── CONSENT ──
   if (step === "consent") {

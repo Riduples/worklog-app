@@ -155,7 +155,7 @@ export function TaxView() {
 
       {showDetails && business && <BusinessTaxDetailsModal business={business} onClose={() => setShowDetails(false)} />}
       {upgradeFeature && business && (
-        <UpgradeModal feature={upgradeFeature} currentPlan={plan} businessId={business.id} isOwner={isOwner} onClose={() => setUpgradeFeature(null)} />
+        <UpgradeModal feature={upgradeFeature} currentPlan={plan} isOwner={isOwner} onClose={() => setUpgradeFeature(null)} />
       )}
     </div>
   );

@@ -254,7 +254,7 @@ export function StaffView() {
 
       {showAdd && <StaffModal onClose={() => setShowAdd(false)} />}
       {showUpgrade && business && (
-        <UpgradeModal feature="staffregister" currentPlan={plan} businessId={business.id} isOwner={isOwner} onClose={() => setShowUpgrade(false)} />
+        <UpgradeModal feature="staffregister" currentPlan={plan} isOwner={isOwner} onClose={() => setShowUpgrade(false)} />
       )}
       {selected && <StaffDetailModal staff={selected} onClose={() => setSelected(null)} />}
     </div>

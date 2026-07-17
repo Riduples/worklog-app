@@ -49,6 +49,19 @@ function NextBtn({ label, onClick, disabled }: { label?: string; onClick: () => 
   );
 }
 
+// Out here, not inside PayRunView. Declared during render it was a new function
+// every pass, so React discarded and rebuilt the header on each step change
+// rather than leaving it alone. It closes over nothing — there was no reason for
+// it to live inside.
+const Header = () => (
+  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
+    <div>
+      <BackLink />
+      <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 0" }}>Pay Run</h1>
+    </div>
+  </div>
+);
+
 // Kept as a local wrapper only to hold the wizard's own spacing — the step bar
 // above it and the step's content below both need more room than the tool pages
 // leave. The control itself is the shared one.
@@ -239,15 +252,6 @@ export function PayRunView() {
         valid_until: null,
       }
     : null;
-
-  const Header = () => (
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
-      <div>
-        <BackLink />
-        <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 0" }}>Pay Run</h1>
-      </div>
-    </div>
-  );
 
   // ── STEP 1: EMPLOYEE ──
   if (step === 1) {
@@ -619,7 +623,7 @@ export function PayRunView() {
       )}
 
       {showUpgrade && business && (
-        <UpgradeModal feature="payrun" currentPlan={plan} businessId={business.id} isOwner={member.role === "owner"} onClose={() => setShowUpgrade(false)} />
+        <UpgradeModal feature="payrun" currentPlan={plan} isOwner={member.role === "owner"} onClose={() => setShowUpgrade(false)} />
       )}
     </div>
   );

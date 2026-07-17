@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useTimeEntries, useUpdateTimeEntry, type TimeEntry } from "@/lib/supabase/hooks/useTimeEntries";
+import { useTimeEntries, useUpdateTimeEntry } from "@/lib/supabase/hooks/useTimeEntries";
 import { TimeModal } from "@/components/modals/TimeModal";
 import { fmt } from "@/lib/format";
 import { ReadOnlyNotice } from "@/components/ui/ReadOnlyNotice";

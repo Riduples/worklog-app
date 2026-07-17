@@ -46,7 +46,6 @@ export function InvoiceModal({ sourceQuote, onClose }: { sourceQuote?: Quote; on
   const subtotal = items.reduce((s, it) => s + Number(it.labour || 0) + Number(it.materials || 0), 0);
   const isVatRegistered = !!business?.vat_number;
   const vatAmount = isVatRegistered ? subtotal * VAT_RATE : 0;
-  const totalInclVat = subtotal + vatAmount;
   const depositNum = parseFloat(depositReceived) || 0;
   const balanceDue = subtotal - depositNum;
 
