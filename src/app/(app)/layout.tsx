@@ -1,19 +1,16 @@
 import { QueryProvider } from "@/components/providers/QueryProvider";
+import { Sidebar } from "@/components/shell/Sidebar";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <QueryProvider>
-      {/* The typeface is set once on body in globals.css. Repeating it here was
-          how the app came to ask for Inter in three files and ship it in none. */}
-      <div
-        style={{
-          minHeight: "100vh",
-          background: "#F0F9FF",
-          maxWidth: 480,
-          margin: "0 auto",
-        }}
-      >
-        {children}
+      {/* The shape of this lives in globals.css, because a style attribute
+          can't hold a media query. On a phone it stays what it always was: one
+          480px column, no sidebar. The typeface is set once on body, for the
+          same reason it isn't repeated here. */}
+      <div className="app-shell">
+        <Sidebar />
+        <div className="app-content">{children}</div>
       </div>
     </QueryProvider>
   );

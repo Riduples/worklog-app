@@ -13,20 +13,11 @@ export function LogoutButton() {
     router.refresh();
   };
 
+  // Styled from globals.css alongside the other header buttons: it sits on navy
+  // on a phone and on sky on a desktop, and a style attribute can't hold the
+  // media query that tells those apart.
   return (
-    <button
-      onClick={handleLogout}
-      style={{
-        background: "rgba(255,255,255,0.12)",
-        border: "none",
-        borderRadius: 10,
-        padding: "8px 14px",
-        color: "#E0F2FE",
-        fontSize: 12,
-        fontWeight: 700,
-        cursor: "pointer",
-      }}
-    >
+    <button onClick={handleLogout} className="dash-logout">
       Log out
     </button>
   );

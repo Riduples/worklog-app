@@ -6,8 +6,6 @@ import { useSearchParams } from "next/navigation";
 import { useIncome } from "@/lib/supabase/hooks/useIncome";
 import { useExpenses } from "@/lib/supabase/hooks/useExpenses";
 import { useStockItems } from "@/lib/supabase/hooks/useStock";
-import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
-import { useCurrentMember } from "@/lib/supabase/hooks/useCurrentMember";
 import { IncomeModal } from "@/components/modals/IncomeModal";
 import { ExpenseModal } from "@/components/modals/ExpenseModal";
 import { QuickLogModal } from "@/components/modals/QuickLogModal";
@@ -18,9 +16,8 @@ import { LogoutButton } from "@/components/auth/LogoutButton";
 import { ToolTile } from "@/components/dashboard/ToolTile";
 import { fmt, greeting } from "@/lib/format";
 import { incomeNet } from "@/lib/taxRates";
-import { canSee, type ToolId } from "@/lib/permissions";
-import { coreToolsFor, isCoreTool } from "@/lib/businessTypes";
-import { isLocked, type Plan } from "@/lib/tiers";
+import { useToolGate } from "@/lib/useToolGate";
+import { type ToolId } from "@/lib/permissions";
 import type { Tables } from "@/lib/types/database";
 
 const isThisMonth = (dateStr: string) => {
@@ -33,8 +30,6 @@ export function DashboardView({ businessName }: { businessName: string }) {
   const { data: income } = useIncome();
   const { data: expenses } = useExpenses();
   const { data: stock } = useStockItems();
-  const { data: business } = useBusinessProfile();
-  const { data: currentMember } = useCurrentMember();
   const [modal, setModal] = useState<"income" | "expense" | "quicklog" | "help" | "business" | null>(null);
   // requirePlanAccess() bounces someone off a page their plan doesn't include
   // and lands them here with ?upgrade=<tool>. Without this they'd arrive at the
@@ -45,19 +40,9 @@ export function DashboardView({ businessName }: { businessName: string }) {
     (upgradeParam as ToolId | "team" | null) ?? null
   );
 
-  // Default to full access while the membership row is still loading, so the
-  // (overwhelmingly common) single-owner case never flashes hidden tiles.
-  const member = currentMember ?? { role: "owner", permissions: {} };
-  const plan = (business?.plan ?? "shoebox") as Plan;
-  const isOwner = member.role === "owner";
-
-  // Two independent filters, in the prototype's order: permission decides what
-  // you're ALLOWED to see, business type decides what's WORTH showing you.
-  // Type filtering hides rather than locks — a tool it removes is still fully
-  // reachable by its URL and by turning on "Show every tool".
-  const coreTools = coreToolsFor(business);
-  const gate = (toolId: ToolId) => canSee(member, toolId) && isCoreTool(coreTools, toolId);
-  const tierLocked = (toolId: ToolId) => isLocked(plan, toolId);
+  // Shared with the desktop sidebar, which has to reach exactly the same verdict
+  // about every tool — see useToolGate.
+  const { business, plan, isOwner, gate, tierLocked } = useToolGate();
 
   // Net of VAT, so PROFIT is what the business actually earned rather than
   // being inflated by VAT it is only holding for SARS — and IN − OUT still
@@ -80,47 +65,44 @@ export function DashboardView({ businessName }: { businessName: string }) {
 
   return (
     <div>
-      <div style={{ background: "#0C4A6E", padding: "20px 20px 20px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+      {/* On a phone this navy band IS the app's chrome. On a desktop the sidebar
+          is, so the band would run into it and the logo would appear twice — the
+          colours therefore live in globals.css, where a media query can reach
+          them. An inline style can't be overridden by a class. */}
+      <div className="dash-header">
+        <div className="dash-header-row">
           <div>
             {/* The light variant: the logotype's own wordmark is #15171A, which
                 lands at 1.90:1 on this navy — v65 ships that and it is close to
                 unreadable. White is 9.46:1. The mark keeps its dark field.
+                Hidden on desktop, where the sidebar already carries it.
                 eslint-disable: next/image would want the dimensions plumbed
                 through for a fixed-height brand asset that never reflows. */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/worklog-logo-light.png" alt="Worklog" style={{ height: 32, width: "auto", display: "block" }} />
-            <div style={{ fontSize: 11, color: "#E0F2FE", letterSpacing: 0.3, marginTop: 5 }}>
+            <img className="dash-logo" src="/worklog-logo-light.png" alt="Worklog" />
+            <div className="dash-greeting">
               {greeting()}, {businessName || "there"}
             </div>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             {isOwner && business && (
-              <button
-                onClick={() => setModal("business")}
-                aria-label="Business details"
-                style={{ background: "rgba(255,255,255,0.12)", border: "none", borderRadius: 10, width: 34, height: 34, fontSize: 15, cursor: "pointer", color: "#fff" }}
-              >
+              <button onClick={() => setModal("business")} aria-label="Business details" className="dash-icon-btn">
                 ⚙
               </button>
             )}
-            <button
-              onClick={() => setModal("help")}
-              aria-label="Help"
-              style={{ background: "rgba(255,255,255,0.12)", border: "none", borderRadius: 10, width: 34, height: 34, fontSize: 15, cursor: "pointer", color: "#fff" }}
-            >
+            <button onClick={() => setModal("help")} aria-label="Help" className="dash-icon-btn">
               ?
             </button>
             <LogoutButton />
           </div>
         </div>
-        <div style={{ display: "flex", gap: 10 }}>
+        <div className="dash-stats">
           {[
             { label: "IN", value: fmt(monthIncome), color: "#7DD3FC" },
             { label: "OUT", value: fmt(monthExpense), color: "#FCA5A5" },
             { label: "PROFIT", value: fmt(profit), color: profit >= 0 ? "#7DD3FC" : "#FCA5A5" },
           ].map((s) => (
-            <div key={s.label} style={{ flex: 1, background: "rgba(255,255,255,0.09)", borderRadius: 12, padding: "12px 10px" }}>
+            <div key={s.label} className="dash-stat">
               <div style={{ fontSize: 9, color: "rgba(255,255,255,0.5)", fontWeight: 700, letterSpacing: 1, marginBottom: 3 }}>
                 {s.label}
               </div>
@@ -134,8 +116,8 @@ export function DashboardView({ businessName }: { businessName: string }) {
         {(gate("income") || gate("expense")) && (
         <button
           onClick={() => setModal("quicklog")}
+          className="dash-quicklog"
           style={{
-            width: "100%",
             background: "#F59E0B",
             borderRadius: 18,
             padding: "18px 16px",
@@ -160,7 +142,7 @@ export function DashboardView({ businessName }: { businessName: string }) {
         </button>
         )}
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+        <div className="money-grid">
           {gate("income") && (
           <button
             onClick={() => setModal("income")}
@@ -200,7 +182,7 @@ export function DashboardView({ businessName }: { businessName: string }) {
           )}
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
+        <div className="tool-grid">
           {(gate("clients") || gate("suppliers")) && <ToolTile href="/contacts" icon="👥" label="Contacts" />}
           {gate("stock") && <ToolTile href="/stock" icon="📦" label="Stock" />}
           {gate("quote") && <ToolTile href="/quotes" icon="📋" label="Quotes" />}
@@ -256,7 +238,7 @@ export function DashboardView({ businessName }: { businessName: string }) {
             <div style={{ fontSize: 12, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 1, margin: "6px 0 10px" }}>
               Payroll
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
+            <div className="tool-grid">
               {gate("staffregister") && (
                 <ToolTile
                   href="/staff"
@@ -287,7 +269,7 @@ export function DashboardView({ businessName }: { businessName: string }) {
             <div style={{ fontSize: 12, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 1, margin: "6px 0 10px" }}>
               Reports
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
+            <div className="tool-grid">
               {gate("tax") && <ToolTile href="/tax" icon="🧾" label="Tax & SARS" />}
               {gate("profit") && <ToolTile href="/cashflow" icon="📊" label="Cash Flow" />}
               {gate("profitloss") && <ToolTile href="/profit-loss" icon="📈" label="Profit & Loss" />}

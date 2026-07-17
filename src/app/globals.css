@@ -17,3 +17,195 @@
 body {
   font-family: var(--font-inter), "Segoe UI", system-ui, sans-serif;
 }
+
+/**
+ * The desktop shell.
+ *
+ * Layout lives here rather than inline because a style attribute cannot hold a
+ * media query, and the alternative — measuring the viewport in JS — makes the
+ * server render a layout it has to guess at, then correct on hydration. That
+ * flash is worse than the problem. Everything that isn't width-dependent stays
+ * inline, as the rest of the app does.
+ *
+ * Mobile is the default and is untouched: one 480px column, no sidebar, exactly
+ * as before. Desktop is the enhancement, not the other way round.
+ */
+.app-shell {
+  min-height: 100vh;
+  background: #f0f9ff;
+}
+
+.app-content {
+  max-width: 480px;
+  margin: 0 auto;
+  min-width: 0; /* lets flex children shrink instead of forcing a page-wide scrollbar */
+}
+
+/* Hidden, not unrendered. Skipping the markup on a phone would mean measuring
+   the viewport in JS, which the server cannot do — it would render one layout
+   and correct it on hydration, and the flash costs more than the markup does.
+   So a phone carries the nav links in its DOM and never paints them. */
+.app-sidebar {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .app-shell {
+    display: flex;
+    align-items: flex-start;
+    /* Centre the whole shell, not just the content: 240 + 1200 on a 1920 screen
+       would otherwise sit hard left with 480px of dead sky to the right. */
+    max-width: 1440px;
+    margin: 0 auto;
+  }
+
+  .app-sidebar {
+    display: block;
+    width: 240px;
+    flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+
+  .app-content {
+    flex: 1;
+    max-width: 1200px;
+    margin: 0;
+  }
+}
+
+/**
+ * Tool tiles. Two across on a phone — the prototype's proportion, and about
+ * right for a thumb. On a desktop, two across is just a tall column of
+ * half-empty cards, so they fill the row instead.
+ */
+.tool-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+/* Money In / Money Out: the two primary actions, deliberately bigger. */
+.money-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+@media (min-width: 1024px) {
+  .tool-grid {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  }
+
+  /* Capped rather than stretched: these two are the things you came to do, and
+     a pair of 600px-wide buttons reads as a mistake, not as emphasis. */
+  .money-grid {
+    grid-template-columns: repeat(2, minmax(0, 260px));
+  }
+}
+
+/**
+ * The dashboard header.
+ *
+ * On a phone it is the app's chrome: a navy band carrying the logo, the
+ * greeting and the month's figures. On a desktop the sidebar is the chrome, and
+ * this band butts straight into it — same colour, no seam — while repeating a
+ * logo that is already six inches to the left. So on desktop the band steps
+ * back: the greeting becomes the page title in navy on sky, the logo goes (the
+ * sidebar has it), and only the figures keep the navy, as their own contained
+ * card rather than a full-bleed strip.
+ */
+.dash-header {
+  background: #0c4a6e;
+  padding: 20px;
+}
+.dash-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.dash-logo {
+  height: 32px;
+  width: auto;
+  display: block;
+}
+.dash-greeting {
+  font-size: 11px;
+  color: #e0f2fe;
+  letter-spacing: 0.3px;
+  margin-top: 5px;
+}
+.dash-icon-btn {
+  background: rgba(255, 255, 255, 0.12);
+  border: none;
+  border-radius: 10px;
+  width: 34px;
+  height: 34px;
+  font-size: 15px;
+  cursor: pointer;
+  color: #fff;
+}
+.dash-stats {
+  display: flex;
+  gap: 10px;
+}
+.dash-stat {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.09);
+  border-radius: 12px;
+  padding: 12px 10px;
+}
+.dash-logout {
+  background: rgba(255, 255, 255, 0.12);
+  border: none;
+  border-radius: 10px;
+  padding: 8px 14px;
+  color: #e0f2fe;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.dash-quicklog {
+  width: 100%;
+}
+
+@media (min-width: 1024px) {
+  .dash-header {
+    background: transparent;
+    padding: 22px 16px 0;
+  }
+  .dash-logo {
+    display: none;
+  }
+  .dash-greeting {
+    font-size: 19px;
+    font-weight: 800;
+    color: #0c4a6e;
+    margin-top: 0;
+    letter-spacing: 0;
+  }
+  /* These buttons lose the navy they were sitting on, so they need their own —
+     white-on-sky at 12% opacity would be all but invisible. */
+  .dash-icon-btn,
+  .dash-logout {
+    background: #fff;
+    color: #0c4a6e;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  }
+  /* The figures keep the navy — as a card of their own, sized to the numbers
+     rather than stretched across 1200px. */
+  .dash-stats {
+    background: #0c4a6e;
+    border-radius: 14px;
+    padding: 14px;
+    max-width: 620px;
+  }
+  .dash-quicklog {
+    max-width: 380px;
+  }
+}
