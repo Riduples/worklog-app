@@ -8,10 +8,12 @@ import { SaveBtn } from "@/components/ui/SaveBtn";
 import { ContactPicker } from "@/components/ui/ContactPicker";
 import { PaymentMethodPicker } from "@/components/ui/PaymentMethodPicker";
 import { SarsSuggestionDropdown } from "@/components/ui/SarsSuggestionDropdown";
+import { LedgerEntryMatcher, expenseSettlesEntry } from "@/components/ui/LedgerEntryMatcher";
 import { getSarsMatch, type SarsCategory } from "@/lib/sarsCategories";
 import { todayStr } from "@/lib/format";
 import { useCreateExpense } from "@/lib/supabase/hooks/useExpenses";
 import { useContacts } from "@/lib/supabase/hooks/useContacts";
+import { useLedgerEntries, useUpdateLedgerEntry } from "@/lib/supabase/hooks/useLedger";
 
 export function ExpenseModal({ onClose }: { onClose: () => void }) {
   const [amount, setAmount] = useState("");
@@ -23,12 +25,23 @@ export function ExpenseModal({ onClose }: { onClose: () => void }) {
   const [details, setDetails] = useState("");
   const [method, setMethod] = useState("Cash");
   const [date, setDate] = useState(todayStr());
+  const [matchedLedgerEntryId, setMatchedLedgerEntryId] = useState<string | null>(null);
+  const [markPaid, setMarkPaid] = useState(false);
   const [error, setError] = useState("");
 
   const { data: contacts } = useContacts();
+  const { data: ledgerEntries } = useLedgerEntries();
   const createExpense = useCreateExpense();
+  const updateLedgerEntry = useUpdateLedgerEntry();
 
   const amountNum = parseFloat(amount) || 0;
+
+  // Supplier entries only: a client entry is money owed TO the business, which
+  // an expense can never settle. Settled entries stay listed so an older
+  // payment can still be linked, exactly as the invoice matcher does.
+  const supplierEntries = (ledgerEntries ?? []).filter((e) => e.ledger_type === "supplier");
+  const matchedEntry = supplierEntries.find((e) => e.id === matchedLedgerEntryId) ?? null;
+  const settlesEntry = expenseSettlesEntry(matchedEntry, amountNum);
 
   const handleSave = () => {
     if (!amountNum || amountNum <= 0) {
@@ -47,9 +60,25 @@ export function ExpenseModal({ onClose }: { onClose: () => void }) {
         paid_to_contact_id: paidToContactId,
         payment_method: method || null,
         transaction_date: date,
+        matched_ledger_entry_id: matchedLedgerEntryId,
         source: "manual",
       },
-      { onSuccess: onClose }
+      {
+        onSuccess: async () => {
+          // Re-check settlesEntry rather than trusting the checkbox alone: the
+          // amount can be edited after ticking it, and marking a R5,000 debt
+          // settled because someone paid R50 is the kind of wrong that only
+          // shows up at year end. The expense is saved either way — the link is
+          // what keeps the report right, and this is only the convenience on
+          // top, so a failure here must not lose the expense.
+          if (matchedLedgerEntryId && markPaid && settlesEntry) {
+            await updateLedgerEntry
+              .mutateAsync({ id: matchedLedgerEntryId, changes: { status: "paid", paid_date: date } })
+              .catch(() => {});
+          }
+          onClose();
+        },
+      }
     );
   };
 
@@ -92,6 +121,20 @@ export function ExpenseModal({ onClose }: { onClose: () => void }) {
         }}
         contacts={contacts ?? []}
         placeholder="Name (optional)"
+      />
+
+      <LedgerEntryMatcher
+        entries={supplierEntries}
+        matchedId={matchedLedgerEntryId}
+        onMatch={(id) => {
+          setMatchedLedgerEntryId(id);
+          if (!id) setMarkPaid(false);
+        }}
+        filterByParty={paidTo}
+        onAutoFillParty={setPaidTo}
+        expenseAmount={amountNum}
+        markPaid={markPaid}
+        onMarkPaidChange={setMarkPaid}
       />
 
       <PaymentMethodPicker selected={method} onSelect={setMethod} />

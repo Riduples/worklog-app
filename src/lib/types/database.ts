@@ -325,6 +325,7 @@ export type Database = {
           deleted_at: string | null
           details: string | null
           id: string
+          matched_ledger_entry_id: string | null
           paid_to: string | null
           paid_to_contact_id: string | null
           payment_method: string | null
@@ -342,6 +343,7 @@ export type Database = {
           deleted_at?: string | null
           details?: string | null
           id?: string
+          matched_ledger_entry_id?: string | null
           paid_to?: string | null
           paid_to_contact_id?: string | null
           payment_method?: string | null
@@ -359,6 +361,7 @@ export type Database = {
           deleted_at?: string | null
           details?: string | null
           id?: string
+          matched_ledger_entry_id?: string | null
           paid_to?: string | null
           paid_to_contact_id?: string | null
           payment_method?: string | null
@@ -375,6 +378,13 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "business_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_matched_ledger_entry_id_fkey"
+            columns: ["matched_ledger_entry_id"]
+            isOneToOne: false
+            referencedRelation: "ledger_entries"
             referencedColumns: ["id"]
           },
           {

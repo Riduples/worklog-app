@@ -38,11 +38,19 @@ export function ProfitLossView() {
     .reduce((s, r) => s + incomeNet(r), 0);
   const totalRevenue = invoicesIssued + (cashIncome - incomeLinkedToInvoice);
 
+  // Costs mirror revenue above. A supplier ledger entry counts the cost when it
+  // is incurred, so an expense settling one would count it a second time —
+  // exactly the trap invoices set on the income side. Netting the linked
+  // expenses out is what stops "I owe Pipe Co R1000" plus the R1000 you later
+  // pay them reading as R2000 of costs.
   const cashExpense = (expenses ?? []).filter((r) => within(r.transaction_date)).reduce((s, r) => s + Number(r.amount), 0);
   const supplierCreditIncurred = (ledger ?? [])
     .filter((e) => e.ledger_type === "supplier" && within(e.entry_date))
     .reduce((s, e) => s + Number(e.amount), 0);
-  const totalCosts = cashExpense + supplierCreditIncurred;
+  const expenseSettlingCredit = (expenses ?? [])
+    .filter((r) => within(r.transaction_date) && r.matched_ledger_entry_id)
+    .reduce((s, r) => s + Number(r.amount), 0);
+  const totalCosts = supplierCreditIncurred + (cashExpense - expenseSettlingCredit);
 
   const netProfit = totalRevenue - totalCosts;
   const margin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
@@ -83,8 +91,11 @@ export function ProfitLossView() {
         <Row label="+ Other cash income" value={fmt(cashIncome - incomeLinkedToInvoice)} />
         <Row label="Total revenue" value={fmt(totalRevenue)} bold />
         <div style={{ height: 12 }} />
-        <Row label="Cash expenses" value={fmt(cashExpense)} color="#b45309" />
-        <Row label="+ Supplier credit" value={fmt(supplierCreditIncurred)} color="#b45309" />
+        {/* Same shape as revenue above, and in the same order: what was
+            incurred, then the cash that isn't already in it. Showing the full
+            cash expense here would print three numbers that don't add up. */}
+        <Row label="Supplier credit" value={fmt(supplierCreditIncurred)} color="#b45309" />
+        <Row label="+ Other cash expenses" value={fmt(cashExpense - expenseSettlingCredit)} color="#b45309" />
         <Row label="Total costs" value={fmt(totalCosts)} bold color="#b45309" />
       </div>
 
