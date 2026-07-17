@@ -7,12 +7,15 @@ import { Field } from "@/components/ui/Field";
 import { Input } from "@/components/ui/Input";
 import { Chips } from "@/components/ui/Chips";
 import { SaveBtn } from "@/components/ui/SaveBtn";
+import { PlanPicker } from "@/components/billing/PlanPicker";
 import { BUSINESS_TYPES, type BusinessType } from "@/lib/businessTypes";
+import type { Plan } from "@/lib/tiers";
 
 export function OnboardingForm({ userId, userEmail }: { userId: string; userEmail: string }) {
   const router = useRouter();
   const [name, setName] = useState("");
   const [businessType, setBusinessType] = useState<BusinessType | "">("");
+  const [plan, setPlan] = useState<Plan>("shoebox");
   const [address, setAddress] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState(userEmail);
@@ -25,6 +28,10 @@ export function OnboardingForm({ userId, userEmail }: { userId: string; userEmai
     setLoading(true);
     setError("");
     const supabase = createClient();
+    // Note the plan is NOT inserted. Every business starts on Shoebox and a
+    // paid tier is only ever granted by a verified payment (migration 0054) —
+    // letting signup write its own plan would hand out Business for free and
+    // undo the whole point of the enforcement.
     const { error } = await supabase.from("business_profiles").insert({
       user_id: userId,
       name,
@@ -41,7 +48,9 @@ export function OnboardingForm({ userId, userEmail }: { userId: string; userEmai
       setError(error.message);
       return;
     }
-    router.push("/dashboard");
+    // Chose a paid plan? Carry the intent to checkout. Chose Shoebox? They're
+    // already on it, so go straight to work.
+    router.push(plan === "shoebox" ? "/dashboard" : `/billing/checkout?plan=${plan}`);
     router.refresh();
   };
 
@@ -73,8 +82,22 @@ export function OnboardingForm({ userId, userEmail }: { userId: string; userEmai
       <Field label="VAT number (optional)">
         <Input value={vatNumber} onChange={setVatNumber} placeholder="Leave blank if not VAT registered" />
       </Field>
+
+      <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 0.6, margin: "18px 0 10px" }}>
+        Pick a plan
+      </div>
+      <PlanPicker selected={plan} onSelect={setPlan} />
+      <p style={{ fontSize: 11, color: "#64748b", margin: "8px 0 16px", lineHeight: 1.5 }}>
+        Not sure? Start on Shoebox — you can move up whenever your business is ready, and nothing you&apos;ve captured is
+        lost either way.
+      </p>
+
       {error && <p style={{ color: "#dc2626", fontSize: 13, marginBottom: 12 }}>{error}</p>}
-      <SaveBtn type="submit" label={loading ? "Saving..." : "Save and continue"} disabled={loading} />
+      <SaveBtn
+        type="submit"
+        label={loading ? "Saving..." : plan === "shoebox" ? "Save and continue" : "Save and choose payment"}
+        disabled={loading}
+      />
     </form>
   );
 }

@@ -884,6 +884,72 @@ export type Database = {
           },
         ]
       }
+      payment_events: {
+        Row: {
+          business_id: string | null
+          event_type: string | null
+          id: string
+          processed_at: string
+          raw_payload: Json | null
+          signature_valid: boolean | null
+          source_ip: string | null
+          subscription_id: string | null
+        }
+        Insert: {
+          business_id?: string | null
+          event_type?: string | null
+          id?: string
+          processed_at?: string
+          raw_payload?: Json | null
+          signature_valid?: boolean | null
+          source_ip?: string | null
+          subscription_id?: string | null
+        }
+        Update: {
+          business_id?: string | null
+          event_type?: string | null
+          id?: string
+          processed_at?: string
+          raw_payload?: Json | null
+          signature_valid?: boolean | null
+          source_ip?: string | null
+          subscription_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_events_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_events_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_admins: {
+        Row: {
+          created_at: string
+          note: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          note?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          note?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       purchase_orders: {
         Row: {
           business_id: string
@@ -1229,6 +1295,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "stock_items_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscriptions: {
+        Row: {
+          business_id: string
+          created_at: string
+          current_period_end: string | null
+          id: string
+          payfast_token: string | null
+          status: string
+          tier: string
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          current_period_end?: string | null
+          id?: string
+          payfast_token?: string | null
+          status?: string
+          tier?: string
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          current_period_end?: string | null
+          id?: string
+          payfast_token?: string | null
+          status?: string
+          tier?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_business_id_fkey"
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "business_profiles"
@@ -1754,9 +1861,19 @@ export type Database = {
         Args: { target_business_id: string }
         Returns: boolean
       }
+      is_platform_admin: { Args: never; Returns: boolean }
+      plan_allows: {
+        Args: { p_business_id: string; p_tool: string }
+        Returns: boolean
+      }
+      plan_rank: { Args: { p_plan: string }; Returns: number }
       recurrence_next: {
         Args: { p_from: string; p_recurrence: string }
         Returns: string
+      }
+      staff_slots_available: {
+        Args: { p_business_id: string }
+        Returns: boolean
       }
       tool_access_rank: { Args: { p_level: string }; Returns: number }
       update_business_plan: {

@@ -13,6 +13,48 @@ export const TIERS: Record<Plan, { label: string; price: string; color: string; 
   business: { label: "Business", price: "R199/mo", color: "#1e40af", bg: "#eff6ff", border: "#bfdbfe" },
 };
 
+export const PLAN_ORDER: Plan[] = ["shoebox", "solo", "business"];
+
+// What each plan is sold as. Shared so the signup picker, the upgrade prompt
+// and the checkout summary can't describe the same plan three different ways.
+//
+// Keep these honest against the lock lists below: anything sold here as a
+// Business feature must actually be in SOLO_LOCKED (or genuinely gated). PAYE,
+// UIF and SDL are calculated on every plan and Age Analysis is unlocked on
+// Solo, so neither may be claimed for Business.
+export const PLAN_FEATURES: Record<Plan, { tagline: string; features: string[] }> = {
+  shoebox: {
+    tagline: "A digital shoebox for your receipts",
+    features: [
+      "Log income & expenses in seconds",
+      "Quick Log — type, speak or snap a photo",
+      "Import your bank statement",
+      "Daily cash-up, quotes, invoices & diary",
+    ],
+  },
+  solo: {
+    tagline: "For a one-person business getting organised",
+    features: [
+      "Everything in Shoebox",
+      "Staff register for up to 2 employees",
+      "Full pay calculation — PAYE, UIF & SDL",
+      "VAT201, provisional tax & age analysis",
+      "Purchase orders, supplier invoices & statements",
+    ],
+  },
+  business: {
+    tagline: "For a business with staff and a team",
+    features: [
+      "Everything in Solo",
+      "Unlimited employees",
+      "Share professional payslips with your staff",
+      "EMP201 monthly payroll return for SARS",
+      "Recurring invoices — weekly to annual",
+      "Multi-user team access with permission control",
+    ],
+  },
+};
+
 // Tools locked on Solo — show lock icon + upgrade prompt.
 export const SOLO_LOCKED: ToolId[] = ["emp201"];
 
