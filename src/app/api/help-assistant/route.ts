@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@/lib/supabase/server";
+import { enforceRateLimit } from "@/lib/rateLimit";
 import { TOOL_LABELS, type ToolId } from "@/lib/permissions";
 import { TAX_RATES } from "@/lib/taxRates";
 import { TIERS } from "@/lib/tiers";
@@ -78,6 +79,10 @@ export async function POST(request: Request) {
   if (!user) {
     return NextResponse.json({ error: "unauthorized", message: "Not signed in." }, { status: 401 });
   }
+
+  // Before the model call, because the point is to not spend the money.
+  const limited = await enforceRateLimit(supabase, "help-assistant");
+  if (limited) return limited;
 
   if (!process.env.ANTHROPIC_API_KEY) {
     return NextResponse.json(

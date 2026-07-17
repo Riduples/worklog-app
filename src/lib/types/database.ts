@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      api_rate_limits: {
+        Row: {
+          request_count: number
+          route: string
+          user_id: string
+          window_start: string
+        }
+        Insert: {
+          request_count?: number
+          route: string
+          user_id: string
+          window_start: string
+        }
+        Update: {
+          request_count?: number
+          route?: string
+          user_id?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
       bookings: {
         Row: {
           balance_due: number | null
@@ -1726,6 +1747,7 @@ export type Database = {
     }
     Functions: {
       accept_invite: { Args: { p_token: string }; Returns: string }
+      consume_rate_limit: { Args: { p_route: string }; Returns: Json }
       convert_quote_to_invoice: {
         Args: {
           p_deposit_received: number
@@ -1867,6 +1889,7 @@ export type Database = {
         Returns: boolean
       }
       plan_rank: { Args: { p_plan: string }; Returns: number }
+      purge_old_rate_limits: { Args: never; Returns: undefined }
       recurrence_next: {
         Args: { p_from: string; p_recurrence: string }
         Returns: string

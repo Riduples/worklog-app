@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import chromium from "@sparticuz/chromium";
 import puppeteer, { type Browser } from "puppeteer-core";
 import { createClient } from "@/lib/supabase/server";
+import { enforceRateLimit } from "@/lib/rateLimit";
 import { buildDocumentHTML, type DocForRender, type DocKind } from "@/lib/docgen/buildDocumentHTML";
 import { buildStatementHTML, buildRemittanceHTML, type StatementLine, type RemittanceLine } from "@/lib/docgen/buildLedgerHTML";
 import type { BusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
@@ -85,6 +86,11 @@ export async function POST(request: Request) {
   if (!user) {
     return NextResponse.json({ error: "unauthorized", message: "Not signed in." }, { status: 401 });
   }
+
+  // No model call here, but every request boots a Chromium — the cost is the
+  // function's memory and time rather than tokens.
+  const limited = await enforceRateLimit(supabase, "render-pdf");
+  if (limited) return limited;
 
   let body: RenderRequest;
   try {

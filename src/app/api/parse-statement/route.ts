@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@/lib/supabase/server";
+import { enforceRateLimit } from "@/lib/rateLimit";
 import { ALL_PAYMENT_METHODS } from "@/lib/sarsCategories";
 
 export const runtime = "nodejs";
@@ -61,6 +62,11 @@ export async function POST(request: Request) {
   if (!user) {
     return NextResponse.json({ error: "unauthorized", message: "Not signed in." }, { status: 401 });
   }
+
+  // Before the model call, and before we read a whole PDF into memory. This is
+  // the dearest of the four: a full statement in, up to 8k tokens out.
+  const limited = await enforceRateLimit(supabase, "parse-statement");
+  if (limited) return limited;
 
   if (!process.env.ANTHROPIC_API_KEY) {
     return NextResponse.json(
