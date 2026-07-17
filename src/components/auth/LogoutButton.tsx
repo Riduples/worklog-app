@@ -17,7 +17,7 @@ export function LogoutButton() {
   // on a phone and on sky on a desktop, and a style attribute can't hold the
   // media query that tells those apart.
   return (
-    <button onClick={handleLogout} className="dash-logout">
+    <button onClick={handleLogout} className="dash-text-btn">
       Log out
     </button>
   );

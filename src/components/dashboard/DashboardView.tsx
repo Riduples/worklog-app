@@ -90,8 +90,11 @@ export function DashboardView({ businessName }: { businessName: string }) {
                 ⚙
               </button>
             )}
-            <button onClick={() => setModal("help")} aria-label="Help" className="dash-icon-btn">
-              ?
+            {/* The word, not "?". A question mark only helps if you already know
+                it means help — which is a poor assumption for the first person
+                who opens this and doesn't know what the app can do. */}
+            <button onClick={() => setModal("help")} className="dash-text-btn">
+              Help
             </button>
             <LogoutButton />
           </div>
