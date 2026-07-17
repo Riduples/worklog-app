@@ -16,6 +16,12 @@
  */
 body {
   font-family: var(--font-inter), "Segoe UI", system-ui, sans-serif;
+  /* The app is sky everywhere — both layouts paint it on their own wrapper. But
+     leaving the page itself white means any pixel a wrapper fails to cover is
+     bare white, which is exactly how a capped shell put white gutters down both
+     sides of a wide screen. Painting it here means a gap is invisible instead
+     of a bug. */
+  background: #f0f9ff;
 }
 
 /**
@@ -53,12 +59,12 @@ body {
   .app-shell {
     display: flex;
     align-items: flex-start;
-    /* Centre the whole shell, not just the content: 240 + 1200 on a 1920 screen
-       would otherwise sit hard left with 480px of dead sky to the right. */
-    max-width: 1440px;
-    margin: 0 auto;
   }
 
+  /* Hard against the viewport edge, which is where a sidebar belongs and where
+     every app that has one puts it. Capping the shell instead left it floating
+     in the middle of a wide screen with bare white either side — the sky lives
+     on .app-shell, so anything the shell didn't cover wasn't sky at all. */
   .app-sidebar {
     display: block;
     width: 240px;
@@ -69,10 +75,13 @@ body {
     overflow-y: auto;
   }
 
+  /* Centred in whatever the sidebar leaves. Left-aligned would pin 1200px of
+     content to the nav and pile the slack up on the right; stretched would give
+     line lengths nobody can read. */
   .app-content {
     flex: 1;
     max-width: 1200px;
-    margin: 0;
+    margin: 0 auto;
   }
 }
 
