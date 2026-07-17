@@ -325,8 +325,6 @@ export type Database = {
           deleted_at: string | null
           details: string | null
           id: string
-          matched_document_id: string | null
-          matched_document_type: string | null
           paid_to: string | null
           paid_to_contact_id: string | null
           payment_method: string | null
@@ -344,8 +342,6 @@ export type Database = {
           deleted_at?: string | null
           details?: string | null
           id?: string
-          matched_document_id?: string | null
-          matched_document_type?: string | null
           paid_to?: string | null
           paid_to_contact_id?: string | null
           payment_method?: string | null
@@ -363,8 +359,6 @@ export type Database = {
           deleted_at?: string | null
           details?: string | null
           id?: string
-          matched_document_id?: string | null
-          matched_document_type?: string | null
           paid_to?: string | null
           paid_to_contact_id?: string | null
           payment_method?: string | null

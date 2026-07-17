@@ -1,0 +1,31 @@
+-- Drop expenses.matched_document_id / matched_document_type.
+--
+-- Created in 0011 from this project's own plan ("split its single matchedId
+-- into matched_document_id + matched_document_type") and never wired to
+-- anything. Verified before dropping, rather than assumed:
+--
+--   * no reference anywhere in src/ outside the generated types
+--   * no function, trigger, view, index or RLS policy mentions them; the only
+--     database object that does is their own CHECK constraint, which goes with
+--     the column
+--   * every row is NULL in both — the columns have never held a value
+--
+-- The deciding evidence is in the prototype. The CHECK limits the type to
+-- 'quote' or 'purchaseorder', so the idea was to hang an expense off a job you
+-- had quoted. v65 does have that picker (DocumentMatcher with direction=
+-- "expense", worklog-v65.jsx:2339, which offers quotes) — but it saves the id
+-- at :2434 and nothing ever reads it back. No report, no costing, nothing. The
+-- income half of that same component earns its keep: the matched id marks the
+-- invoice paid (:2252-2260), which is why that half was ported and this half
+-- was not.
+--
+-- So this isn't a feature we half-built; it's a link the prototype records and
+-- never uses, and we copied the column but not the dead weight around it. Job
+-- costing — spend against a quoted job — is a real thing a tradesperson would
+-- want, and if it gets built it deserves a design rather than the resurrection
+-- of a column nobody ever read.
+--
+-- Nothing is lost: the columns are empty, so this drops structure, not data.
+ALTER TABLE public.expenses
+  DROP COLUMN IF EXISTS matched_document_id,
+  DROP COLUMN IF EXISTS matched_document_type;
