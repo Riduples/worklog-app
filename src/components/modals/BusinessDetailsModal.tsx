@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 import { Modal } from "@/components/ui/Modal";
 import { Field } from "@/components/ui/Field";
 import { Input } from "@/components/ui/Input";
 import { Chips } from "@/components/ui/Chips";
 import { SaveBtn } from "@/components/ui/SaveBtn";
 import { BUSINESS_TYPES, coreToolsFor, type BusinessType } from "@/lib/businessTypes";
+import { LOGO_BUCKET, MAX_LOGO_BYTES, storagePathFromUrl } from "@/lib/logo";
 import { useUpdateBusinessProfile, type BusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 
 export function BusinessDetailsModal({ business, onClose }: { business: BusinessProfile; onClose: () => void }) {
@@ -21,7 +23,60 @@ export function BusinessDetailsModal({ business, onClose }: { business: Business
   const [bankAccount, setBankAccount] = useState(business.bank_account ?? "");
   const [bankBranch, setBankBranch] = useState(business.bank_branch ?? "");
   const [bankRef, setBankRef] = useState(business.bank_ref ?? "");
+  const [logoUrl, setLogoUrl] = useState(business.logo_url ?? "");
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleLogoPick = async (file: File | undefined) => {
+    if (!file) return;
+    setError("");
+    if (!file.type.startsWith("image/")) {
+      setError("That file isn't an image.");
+      return;
+    }
+    if (file.size > MAX_LOGO_BYTES) {
+      setError("That image is larger than 2MB — try a smaller one.");
+      return;
+    }
+    setUploading(true);
+    const supabase = createClient();
+    // {business_id}/logo.{ext} — the first folder segment is what the bucket's
+    // RLS checks, and a fixed name means re-uploading replaces rather than
+    // piling up orphans nobody ever deletes.
+    const ext = (file.name.split(".").pop() || "png").toLowerCase().replace(/[^a-z0-9]/g, "");
+    const path = `${business.id}/logo.${ext}`;
+    const { error: uploadError } = await supabase.storage
+      .from(LOGO_BUCKET)
+      .upload(path, file, { upsert: true, contentType: file.type });
+    if (uploadError) {
+      setUploading(false);
+      setError(uploadError.message);
+      return;
+    }
+    const { data } = supabase.storage.from(LOGO_BUCKET).getPublicUrl(path);
+    // Cache-bust: the path is stable, so a replaced logo would otherwise keep
+    // showing the old image from cache.
+    setLogoUrl(`${data.publicUrl}?v=${Date.now()}`);
+    setUploading(false);
+  };
+
+  /**
+   * Removes the file as well as the reference.
+   *
+   * Clearing logo_url alone would leave the image sitting in a public bucket,
+   * still fetchable by anyone with the URL, after the owner had been told it
+   * was removed. A button that says Remove has to remove.
+   */
+  const handleLogoRemove = async () => {
+    const path = storagePathFromUrl(logoUrl, business.id);
+    setLogoUrl("");
+    if (!path) return;
+    const supabase = createClient();
+    // Best-effort: the reference is already gone, so a failure here leaves an
+    // unreferenced file rather than a broken letterhead. Not worth blocking on.
+    await supabase.storage.from(LOGO_BUCKET).remove([path]);
+  };
 
   // Preview the effect of the current choices rather than making the owner save
   // and go hunting. coreToolsFor is the same function the dashboard filters on,
@@ -44,6 +99,7 @@ export function BusinessDetailsModal({ business, onClose }: { business: Business
           bank_account: bankAccount.trim() || null,
           bank_branch: bankBranch.trim() || null,
           bank_ref: bankRef.trim() || null,
+          logo_url: logoUrl.trim() || null,
         },
       },
       {
@@ -55,6 +111,67 @@ export function BusinessDetailsModal({ business, onClose }: { business: Business
 
   return (
     <Modal title="Business details" onClose={onClose}>
+      <Field label="Your logo">
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div
+            style={{
+              width: 56,
+              height: 56,
+              borderRadius: 10,
+              flexShrink: 0,
+              border: "1.5px solid #e2e8f0",
+              background: logoUrl ? "#fff" : "#F59E0B",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              overflow: "hidden",
+            }}
+          >
+            {logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element -- a user-uploaded
+              // logo from Storage; next/image would need the host allow-listed and
+              // buys nothing for a 56px preview.
+              <img src={logoUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+            ) : (
+              <span style={{ fontSize: 24, fontWeight: 900, color: "#1B4332", fontFamily: "monospace" }}>
+                {(name || "W").trim().charAt(0).toUpperCase()}
+              </span>
+            )}
+          </div>
+          <div style={{ flex: 1 }}>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/svg+xml"
+              onChange={(e) => handleLogoPick(e.target.files?.[0])}
+              style={{ display: "none" }}
+            />
+            <div style={{ display: "flex", gap: 8 }}>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                style={{ flex: 1, background: "#f0fdf4", color: "#166534", border: "1.5px solid #d1fae5", borderRadius: 10, padding: "9px 10px", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
+              >
+                {uploading ? "Uploading..." : logoUrl ? "Change" : "⬆ Upload logo"}
+              </button>
+              {logoUrl && (
+                <button
+                  type="button"
+                  onClick={handleLogoRemove}
+                  style={{ background: "#fff", color: "#b45309", border: "1.5px solid #fed7aa", borderRadius: 10, padding: "9px 12px", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
+                >
+                  Remove
+                </button>
+              )}
+            </div>
+            <p style={{ fontSize: 11, color: "#64748b", marginTop: 6, lineHeight: 1.5 }}>
+              Appears on your quotes and invoices. PNG or JPG, up to 2MB. Without one we use your initial.
+            </p>
+          </div>
+        </div>
+      </Field>
+
       <Field label="Business / trading name">
         <Input value={name} onChange={setName} placeholder="e.g. Thabo's Plumbing" />
       </Field>

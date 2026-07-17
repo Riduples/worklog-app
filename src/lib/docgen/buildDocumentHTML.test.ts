@@ -86,6 +86,32 @@ describe("payment reference", () => {
   });
 });
 
+describe("letterhead", () => {
+  it("is the business's, not WORKLOG's", () => {
+    // The document goes from the business to their customer, so heading it
+    // "WORKLOG" was never right. Attribution stays in the footer.
+    const html = build("invoice");
+    expect(html).toContain("Thabo&#39;s Plumbing");
+    expect(html).toContain("Generated via WORKLOG");
+  });
+
+  it("shows the logo when there is one", () => {
+    const html = build("invoice", { logo_url: "https://example.test/logo.png" });
+    expect(html).toContain('<img src="https://example.test/logo.png"');
+  });
+
+  it("falls back to the business's initial, not a WORKLOG mark", () => {
+    const html = build("invoice", { logo_url: null });
+    expect(html).not.toContain("<img");
+    expect(html).toContain(">T<"); // Thabo's Plumbing
+  });
+
+  it("copes with a business that has no name yet", () => {
+    const html = build("invoice", { logo_url: null, name: null });
+    expect(html).toContain(">W<");
+  });
+});
+
 describe("escaping", () => {
   // openDocumentForPrinting() hands this markup to win.document.write(), which
   // executes scripts. A member with edit rights on Contacts could otherwise

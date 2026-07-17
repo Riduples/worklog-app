@@ -39,6 +39,30 @@ function buildHtml(body: RenderRequest, business: BusinessProfile): string | nul
   }
 }
 
+// Only ever our own logo bucket. logo_url is a column the user can write, so
+// fetching whatever it says would hand them a request-forgery primitive: point
+// it at a cloud metadata endpoint or an internal address and this server would
+// dutifully fetch it. Pinning to the exact public prefix of one bucket means a
+// tampered value fetches nothing instead.
+const LOGO_PREFIX = `${process.env.NEXT_PUBLIC_SUPABASE_URL ?? ""}/storage/v1/object/public/business-logos/`;
+const MAX_LOGO_BYTES = 2 * 1024 * 1024; // matches the bucket's own limit
+
+async function inlineLogo(logoUrl: string | null): Promise<string | null> {
+  if (!logoUrl || !LOGO_PREFIX.startsWith("http") || !logoUrl.startsWith(LOGO_PREFIX)) return null;
+  try {
+    const res = await fetch(logoUrl, { signal: AbortSignal.timeout(5_000), redirect: "error" });
+    if (!res.ok) return null;
+    const type = res.headers.get("content-type") ?? "";
+    if (!type.startsWith("image/")) return null;
+    const buf = Buffer.from(await res.arrayBuffer());
+    if (buf.byteLength > MAX_LOGO_BYTES) return null;
+    return `data:${type};base64,${buf.toString("base64")}`;
+  } catch {
+    // A missing or slow logo must never cost someone their invoice.
+    return null;
+  }
+}
+
 async function launchBrowser(): Promise<Browser> {
   // @sparticuz/chromium only ships a Linux binary for the serverless runtime.
   // Locally, point at an installed Chrome via PUPPETEER_EXECUTABLE_PATH.
@@ -77,9 +101,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "no_business", message: "No business profile found." }, { status: 400 });
   }
 
+  // The rendering page has its network blocked (see the interception below), so
+  // an <img src="https://..."> would simply be dropped and the letterhead would
+  // come out blank. Fetch the logo here, where the network is ours, and hand
+  // the template a data: URI instead.
+  const letterhead = { ...(business as BusinessProfile), logo_url: await inlineLogo(business.logo_url) };
+
   let html: string | null;
   try {
-    html = buildHtml(body, business as BusinessProfile);
+    html = buildHtml(body, letterhead);
   } catch {
     return NextResponse.json({ error: "bad_request", message: "Couldn't build that document." }, { status: 400 });
   }

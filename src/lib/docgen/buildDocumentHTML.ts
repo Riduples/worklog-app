@@ -91,6 +91,19 @@ export function buildDocumentHTML(doc: DocForRender, business: BusinessProfile, 
   // ask the customer for money (a quote carries a deposit), while on a PO the
   // business is the buyer — its own account number has no purpose there, and
   // printing it for every supplier is needless exposure.
+  // The letterhead is the BUSINESS's, not ours — this document goes from them
+  // to their customer, so heading it "WORKLOG" was never right. v65 had this
+  // correct: logo, or the business's own initial. WORKLOG's credit stays in
+  // the footer, where attribution belongs.
+  //
+  // logo_url must already be renderable by the time it arrives here: the PDF
+  // route inlines it as a data: URI first, because that page has its network
+  // blocked. See /api/render-pdf.
+  const initial = (business.name || "W").trim().charAt(0).toUpperCase();
+  const logoHTML = business.logo_url
+    ? `<img src="${esc(business.logo_url)}" alt="" style="width:44px;height:44px;object-fit:contain;border-radius:8px;" />`
+    : `<div class="brand-mark">${esc(initial)}</div>`;
+
   const hasBanking = !!business.bank_name && !!business.bank_account;
   const bankingHTML =
     hasBanking && (isInvoice || kind === "quote")
@@ -141,10 +154,10 @@ export function buildDocumentHTML(doc: DocForRender, business: BusinessProfile, 
 <body>
   <div class="header">
     <div class="brand">
-      <div class="brand-mark">W</div>
+      ${logoHTML}
       <div>
-        <div class="brand-name">WORKLOG</div>
-        <div style="font-size:10px;color:#94a3b8;">worklog.co.za</div>
+        <div class="brand-name">${esc(business.name || "Your Business")}</div>
+        <div style="font-size:10px;color:#94a3b8;">${esc(business.phone || business.email || "")}</div>
       </div>
     </div>
     <div>
