@@ -15,16 +15,12 @@ import { BusinessDetailsModal } from "@/components/modals/BusinessDetailsModal";
 import { LogoutButton } from "@/components/auth/LogoutButton";
 import { ToolTile } from "@/components/dashboard/ToolTile";
 import { fmt, greeting } from "@/lib/format";
+import { inPeriod } from "@/lib/period";
 import { incomeNet } from "@/lib/taxRates";
 import { useToolGate } from "@/lib/useToolGate";
 import { type ToolId } from "@/lib/permissions";
 import type { Tables } from "@/lib/types/database";
 
-const isThisMonth = (dateStr: string) => {
-  const d = new Date(dateStr);
-  const now = new Date();
-  return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
-};
 
 export function DashboardView({ businessName }: { businessName: string }) {
   const { data: income } = useIncome();
@@ -43,6 +39,13 @@ export function DashboardView({ businessName }: { businessName: string }) {
   // Shared with the desktop sidebar, which has to reach exactly the same verdict
   // about every tool — see useToolGate.
   const { business, plan, isOwner, gate, tierLocked } = useToolGate();
+
+  // The same "this month" Profit & Loss uses. This used to be a private
+  // year-and-month check up at module scope, and the two screens disagreed:
+  // inPeriod("month") had no upper bound and counted post-dated rows. Built per
+  // render, not once at import — inPeriod reads the clock when you call it, so a
+  // module-level predicate would still think it was whatever day the tab opened.
+  const isThisMonth = inPeriod("month");
 
   // Net of VAT, so PROFIT is what the business actually earned rather than
   // being inflated by VAT it is only holding for SARS — and IN − OUT still

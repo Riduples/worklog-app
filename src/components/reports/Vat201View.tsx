@@ -7,19 +7,29 @@ import { useIncome } from "@/lib/supabase/hooks/useIncome";
 import { useSupplierInvoices } from "@/lib/supabase/hooks/useSupplierInvoices";
 import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 import { useTaxFilings, useMarkFiled } from "@/lib/supabase/hooks/useTaxFilings";
-import { fmt } from "@/lib/format";
+import { fmt, toLocalIsoDate } from "@/lib/format";
 
 const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 // Period is a [year, startMonth0] pair. Monthly = 1 calendar month; Bi-monthly
 // = the SARS convention of Jan/Feb, Mar/Apr, ... calendar-year pairs.
-function periodRange(year: number, startMonth0: number, monthly: boolean) {
+// The dates below decide which transactions are declared to SARS, so they have
+// to be the calendar days the owner means. They are read locally, via
+// toLocalIsoDate: the old .toISOString() converted a local-midnight Date to UTC
+// first, and in SAST that rolled BOTH ends back a day. July 2026 came out as
+// 30 June – 30 July, so the month's last day of sales was left out of its own
+// return and the previous month's last day was pulled into it. Jan–Feb came out
+// starting 31 December, in the wrong calendar year. It was correct under UTC —
+// which no user of this app is.
+// Exported for the tests. It decides what a business declares to SARS, which is
+// reason enough for it to be checkable on its own rather than only through a
+// screen nothing renders in CI.
+export function periodRange(year: number, startMonth0: number, monthly: boolean) {
   const span = monthly ? 1 : 2;
   const from = new Date(year, startMonth0, 1);
-  const to = new Date(year, startMonth0 + span, 0);
-  const toIso = (d: Date) => d.toISOString().slice(0, 10);
+  const to = new Date(year, startMonth0 + span, 0); // day 0 = last day of the previous month
   const label = monthly ? `${MONTH_NAMES[startMonth0]} ${year}` : `${MONTH_NAMES[startMonth0]}–${MONTH_NAMES[startMonth0 + 1]} ${year}`;
-  return { fromDate: toIso(from), toDate: toIso(to), label };
+  return { fromDate: toLocalIsoDate(from), toDate: toLocalIsoDate(to), label };
 }
 
 export function Vat201View() {
