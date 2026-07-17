@@ -170,7 +170,7 @@ export function InvoiceModal({ sourceQuote, onClose }: { sourceQuote?: Quote; on
               </div>
               {nextRunDate && (
                 <div style={{ background: "#F0F9FF", border: "1.5px solid #BAE6FD", borderRadius: 10, padding: "9px 12px", marginTop: 8, fontSize: 12, color: "#0369A1", lineHeight: 1.5 }}>
-                  🔁 This invoice goes out now. WORKLOG then creates the next one automatically on{" "}
+                  🔁 This invoice goes out now. Worklog then creates the next one automatically on{" "}
                   <strong>{nextRunDate}</strong>, and every {RECURRENCE_OPTIONS.find((o) => o.id === recurrence)?.every} after that.
                 </div>
               )}

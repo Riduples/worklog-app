@@ -43,7 +43,7 @@ export function DocumentActions({
   const handleShare = async () => {
     setBusy(true);
     try {
-      await shareDocumentText(`WORKLOG — ${doc.doc_number}`, shareText);
+      await shareDocumentText(`Worklog — ${doc.doc_number}`, shareText);
       if (business) {
         const html = buildDocumentHTML(doc, business, kind);
         await archiveGeneratedDocument(html, kind, sourceId).catch(() => {});

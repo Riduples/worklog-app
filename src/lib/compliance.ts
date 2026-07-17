@@ -92,7 +92,7 @@ export function buildObligations(ctx: ComplianceContext): Obligation[] {
       where: ctx.hasEmployees ? "worklog" : "external",
       href: "/emp201",
       note: ctx.hasEmployees
-        ? "PAYE, UIF and SDL declared and paid by the 7th. Use the WORKLOG EMP201 tool to generate the summary, then pay via eFiling. Penalty: 10% of PAYE + R100/month late filing."
+        ? "PAYE, UIF and SDL declared and paid by the 7th. Use the Worklog EMP201 tool to generate the summary, then pay via eFiling. Penalty: 10% of PAYE + R100/month late filing."
         : "Required as soon as you have any employee. Register as an employer with SARS when you hire your first person.",
       cta: ctx.hasEmployees ? "Open EMP201" : "Register on eFiling",
       ctaUrl: "https://www.sarsefiling.co.za",
@@ -107,7 +107,7 @@ export function buildObligations(ctx: ComplianceContext): Obligation[] {
       status: "ready",
       where: "worklog",
       href: "/provtax",
-      note: "Period 1 (P1) due 31 August — based on first 6 months income. Period 2 (P2) due last day of February — full year. Penalty: 20% if estimate is more than 20% below actual tax. WORKLOG estimates your amount due — submit the actual return via eFiling or your accountant.",
+      note: "Period 1 (P1) due 31 August — based on first 6 months income. Period 2 (P2) due last day of February — full year. Penalty: 20% if estimate is more than 20% below actual tax. Worklog estimates your amount due — submit the actual return via eFiling or your accountant.",
       cta: "Open IRP6 Estimator",
     },
     {
@@ -119,7 +119,7 @@ export function buildObligations(ctx: ComplianceContext): Obligation[] {
       due: `Last day of Feb ${year + 1}`,
       status: "elsewhere",
       where: "accountant",
-      note: "Filed via eFiling or your tax practitioner. ITR12 for individuals and sole proprietors. ITR14 for companies. Requires proper treatment of deductions, depreciation (wear and tear), home office claims, and capital gains. Your WORKLOG P&L and expense records are the source data — export them for your accountant.",
+      note: "Filed via eFiling or your tax practitioner. ITR12 for individuals and sole proprietors. ITR14 for companies. Requires proper treatment of deductions, depreciation (wear and tear), home office claims, and capital gains. Your Worklog P&L and expense records are the source data — export them for your accountant.",
       cta: "Open eFiling",
       ctaUrl: "https://www.sarsefiling.co.za",
     },
@@ -148,7 +148,7 @@ export function buildObligations(ctx: ComplianceContext): Obligation[] {
       status: ctx.hasEmployees ? "action" : "na",
       where: "external",
       note: ctx.hasEmployees
-        ? "Declare your annual payroll to the Compensation Fund every March. Your WORKLOG payroll records have the figures you need. File on the CompEasy portal (workmanscomp.co.za). Without a valid Letter of Good Standing: you are personally liable for all workplace injury costs, and you cannot win any government or private-sector tender."
+        ? "Declare your annual payroll to the Compensation Fund every March. Your Worklog payroll records have the figures you need. File on the CompEasy portal (workmanscomp.co.za). Without a valid Letter of Good Standing: you are personally liable for all workplace injury costs, and you cannot win any government or private-sector tender."
         : "Required for any employer. Register with the Compensation Fund before staff start work.",
       cta: "Go to CompEasy",
       ctaUrl: "https://www.workmanscomp.co.za",
@@ -201,7 +201,7 @@ export function buildObligations(ctx: ComplianceContext): Obligation[] {
       due: "Register once — check status",
       status: "action",
       where: "external",
-      note: "Every business that handles personal data (client names, emails, phone numbers — which every WORKLOG user does) must register an Information Officer with the Information Regulator. By default this is the owner/CEO. Register on the Information Regulator portal (justice.gov.za/inforeg). Fines up to R10 million. One-off task: takes about 30 minutes.",
+      note: "Every business that handles personal data (client names, emails, phone numbers — which every Worklog user does) must register an Information Officer with the Information Regulator. By default this is the owner/CEO. Register on the Information Regulator portal (justice.gov.za/inforeg). Fines up to R10 million. One-off task: takes about 30 minutes.",
       cta: "Go to InfoReg",
       ctaUrl: "https://www.justice.gov.za/inforeg",
     },

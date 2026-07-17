@@ -92,8 +92,8 @@ export function buildDocumentHTML(doc: DocForRender, business: BusinessProfile, 
   // business is the buyer — its own account number has no purpose there, and
   // printing it for every supplier is needless exposure.
   // The letterhead is the BUSINESS's, not ours — this document goes from them
-  // to their customer, so heading it "WORKLOG" was never right. v65 had this
-  // correct: logo, or the business's own initial. WORKLOG's credit stays in
+  // to their customer, so heading it "Worklog" was never right. v65 had this
+  // correct: logo, or the business's own initial. Worklog's credit stays in
   // the footer, where attribution belongs.
   //
   // logo_url must already be renderable by the time it arrives here: the PDF
@@ -216,7 +216,7 @@ ${bankingHTML}
               : "Please make payment by the due date above. Thank you for your business."
             : `This quote is valid until ${esc(doc.valid_until || "30 days from the issue date")}. Reply to accept or for any questions.`
     }
-    <br/>Generated via WORKLOG — worklog.co.za
+    <br/>Generated via Worklog — worklog.co.za
   </div>
 </body>
 </html>`;

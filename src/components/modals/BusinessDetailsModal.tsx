@@ -128,9 +128,11 @@ export function BusinessDetailsModal({ business, onClose }: { business: Business
             }}
           >
             {logoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element -- a user-uploaded
-              // logo from Storage; next/image would need the host allow-listed and
-              // buys nothing for a 56px preview.
+              // A user-uploaded logo from Storage; next/image would need the host
+              // allow-listed and buys nothing for a 56px preview. The disable has
+              // to sit immediately above the element — with the prose after it,
+              // "next line" was the comment itself and the directive did nothing.
+              // eslint-disable-next-line @next/next/no-img-element
               <img src={logoUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
             ) : (
               <span style={{ fontSize: 24, fontWeight: 900, color: "#0C4A6E", fontFamily: "monospace" }}>
@@ -205,7 +207,7 @@ export function BusinessDetailsModal({ business, onClose }: { business: Business
           <div>
             <div style={{ fontSize: 13, fontWeight: 700, color: showAllTools ? "#0C4A6E" : "#111" }}>Show every tool</div>
             <div style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>
-              Turn this on to see everything WORKLOG can do, whatever your business type
+              Turn this on to see everything Worklog can do, whatever your business type
             </div>
           </div>
         </button>

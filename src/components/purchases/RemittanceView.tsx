@@ -87,7 +87,7 @@ export function RemittanceView() {
       ``,
       `Total payment: ${fmt(paymentTotal)}`,
       ``,
-      `Generated via WORKLOG`,
+      `Generated via Worklog`,
     ].join("\n");
     await shareDocumentText(`Remittance — ${selectedSupplier}`, text);
   };

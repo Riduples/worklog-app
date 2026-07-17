@@ -197,8 +197,8 @@ export function QuickLogModal({ onClose }: { onClose: () => void }) {
           lineHeight: 1.5,
         }}
       >
-        <span style={{ fontWeight: 700 }}>✨ Quick Log</span> — Tell WORKLOG what happened in any way that works for
-        you. Type it, say it, or snap a photo of the receipt — WORKLOG reads it and logs it for you to confirm.
+        <span style={{ fontWeight: 700 }}>✨ Quick Log</span> — Tell Worklog what happened in any way that works for
+        you. Type it, say it, or snap a photo of the receipt — Worklog reads it and logs it for you to confirm.
       </div>
 
       {history.length > 0 && (

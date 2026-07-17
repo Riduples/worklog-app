@@ -31,7 +31,7 @@ export function SaveBtn({
         justifyContent: "center",
         gap: 10,
         marginTop: 8,
-        boxShadow: disabled ? "none" : "0 4px 12px rgba(27,67,50,0.25)",
+        boxShadow: disabled ? "none" : "0 4px 12px rgba(12,74,110,0.25)",
       }}
     >
       <span>{icon}</span> {label}

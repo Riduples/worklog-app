@@ -14,12 +14,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "WORKLOG",
+  title: "Worklog",
   description: "Bookkeeping for South African small and informal businesses",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "WORKLOG",
+    title: "Worklog",
   },
 };
 

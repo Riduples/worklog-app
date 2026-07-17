@@ -26,27 +26,12 @@ const shell = (children: React.ReactNode) => (
     }}
   >
     <div style={{ width: "100%", maxWidth: 380 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 10, justifyContent: "center", marginBottom: 28 }}>
-        <div
-          style={{
-            background: "#F59E0B",
-            borderRadius: 9,
-            width: 34,
-            height: 34,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontWeight: 900,
-            fontSize: 17,
-            color: "#0C4A6E",
-            fontFamily: "monospace",
-          }}
-        >
-          W
-        </div>
-        <div style={{ fontSize: 17, fontWeight: 900, color: "#0C4A6E", letterSpacing: 1.5 }}>WORKLOG</div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 28 }}>
+        {/* Light background, so the logotype's own dark wordmark is right here. */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/worklog-logo.png" alt="Worklog" style={{ height: 38, width: "auto", display: "block" }} />
       </div>
-      <div style={{ background: "#fff", borderRadius: 18, padding: "28px 24px", boxShadow: "0 4px 16px rgba(27,67,50,0.1)" }}>
+      <div style={{ background: "#fff", borderRadius: 18, padding: "28px 24px", boxShadow: "0 4px 16px rgba(12,74,110,0.1)" }}>
         {children}
       </div>
     </div>
@@ -144,7 +129,7 @@ export function AcceptInviteClient() {
     <>
       <h1 style={{ fontSize: 18, fontWeight: 800, color: "#0C4A6E", marginBottom: 8 }}>You&apos;re invited</h1>
       <p style={{ fontSize: 14, color: "#374151", marginBottom: 20, lineHeight: 1.5 }}>
-        Join <strong>{preview.business_name}</strong> on WORKLOG as a <strong style={{ textTransform: "capitalize" }}>{preview.role}</strong>.
+        Join <strong>{preview.business_name}</strong> on Worklog as a <strong style={{ textTransform: "capitalize" }}>{preview.role}</strong>.
       </p>
 
       {error && <p style={{ color: "#dc2626", fontSize: 13, marginBottom: 12 }}>{error}</p>}

@@ -54,7 +54,7 @@ export function LoginForm() {
   return (
     <div>
       <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", marginBottom: 4 }}>Welcome back</h1>
-      <p style={{ fontSize: 13, color: "#64748b", marginBottom: 22 }}>Log in to your WORKLOG account.</p>
+      <p style={{ fontSize: 13, color: "#64748b", marginBottom: 22 }}>Log in to your Worklog account.</p>
 
       <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
         <button

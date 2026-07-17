@@ -83,7 +83,7 @@ export function CheckoutView() {
             </button>
             <div style={{ background: "#F0F9FF", border: "1.5px solid #BAE6FD", borderRadius: 12, padding: "12px 14px", marginTop: 10, fontSize: 12, color: "#0C4A6E", lineHeight: 1.6 }}>
               🔒 Card payments aren&apos;t switched on yet — our PayFast registration is still being approved. Nothing is
-              charged and nothing is stored. Until then you can keep using WORKLOG on Shoebox, and we&apos;ll let you know
+              charged and nothing is stored. Until then you can keep using Worklog on Shoebox, and we&apos;ll let you know
               the moment {tier.label} can be activated.
             </div>
           </>

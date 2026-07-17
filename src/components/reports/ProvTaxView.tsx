@@ -126,7 +126,7 @@ export function ProvTaxView() {
 
       <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 12, padding: "12px 14px", marginBottom: 12 }}>
         <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>
-          From your WORKLOG records (year-to-date)
+          From your Worklog records (year-to-date)
         </div>
         {[
           ["Total income logged", ytdIncome],

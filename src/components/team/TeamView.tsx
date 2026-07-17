@@ -72,7 +72,7 @@ export function TeamView() {
         <div style={{ background: "#0C4A6E", borderRadius: 12, padding: "12px 16px", marginBottom: 18, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>
             <div style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>
-              WORKLOG {TIERS[plan].label} · {TIERS[plan].price}
+              Worklog {TIERS[plan].label} · {TIERS[plan].price}
             </div>
             <div style={{ fontSize: 11, color: "#7DD3FC", marginTop: 2 }}>
               {(members ?? []).length} user{(members ?? []).length !== 1 ? "s" : ""}

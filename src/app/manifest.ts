@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "WORKLOG",
-    short_name: "WORKLOG",
+    name: "Worklog",
+    short_name: "Worklog",
     description: "Bookkeeping for South African small and informal businesses",
     start_url: "/dashboard",
     display: "standalone",

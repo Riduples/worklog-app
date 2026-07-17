@@ -53,7 +53,7 @@ export function ComplianceView() {
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8, marginBottom: 14 }}>
         {[
-          { label: "WORKLOG tools ready", val: count("ready"), s: STATUS_STYLE.ready },
+          { label: "Worklog tools ready", val: count("ready"), s: STATUS_STYLE.ready },
           { label: "Action needed", val: count("action"), s: STATUS_STYLE.action },
           { label: "Requires registration", val: count("register"), s: STATUS_STYLE.register },
         ].map((c) => (
@@ -86,7 +86,7 @@ export function ComplianceView() {
         {(
           [
             ["all", "All obligations"],
-            ["worklog", "In WORKLOG"],
+            ["worklog", "In Worklog"],
             ["external", "External"],
             ["employees", "Payroll & Labour"],
           ] as const
@@ -126,7 +126,7 @@ export function ComplianceView() {
                     <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
                       <div style={{ width: 8, height: 8, borderRadius: "50%", background: s.dot }} />
                       <span style={{ fontSize: 10, fontWeight: 700, color: s.color, background: s.bg, border: `1px solid ${s.border}`, padding: "2px 7px", borderRadius: 6 }}>
-                        {o.where === "worklog" ? "In WORKLOG" : o.where === "accountant" ? "Accountant" : "External"}
+                        {o.where === "worklog" ? "In Worklog" : o.where === "accountant" ? "Accountant" : "External"}
                       </span>
                       <span style={{ fontSize: 11, color: "#94a3b8" }}>{isOpen ? "▲" : "▾"}</span>
                     </div>
@@ -162,7 +162,7 @@ export function ComplianceView() {
       })}
 
       <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 10, padding: "10px 14px", fontSize: 11, color: "#64748b", lineHeight: 1.7, marginTop: 4 }}>
-        💡 WORKLOG handles VAT201, EMP201 and Provisional Tax estimation. All other obligations require eFiling, uFiling, CompEasy, BizPortal or your accountant. Deadlines shown are for the current period — set calendar reminders for each.
+        💡 Worklog handles VAT201, EMP201 and Provisional Tax estimation. All other obligations require eFiling, uFiling, CompEasy, BizPortal or your accountant. Deadlines shown are for the current period — set calendar reminders for each.
       </div>
     </div>
   );

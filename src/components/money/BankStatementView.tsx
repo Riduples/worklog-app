@@ -138,7 +138,7 @@ export function BankStatementView() {
             {[
               "Your bank statement is sent to an AI service (Anthropic) to extract your transactions automatically.",
               "Anthropic does not store your data — it is processed and immediately discarded.",
-              "Only the extracted transactions are saved in WORKLOG — not the original file.",
+              "Only the extracted transactions are saved in Worklog — not the original file.",
               "Your data is never used to train AI models.",
             ].map((t) => (
               <div key={t} style={{ display: "flex", gap: 10, marginBottom: 10, fontSize: 13, lineHeight: 1.5 }}>
@@ -175,7 +175,7 @@ export function BankStatementView() {
       <div style={{ padding: "20px 16px 100px" }}>
         <Header />
         <div style={{ background: "#F0F9FF", border: "1.5px solid #7DD3FC", borderRadius: 12, padding: "12px 14px", marginBottom: 18, fontSize: 12, color: "#0369A1", lineHeight: 1.5 }}>
-          Upload a PDF or a clear photo of your bank statement. WORKLOG reads every transaction and lets you pick which
+          Upload a PDF or a clear photo of your bank statement. Worklog reads every transaction and lets you pick which
           ones to keep before anything is saved.
         </div>
 

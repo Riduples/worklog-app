@@ -569,7 +569,7 @@ export function PayRunView() {
           <button
             onClick={() => handleSave("approved")}
             disabled={createPayRun.isPending}
-            style={{ width: "100%", background: "#0369A1", border: "none", borderRadius: 14, padding: 16, fontSize: 16, fontWeight: 700, cursor: createPayRun.isPending ? "default" : "pointer", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, boxShadow: "0 4px 12px rgba(15,118,110,0.3)" }}
+            style={{ width: "100%", background: "#0369A1", border: "none", borderRadius: 14, padding: 16, fontSize: 16, fontWeight: 700, cursor: createPayRun.isPending ? "default" : "pointer", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, boxShadow: "0 4px 12px rgba(3,105,161,0.3)" }}
           >
             ✔️ {createPayRun.isPending ? "Saving..." : "Approve & Save Pay Run"}
           </button>

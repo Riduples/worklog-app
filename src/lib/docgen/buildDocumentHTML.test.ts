@@ -87,12 +87,12 @@ describe("payment reference", () => {
 });
 
 describe("letterhead", () => {
-  it("is the business's, not WORKLOG's", () => {
+  it("is the business's, not Worklog's", () => {
     // The document goes from the business to their customer, so heading it
-    // "WORKLOG" was never right. Attribution stays in the footer.
+    // "Worklog" was never right. Attribution stays in the footer.
     const html = build("invoice");
     expect(html).toContain("Thabo&#39;s Plumbing");
-    expect(html).toContain("Generated via WORKLOG");
+    expect(html).toContain("Generated via Worklog");
   });
 
   it("shows the logo when there is one", () => {
@@ -100,7 +100,7 @@ describe("letterhead", () => {
     expect(html).toContain('<img src="https://example.test/logo.png"');
   });
 
-  it("falls back to the business's initial, not a WORKLOG mark", () => {
+  it("falls back to the business's initial, not a Worklog mark", () => {
     const html = build("invoice", { logo_url: null });
     expect(html).not.toContain("<img");
     expect(html).toContain(">T<"); // Thabo's Plumbing

@@ -3,7 +3,7 @@ import type { ToolId } from "@/lib/permissions";
 // Progressive disclosure. Ported from worklog-v65.jsx:792-812.
 //
 // The point is reducing overwhelm, not access control: a salon owner opening
-// WORKLOG for the first time should see a till and a diary, not Purchase Orders
+// Worklog for the first time should see a till and a diary, not Purchase Orders
 // and Age Analysis. Nothing here is ever locked — "Show every tool" in Business
 // Details restores the full set, and permissions/tiers do the actual gating.
 

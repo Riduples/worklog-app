@@ -83,8 +83,14 @@ export function DashboardView({ businessName }: { businessName: string }) {
       <div style={{ background: "#0C4A6E", padding: "20px 20px 20px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
           <div>
-            <div style={{ fontSize: 17, fontWeight: 900, color: "#fff", letterSpacing: 1.5 }}>WORKLOG</div>
-            <div style={{ fontSize: 11, color: "#E0F2FE", letterSpacing: 0.3 }}>
+            {/* The light variant: the logotype's own wordmark is #15171A, which
+                lands at 1.90:1 on this navy — v65 ships that and it is close to
+                unreadable. White is 9.46:1. The mark keeps its dark field.
+                eslint-disable: next/image would want the dimensions plumbed
+                through for a fixed-height brand asset that never reflows. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/worklog-logo-light.png" alt="Worklog" style={{ height: 32, width: "auto", display: "block" }} />
+            <div style={{ fontSize: 11, color: "#E0F2FE", letterSpacing: 0.3, marginTop: 5 }}>
               {greeting()}, {businessName || "there"}
             </div>
           </div>
@@ -148,7 +154,7 @@ export function DashboardView({ businessName }: { businessName: string }) {
           <div>
             <div style={{ fontSize: 16, fontWeight: 800 }}>Quick Log</div>
             <div style={{ fontSize: 12, color: "rgba(255,255,255,0.85)", marginTop: 1 }}>
-              Type, speak, or snap a photo — WORKLOG logs it for you
+              Type, speak, or snap a photo — Worklog logs it for you
             </div>
           </div>
         </button>
@@ -166,7 +172,7 @@ export function DashboardView({ businessName }: { businessName: string }) {
               color: "#fff",
               cursor: "pointer",
               textAlign: "left",
-              boxShadow: "0 4px 16px rgba(27,67,50,0.22)",
+              boxShadow: "0 4px 16px rgba(12,74,110,0.22)",
             }}
           >
             <div style={{ fontSize: 28, marginBottom: 8 }}>💰</div>

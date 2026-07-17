@@ -34,7 +34,7 @@ function header(business: BusinessProfile, title: string, dateLabel: string) {
     <div class="brand">
       <div class="brand-mark">W</div>
       <div>
-        <div class="brand-name">WORKLOG</div>
+        <div class="brand-name">Worklog</div>
         <div style="font-size:10px;color:#94a3b8;">worklog.co.za</div>
       </div>
     </div>
@@ -113,7 +113,7 @@ export function buildStatementHTML(
     </div>
   </div>
   <div class="footer">
-    Please contact us if you have any queries regarding this statement.<br/>Generated via WORKLOG — worklog.co.za
+    Please contact us if you have any queries regarding this statement.<br/>Generated via Worklog — worklog.co.za
   </div>
 </body>
 </html>`;
@@ -180,7 +180,7 @@ export function buildRemittanceHTML(
     </div>
   </div>
   <div class="footer">
-    Please apply this payment to the invoices listed above. Contact us if you have any queries.<br/>Generated via WORKLOG — worklog.co.za
+    Please apply this payment to the invoices listed above. Contact us if you have any queries.<br/>Generated via Worklog — worklog.co.za
   </div>
 </body>
 </html>`;

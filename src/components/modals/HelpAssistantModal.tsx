@@ -43,7 +43,7 @@ const TOPICS = [
   { label: "Where do I start?", icon: "🚀" },
   { label: "How do I send a quote?", icon: "📋" },
   { label: "How do I pay my staff?", icon: "💼" },
-  { label: "How does VAT work in WORKLOG?", icon: "🏦" },
+  { label: "How does VAT work in Worklog?", icon: "🏦" },
   { label: "How do I track mileage for SARS?", icon: "🚗" },
   { label: "What is UIF and how is it calculated?", icon: "📊" },
 ];
@@ -90,7 +90,7 @@ export function HelpAssistantModal({ onClose }: { onClose: () => void }) {
       {messages.length === 0 && (
         <>
           <div style={{ background: "#F0F9FF", border: "1.5px solid #7DD3FC", borderRadius: 12, padding: "12px 14px", marginBottom: 14, fontSize: 12, color: "#0369A1", lineHeight: 1.5 }}>
-            <span style={{ fontWeight: 700 }}>💬 Ask me anything</span> — how to use WORKLOG, or how SA tax and labour
+            <span style={{ fontWeight: 700 }}>💬 Ask me anything</span> — how to use Worklog, or how SA tax and labour
             rules apply to your business.
           </div>
           <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 8 }}>
