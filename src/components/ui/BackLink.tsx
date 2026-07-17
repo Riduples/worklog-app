@@ -31,3 +31,34 @@ export function BackLink({
     </Link>
   );
 }
+
+/**
+ * The same control for going back a step rather than going somewhere.
+ *
+ * A wizard step and a modal don't have a URL to return to, so this is a button
+ * and not a link — the element should say which of those it is, even though
+ * both look identical and should. They shared the same fault too: the pay-run
+ * wizard's was #64748b at 4.46:1 with no padding at all, and the permissions
+ * editor's was #94a3b8 on white at 2.56:1, the worst contrast in the app.
+ *
+ * `block` is for a modal footer, where this sits under a full-width Save and
+ * matching it is the point. Everywhere else it's the same pill as BackLink.
+ */
+export function BackButton({
+  onClick,
+  label = "Back",
+  block = false,
+}: {
+  onClick: () => void;
+  label?: string;
+  block?: boolean;
+}) {
+  return (
+    <button type="button" onClick={onClick} className={block ? "back-link back-link--block" : "back-link"}>
+      <span aria-hidden="true" className="back-link-arrow">
+        ←
+      </span>
+      <span>{label}</span>
+    </button>
+  );
+}

@@ -20,7 +20,7 @@ import { canApprove } from "@/lib/permissions";
 import { isRestricted, TIERS, type Plan } from "@/lib/tiers";
 import { useTaxRates } from "@/lib/taxRates";
 import type { DocForRender } from "@/lib/docgen/buildDocumentHTML";
-import { BackLink } from "@/components/ui/BackLink";
+import { BackLink, BackButton } from "@/components/ui/BackLink";
 
 const STEP_LABELS = ["Employee", "Period", "Earnings", "Deductions", "Summary"];
 
@@ -49,11 +49,14 @@ function NextBtn({ label, onClick, disabled }: { label?: string; onClick: () => 
   );
 }
 
+// Kept as a local wrapper only to hold the wizard's own spacing — the step bar
+// above it and the step's content below both need more room than the tool pages
+// leave. The control itself is the shared one.
 function BackBtn({ onClick }: { onClick: () => void }) {
   return (
-    <button onClick={onClick} style={{ background: "none", border: "none", color: "#64748b", fontSize: 13, fontWeight: 600, cursor: "pointer", marginBottom: 16, padding: 0 }}>
-      ← Back
-    </button>
+    <div style={{ marginBottom: 10 }}>
+      <BackButton onClick={onClick} />
+    </div>
   );
 }
 

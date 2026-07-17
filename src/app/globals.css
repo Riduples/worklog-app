@@ -142,6 +142,14 @@ body {
   font-weight: 700;
   color: #0c4a6e;
   text-decoration: none;
+  /* This dresses an <a> on the tool pages and a <button> in the wizard and the
+     modals — going back a step has no URL to point at. A button brings its own
+     border, background and font, none of which an anchor has, so they're reset
+     here and the two are genuinely identical rather than nearly. */
+  background: none;
+  border: none;
+  font-family: inherit;
+  cursor: pointer;
 }
 .back-link-arrow {
   font-size: 15px;
@@ -150,6 +158,22 @@ body {
 .back-link:hover {
   background: #fff;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+/* A modal footer, where this sits under a full-width Save and matching it is
+   the point. It's also on white, so the hover has to go the other way. */
+.back-link--block {
+  width: 100%;
+  justify-content: center;
+  margin-left: 0;
+  margin-top: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+.back-link--block:hover {
+  background: #f0f9ff;
+  box-shadow: none;
 }
 
 @media (min-width: 1024px) {

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { SaveBtn } from "@/components/ui/SaveBtn";
+import { BackButton } from "@/components/ui/BackLink";
 import {
   ACCESS_LEVELS,
   ACCESS_LEVEL_MAP,
@@ -92,12 +93,7 @@ export function PermissionsEditor({
             </button>
           ))}
         </div>
-        <button
-          onClick={() => setPickerTool(null)}
-          style={{ width: "100%", background: "none", border: "none", color: "#94a3b8", fontSize: 13, cursor: "pointer", marginTop: 12, padding: 8 }}
-        >
-          ← Back
-        </button>
+        <BackButton onClick={() => setPickerTool(null)} block />
       </Modal>
     );
   }
@@ -231,9 +227,7 @@ export function PermissionsEditor({
       )}
 
       <SaveBtn label="Save permissions" icon="✅" onClick={() => onSave(localPerms)} />
-      <button onClick={onBack} style={{ width: "100%", background: "none", border: "none", color: "#94a3b8", fontSize: 13, cursor: "pointer", marginTop: 8, padding: 6 }}>
-        ← Back to team
-      </button>
+      <BackButton onClick={onBack} label="Back to team" block />
     </Modal>
   );
 }
