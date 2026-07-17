@@ -1,13 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { usePurchaseOrders, type PurchaseOrder } from "@/lib/supabase/hooks/usePurchaseOrders";
 import { PurchaseOrderModal } from "@/components/modals/PurchaseOrderModal";
 import { PurchaseOrderActionsModal, PO_STATUS_COLORS } from "@/components/modals/PurchaseOrderActionsModal";
 import { fmt } from "@/lib/format";
 import { ReadOnlyNotice } from "@/components/ui/ReadOnlyNotice";
 import { useToolAccess } from "@/lib/supabase/hooks/useToolAccess";
+import { BackLink } from "@/components/ui/BackLink";
 
 export function PurchaseOrdersView() {
   const access = useToolAccess("purchaseorder");
@@ -19,9 +19,7 @@ export function PurchaseOrdersView() {
     <div style={{ padding: "20px 16px 100px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
         <div>
-          <Link href="/dashboard" style={{ fontSize: 12, color: "#64748b" }}>
-            ← Dashboard
-          </Link>
+          <BackLink />
           <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 0" }}>Purchase Orders</h1>
         </div>
         {access.canEdit && (

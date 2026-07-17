@@ -20,6 +20,7 @@ import { canApprove } from "@/lib/permissions";
 import { isRestricted, TIERS, type Plan } from "@/lib/tiers";
 import { useTaxRates } from "@/lib/taxRates";
 import type { DocForRender } from "@/lib/docgen/buildDocumentHTML";
+import { BackLink } from "@/components/ui/BackLink";
 
 const STEP_LABELS = ["Employee", "Period", "Earnings", "Deductions", "Summary"];
 
@@ -239,9 +240,7 @@ export function PayRunView() {
   const Header = () => (
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
       <div>
-        <Link href="/dashboard" style={{ fontSize: 12, color: "#64748b" }}>
-          ← Dashboard
-        </Link>
+        <BackLink />
         <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 0" }}>Pay Run</h1>
       </div>
     </div>

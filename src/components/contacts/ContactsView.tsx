@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useContacts, useUpdateContact, type Contact } from "@/lib/supabase/hooks/useContacts";
 import { ContactModal } from "@/components/modals/ContactModal";
 import { CSVImportModal } from "@/components/modals/CSVImportModal";
 import { ReadOnlyNotice } from "@/components/ui/ReadOnlyNotice";
 import { useToolAccess } from "@/lib/supabase/hooks/useToolAccess";
+import { BackLink } from "@/components/ui/BackLink";
 
 export function ContactsView() {
   const { data: contacts, isLoading } = useContacts();
@@ -48,9 +48,7 @@ export function ContactsView() {
     <div style={{ padding: "20px 16px 100px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
         <div>
-          <Link href="/dashboard" style={{ fontSize: 12, color: "#64748b" }}>
-            ← Dashboard
-          </Link>
+          <BackLink />
           <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 0" }}>Contacts</h1>
         </div>
         {canAddAny && (

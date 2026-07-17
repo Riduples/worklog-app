@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useIncome } from "@/lib/supabase/hooks/useIncome";
 import { useExpenses } from "@/lib/supabase/hooks/useExpenses";
 import { useCashUps, useCreateCashUp } from "@/lib/supabase/hooks/useCashUps";
@@ -12,6 +11,7 @@ import { Row } from "@/components/ui/Row";
 import { SaveBtn } from "@/components/ui/SaveBtn";
 import { fmt, todayStr } from "@/lib/format";
 import { canEdit } from "@/lib/permissions";
+import { BackLink } from "@/components/ui/BackLink";
 
 export function CashUpView() {
   const { data: income } = useIncome();
@@ -77,9 +77,7 @@ export function CashUpView() {
 
   return (
     <div style={{ padding: "20px 16px 100px" }}>
-      <Link href="/dashboard" style={{ fontSize: 12, color: "#64748b" }}>
-        ← Dashboard
-      </Link>
+      <BackLink />
       <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 18px" }}>Daily Cash-Up</h1>
 
       <div style={{ background: "#F0F9FF", border: "1.5px solid #7DD3FC", borderRadius: 12, padding: "12px 14px", marginBottom: 18, fontSize: 12, color: "#0369A1", lineHeight: 1.5 }}>

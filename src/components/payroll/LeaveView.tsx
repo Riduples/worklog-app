@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useStaffRegister } from "@/lib/supabase/hooks/useStaffRegister";
 import { useWorkerLeave, useCreateWorkerLeave } from "@/lib/supabase/hooks/useWorkerLeave";
 import { usePayRuns } from "@/lib/supabase/hooks/usePayRuns";
@@ -10,6 +9,7 @@ import { Input } from "@/components/ui/Input";
 import { SaveBtn } from "@/components/ui/SaveBtn";
 import { todayStr } from "@/lib/format";
 import { calcLeaveBalances } from "@/lib/payroll";
+import { BackLink } from "@/components/ui/BackLink";
 
 export function LeaveView() {
   const { data: staff } = useStaffRegister();
@@ -67,9 +67,7 @@ export function LeaveView() {
   return (
     <div style={{ padding: "20px 16px 100px" }}>
       <div style={{ marginBottom: 18 }}>
-        <Link href="/dashboard" style={{ fontSize: 12, color: "#64748b" }}>
-          ← Dashboard
-        </Link>
+        <BackLink />
         <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 0" }}>Leave</h1>
       </div>
 

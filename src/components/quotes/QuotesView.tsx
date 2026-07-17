@@ -1,13 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useQuotes, type Quote } from "@/lib/supabase/hooks/useQuotes";
 import { QuoteModal } from "@/components/modals/QuoteModal";
 import { QuoteActionsModal } from "@/components/modals/QuoteActionsModal";
 import { fmt } from "@/lib/format";
 import { ReadOnlyNotice } from "@/components/ui/ReadOnlyNotice";
 import { useToolAccess } from "@/lib/supabase/hooks/useToolAccess";
+import { BackLink } from "@/components/ui/BackLink";
 
 const STATUS_COLORS: Record<string, { bg: string; fg: string }> = {
   pending: { bg: "#fff7ed", fg: "#b45309" },
@@ -26,9 +26,7 @@ export function QuotesView() {
     <div style={{ padding: "20px 16px 100px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
         <div>
-          <Link href="/dashboard" style={{ fontSize: 12, color: "#64748b" }}>
-            ← Dashboard
-          </Link>
+          <BackLink />
           <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 0" }}>Quotes</h1>
         </div>
         {access.canEdit && (

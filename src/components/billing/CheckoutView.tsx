@@ -6,6 +6,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { PlanPicker } from "@/components/billing/PlanPicker";
 import { PLAN_ORDER, TIERS, type Plan } from "@/lib/tiers";
 import { useBusinessProfile, useUpdateBusinessPlan } from "@/lib/supabase/hooks/useBusinessProfile";
+import { BackLink } from "@/components/ui/BackLink";
 
 const isPlan = (v: string | null): v is Plan => !!v && (PLAN_ORDER as string[]).includes(v);
 
@@ -41,9 +42,7 @@ export function CheckoutView() {
 
   return (
     <div style={{ padding: "20px 16px 100px" }}>
-      <Link href="/dashboard" style={{ fontSize: 12, color: "#64748b" }}>
-        ← Dashboard
-      </Link>
+      <BackLink />
       <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 6px" }}>Choose your plan</h1>
       <p style={{ fontSize: 12, color: "#64748b", marginBottom: 18, lineHeight: 1.5 }}>
         Every plan is billed monthly and you can change or cancel it any time.

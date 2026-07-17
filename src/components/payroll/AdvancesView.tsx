@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useStaffRegister } from "@/lib/supabase/hooks/useStaffRegister";
 import { useWorkerLoans, useCreateAdvance } from "@/lib/supabase/hooks/useWorkerLoans";
 import { Field } from "@/components/ui/Field";
@@ -9,6 +8,7 @@ import { Input } from "@/components/ui/Input";
 import { SaveBtn } from "@/components/ui/SaveBtn";
 import { fmt, todayStr } from "@/lib/format";
 import { getLoanBalance } from "@/lib/payroll";
+import { BackLink } from "@/components/ui/BackLink";
 
 export function AdvancesView() {
   const { data: staff } = useStaffRegister();
@@ -50,9 +50,7 @@ export function AdvancesView() {
   return (
     <div style={{ padding: "20px 16px 100px" }}>
       <div style={{ marginBottom: 18 }}>
-        <Link href="/dashboard" style={{ fontSize: 12, color: "#64748b" }}>
-          ← Dashboard
-        </Link>
+        <BackLink />
         <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 0" }}>Advances</h1>
       </div>
 

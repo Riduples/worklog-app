@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useBookings, useUpdateBooking, type Booking } from "@/lib/supabase/hooks/useBookings";
 import { BookingModal } from "@/components/modals/BookingModal";
 import { Modal } from "@/components/ui/Modal";
@@ -9,6 +8,7 @@ import { Row } from "@/components/ui/Row";
 import { fmt } from "@/lib/format";
 import { ReadOnlyNotice } from "@/components/ui/ReadOnlyNotice";
 import { useToolAccess } from "@/lib/supabase/hooks/useToolAccess";
+import { BackLink } from "@/components/ui/BackLink";
 
 const STATUS_COLORS: Record<string, { bg: string; fg: string }> = {
   confirmed: { bg: "#F0F9FF", fg: "#0369A1" },
@@ -74,9 +74,7 @@ export function BookingsView() {
     <div style={{ padding: "20px 16px 100px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
         <div>
-          <Link href="/dashboard" style={{ fontSize: 12, color: "#64748b" }}>
-            ← Dashboard
-          </Link>
+          <BackLink />
           <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 0" }}>Bookings</h1>
         </div>
         {access.canEdit && (

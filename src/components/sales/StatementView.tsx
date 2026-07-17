@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useInvoices } from "@/lib/supabase/hooks/useInvoices";
 import { useContacts } from "@/lib/supabase/hooks/useContacts";
 import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
@@ -11,6 +10,7 @@ import { buildStatementHTML, type StatementLine } from "@/lib/docgen/buildLedger
 import { openDocumentForPrinting, shareDocumentText } from "@/lib/docgen/shareDocument";
 import { renderPdf, downloadBlob } from "@/lib/docgen/renderPdf";
 import { fmt } from "@/lib/format";
+import { BackLink } from "@/components/ui/BackLink";
 
 export function StatementView() {
   const { data: invoices } = useInvoices();
@@ -86,9 +86,7 @@ export function StatementView() {
 
   return (
     <div style={{ padding: "20px 16px 100px" }}>
-      <Link href="/dashboard" style={{ fontSize: 12, color: "#64748b" }}>
-        ← Dashboard
-      </Link>
+      <BackLink />
       <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 18px" }}>Customer Statement</h1>
 
       <div style={{ background: "#F0F9FF", border: "1.5px solid #7DD3FC", borderRadius: 12, padding: "12px 14px", marginBottom: 18, fontSize: 12, color: "#0369A1", lineHeight: 1.5 }}>

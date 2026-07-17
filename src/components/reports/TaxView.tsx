@@ -15,6 +15,7 @@ import { fmt } from "@/lib/format";
 import { canSee, type ToolId } from "@/lib/permissions";
 import { coreToolsFor, isCoreTool } from "@/lib/businessTypes";
 import { isLocked, type Plan } from "@/lib/tiers";
+import { BackLink } from "@/components/ui/BackLink";
 
 const TOOLS: { id: ToolId; href: string; icon: string; label: string }[] = [
   { id: "vat201", href: "/vat201", icon: "🏦", label: "VAT201" },
@@ -59,9 +60,7 @@ export function TaxView() {
 
   return (
     <div style={{ padding: "20px 16px 100px" }}>
-      <Link href="/dashboard" style={{ fontSize: 12, color: "#64748b" }}>
-        ← Dashboard
-      </Link>
+      <BackLink />
       <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 18px" }}>Tax &amp; SARS</h1>
 
       <div style={{ background: "#0C4A6E", borderRadius: 16, padding: "18px", marginBottom: 16 }}>

@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useInvoices } from "@/lib/supabase/hooks/useInvoices";
 import { useSupplierInvoices } from "@/lib/supabase/hooks/useSupplierInvoices";
 import { fmt, todayStr } from "@/lib/format";
+import { BackLink } from "@/components/ui/BackLink";
 
 type Bucket = "0–30" | "31–60" | "61–90" | "90+";
 const BUCKETS: Bucket[] = ["0–30", "31–60", "61–90", "90+"];
@@ -78,9 +78,7 @@ export function AgeAnalysisView() {
 
   return (
     <div style={{ padding: "20px 16px 100px" }}>
-      <Link href="/dashboard" style={{ fontSize: 12, color: "#64748b" }}>
-        ← Dashboard
-      </Link>
+      <BackLink />
       <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 18px" }}>Age Analysis</h1>
 
       <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>

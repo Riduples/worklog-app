@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { PeriodSelector } from "@/components/ui/PeriodSelector";
 import { useIncome } from "@/lib/supabase/hooks/useIncome";
 import { useExpenses } from "@/lib/supabase/hooks/useExpenses";
@@ -11,6 +10,7 @@ import { useMileageTrips } from "@/lib/supabase/hooks/useMileage";
 import { inPeriod, type Period } from "@/lib/period";
 import { incomeNet } from "@/lib/taxRates";
 import { fmt } from "@/lib/format";
+import { BackLink } from "@/components/ui/BackLink";
 
 export function ProfitLossView() {
   const [period, setPeriod] = useState<Period>("month");
@@ -73,9 +73,7 @@ export function ProfitLossView() {
 
   return (
     <div style={{ padding: "20px 16px 100px" }}>
-      <Link href="/dashboard" style={{ fontSize: 12, color: "#64748b" }}>
-        ← Dashboard
-      </Link>
+      <BackLink />
       <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 18px" }}>Profit &amp; Loss</h1>
 
       <PeriodSelector selected={period} onSelect={setPeriod} />

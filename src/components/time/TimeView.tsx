@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useTimeEntries, useUpdateTimeEntry, type TimeEntry } from "@/lib/supabase/hooks/useTimeEntries";
 import { TimeModal } from "@/components/modals/TimeModal";
 import { fmt } from "@/lib/format";
 import { ReadOnlyNotice } from "@/components/ui/ReadOnlyNotice";
 import { useToolAccess } from "@/lib/supabase/hooks/useToolAccess";
+import { BackLink } from "@/components/ui/BackLink";
 
 const TYPE_COLORS: Record<string, { bg: string; fg: string }> = {
   Billable: { bg: "#F0F9FF", fg: "#0369A1" },
@@ -35,9 +35,7 @@ export function TimeView() {
     <div style={{ padding: "20px 16px 100px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
         <div>
-          <Link href="/dashboard" style={{ fontSize: 12, color: "#64748b" }}>
-            ← Dashboard
-          </Link>
+          <BackLink />
           <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 0" }}>Time Tracker</h1>
         </div>
         {access.canEdit && (

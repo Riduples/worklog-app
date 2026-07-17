@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useStaffRegister, type StaffMember } from "@/lib/supabase/hooks/useStaffRegister";
 import { useWorkerLoans } from "@/lib/supabase/hooks/useWorkerLoans";
 import { useWorkerLeave } from "@/lib/supabase/hooks/useWorkerLeave";
@@ -15,6 +14,7 @@ import { Row } from "@/components/ui/Row";
 import { fmt } from "@/lib/format";
 import { calcLeaveBalances, getLoanBalance, rateLabel } from "@/lib/payroll";
 import { isRestricted, TIERS, type Plan } from "@/lib/tiers";
+import { BackLink } from "@/components/ui/BackLink";
 
 const EMPLOYMENT_BADGE: Record<string, { label: string; bg: string; fg: string; border: string }> = {
   contractor: { label: "🧾 Contractor", bg: "#fff7ed", fg: "#92400e", border: "#fed7aa" },
@@ -170,9 +170,7 @@ export function StaffView() {
     <div style={{ padding: "20px 16px 100px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
         <div>
-          <Link href="/dashboard" style={{ fontSize: 12, color: "#64748b" }}>
-            ← Dashboard
-          </Link>
+          <BackLink />
           <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 0" }}>Staff Register</h1>
         </div>
         <button

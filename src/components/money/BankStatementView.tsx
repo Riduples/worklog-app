@@ -7,6 +7,7 @@ import { useCreateExpense } from "@/lib/supabase/hooks/useExpenses";
 import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 import { useTaxRates } from "@/lib/taxRates";
 import { fmt } from "@/lib/format";
+import { BackLink } from "@/components/ui/BackLink";
 
 type ParsedTxn = {
   date: string;
@@ -119,9 +120,7 @@ export function BankStatementView() {
 
   const Header = () => (
     <>
-      <Link href="/dashboard" style={{ fontSize: 12, color: "#64748b" }}>
-        ← Dashboard
-      </Link>
+      <BackLink />
       <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 18px" }}>Import Bank Statement</h1>
     </>
   );

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useBusinessMembers, useUpdateMemberPermissions } from "@/lib/supabase/hooks/useBusinessMembers";
 import { usePendingInvites, useRevokeInvite } from "@/lib/supabase/hooks/useInvites";
 import { useBusinessProfile, useUpdateBusinessPlan } from "@/lib/supabase/hooks/useBusinessProfile";
@@ -11,6 +10,7 @@ import { UpgradeModal } from "@/components/modals/UpgradeModal";
 import { PermissionsEditor } from "@/components/team/PermissionsEditor";
 import { TIERS, isLocked, type Plan } from "@/lib/tiers";
 import type { Permissions } from "@/lib/permissions";
+import { BackLink } from "@/components/ui/BackLink";
 
 export function TeamView() {
   const { data: business } = useBusinessProfile();
@@ -55,9 +55,7 @@ export function TeamView() {
     <div style={{ padding: "20px 16px 100px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
         <div>
-          <Link href="/dashboard" style={{ fontSize: 12, color: "#64748b" }}>
-            ← Dashboard
-          </Link>
+          <BackLink />
           <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 0" }}>Team</h1>
         </div>
         <button

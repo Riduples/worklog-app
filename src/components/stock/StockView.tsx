@@ -1,13 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useStockItems, useUpdateStockItem, type StockItem } from "@/lib/supabase/hooks/useStock";
 import { StockModal } from "@/components/modals/StockModal";
 import { CSVImportModal } from "@/components/modals/CSVImportModal";
 import { ReadOnlyNotice } from "@/components/ui/ReadOnlyNotice";
 import { useToolAccess } from "@/lib/supabase/hooks/useToolAccess";
 import { fmt } from "@/lib/format";
+import { BackLink } from "@/components/ui/BackLink";
 
 export function StockView() {
   const { data: items, isLoading } = useStockItems();
@@ -25,9 +25,7 @@ export function StockView() {
     <div style={{ padding: "20px 16px 100px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
         <div>
-          <Link href="/dashboard" style={{ fontSize: 12, color: "#64748b" }}>
-            ← Dashboard
-          </Link>
+          <BackLink />
           <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 0" }}>Stock</h1>
         </div>
         {access.canEdit && (

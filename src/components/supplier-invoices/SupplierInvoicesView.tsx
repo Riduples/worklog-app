@@ -1,13 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useSupplierInvoices, type SupplierInvoice } from "@/lib/supabase/hooks/useSupplierInvoices";
 import { SupplierInvoiceModal } from "@/components/modals/SupplierInvoiceModal";
 import { SupplierInvoiceActionsModal, supplierInvoiceDisplayStatus } from "@/components/modals/SupplierInvoiceActionsModal";
 import { fmt } from "@/lib/format";
 import { ReadOnlyNotice } from "@/components/ui/ReadOnlyNotice";
 import { useToolAccess } from "@/lib/supabase/hooks/useToolAccess";
+import { BackLink } from "@/components/ui/BackLink";
 
 export function SupplierInvoicesView() {
   const access = useToolAccess("supplierinvoice");
@@ -19,9 +19,7 @@ export function SupplierInvoicesView() {
     <div style={{ padding: "20px 16px 100px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
         <div>
-          <Link href="/dashboard" style={{ fontSize: 12, color: "#64748b" }}>
-            ← Dashboard
-          </Link>
+          <BackLink />
           <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 0" }}>Supplier Invoices</h1>
         </div>
         {access.canEdit && (

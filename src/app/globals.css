@@ -118,6 +118,53 @@ body {
 }
 
 /**
+ * The way back to the dashboard, on every tool page.
+ *
+ * A phone has no sidebar, so this is the only way home — and it was a 12px
+ * slate link at 4.46:1, under the 4.5 that normal text needs, in a tap target
+ * roughly 90x15 against the 44x44 guideline. It is now a control: navy on white
+ * at 9.46:1, 44px tall, and shaped like the cards it sits above so it reads as
+ * something you press.
+ *
+ * The negative left margin pulls the arrow out to the padding edge so the label
+ * lines up with the heading below it rather than sitting a few pixels in.
+ */
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 14px;
+  margin-left: -12px;
+  margin-bottom: 2px;
+  border-radius: 11px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #0c4a6e;
+  text-decoration: none;
+}
+.back-link-arrow {
+  font-size: 15px;
+  line-height: 1;
+}
+.back-link:hover {
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+@media (min-width: 1024px) {
+  /* A mouse doesn't need a 44px target, so this can be smaller here — but only
+     smaller. The colour stays navy: the sidebar means you are never stuck
+     without this, which is a reason to make it quieter and not a reason to make
+     it harder to read. Toning it back to the old slate would have restored the
+     4.46:1 this exists to fix, on the screens most likely to be used all day. */
+  .back-link {
+    min-height: 30px;
+    font-size: 12px;
+  }
+}
+
+/**
  * The dashboard header.
  *
  * On a phone it is the app's chrome: a navy band carrying the logo, the
