@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { isLocked, type Plan } from "@/lib/tiers";
+import type { ToolId } from "@/lib/permissions";
 
 export async function requireUser() {
   const supabase = await createClient();
@@ -18,5 +20,24 @@ export async function requireBusinessProfile() {
   // user_id doesn't match business_profiles.user_id (the owner's).
   const { data: profile } = await supabase.from("business_profiles").select("*").maybeSingle();
   if (!profile) redirect("/onboarding");
+  return { user, profile };
+}
+
+/**
+ * Guards a page that a plan can lock.
+ *
+ * isLocked() only ever decided whether a dashboard tile drew a padlock —
+ * nothing checked the plan on the way into the page, so a Shoebox user could
+ * simply type /staff and use the Staff Register in full.
+ *
+ * RLS is what actually stops the write (plan_allows, migration 0052). This is
+ * so they meet the upgrade prompt instead of a database rejection, which is a
+ * courtesy rather than the control: never the only thing between a plan and a
+ * feature.
+ */
+export async function requirePlanAccess(tool: ToolId | "team") {
+  const { user, profile } = await requireBusinessProfile();
+  const plan = (profile.plan ?? "shoebox") as Plan;
+  if (isLocked(plan, tool)) redirect(`/dashboard?upgrade=${encodeURIComponent(tool)}`);
   return { user, profile };
 }

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useIncome } from "@/lib/supabase/hooks/useIncome";
 import { useExpenses } from "@/lib/supabase/hooks/useExpenses";
 import { useStockItems } from "@/lib/supabase/hooks/useStock";
@@ -35,7 +36,14 @@ export function DashboardView({ businessName }: { businessName: string }) {
   const { data: business } = useBusinessProfile();
   const { data: currentMember } = useCurrentMember();
   const [modal, setModal] = useState<"income" | "expense" | "quicklog" | "help" | "business" | null>(null);
-  const [upgradeFeature, setUpgradeFeature] = useState<ToolId | "team" | null>(null);
+  // requirePlanAccess() bounces someone off a page their plan doesn't include
+  // and lands them here with ?upgrade=<tool>. Without this they'd arrive at the
+  // dashboard with no idea why, which is worse than the hole it closes.
+  const searchParams = useSearchParams();
+  const upgradeParam = searchParams.get("upgrade");
+  const [upgradeFeature, setUpgradeFeature] = useState<ToolId | "team" | null>(
+    (upgradeParam as ToolId | "team" | null) ?? null
+  );
 
   // Default to full access while the membership row is still loading, so the
   // (overwhelmingly common) single-owner case never flashes hidden tiles.
