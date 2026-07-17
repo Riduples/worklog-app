@@ -10,6 +10,7 @@ import { useLedgerEntries } from "@/lib/supabase/hooks/useLedger";
 import { useStockItems } from "@/lib/supabase/hooks/useStock";
 import { inPeriod, type Period } from "@/lib/period";
 import { fmt } from "@/lib/format";
+import { balanceInclVat } from "@/lib/balance";
 import { BackLink } from "@/components/ui/BackLink";
 
 export function CashFlowView() {
@@ -31,7 +32,7 @@ export function CashFlowView() {
   // what's outstanding right now regardless of the period selector.
   const invoicesOwed = (invoices ?? [])
     .filter((i) => i.status !== "paid")
-    .reduce((s, i) => s + Number(i.balance_due) + Number(i.vat_amount ?? 0), 0);
+    .reduce((s, i) => s + balanceInclVat(i.balance_due, i.vat_amount), 0);
   const clientLedgerOwed = (ledger ?? [])
     .filter((e) => e.ledger_type === "client" && e.status !== "paid")
     .reduce((s, e) => s + Number(e.amount), 0);
@@ -39,7 +40,7 @@ export function CashFlowView() {
 
   const supplierInvoicesOwed = (supplierInvoices ?? [])
     .filter((si) => si.status !== "paid")
-    .reduce((s, si) => s + Number(si.balance_due) + Number(si.vat_amount ?? 0), 0);
+    .reduce((s, si) => s + balanceInclVat(si.balance_due, si.vat_amount), 0);
   const supplierLedgerOwed = (ledger ?? [])
     .filter((e) => e.ledger_type === "supplier" && e.status !== "paid")
     .reduce((s, e) => s + Number(e.amount), 0);

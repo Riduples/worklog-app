@@ -11,6 +11,7 @@ import { buildRemittanceHTML, type RemittanceLine } from "@/lib/docgen/buildLedg
 import { openDocumentForPrinting, shareDocumentText } from "@/lib/docgen/shareDocument";
 import { renderPdf, downloadBlob } from "@/lib/docgen/renderPdf";
 import { fmt, todayStr } from "@/lib/format";
+import { balanceInclVat } from "@/lib/balance";
 import { BackLink } from "@/components/ui/BackLink";
 
 export function RemittanceView() {
@@ -36,7 +37,7 @@ export function RemittanceView() {
     .filter(Boolean)
     .sort();
 
-  const balanceOf = (si: { balance_due: number; vat_amount: number | null }) => Number(si.balance_due) + Number(si.vat_amount ?? 0);
+  const balanceOf = (si: { balance_due: number; vat_amount: number | null }) => balanceInclVat(si.balance_due, si.vat_amount);
 
   const supplierSIs = (supplierInvoices ?? []).filter((si) => si.supplier_name === selectedSupplier && si.status !== "paid");
   const selectedSIs = supplierSIs.filter((si) => selectedIds.includes(si.id));

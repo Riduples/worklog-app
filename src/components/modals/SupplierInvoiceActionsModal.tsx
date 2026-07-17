@@ -3,6 +3,7 @@
 import { Modal } from "@/components/ui/Modal";
 import { Row } from "@/components/ui/Row";
 import { fmt, todayStr } from "@/lib/format";
+import { balanceInclVat } from "@/lib/balance";
 import { useUpdateSupplierInvoice, type SupplierInvoice } from "@/lib/supabase/hooks/useSupplierInvoices";
 import type { PurchaseLineItem } from "@/components/ui/PurchaseLineItemsEditor";
 
@@ -18,7 +19,10 @@ export function SupplierInvoiceActionsModal({ si, onClose }: { si: SupplierInvoi
   const items = (si.line_items as PurchaseLineItem[]) ?? [];
   const status = supplierInvoiceDisplayStatus(si);
   const totalInclVat = Number(si.invoice_amount) + Number(si.vat_amount ?? 0);
-  const balanceInclVat = Number(si.balance_due) + Number(si.vat_amount ?? 0);
+  // Marking paid (below) zeroes balance_due and leaves vat_amount, so the naive
+  // sum told you a settled invoice still owed the supplier exactly the VAT.
+  // Its sales-side sibling has had the guard since 3885cf2; this side didn't.
+  const balanceOwed = balanceInclVat(si.balance_due, si.vat_amount);
 
   return (
     <Modal title={si.supplier_ref_number ? `Invoice ${si.supplier_ref_number}` : "Supplier invoice"} onClose={onClose}>
@@ -55,7 +59,7 @@ export function SupplierInvoiceActionsModal({ si, onClose }: { si: SupplierInvoi
 
       <Row label="Total" value={fmt(totalInclVat)} />
       {si.paid_amount ? <Row label="Already paid" value={fmt(si.paid_amount)} /> : null}
-      <Row label="Balance you owe" value={fmt(balanceInclVat)} bold />
+      <Row label="Balance you owe" value={fmt(balanceOwed)} bold />
 
       {si.status !== "paid" && (
         <button

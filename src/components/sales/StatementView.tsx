@@ -10,6 +10,7 @@ import { buildStatementHTML, type StatementLine } from "@/lib/docgen/buildLedger
 import { openDocumentForPrinting, shareDocumentText } from "@/lib/docgen/shareDocument";
 import { renderPdf, downloadBlob } from "@/lib/docgen/renderPdf";
 import { fmt } from "@/lib/format";
+import { balanceInclVat } from "@/lib/balance";
 import { BackLink } from "@/components/ui/BackLink";
 
 export function StatementView() {
@@ -37,7 +38,7 @@ export function StatementView() {
   const totalInvoiced = clientInvoices.reduce((s, i) => s + Number(i.invoice_amount) + Number(i.vat_amount ?? 0), 0);
   const totalOutstanding = clientInvoices
     .filter((i) => i.status !== "paid")
-    .reduce((s, i) => s + Number(i.balance_due) + Number(i.vat_amount ?? 0), 0);
+    .reduce((s, i) => s + balanceInclVat(i.balance_due, i.vat_amount), 0);
   const totalReceived = totalInvoiced - totalOutstanding;
 
   const asAt = new Date().toLocaleDateString("en-ZA", { year: "numeric", month: "long", day: "numeric" });
@@ -45,7 +46,7 @@ export function StatementView() {
   const owedFor = (name: string) =>
     (invoices ?? [])
       .filter((i) => i.client_name === name && i.status !== "paid")
-      .reduce((s, i) => s + Number(i.balance_due) + Number(i.vat_amount ?? 0), 0);
+      .reduce((s, i) => s + balanceInclVat(i.balance_due, i.vat_amount), 0);
 
   const handlePrint = async () => {
     if (!business || busy) return;
@@ -54,7 +55,7 @@ export function StatementView() {
       date: i.issue_date,
       reference: i.doc_number,
       amount: Number(i.invoice_amount) + Number(i.vat_amount ?? 0),
-      balance: Number(i.balance_due) + Number(i.vat_amount ?? 0),
+      balance: balanceInclVat(i.balance_due, i.vat_amount),
       paid: i.status === "paid",
     }));
     const totals = { invoiced: totalInvoiced, received: totalReceived, outstanding: totalOutstanding };
@@ -151,7 +152,7 @@ export function StatementView() {
           {clientInvoices.map((inv) => {
             const paid = inv.status === "paid";
             const total = Number(inv.invoice_amount) + Number(inv.vat_amount ?? 0);
-            const balance = Number(inv.balance_due) + Number(inv.vat_amount ?? 0);
+            const balance = balanceInclVat(inv.balance_due, inv.vat_amount);
             return (
               <div key={inv.id} style={{ background: paid ? "#F0F9FF" : "#fff7ed", borderRadius: 12, padding: "11px 14px", marginBottom: 8, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div>

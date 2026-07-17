@@ -5,6 +5,7 @@
 //    total_amount, line_items, ...) instead of the prototype's local state shape.
 import { fmt, todayStr } from "@/lib/format";
 import { esc } from "@/lib/docgen/esc";
+import { balanceInclVat } from "@/lib/balance";
 import type { BusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 
 export type DocKind = "quote" | "invoice" | "purchaseorder" | "payslip";
@@ -49,8 +50,12 @@ export function buildDocumentHTML(doc: DocForRender, business: BusinessProfile, 
 
   const vatPctLabel = hasVat ? `${((doc.vat_rate as number) * 100).toFixed(0)}%` : "";
   const totalInclVat = doc.subtotal + (hasVat ? doc.vat_amount : 0);
+  // An invoice with no balance_due recorded hasn't been part-paid, so the whole
+  // subtotal is still due — that fallback stays. What changed is the guard: a
+  // PAID invoice has balance_due 0 and keeps its vat_amount, so the old sum
+  // printed "Total Due (incl. VAT): R150.00" on the PDF of a settled invoice.
   const finalDue = isInvoice
-    ? (doc.balance_due != null ? Number(doc.balance_due) : doc.subtotal) + (hasVat ? doc.vat_amount : 0)
+    ? balanceInclVat(doc.balance_due != null ? doc.balance_due : doc.subtotal, hasVat ? doc.vat_amount : 0)
     : totalInclVat;
 
   const totalsRows = [

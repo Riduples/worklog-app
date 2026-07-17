@@ -1,4 +1,5 @@
 import { fmt } from "@/lib/format";
+import { balanceInclVat } from "@/lib/balance";
 import type { Quote } from "@/lib/supabase/hooks/useQuotes";
 import type { Invoice } from "@/lib/supabase/hooks/useInvoices";
 
@@ -42,7 +43,10 @@ export function buildQuoteText(q: Quote): string {
 
 export function buildInvoiceText(inv: Invoice): string {
   const totalInclVat = Number(inv.invoice_amount) + Number(inv.vat_amount ?? 0);
-  const balanceInclVat = Number(inv.balance_due) + Number(inv.vat_amount ?? 0);
+  // This goes to the customer. The naive sum meant a settled invoice's WhatsApp
+  // message announced a balance of exactly the VAT — while the same modal that
+  // sends it showed R 0.00 on screen, because that one had the guard.
+  const balanceDue = balanceInclVat(inv.balance_due, inv.vat_amount);
 
   return [
     `📄 *INVOICE ${inv.doc_number}*`,
@@ -54,7 +58,7 @@ export function buildInvoiceText(inv: Invoice): string {
     `━━━━━━━━━━━━━━━━━━━`,
     `*Invoice amount:* ${fmt(totalInclVat)}`,
     Number(inv.deposit_received) > 0 ? `*Deposit received:* ${fmt(inv.deposit_received)}` : null,
-    `*BALANCE DUE: ${fmt(balanceInclVat)}*`,
+    `*BALANCE DUE: ${fmt(balanceDue)}*`,
     ``,
     `_Please make payment by the due date._`,
     `_Thank you for your business!_`,

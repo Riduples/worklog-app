@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useInvoices } from "@/lib/supabase/hooks/useInvoices";
 import { useSupplierInvoices } from "@/lib/supabase/hooks/useSupplierInvoices";
 import { fmt, todayStr } from "@/lib/format";
+import { balanceInclVat } from "@/lib/balance";
 import { BackLink } from "@/components/ui/BackLink";
 
 type Bucket = "0–30" | "31–60" | "61–90" | "90+";
@@ -47,7 +48,7 @@ export function AgeAnalysisView() {
         date: r.due_date ?? r.issue_date,
         days,
         bucket: bucketOf(days),
-        amount: Number(r.balance_due) + Number(r.vat_amount ?? 0),
+        amount: balanceInclVat(r.balance_due, r.vat_amount),
       };
     })
     .sort((a, b) => b.days - a.days);
@@ -63,7 +64,7 @@ export function AgeAnalysisView() {
         date: r.due_date ?? r.issue_date,
         days,
         bucket: bucketOf(days),
-        amount: Number(r.balance_due) + Number(r.vat_amount ?? 0),
+        amount: balanceInclVat(r.balance_due, r.vat_amount),
       };
     })
     .sort((a, b) => b.days - a.days);
