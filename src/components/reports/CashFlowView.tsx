@@ -53,19 +53,19 @@ export function CashFlowView() {
       <Link href="/dashboard" style={{ fontSize: 12, color: "#64748b" }}>
         ← Dashboard
       </Link>
-      <h1 style={{ fontSize: 20, fontWeight: 800, color: "#1B4332", margin: "4px 0 18px" }}>Cash Flow</h1>
+      <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 18px" }}>Cash Flow</h1>
 
       <PeriodSelector selected={period} onSelect={setPeriod} />
 
-      <div style={{ background: "#1B4332", borderRadius: 16, padding: "18px 18px", marginBottom: 16 }}>
+      <div style={{ background: "#0C4A6E", borderRadius: 16, padding: "18px 18px", marginBottom: 16 }}>
         <div style={{ fontSize: 11, color: "rgba(255,255,255,0.6)", fontWeight: 700, letterSpacing: 1, marginBottom: 4 }}>
           NET CASH FLOW
         </div>
-        <div style={{ fontSize: 28, fontWeight: 800, color: netCashFlow >= 0 ? "#6EE7B7" : "#FCA5A5" }}>{fmt(netCashFlow)}</div>
+        <div style={{ fontSize: 28, fontWeight: 800, color: netCashFlow >= 0 ? "#7DD3FC" : "#FCA5A5" }}>{fmt(netCashFlow)}</div>
         <div style={{ display: "flex", gap: 16, marginTop: 12 }}>
           <div>
             <div style={{ fontSize: 10, color: "rgba(255,255,255,0.5)" }}>IN</div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: "#6EE7B7" }}>{fmt(moneyIn)}</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "#7DD3FC" }}>{fmt(moneyIn)}</div>
           </div>
           <div>
             <div style={{ fontSize: 10, color: "rgba(255,255,255,0.5)" }}>OUT</div>
@@ -79,14 +79,14 @@ export function CashFlowView() {
           Adjusted position (incl. what&apos;s outstanding)
         </div>
         <Row label="Net cash flow" value={fmt(netCashFlow)} />
-        <Row label="+ Owed to you" value={fmt(owedToYou)} color="#166534" />
+        <Row label="+ Owed to you" value={fmt(owedToYou)} color="#0369A1" />
         <Row label="− You owe suppliers" value={fmt(youOwe)} color="#b45309" />
         <div style={{ borderTop: "1.5px solid #e2e8f0", marginTop: 8, paddingTop: 8 }}>
           <Row label="Adjusted position" value={fmt(adjustedPosition)} bold />
         </div>
       </div>
 
-      <div style={{ background: "#f0fdf4", borderRadius: 14, padding: "14px 16px", fontSize: 13, color: "#166534" }}>
+      <div style={{ background: "#F0F9FF", borderRadius: 14, padding: "14px 16px", fontSize: 13, color: "#0369A1" }}>
         Stock on hand (at cost): <strong>{fmt(stockValue)}</strong>
         <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 4 }}>Not counted in cash position — value tied up in inventory.</div>
       </div>
@@ -98,7 +98,7 @@ function Row({ label, value, bold, color }: { label: string; value: string; bold
   return (
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
       <span style={{ fontSize: 13, color: "#374151" }}>{label}</span>
-      <span style={{ fontSize: bold ? 17 : 14, fontWeight: bold ? 800 : 600, color: color ?? "#1B4332" }}>{value}</span>
+      <span style={{ fontSize: bold ? 17 : 14, fontWeight: bold ? 800 : 600, color: color ?? "#0C4A6E" }}>{value}</span>
     </div>
   );
 }

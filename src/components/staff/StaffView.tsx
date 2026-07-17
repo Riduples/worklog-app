@@ -19,7 +19,7 @@ import { isRestricted, TIERS, type Plan } from "@/lib/tiers";
 const EMPLOYMENT_BADGE: Record<string, { label: string; bg: string; fg: string; border: string }> = {
   contractor: { label: "🧾 Contractor", bg: "#fff7ed", fg: "#92400e", border: "#fed7aa" },
   fixed_term: { label: "📅 Fixed-term", bg: "#f5f3ff", fg: "#6d28d9", border: "#ddd6fe" },
-  casual: { label: "🔁 Casual", bg: "#f0fdf4", fg: "#166534", border: "#BAE6FD" },
+  casual: { label: "🔁 Casual", bg: "#F0F9FF", fg: "#0369A1", border: "#BAE6FD" },
 };
 
 function StaffDetailModal({ staff, onClose }: { staff: StaffMember; onClose: () => void }) {
@@ -173,11 +173,11 @@ export function StaffView() {
           <Link href="/dashboard" style={{ fontSize: 12, color: "#64748b" }}>
             ← Dashboard
           </Link>
-          <h1 style={{ fontSize: 20, fontWeight: 800, color: "#1B4332", margin: "4px 0 0" }}>Staff Register</h1>
+          <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 0" }}>Staff Register</h1>
         </div>
         <button
           onClick={handleAddClick}
-          style={{ background: "#1B4332", color: "#fff", border: "none", borderRadius: 12, padding: "10px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+          style={{ background: "#0C4A6E", color: "#fff", border: "none", borderRadius: 12, padding: "10px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
         >
           {soloCapped ? "🔒 Add" : "+ Add"}
         </button>

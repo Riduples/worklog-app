@@ -62,14 +62,14 @@ export function TaxView() {
       <Link href="/dashboard" style={{ fontSize: 12, color: "#64748b" }}>
         ← Dashboard
       </Link>
-      <h1 style={{ fontSize: 20, fontWeight: 800, color: "#1B4332", margin: "4px 0 18px" }}>Tax &amp; SARS</h1>
+      <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 18px" }}>Tax &amp; SARS</h1>
 
-      <div style={{ background: "#1B4332", borderRadius: 16, padding: "18px", marginBottom: 16 }}>
+      <div style={{ background: "#0C4A6E", borderRadius: 16, padding: "18px", marginBottom: 16 }}>
         <div style={{ fontSize: 11, color: "rgba(255,255,255,0.6)", fontWeight: 700, letterSpacing: 1, marginBottom: 4 }}>
           🏦 TAX JAR (SET ASIDE FOR SARS)
         </div>
-        <div style={{ fontSize: 28, fontWeight: 800, color: netJar >= 0 ? "#6EE7B7" : "#FCA5A5" }}>{fmt(netJar)}</div>
-        <div style={{ fontSize: 12, color: "#A7F3D0", marginTop: 4 }}>
+        <div style={{ fontSize: 28, fontWeight: 800, color: netJar >= 0 ? "#7DD3FC" : "#FCA5A5" }}>{fmt(netJar)}</div>
+        <div style={{ fontSize: 12, color: "#E0F2FE", marginTop: 4 }}>
           {fmt(taxJar)} set aside · {fmt(paidToSARS)} already paid to SARS
         </div>
         <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", marginTop: 2 }}>
@@ -114,7 +114,7 @@ export function TaxView() {
             padding: "14px 16px",
             fontSize: 14,
             fontWeight: 700,
-            color: locked ? "#94a3b8" : "#1B4332",
+            color: locked ? "#94a3b8" : "#0C4A6E",
             cursor: "pointer",
           };
           return locked ? (
@@ -141,7 +141,7 @@ export function TaxView() {
         </Field>
 
         {breakEvenRate > 0 && (
-          <div style={{ background: "#f0fdf4", borderRadius: 12, padding: "12px 14px", marginTop: 8, fontSize: 13, color: "#166534" }}>
+          <div style={{ background: "#F0F9FF", borderRadius: 12, padding: "12px 14px", marginTop: 8, fontSize: 13, color: "#0369A1" }}>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
               <span>Minimum rate (break-even + buffer)</span>
               <strong>{fmt(breakEvenRate)}/h</strong>

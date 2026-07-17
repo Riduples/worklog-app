@@ -97,7 +97,7 @@ export function RemittanceView() {
       <Link href="/dashboard" style={{ fontSize: 12, color: "#64748b" }}>
         ← Dashboard
       </Link>
-      <h1 style={{ fontSize: 20, fontWeight: 800, color: "#1B4332", margin: "4px 0 18px" }}>Remittance Advice</h1>
+      <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 18px" }}>Remittance Advice</h1>
 
       <div style={{ background: "#fff7ed", border: "1.5px solid #fed7aa", borderRadius: 12, padding: "12px 14px", marginBottom: 18, fontSize: 12, color: "#92400e", lineHeight: 1.5 }}>
         A remittance advice tells your supplier exactly which of their invoices your payment covers. Send it when you make a payment so there&apos;s no confusion on their side.
@@ -203,13 +203,13 @@ export function RemittanceView() {
                 <button
                   onClick={handlePrint}
                   disabled={!business || busy}
-                  style={{ flex: 1, background: "#f0fdf4", color: "#1B4332", border: "1.5px solid #d1fae5", borderRadius: 12, padding: 13, fontWeight: 700, fontSize: 13, cursor: "pointer" }}
+                  style={{ flex: 1, background: "#F0F9FF", color: "#0C4A6E", border: "1.5px solid #BAE6FD", borderRadius: 12, padding: 13, fontWeight: 700, fontSize: 13, cursor: "pointer" }}
                 >
                   {busy ? "📄 Preparing..." : "📄 Download PDF"}
                 </button>
                 <button
                   onClick={handleShare}
-                  style={{ flex: 1, background: "#f0fdf4", color: "#1B4332", border: "1.5px solid #d1fae5", borderRadius: 12, padding: 13, fontWeight: 700, fontSize: 13, cursor: "pointer" }}
+                  style={{ flex: 1, background: "#F0F9FF", color: "#0C4A6E", border: "1.5px solid #BAE6FD", borderRadius: 12, padding: 13, fontWeight: 700, fontSize: 13, cursor: "pointer" }}
                 >
                   📤 Share
                 </button>

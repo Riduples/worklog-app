@@ -249,8 +249,8 @@ export function InvoiceMatcher({
             marginTop: 6,
             padding: "9px 12px",
             borderRadius: 8,
-            border: `1.5px solid ${markPaid ? "#1B4332" : "#d1fae5"}`,
-            background: markPaid ? "#f0fdf4" : "#fff",
+            border: `1.5px solid ${markPaid ? "#0C4A6E" : "#BAE6FD"}`,
+            background: markPaid ? "#F0F9FF" : "#fff",
             cursor: "pointer",
             textAlign: "left",
             display: "flex",
@@ -258,8 +258,8 @@ export function InvoiceMatcher({
             gap: 8,
           }}
         >
-          <span style={{ fontSize: 14, color: markPaid ? "#1B4332" : "#cbd5e1" }}>{markPaid ? "☑" : "☐"}</span>
-          <span style={{ fontSize: 11, color: "#166534", fontWeight: 700, lineHeight: 1.5 }}>
+          <span style={{ fontSize: 14, color: markPaid ? "#0C4A6E" : "#cbd5e1" }}>{markPaid ? "☑" : "☐"}</span>
+          <span style={{ fontSize: 11, color: "#0369A1", fontWeight: 700, lineHeight: 1.5 }}>
             {`This covers the full ${fmt(invoiceBalanceInclVat(matched))} balance — mark ${matched.doc_number} as paid`}
           </span>
         </button>

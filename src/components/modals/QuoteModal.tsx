@@ -101,7 +101,7 @@ export function QuoteModal({ onClose }: { onClose: () => void }) {
         <Input value={deposit} onChange={setDeposit} type="number" placeholder="0.00" />
       </Field>
 
-      <div style={{ background: "#f0fdf4", borderRadius: 12, padding: "12px 14px", marginBottom: 16, fontSize: 13, color: "#166534" }}>
+      <div style={{ background: "#F0F9FF", borderRadius: 12, padding: "12px 14px", marginBottom: 16, fontSize: 13, color: "#0369A1" }}>
         <div style={{ display: "flex", justifyContent: "space-between" }}>
           <span>Subtotal{isVatRegistered ? " (excl. VAT)" : ""}</span>
           <span>{fmt(subtotal)}</span>
@@ -118,7 +118,7 @@ export function QuoteModal({ onClose }: { onClose: () => void }) {
             <span>−{fmt(depositNum)}</span>
           </div>
         )}
-        <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 800, fontSize: 16, marginTop: 6, paddingTop: 6, borderTop: "1.5px solid #bbf7d0" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 800, fontSize: 16, marginTop: 6, paddingTop: 6, borderTop: "1.5px solid #BAE6FD" }}>
           <span>Total{isVatRegistered ? " (incl. VAT)" : ""}</span>
           <span>{fmt(totalInclVat)}</span>
         </div>

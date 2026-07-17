@@ -58,11 +58,11 @@ export function TeamView() {
           <Link href="/dashboard" style={{ fontSize: 12, color: "#64748b" }}>
             ← Dashboard
           </Link>
-          <h1 style={{ fontSize: 20, fontWeight: 800, color: "#1B4332", margin: "4px 0 0" }}>Team</h1>
+          <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 0" }}>Team</h1>
         </div>
         <button
           onClick={handleInviteClick}
-          style={{ background: "#1B4332", color: "#fff", border: "none", borderRadius: 12, padding: "10px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+          style={{ background: "#0C4A6E", color: "#fff", border: "none", borderRadius: 12, padding: "10px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
         >
           {teamLocked ? "🔒 Invite" : "+ Invite"}
         </button>
@@ -130,8 +130,8 @@ export function TeamView() {
                 padding: "3px 8px",
                 borderRadius: 20,
                 textTransform: "capitalize",
-                background: m.role === "owner" ? "#fff7ed" : "#f0fdf4",
-                color: m.role === "owner" ? "#92400e" : "#166534",
+                background: m.role === "owner" ? "#fff7ed" : "#F0F9FF",
+                color: m.role === "owner" ? "#92400e" : "#0369A1",
               }}
             >
               {m.role}
@@ -168,7 +168,7 @@ export function TeamView() {
                 {!expired && (
                   <button
                     onClick={() => copyInviteLink(inv.token, inv.id)}
-                    style={{ width: "100%", background: "#f0fdf4", border: "1.5px solid #d1fae5", borderRadius: 10, padding: 8, fontSize: 12, fontWeight: 700, color: "#166534", cursor: "pointer" }}
+                    style={{ width: "100%", background: "#F0F9FF", border: "1.5px solid #BAE6FD", borderRadius: 10, padding: 8, fontSize: 12, fontWeight: 700, color: "#0369A1", cursor: "pointer" }}
                   >
                     {copiedId === inv.id ? "Copied!" : "📋 Copy invite link"}
                   </button>

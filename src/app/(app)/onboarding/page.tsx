@@ -16,7 +16,7 @@ export default async function OnboardingPage() {
 
   return (
     <div style={{ padding: "40px 20px" }}>
-      <h1 style={{ fontSize: 20, fontWeight: 800, color: "#1B4332", marginBottom: 4 }}>Set up your business</h1>
+      <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", marginBottom: 4 }}>Set up your business</h1>
       <p style={{ fontSize: 13, color: "#64748b", marginBottom: 22 }}>
         This shows up as the &ldquo;From&rdquo; details on every quote, invoice and purchase order.
       </p>

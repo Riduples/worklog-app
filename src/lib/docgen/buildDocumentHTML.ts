@@ -128,11 +128,11 @@ export function buildDocumentHTML(doc: DocForRender, business: BusinessProfile, 
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #fff; color: #111; padding: 40px; width: 700px; }
-  .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #1B4332; padding-bottom: 20px; margin-bottom: 28px; }
+  .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #0C4A6E; padding-bottom: 20px; margin-bottom: 28px; }
   .brand { display: flex; align-items: center; gap: 10px; }
-  .brand-mark { background: #F59E0B; border-radius: 8px; width: 36px; height: 36px; display:flex; align-items:center; justify-content:center; font-weight: 900; font-size: 18px; color: #1B4332; font-family: monospace; }
-  .brand-name { font-size: 13px; font-weight: 900; color: #1B4332; letter-spacing: 1.5px; }
-  .doc-title { font-size: 26px; font-weight: 800; color: #1B4332; text-align: right; }
+  .brand-mark { background: #F59E0B; border-radius: 8px; width: 36px; height: 36px; display:flex; align-items:center; justify-content:center; font-weight: 900; font-size: 18px; color: #0C4A6E; font-family: monospace; }
+  .brand-name { font-size: 13px; font-weight: 900; color: #0C4A6E; letter-spacing: 1.5px; }
+  .doc-title { font-size: 26px; font-weight: 800; color: #0C4A6E; text-align: right; }
   .doc-number { font-size: 12px; color: #64748b; text-align: right; margin-top: 4px; }
   .meta-row { display: flex; justify-content: space-between; margin-bottom: 28px; gap: 24px; }
   .meta-block { flex: 1; }
@@ -140,13 +140,13 @@ export function buildDocumentHTML(doc: DocForRender, business: BusinessProfile, 
   .meta-value { font-size: 13px; color: #111; line-height: 1.5; }
   .meta-value strong { font-weight: 700; }
   table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-  thead th { background: #f0fdf4; padding: 10px 8px; font-size: 11px; font-weight: 700; color: #1B4332; text-transform: uppercase; letter-spacing: 0.5px; text-align: left; }
+  thead th { background: #F0F9FF; padding: 10px 8px; font-size: 11px; font-weight: 700; color: #0C4A6E; text-transform: uppercase; letter-spacing: 0.5px; text-align: left; }
   thead th:nth-child(2) { text-align: center; }
   thead th:nth-child(3) { text-align: right; }
   .totals { display: flex; justify-content: flex-end; }
   .totals-box { width: 280px; }
   .totals-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 13px; color: #374151; }
-  .totals-row.final { border-top: 2px solid #1B4332; margin-top: 6px; padding-top: 12px; font-size: 18px; font-weight: 800; color: #1B4332; }
+  .totals-row.final { border-top: 2px solid #0C4A6E; margin-top: 6px; padding-top: 12px; font-size: 18px; font-weight: 800; color: #0C4A6E; }
   .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; font-size: 11px; color: #94a3b8; line-height: 1.6; }
   .vat-note { font-size: 10px; color: #94a3b8; margin-top: 4px; }
 </style>

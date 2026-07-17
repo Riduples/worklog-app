@@ -44,14 +44,14 @@ export function SignupForm() {
   if (needsConfirmation) {
     return (
       <div>
-        <h1 style={{ fontSize: 20, fontWeight: 800, color: "#1B4332", marginBottom: 12 }}>Almost there</h1>
-        <div style={{ background: "#f0fdf4", borderRadius: 12, padding: "14px 16px", fontSize: 13, color: "#166534" }}>
+        <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", marginBottom: 12 }}>Almost there</h1>
+        <div style={{ background: "#F0F9FF", borderRadius: 12, padding: "14px 16px", fontSize: 13, color: "#0369A1" }}>
           We sent a confirmation link to <strong>{email}</strong>. Confirm your email, then log in.
         </div>
         <p style={{ fontSize: 13, color: "#64748b", textAlign: "center", marginTop: 20 }}>
           <Link
             href={next ? `/login?next=${encodeURIComponent(next)}` : "/login"}
-            style={{ color: "#1B4332", fontWeight: 700 }}
+            style={{ color: "#0C4A6E", fontWeight: 700 }}
           >
             Back to login
           </Link>
@@ -62,7 +62,7 @@ export function SignupForm() {
 
   return (
     <div>
-      <h1 style={{ fontSize: 20, fontWeight: 800, color: "#1B4332", marginBottom: 4 }}>Create your account</h1>
+      <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", marginBottom: 4 }}>Create your account</h1>
       <p style={{ fontSize: 13, color: "#64748b", marginBottom: 22 }}>Start logging every rand and every job.</p>
 
       <form onSubmit={handleSignup}>
@@ -80,7 +80,7 @@ export function SignupForm() {
         Already have an account?{" "}
         <Link
           href={next ? `/login?next=${encodeURIComponent(next)}` : "/login"}
-          style={{ color: "#1B4332", fontWeight: 700 }}
+          style={{ color: "#0C4A6E", fontWeight: 700 }}
         >
           Log in
         </Link>

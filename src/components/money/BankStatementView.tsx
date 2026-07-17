@@ -122,7 +122,7 @@ export function BankStatementView() {
       <Link href="/dashboard" style={{ fontSize: 12, color: "#64748b" }}>
         ← Dashboard
       </Link>
-      <h1 style={{ fontSize: 20, fontWeight: 800, color: "#1B4332", margin: "4px 0 18px" }}>Import Bank Statement</h1>
+      <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 18px" }}>Import Bank Statement</h1>
     </>
   );
 
@@ -230,13 +230,13 @@ export function BankStatementView() {
         <Header />
         <div style={{ textAlign: "center", padding: "40px 0" }}>
           <div style={{ fontSize: 44, marginBottom: 14 }}>✅</div>
-          <div style={{ fontSize: 17, fontWeight: 800, color: "#1B4332", marginBottom: 6 }}>
+          <div style={{ fontSize: 17, fontWeight: 800, color: "#0C4A6E", marginBottom: 6 }}>
             {savedCount} transaction{savedCount !== 1 ? "s" : ""} imported
           </div>
           <div style={{ fontSize: 13, color: "#64748b", marginBottom: 24 }}>They&apos;re now in your Money records.</div>
           <Link
             href="/dashboard"
-            style={{ display: "block", background: "#1B4332", borderRadius: 14, padding: 15, fontSize: 15, fontWeight: 700, color: "#fff", textDecoration: "none" }}
+            style={{ display: "block", background: "#0C4A6E", borderRadius: 14, padding: 15, fontSize: 15, fontWeight: 700, color: "#fff", textDecoration: "none" }}
           >
             Back to dashboard
           </Link>
@@ -257,7 +257,7 @@ export function BankStatementView() {
       <div style={{ background: "#0C4A6E", borderRadius: 12, padding: "12px 16px", marginBottom: 14, display: "flex", justifyContent: "space-between" }}>
         <div>
           <div style={{ fontSize: 10, color: "#7DD3FC", fontWeight: 700 }}>MONEY IN</div>
-          <div style={{ fontSize: 15, fontWeight: 800, color: "#6EE7B7" }}>{fmt(totalIncome)}</div>
+          <div style={{ fontSize: 15, fontWeight: 800, color: "#7DD3FC" }}>{fmt(totalIncome)}</div>
         </div>
         <div>
           <div style={{ fontSize: 10, color: "#7DD3FC", fontWeight: 700 }}>MONEY OUT</div>
@@ -293,7 +293,7 @@ export function BankStatementView() {
               </div>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0, marginLeft: 8 }}>
-              <span style={{ fontSize: 14, fontWeight: 800, color: t.type === "income" ? "#166534" : "#dc2626" }}>
+              <span style={{ fontSize: 14, fontWeight: 800, color: t.type === "income" ? "#0369A1" : "#dc2626" }}>
                 {t.type === "income" ? "+" : "−"}
                 {fmt(t.amount)}
               </span>
@@ -308,7 +308,7 @@ export function BankStatementView() {
       <button
         onClick={saveSelected}
         disabled={selectedCount === 0 || saving}
-        style={{ width: "100%", background: selectedCount === 0 || saving ? "#94a3b8" : "#1B4332", border: "none", borderRadius: 14, padding: 16, fontSize: 15, fontWeight: 700, color: "#fff", cursor: selectedCount === 0 || saving ? "default" : "pointer", marginTop: 8 }}
+        style={{ width: "100%", background: selectedCount === 0 || saving ? "#94a3b8" : "#0C4A6E", border: "none", borderRadius: 14, padding: 16, fontSize: 15, fontWeight: 700, color: "#fff", cursor: selectedCount === 0 || saving ? "default" : "pointer", marginTop: 8 }}
       >
         {saving ? "Importing..." : `Import ${selectedCount} transaction${selectedCount !== 1 ? "s" : ""}`}
       </button>

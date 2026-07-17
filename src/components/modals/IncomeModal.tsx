@@ -181,7 +181,7 @@ export function IncomeModal({ onClose }: { onClose: () => void }) {
       )}
 
       {amountNum > 0 && (
-        <div style={{ background: "#f0fdf4", borderRadius: 12, padding: "12px 14px", marginBottom: 16, fontSize: 13, color: "#166534" }}>
+        <div style={{ background: "#F0F9FF", borderRadius: 12, padding: "12px 14px", marginBottom: 16, fontSize: 13, color: "#0369A1" }}>
           {`🏦 ${fmt(taxJar)} set aside for SARS (${(TAX_JAR_RATE * 100).toFixed(0)}% tax jar${isVatRegistered ? " on your income after VAT" : ""})`}
         </div>
       )}

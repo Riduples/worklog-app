@@ -132,14 +132,14 @@ export function CSVImportModal({ type, onClose }: { type: CsvImportType; onClose
     <Modal title={`Import ${template.label.toLowerCase()}`} onClose={onClose}>
       {step === "upload" && (
         <>
-          <div style={{ background: "#f0fdf4", borderRadius: 12, padding: "14px 16px", marginBottom: 16, fontSize: 13, color: "#166534", lineHeight: 1.5 }}>
+          <div style={{ background: "#F0F9FF", borderRadius: 12, padding: "14px 16px", marginBottom: 16, fontSize: 13, color: "#0369A1", lineHeight: 1.5 }}>
             Upload a CSV with columns: <strong>{template.columns.map((c) => c.csvHeader).join(", ")}</strong>. Only{" "}
             <strong>name</strong> is required. Rows matching an existing name are skipped.
           </div>
 
           <button
             onClick={downloadTemplate}
-            style={{ width: "100%", padding: 12, borderRadius: 12, border: "1.5px solid #d1fae5", background: "#f0fdf4", color: "#166534", fontSize: 13, fontWeight: 700, cursor: "pointer", marginBottom: 12 }}
+            style={{ width: "100%", padding: 12, borderRadius: 12, border: "1.5px solid #BAE6FD", background: "#F0F9FF", color: "#0369A1", fontSize: 13, fontWeight: 700, cursor: "pointer", marginBottom: 12 }}
           >
             ⬇ Download template CSV
           </button>
@@ -165,9 +165,9 @@ export function CSVImportModal({ type, onClose }: { type: CsvImportType; onClose
       {step === "preview" && (
         <>
           <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
-            <div style={{ flex: 1, background: "#f0fdf4", borderRadius: 12, padding: "12px 14px" }}>
-              <div style={{ fontSize: 10, color: "#166534", fontWeight: 700, textTransform: "uppercase" }}>Will import</div>
-              <div style={{ fontSize: 18, fontWeight: 800, color: "#1B4332" }}>{newCount}</div>
+            <div style={{ flex: 1, background: "#F0F9FF", borderRadius: 12, padding: "12px 14px" }}>
+              <div style={{ fontSize: 10, color: "#0369A1", fontWeight: 700, textTransform: "uppercase" }}>Will import</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: "#0C4A6E" }}>{newCount}</div>
             </div>
             <div style={{ flex: 1, background: "#fff7ed", borderRadius: 12, padding: "12px 14px" }}>
               <div style={{ fontSize: 10, color: "#92400e", fontWeight: 700, textTransform: "uppercase" }}>Duplicates skipped</div>
@@ -202,7 +202,7 @@ export function CSVImportModal({ type, onClose }: { type: CsvImportType; onClose
 
       {step === "done" && (
         <>
-          <div style={{ background: "#f0fdf4", borderRadius: 12, padding: "18px 16px", fontSize: 14, color: "#166534", textAlign: "center", marginBottom: 16 }}>
+          <div style={{ background: "#F0F9FF", borderRadius: 12, padding: "18px 16px", fontSize: 14, color: "#0369A1", textAlign: "center", marginBottom: 16 }}>
             ✅ Imported <strong>{importedCount}</strong> {template.label.toLowerCase()}.
           </div>
           <SaveBtn label="Done" icon="✅" onClick={onClose} />

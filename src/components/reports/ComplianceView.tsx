@@ -49,7 +49,7 @@ export function ComplianceView() {
       <Link href="/tax" style={{ fontSize: 12, color: "#64748b" }}>
         ← Tax &amp; Compliance
       </Link>
-      <h1 style={{ fontSize: 20, fontWeight: 800, color: "#1B4332", margin: "4px 0 18px" }}>Compliance Dashboard</h1>
+      <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 18px" }}>Compliance Dashboard</h1>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8, marginBottom: 14 }}>
         {[

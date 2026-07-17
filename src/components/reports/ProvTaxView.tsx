@@ -77,7 +77,7 @@ export function ProvTaxView() {
       <Link href="/tax" style={{ fontSize: 12, color: "#64748b" }}>
         ← Tax &amp; Compliance
       </Link>
-      <h1 style={{ fontSize: 20, fontWeight: 800, color: "#1B4332", margin: "4px 0 18px" }}>Provisional Tax — IRP6</h1>
+      <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 18px" }}>Provisional Tax — IRP6</h1>
 
       <div style={{ background: "#F0F9FF", border: "1.5px solid #7DD3FC", borderRadius: 12, padding: "11px 14px", marginBottom: 14, fontSize: 12, color: "#0369A1", lineHeight: 1.6 }}>
         <span style={{ fontWeight: 700 }}>📅 IRP6 Provisional Tax</span> — Estimate what you owe SARS for each provisional tax period. This is a planning tool — submit your actual IRP6 return via eFiling or your accountant.
@@ -136,7 +136,7 @@ export function ProvTaxView() {
         ].map(([l, v]) => (
           <div key={l as string} style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
             <span style={{ fontSize: 13, color: "#374151" }}>{l}</span>
-            <span style={{ fontSize: 14, fontWeight: 600, color: "#1B4332" }}>{fmt(v as number)}</span>
+            <span style={{ fontSize: 14, fontWeight: 600, color: "#0C4A6E" }}>{fmt(v as number)}</span>
           </div>
         ))}
       </div>

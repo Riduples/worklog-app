@@ -133,7 +133,7 @@ export function BusinessDetailsModal({ business, onClose }: { business: Business
               // buys nothing for a 56px preview.
               <img src={logoUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
             ) : (
-              <span style={{ fontSize: 24, fontWeight: 900, color: "#1B4332", fontFamily: "monospace" }}>
+              <span style={{ fontSize: 24, fontWeight: 900, color: "#0C4A6E", fontFamily: "monospace" }}>
                 {(name || "W").trim().charAt(0).toUpperCase()}
               </span>
             )}
@@ -151,7 +151,7 @@ export function BusinessDetailsModal({ business, onClose }: { business: Business
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading}
-                style={{ flex: 1, background: "#f0fdf4", color: "#166534", border: "1.5px solid #d1fae5", borderRadius: 10, padding: "9px 10px", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
+                style={{ flex: 1, background: "#F0F9FF", color: "#0369A1", border: "1.5px solid #BAE6FD", borderRadius: 10, padding: "9px 10px", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
               >
                 {uploading ? "Uploading..." : logoUrl ? "Change" : "⬆ Upload logo"}
               </button>

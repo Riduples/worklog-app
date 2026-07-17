@@ -17,7 +17,7 @@ export function SarsSuggestionDropdown({
         right: 0,
         zIndex: 60,
         background: "#fff",
-        border: "1.5px solid #d1fae5",
+        border: "1.5px solid #BAE6FD",
         borderRadius: 12,
         marginTop: 4,
         boxShadow: "0 8px 20px rgba(0,0,0,0.12)",
@@ -32,7 +32,7 @@ export function SarsSuggestionDropdown({
           color: "#94a3b8",
           textTransform: "uppercase",
           letterSpacing: 0.6,
-          background: "#f0fdf4",
+          background: "#F0F9FF",
           borderBottom: "1px solid #e2e8f0",
         }}
       >

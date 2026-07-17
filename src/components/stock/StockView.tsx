@@ -28,16 +28,16 @@ export function StockView() {
           <Link href="/dashboard" style={{ fontSize: 12, color: "#64748b" }}>
             ← Dashboard
           </Link>
-          <h1 style={{ fontSize: 20, fontWeight: 800, color: "#1B4332", margin: "4px 0 0" }}>Stock</h1>
+          <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 0" }}>Stock</h1>
         </div>
         {access.canEdit && (
           <div style={{ display: "flex", gap: 8 }}>
             <button
               onClick={() => setImportOpen(true)}
               style={{
-                background: "#f0fdf4",
-                color: "#166534",
-                border: "1.5px solid #d1fae5",
+                background: "#F0F9FF",
+                color: "#0369A1",
+                border: "1.5px solid #BAE6FD",
                 borderRadius: 12,
                 padding: "10px 14px",
                 fontSize: 13,
@@ -50,7 +50,7 @@ export function StockView() {
             <button
               onClick={() => setModalState({ open: true })}
               style={{
-                background: "#1B4332",
+                background: "#0C4A6E",
                 color: "#fff",
                 border: "none",
                 borderRadius: 12,

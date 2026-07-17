@@ -97,7 +97,7 @@ export function RecipeModal({ recipe, onClose }: { recipe?: Recipe; onClose: () 
         <button
           type="button"
           onClick={() => setIngredients((prev) => [...prev, { name: "", cost: 0 }])}
-          style={{ width: "100%", padding: 10, borderRadius: 10, border: "1.5px dashed #d1fae5", background: "#f0fdf4", color: "#166534", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+          style={{ width: "100%", padding: 10, borderRadius: 10, border: "1.5px dashed #BAE6FD", background: "#F0F9FF", color: "#0369A1", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
         >
           + Add ingredient
         </button>
@@ -107,7 +107,7 @@ export function RecipeModal({ recipe, onClose }: { recipe?: Recipe; onClose: () 
         <Input value={markup} onChange={setMarkup} type="number" placeholder="60" />
       </Field>
 
-      <div style={{ background: "#f0fdf4", borderRadius: 12, padding: "12px 14px", marginBottom: 16, fontSize: 13, color: "#166534" }}>
+      <div style={{ background: "#F0F9FF", borderRadius: 12, padding: "12px 14px", marginBottom: 16, fontSize: 13, color: "#0369A1" }}>
         <div style={{ display: "flex", justifyContent: "space-between" }}>
           <span>Total cost</span>
           <span>{fmt(totalCost)}</span>
@@ -116,7 +116,7 @@ export function RecipeModal({ recipe, onClose }: { recipe?: Recipe; onClose: () 
           <span>Cost per serving</span>
           <span>{fmt(costPerServing)}</span>
         </div>
-        <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 800, fontSize: 16, marginTop: 6, paddingTop: 6, borderTop: "1.5px solid #bbf7d0" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 800, fontSize: 16, marginTop: 6, paddingTop: 6, borderTop: "1.5px solid #BAE6FD" }}>
           <span>Suggested price ({markupNum.toFixed(0)}% markup)</span>
           <span>{fmt(suggestedPrice)}</span>
         </div>

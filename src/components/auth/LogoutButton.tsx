@@ -21,7 +21,7 @@ export function LogoutButton() {
         border: "none",
         borderRadius: 10,
         padding: "8px 14px",
-        color: "#A7F3D0",
+        color: "#E0F2FE",
         fontSize: 12,
         fontWeight: 700,
         cursor: "pointer",

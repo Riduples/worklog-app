@@ -7,7 +7,7 @@ import { useUpdateSupplierInvoice, type SupplierInvoice } from "@/lib/supabase/h
 import type { PurchaseLineItem } from "@/components/ui/PurchaseLineItemsEditor";
 
 export function supplierInvoiceDisplayStatus(si: SupplierInvoice): { label: string; bg: string; fg: string } {
-  if (si.status === "paid") return { label: "paid", bg: "#f0fdf4", fg: "#166534" };
+  if (si.status === "paid") return { label: "paid", bg: "#F0F9FF", fg: "#0369A1" };
   const isOverdue = !!si.due_date && si.due_date < todayStr();
   if (isOverdue) return { label: "overdue", bg: "#fee2e2", fg: "#991b1b" };
   return { label: "unpaid", bg: "#fff7ed", fg: "#b45309" };
@@ -68,7 +68,7 @@ export function SupplierInvoiceActionsModal({ si, onClose }: { si: SupplierInvoi
               { onSuccess: onClose }
             )
           }
-          style={{ width: "100%", background: "#1B4332", color: "#fff", border: "none", borderRadius: 14, padding: 16, fontWeight: 700, cursor: "pointer", marginTop: 12 }}
+          style={{ width: "100%", background: "#0C4A6E", color: "#fff", border: "none", borderRadius: 14, padding: 16, fontWeight: 700, cursor: "pointer", marginTop: 12 }}
         >
           ✅ Mark Paid
         </button>

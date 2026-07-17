@@ -26,12 +26,12 @@ export function RecipesView() {
           <Link href="/dashboard" style={{ fontSize: 12, color: "#64748b" }}>
             ← Dashboard
           </Link>
-          <h1 style={{ fontSize: 20, fontWeight: 800, color: "#1B4332", margin: "4px 0 0" }}>Cost Calculator</h1>
+          <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 0" }}>Cost Calculator</h1>
         </div>
         {access.canEdit && (
           <button
             onClick={() => setModalState({ open: true })}
-            style={{ background: "#1B4332", color: "#fff", border: "none", borderRadius: 12, padding: "10px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+            style={{ background: "#0C4A6E", color: "#fff", border: "none", borderRadius: 12, padding: "10px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
           >
             + New
           </button>

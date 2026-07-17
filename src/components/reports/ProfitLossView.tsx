@@ -68,14 +68,14 @@ export function ProfitLossView() {
       <Link href="/dashboard" style={{ fontSize: 12, color: "#64748b" }}>
         ← Dashboard
       </Link>
-      <h1 style={{ fontSize: 20, fontWeight: 800, color: "#1B4332", margin: "4px 0 18px" }}>Profit &amp; Loss</h1>
+      <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 18px" }}>Profit &amp; Loss</h1>
 
       <PeriodSelector selected={period} onSelect={setPeriod} />
 
-      <div style={{ background: "#1B4332", borderRadius: 16, padding: "18px", marginBottom: 16 }}>
+      <div style={{ background: "#0C4A6E", borderRadius: 16, padding: "18px", marginBottom: 16 }}>
         <div style={{ fontSize: 11, color: "rgba(255,255,255,0.6)", fontWeight: 700, letterSpacing: 1, marginBottom: 4 }}>NET PROFIT</div>
-        <div style={{ fontSize: 28, fontWeight: 800, color: netProfit >= 0 ? "#6EE7B7" : "#FCA5A5" }}>{fmt(netProfit)}</div>
-        <div style={{ fontSize: 12, color: "#A7F3D0", marginTop: 4 }}>{margin.toFixed(1)}% margin (accrual basis)</div>
+        <div style={{ fontSize: 28, fontWeight: 800, color: netProfit >= 0 ? "#7DD3FC" : "#FCA5A5" }}>{fmt(netProfit)}</div>
+        <div style={{ fontSize: 12, color: "#E0F2FE", marginTop: 4 }}>{margin.toFixed(1)}% margin (accrual basis)</div>
       </div>
 
       <div style={{ background: "#fff", borderRadius: 14, padding: "16px", marginBottom: 16, boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
@@ -89,13 +89,13 @@ export function ProfitLossView() {
       </div>
 
       <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
-        <div style={{ flex: 1, background: "#f0fdf4", borderRadius: 12, padding: "12px 14px" }}>
-          <div style={{ fontSize: 10, color: "#166534", fontWeight: 700, textTransform: "uppercase" }}>Tax jar</div>
-          <div style={{ fontSize: 15, fontWeight: 800, color: "#1B4332" }}>{fmt(taxJar)}</div>
+        <div style={{ flex: 1, background: "#F0F9FF", borderRadius: 12, padding: "12px 14px" }}>
+          <div style={{ fontSize: 10, color: "#0369A1", fontWeight: 700, textTransform: "uppercase" }}>Tax jar</div>
+          <div style={{ fontSize: 15, fontWeight: 800, color: "#0C4A6E" }}>{fmt(taxJar)}</div>
         </div>
-        <div style={{ flex: 1, background: "#f0fdf4", borderRadius: 12, padding: "12px 14px" }}>
-          <div style={{ fontSize: 10, color: "#166534", fontWeight: 700, textTransform: "uppercase" }}>Mileage deduction</div>
-          <div style={{ fontSize: 15, fontWeight: 800, color: "#1B4332" }}>{fmt(mileageDeduction)}</div>
+        <div style={{ flex: 1, background: "#F0F9FF", borderRadius: 12, padding: "12px 14px" }}>
+          <div style={{ fontSize: 10, color: "#0369A1", fontWeight: 700, textTransform: "uppercase" }}>Mileage deduction</div>
+          <div style={{ fontSize: 15, fontWeight: 800, color: "#0C4A6E" }}>{fmt(mileageDeduction)}</div>
         </div>
       </div>
 
@@ -117,7 +117,7 @@ function Row({ label, value, bold, color }: { label: string; value: string; bold
   return (
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
       <span style={{ fontSize: 13, color: "#374151" }}>{label}</span>
-      <span style={{ fontSize: bold ? 16 : 14, fontWeight: bold ? 800 : 600, color: color ?? "#1B4332" }}>{value}</span>
+      <span style={{ fontSize: bold ? 16 : 14, fontWeight: bold ? 800 : 600, color: color ?? "#0C4A6E" }}>{value}</span>
     </div>
   );
 }

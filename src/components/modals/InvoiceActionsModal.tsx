@@ -10,7 +10,7 @@ import { useToolAccess } from "@/lib/supabase/hooks/useToolAccess";
 import { useUpdateInvoice, type Invoice } from "@/lib/supabase/hooks/useInvoices";
 
 export function displayStatus(invoice: Invoice): { label: string; bg: string; fg: string } {
-  if (invoice.status === "paid") return { label: "paid", bg: "#f0fdf4", fg: "#166534" };
+  if (invoice.status === "paid") return { label: "paid", bg: "#F0F9FF", fg: "#0369A1" };
   const isOverdue = !!invoice.due_date && invoice.due_date < todayStr();
   const isPartial = Number(invoice.deposit_received || 0) > 0 && Number(invoice.deposit_received || 0) < Number(invoice.invoice_amount);
   if (isOverdue) return { label: "overdue", bg: "#fee2e2", fg: "#991b1b" };
@@ -95,7 +95,7 @@ export function InvoiceActionsModal({ invoice, onClose }: { invoice: Invoice; on
               { onSuccess: onClose }
             )
           }
-          style={{ width: "100%", background: "#1B4332", color: "#fff", border: "none", borderRadius: 14, padding: 16, fontWeight: 700, cursor: "pointer", marginTop: 12 }}
+          style={{ width: "100%", background: "#0C4A6E", color: "#fff", border: "none", borderRadius: 14, padding: 16, fontWeight: 700, cursor: "pointer", marginTop: 12 }}
         >
           ✅ Mark Paid
         </button>

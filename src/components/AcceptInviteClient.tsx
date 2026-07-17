@@ -17,7 +17,7 @@ const shell = (children: React.ReactNode) => (
   <div
     style={{
       minHeight: "100vh",
-      background: "#f0fdf4",
+      background: "#F0F9FF",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
@@ -38,13 +38,13 @@ const shell = (children: React.ReactNode) => (
             justifyContent: "center",
             fontWeight: 900,
             fontSize: 17,
-            color: "#1B4332",
+            color: "#0C4A6E",
             fontFamily: "monospace",
           }}
         >
           W
         </div>
-        <div style={{ fontSize: 17, fontWeight: 900, color: "#1B4332", letterSpacing: 1.5 }}>WORKLOG</div>
+        <div style={{ fontSize: 17, fontWeight: 900, color: "#0C4A6E", letterSpacing: 1.5 }}>WORKLOG</div>
       </div>
       <div style={{ background: "#fff", borderRadius: 18, padding: "28px 24px", boxShadow: "0 4px 16px rgba(27,67,50,0.1)" }}>
         {children}
@@ -95,7 +95,7 @@ export function AcceptInviteClient() {
   if (!token) {
     return shell(
       <>
-        <h1 style={{ fontSize: 18, fontWeight: 800, color: "#1B4332", marginBottom: 8 }}>Invalid invite link</h1>
+        <h1 style={{ fontSize: 18, fontWeight: 800, color: "#0C4A6E", marginBottom: 8 }}>Invalid invite link</h1>
         <p style={{ fontSize: 13, color: "#64748b" }}>This link is missing an invite token.</p>
       </>
     );
@@ -108,7 +108,7 @@ export function AcceptInviteClient() {
   if (!preview) {
     return shell(
       <>
-        <h1 style={{ fontSize: 18, fontWeight: 800, color: "#1B4332", marginBottom: 8 }}>Invite not found</h1>
+        <h1 style={{ fontSize: 18, fontWeight: 800, color: "#0C4A6E", marginBottom: 8 }}>Invite not found</h1>
         <p style={{ fontSize: 13, color: "#64748b" }}>This invite link isn&apos;t valid. Ask for a new one.</p>
       </>
     );
@@ -117,9 +117,9 @@ export function AcceptInviteClient() {
   if (preview.is_accepted) {
     return shell(
       <>
-        <h1 style={{ fontSize: 18, fontWeight: 800, color: "#1B4332", marginBottom: 8 }}>Already used</h1>
+        <h1 style={{ fontSize: 18, fontWeight: 800, color: "#0C4A6E", marginBottom: 8 }}>Already used</h1>
         <p style={{ fontSize: 13, color: "#64748b", marginBottom: 16 }}>This invite has already been accepted.</p>
-        <Link href="/login" style={{ color: "#1B4332", fontWeight: 700, fontSize: 13 }}>
+        <Link href="/login" style={{ color: "#0C4A6E", fontWeight: 700, fontSize: 13 }}>
           Log in
         </Link>
       </>
@@ -129,7 +129,7 @@ export function AcceptInviteClient() {
   if (preview.is_expired) {
     return shell(
       <>
-        <h1 style={{ fontSize: 18, fontWeight: 800, color: "#1B4332", marginBottom: 8 }}>Invite expired</h1>
+        <h1 style={{ fontSize: 18, fontWeight: 800, color: "#0C4A6E", marginBottom: 8 }}>Invite expired</h1>
         <p style={{ fontSize: 13, color: "#64748b" }}>
           This invite has expired. Ask the business owner for a new one.
         </p>
@@ -142,7 +142,7 @@ export function AcceptInviteClient() {
 
   return shell(
     <>
-      <h1 style={{ fontSize: 18, fontWeight: 800, color: "#1B4332", marginBottom: 8 }}>You&apos;re invited</h1>
+      <h1 style={{ fontSize: 18, fontWeight: 800, color: "#0C4A6E", marginBottom: 8 }}>You&apos;re invited</h1>
       <p style={{ fontSize: 14, color: "#374151", marginBottom: 20, lineHeight: 1.5 }}>
         Join <strong>{preview.business_name}</strong> on WORKLOG as a <strong style={{ textTransform: "capitalize" }}>{preview.role}</strong>.
       </p>
@@ -154,7 +154,7 @@ export function AcceptInviteClient() {
           <Link
             href={`/signup?next=${nextParam}`}
             style={{
-              background: "#1B4332",
+              background: "#0C4A6E",
               color: "#fff",
               borderRadius: 12,
               padding: "13px",
@@ -193,7 +193,7 @@ export function AcceptInviteClient() {
           disabled={accepting}
           style={{
             width: "100%",
-            background: accepting ? "#94a3b8" : "#1B4332",
+            background: accepting ? "#94a3b8" : "#0C4A6E",
             color: "#fff",
             border: "none",
             borderRadius: 12,

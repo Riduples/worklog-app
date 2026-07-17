@@ -37,13 +37,13 @@ export function ContactPicker({
                 setSearch("");
               }}
               style={{
-                background: show ? "#1B4332" : "#f0fdf4",
-                border: "1.5px solid #d1fae5",
+                background: show ? "#0C4A6E" : "#F0F9FF",
+                border: "1.5px solid #BAE6FD",
                 borderRadius: 10,
                 padding: "12px 12px",
                 fontSize: 13,
                 fontWeight: 700,
-                color: show ? "#fff" : "#1B4332",
+                color: show ? "#fff" : "#0C4A6E",
                 cursor: "pointer",
                 whiteSpace: "nowrap",
                 flexShrink: 0,
@@ -62,7 +62,7 @@ export function ContactPicker({
               right: 0,
               zIndex: 60,
               background: "#fff",
-              border: "1.5px solid #d1fae5",
+              border: "1.5px solid #BAE6FD",
               borderRadius: 12,
               marginTop: 4,
               boxShadow: "0 8px 20px rgba(0,0,0,0.12)",
@@ -128,13 +128,13 @@ export function ContactPicker({
                         marginLeft: 8,
                         background:
                           c.payment_behaviour === "Good payer"
-                            ? "#d1fae5"
+                            ? "#BAE6FD"
                             : c.payment_behaviour === "Slow payer"
                               ? "#fef9c3"
                               : "#fee2e2",
                         color:
                           c.payment_behaviour === "Good payer"
-                            ? "#166534"
+                            ? "#0369A1"
                             : c.payment_behaviour === "Slow payer"
                               ? "#854d0e"
                               : "#991b1b",

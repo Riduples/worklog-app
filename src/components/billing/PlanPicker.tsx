@@ -46,7 +46,7 @@ export function PlanPicker({
                 <span style={{ fontSize: 16, color: isSelected ? tier.color : "#cbd5e1" }}>{isSelected ? "◉" : "○"}</span>
                 <span style={{ fontSize: 15, fontWeight: 800, color: isSelected ? tier.color : "#111" }}>{tier.label}</span>
                 {isCurrent && (
-                  <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 10, background: "#f0fdf4", color: "#166534" }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 10, background: "#F0F9FF", color: "#0369A1" }}>
                     Your plan
                   </span>
                 )}

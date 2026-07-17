@@ -86,7 +86,7 @@ export function TimeModal({ onClose }: { onClose: () => void }) {
       </Field>
 
       {amountToBill > 0 && (
-        <div style={{ background: "#f0fdf4", borderRadius: 12, padding: "12px 14px", marginBottom: 16, fontSize: 13, color: "#166534" }}>
+        <div style={{ background: "#F0F9FF", borderRadius: 12, padding: "12px 14px", marginBottom: 16, fontSize: 13, color: "#0369A1" }}>
           To bill: <strong>{fmt(amountToBill)}</strong> ({hoursNum}h × {fmt(rateNum)})
         </div>
       )}

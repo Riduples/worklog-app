@@ -156,8 +156,8 @@ export function InvoiceModal({ sourceQuote, onClose }: { sourceQuote?: Quote; on
                     style={{
                       padding: "9px 14px",
                       borderRadius: 20,
-                      border: `1.5px solid ${recurrence === o.id ? "#1B4332" : "#e2e8f0"}`,
-                      background: recurrence === o.id ? "#1B4332" : "#fff",
+                      border: `1.5px solid ${recurrence === o.id ? "#0C4A6E" : "#e2e8f0"}`,
+                      background: recurrence === o.id ? "#0C4A6E" : "#fff",
                       color: recurrence === o.id ? "#fff" : "#374151",
                       fontSize: 13,
                       fontWeight: 600,
@@ -185,7 +185,7 @@ export function InvoiceModal({ sourceQuote, onClose }: { sourceQuote?: Quote; on
         <Input value={depositReceived} onChange={setDepositReceived} type="number" placeholder="0.00" />
       </Field>
 
-      <div style={{ background: "#f0fdf4", borderRadius: 12, padding: "12px 14px", marginBottom: 16, fontSize: 13, color: "#166534" }}>
+      <div style={{ background: "#F0F9FF", borderRadius: 12, padding: "12px 14px", marginBottom: 16, fontSize: 13, color: "#0369A1" }}>
         <div style={{ display: "flex", justifyContent: "space-between" }}>
           <span>Subtotal{isVatRegistered ? " (excl. VAT)" : ""}</span>
           <span>{fmt(subtotal)}</span>
@@ -202,7 +202,7 @@ export function InvoiceModal({ sourceQuote, onClose }: { sourceQuote?: Quote; on
             <span>−{fmt(depositNum)}</span>
           </div>
         )}
-        <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 800, fontSize: 16, marginTop: 6, paddingTop: 6, borderTop: "1.5px solid #bbf7d0" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 800, fontSize: 16, marginTop: 6, paddingTop: 6, borderTop: "1.5px solid #BAE6FD" }}>
           <span>Balance due{isVatRegistered ? " (incl. VAT)" : ""}</span>
           <span>{fmt(balanceDue + vatAmount)}</span>
         </div>

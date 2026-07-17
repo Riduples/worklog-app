@@ -6,7 +6,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <div
         style={{
           minHeight: "100vh",
-          background: "#f0fdf4",
+          background: "#F0F9FF",
           fontFamily: "'Inter','Segoe UI',system-ui,sans-serif",
           maxWidth: 480,
           margin: "0 auto",

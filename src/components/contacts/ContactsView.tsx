@@ -51,16 +51,16 @@ export function ContactsView() {
           <Link href="/dashboard" style={{ fontSize: 12, color: "#64748b" }}>
             ← Dashboard
           </Link>
-          <h1 style={{ fontSize: 20, fontWeight: 800, color: "#1B4332", margin: "4px 0 0" }}>Contacts</h1>
+          <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 0" }}>Contacts</h1>
         </div>
         {canAddAny && (
         <div style={{ display: "flex", gap: 8 }}>
           <button
             onClick={() => setImportOpen(true)}
             style={{
-              background: "#f0fdf4",
-              color: "#166534",
-              border: "1.5px solid #d1fae5",
+              background: "#F0F9FF",
+              color: "#0369A1",
+              border: "1.5px solid #BAE6FD",
               borderRadius: 12,
               padding: "10px 14px",
               fontSize: 13,
@@ -73,7 +73,7 @@ export function ContactsView() {
           <button
             onClick={() => setModalState({ open: true })}
             style={{
-              background: "#1B4332",
+              background: "#0C4A6E",
               color: "#fff",
               border: "none",
               borderRadius: 12,
@@ -115,8 +115,8 @@ export function ContactsView() {
             style={{
               padding: "8px 14px",
               borderRadius: 20,
-              border: `1.5px solid ${typeFilter === t ? "#1B4332" : "#e2e8f0"}`,
-              background: typeFilter === t ? "#1B4332" : "#fff",
+              border: `1.5px solid ${typeFilter === t ? "#0C4A6E" : "#e2e8f0"}`,
+              background: typeFilter === t ? "#0C4A6E" : "#fff",
               color: typeFilter === t ? "#fff" : "#374151",
               fontSize: 12,
               fontWeight: 700,
@@ -165,8 +165,8 @@ export function ContactsView() {
               padding: "3px 8px",
               borderRadius: 20,
               marginRight: 8,
-              background: c.contact_type === "client" ? "#f0fdf4" : "#fff7ed",
-              color: c.contact_type === "client" ? "#166534" : "#92400e",
+              background: c.contact_type === "client" ? "#F0F9FF" : "#fff7ed",
+              color: c.contact_type === "client" ? "#0369A1" : "#92400e",
             }}
           >
             {c.contact_type === "client" ? "Client" : "Supplier"}

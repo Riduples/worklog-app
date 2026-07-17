@@ -80,7 +80,7 @@ export function CashUpView() {
       <Link href="/dashboard" style={{ fontSize: 12, color: "#64748b" }}>
         ← Dashboard
       </Link>
-      <h1 style={{ fontSize: 20, fontWeight: 800, color: "#1B4332", margin: "4px 0 18px" }}>Daily Cash-Up</h1>
+      <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 18px" }}>Daily Cash-Up</h1>
 
       <div style={{ background: "#F0F9FF", border: "1.5px solid #7DD3FC", borderRadius: 12, padding: "12px 14px", marginBottom: 18, fontSize: 12, color: "#0369A1", lineHeight: 1.5 }}>
         <span style={{ fontWeight: 700 }}>🧮 Cash-Up</span> — Count the cash in your till at the end of the day and check it matches what you logged. Small differences are normal; big ones are worth a second look.

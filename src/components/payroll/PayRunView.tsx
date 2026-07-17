@@ -242,7 +242,7 @@ export function PayRunView() {
         <Link href="/dashboard" style={{ fontSize: 12, color: "#64748b" }}>
           ← Dashboard
         </Link>
-        <h1 style={{ fontSize: 20, fontWeight: 800, color: "#1B4332", margin: "4px 0 0" }}>Pay Run</h1>
+        <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 0" }}>Pay Run</h1>
       </div>
     </div>
   );

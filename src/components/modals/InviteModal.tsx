@@ -66,7 +66,7 @@ export function InviteModal({ onClose }: { onClose: () => void }) {
   if (link) {
     return (
       <Modal title="Invite created" onClose={onClose}>
-        <div style={{ background: "#f0fdf4", borderRadius: 12, padding: "14px 16px", marginBottom: 16, fontSize: 13, color: "#166534", lineHeight: 1.5 }}>
+        <div style={{ background: "#F0F9FF", borderRadius: 12, padding: "14px 16px", marginBottom: 16, fontSize: 13, color: "#0369A1", lineHeight: 1.5 }}>
           Share this link with <strong>{email}</strong> — it lets them join as a <strong>{role}</strong>. It expires in
           7 days.
         </div>
@@ -116,8 +116,8 @@ export function InviteModal({ onClose }: { onClose: () => void }) {
                 borderRadius: 12,
                 fontSize: 13,
                 fontWeight: 700,
-                border: `1.5px solid ${role === r ? "#1B4332" : "#e2e8f0"}`,
-                background: role === r ? "#1B4332" : "#fff",
+                border: `1.5px solid ${role === r ? "#0C4A6E" : "#e2e8f0"}`,
+                background: role === r ? "#0C4A6E" : "#fff",
                 color: role === r ? "#fff" : "#374151",
                 cursor: "pointer",
                 textTransform: "capitalize",

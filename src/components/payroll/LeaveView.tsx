@@ -70,7 +70,7 @@ export function LeaveView() {
         <Link href="/dashboard" style={{ fontSize: 12, color: "#64748b" }}>
           ← Dashboard
         </Link>
-        <h1 style={{ fontSize: 20, fontWeight: 800, color: "#1B4332", margin: "4px 0 0" }}>Leave</h1>
+        <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 0" }}>Leave</h1>
       </div>
 
       <div style={{ background: "#F0F9FF", border: "1.5px solid #7DD3FC", borderRadius: 12, padding: "10px 14px", marginBottom: 14, fontSize: 12, color: "#0369A1", lineHeight: 1.5 }}>

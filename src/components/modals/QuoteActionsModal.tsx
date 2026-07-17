@@ -11,7 +11,7 @@ import { useUpdateQuote, type Quote } from "@/lib/supabase/hooks/useQuotes";
 
 const STATUS_COLORS: Record<string, { bg: string; fg: string }> = {
   pending: { bg: "#fff7ed", fg: "#b45309" },
-  accepted: { bg: "#f0fdf4", fg: "#166534" },
+  accepted: { bg: "#F0F9FF", fg: "#0369A1" },
   converted: { bg: "#e0f2fe", fg: "#0369a1" },
   declined: { bg: "#fee2e2", fg: "#991b1b" },
 };
@@ -82,7 +82,7 @@ export function QuoteActionsModal({ quote, onClose }: { quote: Quote; onClose: (
         <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
           <button
             onClick={() => updateQuote.mutate({ id: quote.id, changes: { status: "accepted" } }, { onSuccess: onClose })}
-            style={{ flex: 1, background: "#1B4332", color: "#fff", border: "none", borderRadius: 12, padding: 14, fontWeight: 700, cursor: "pointer" }}
+            style={{ flex: 1, background: "#0C4A6E", color: "#fff", border: "none", borderRadius: 12, padding: 14, fontWeight: 700, cursor: "pointer" }}
           >
             ✅ Mark Accepted
           </button>
@@ -98,7 +98,7 @@ export function QuoteActionsModal({ quote, onClose }: { quote: Quote; onClose: (
       {quote.status === "accepted" && (
         <button
           onClick={() => router.push(`/invoices?fromQuote=${quote.id}`)}
-          style={{ width: "100%", background: "#1B4332", color: "#fff", border: "none", borderRadius: 14, padding: 16, fontWeight: 700, cursor: "pointer", marginTop: 12 }}
+          style={{ width: "100%", background: "#0C4A6E", color: "#fff", border: "none", borderRadius: 14, padding: 16, fontWeight: 700, cursor: "pointer", marginTop: 12 }}
         >
           📤 Convert to Invoice
         </button>

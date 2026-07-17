@@ -17,7 +17,7 @@ export function SaveBtn({
       onClick={onClick}
       disabled={disabled}
       style={{
-        background: disabled ? "#94a3b8" : "#1B4332",
+        background: disabled ? "#94a3b8" : "#0C4A6E",
         color: "#fff",
         border: "none",
         borderRadius: 14,

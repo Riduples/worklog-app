@@ -17,8 +17,8 @@ export function Chips({
           style={{
             padding: "9px 14px",
             borderRadius: 20,
-            border: `1.5px solid ${selected === o ? "#1B4332" : "#e2e8f0"}`,
-            background: selected === o ? "#1B4332" : "#fff",
+            border: `1.5px solid ${selected === o ? "#0C4A6E" : "#e2e8f0"}`,
+            background: selected === o ? "#0C4A6E" : "#fff",
             color: selected === o ? "#fff" : "#374151",
             fontSize: 13,
             fontWeight: 600,

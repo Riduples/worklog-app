@@ -80,11 +80,11 @@ export function DashboardView({ businessName }: { businessName: string }) {
 
   return (
     <div>
-      <div style={{ background: "#1B4332", padding: "20px 20px 20px" }}>
+      <div style={{ background: "#0C4A6E", padding: "20px 20px 20px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
           <div>
             <div style={{ fontSize: 17, fontWeight: 900, color: "#fff", letterSpacing: 1.5 }}>WORKLOG</div>
-            <div style={{ fontSize: 11, color: "#6EE7B7", letterSpacing: 0.3 }}>
+            <div style={{ fontSize: 11, color: "#E0F2FE", letterSpacing: 0.3 }}>
               {greeting()}, {businessName || "there"}
             </div>
           </div>
@@ -110,9 +110,9 @@ export function DashboardView({ businessName }: { businessName: string }) {
         </div>
         <div style={{ display: "flex", gap: 10 }}>
           {[
-            { label: "IN", value: fmt(monthIncome), color: "#6EE7B7" },
+            { label: "IN", value: fmt(monthIncome), color: "#7DD3FC" },
             { label: "OUT", value: fmt(monthExpense), color: "#FCA5A5" },
-            { label: "PROFIT", value: fmt(profit), color: profit >= 0 ? "#6EE7B7" : "#FCA5A5" },
+            { label: "PROFIT", value: fmt(profit), color: profit >= 0 ? "#7DD3FC" : "#FCA5A5" },
           ].map((s) => (
             <div key={s.label} style={{ flex: 1, background: "rgba(255,255,255,0.09)", borderRadius: 12, padding: "12px 10px" }}>
               <div style={{ fontSize: 9, color: "rgba(255,255,255,0.5)", fontWeight: 700, letterSpacing: 1, marginBottom: 3 }}>
@@ -159,7 +159,7 @@ export function DashboardView({ businessName }: { businessName: string }) {
           <button
             onClick={() => setModal("income")}
             style={{
-              background: "#1B4332",
+              background: "#0C4A6E",
               borderRadius: 18,
               padding: "20px 16px",
               border: "none",
@@ -171,7 +171,7 @@ export function DashboardView({ businessName }: { businessName: string }) {
           >
             <div style={{ fontSize: 28, marginBottom: 8 }}>💰</div>
             <div style={{ fontSize: 16, fontWeight: 800 }}>Money In</div>
-            <div style={{ fontSize: 12, color: "#A7F3D0", marginTop: 2 }}>Log income</div>
+            <div style={{ fontSize: 12, color: "#E0F2FE", marginTop: 2 }}>Log income</div>
           </button>
           )}
           {gate("expense") && (
@@ -181,8 +181,8 @@ export function DashboardView({ businessName }: { businessName: string }) {
               background: "#fff",
               borderRadius: 18,
               padding: "20px 16px",
-              border: "2px solid #d1fae5",
-              color: "#1B4332",
+              border: "2px solid #BAE6FD",
+              color: "#0C4A6E",
               cursor: "pointer",
               textAlign: "left",
             }}
@@ -322,15 +322,15 @@ export function DashboardView({ businessName }: { businessName: string }) {
         {taxJar > 0 && (
           <div
             style={{
-              background: "#f0fdf4",
+              background: "#F0F9FF",
               borderRadius: 14,
               padding: "13px 16px",
               marginBottom: 10,
-              border: "1.5px solid #bbf7d0",
+              border: "1.5px solid #BAE6FD",
             }}
           >
-            <div style={{ fontSize: 13, fontWeight: 700, color: "#1B4332" }}>Tax jar: {fmt(taxJar)}</div>
-            <div style={{ fontSize: 12, color: "#166534" }}>Saved for SARS</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#0C4A6E" }}>Tax jar: {fmt(taxJar)}</div>
+            <div style={{ fontSize: 12, color: "#0369A1" }}>Saved for SARS</div>
           </div>
         )}
 
@@ -359,7 +359,7 @@ export function DashboardView({ businessName }: { businessName: string }) {
                       width: 36,
                       height: 36,
                       borderRadius: 10,
-                      background: r.txType === "income" ? "#d1fae5" : "#fee2e2",
+                      background: r.txType === "income" ? "#BAE6FD" : "#fee2e2",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
@@ -377,7 +377,7 @@ export function DashboardView({ businessName }: { businessName: string }) {
                     </div>
                   </div>
                 </div>
-                <div style={{ fontWeight: 800, fontSize: 15, color: r.txType === "income" ? "#1B4332" : "#dc2626" }}>
+                <div style={{ fontWeight: 800, fontSize: 15, color: r.txType === "income" ? "#0C4A6E" : "#dc2626" }}>
                   {r.txType === "income" ? "+" : "-"}
                   {fmt(r.amount)}
                 </div>

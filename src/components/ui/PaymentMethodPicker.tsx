@@ -21,8 +21,8 @@ export function PaymentMethodPicker({
               borderRadius: 20,
               fontSize: 13,
               fontWeight: 600,
-              border: `1.5px solid ${selected === m ? "#1B4332" : "#e2e8f0"}`,
-              background: selected === m ? "#1B4332" : "#fff",
+              border: `1.5px solid ${selected === m ? "#0C4A6E" : "#e2e8f0"}`,
+              background: selected === m ? "#0C4A6E" : "#fff",
               color: selected === m ? "#fff" : "#374151",
               cursor: "pointer",
             }}

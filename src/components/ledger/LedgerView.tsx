@@ -32,12 +32,12 @@ export function LedgerView() {
           <Link href="/dashboard" style={{ fontSize: 12, color: "#64748b" }}>
             ← Dashboard
           </Link>
-          <h1 style={{ fontSize: 20, fontWeight: 800, color: "#1B4332", margin: "4px 0 0" }}>Ledgers</h1>
+          <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 0" }}>Ledgers</h1>
         </div>
         {access.canEdit && (
           <button
             onClick={() => setShowNew(true)}
-            style={{ background: "#1B4332", color: "#fff", border: "none", borderRadius: 12, padding: "10px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+            style={{ background: "#0C4A6E", color: "#fff", border: "none", borderRadius: 12, padding: "10px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
           >
             + New
           </button>
@@ -47,9 +47,9 @@ export function LedgerView() {
       {!access.loading && !access.canEdit && <ReadOnlyNotice level={access.level} what="ledger entries" />}
 
       <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
-        <div style={{ flex: 1, background: "#f0fdf4", borderRadius: 12, padding: "12px 14px" }}>
-          <div style={{ fontSize: 10, color: "#166534", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.6 }}>Owed to you</div>
-          <div style={{ fontSize: 16, fontWeight: 800, color: "#1B4332" }}>{fmt(clientOwed)}</div>
+        <div style={{ flex: 1, background: "#F0F9FF", borderRadius: 12, padding: "12px 14px" }}>
+          <div style={{ fontSize: 10, color: "#0369A1", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.6 }}>Owed to you</div>
+          <div style={{ fontSize: 16, fontWeight: 800, color: "#0C4A6E" }}>{fmt(clientOwed)}</div>
         </div>
         <div style={{ flex: 1, background: "#fff7ed", borderRadius: 12, padding: "12px 14px" }}>
           <div style={{ fontSize: 10, color: "#92400e", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.6 }}>You owe</div>
@@ -85,9 +85,9 @@ export function LedgerView() {
             </div>
           </div>
           <div style={{ textAlign: "right", marginRight: 8 }}>
-            <div style={{ fontWeight: 800, fontSize: 15, color: e.ledger_type === "client" ? "#1B4332" : "#b45309" }}>{fmt(e.amount)}</div>
+            <div style={{ fontWeight: 800, fontSize: 15, color: e.ledger_type === "client" ? "#0C4A6E" : "#b45309" }}>{fmt(e.amount)}</div>
             {e.status === "paid" ? (
-              <span style={{ fontSize: 10, color: "#166534", fontWeight: 700 }}>✓ Settled</span>
+              <span style={{ fontSize: 10, color: "#0369A1", fontWeight: 700 }}>✓ Settled</span>
             ) : (
               <button onClick={() => markPaid(e)} style={{ fontSize: 10, color: "#0369a1", fontWeight: 700, background: "none", border: "none", cursor: "pointer", padding: 0 }}>
                 Mark settled

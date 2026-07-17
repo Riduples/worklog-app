@@ -11,7 +11,7 @@ import { useToolAccess } from "@/lib/supabase/hooks/useToolAccess";
 
 const STATUS_COLORS: Record<string, { bg: string; fg: string }> = {
   pending: { bg: "#fff7ed", fg: "#b45309" },
-  accepted: { bg: "#f0fdf4", fg: "#166534" },
+  accepted: { bg: "#F0F9FF", fg: "#0369A1" },
   converted: { bg: "#e0f2fe", fg: "#0369a1" },
   declined: { bg: "#fee2e2", fg: "#991b1b" },
 };
@@ -29,12 +29,12 @@ export function QuotesView() {
           <Link href="/dashboard" style={{ fontSize: 12, color: "#64748b" }}>
             ← Dashboard
           </Link>
-          <h1 style={{ fontSize: 20, fontWeight: 800, color: "#1B4332", margin: "4px 0 0" }}>Quotes</h1>
+          <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 0" }}>Quotes</h1>
         </div>
         {access.canEdit && (
           <button
             onClick={() => setShowNew(true)}
-            style={{ background: "#1B4332", color: "#fff", border: "none", borderRadius: 12, padding: "10px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+            style={{ background: "#0C4A6E", color: "#fff", border: "none", borderRadius: 12, padding: "10px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
           >
             + New
           </button>
@@ -77,7 +77,7 @@ export function QuotesView() {
               </div>
             </div>
             <div style={{ textAlign: "right" }}>
-              <div style={{ fontWeight: 800, fontSize: 15, color: "#1B4332" }}>{fmt(totalInclVat)}</div>
+              <div style={{ fontWeight: 800, fontSize: 15, color: "#0C4A6E" }}>{fmt(totalInclVat)}</div>
               <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: color.bg, color: color.fg, textTransform: "uppercase" }}>
                 {q.status}
               </span>

@@ -61,7 +61,7 @@ export function Emp201View() {
         <Link href="/tax" style={{ fontSize: 12, color: "#64748b" }}>
           ← Tax &amp; Compliance
         </Link>
-        <h1 style={{ fontSize: 20, fontWeight: 800, color: "#1B4332", margin: "4px 0 18px" }}>EMP201</h1>
+        <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 18px" }}>EMP201</h1>
         <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 12, padding: 20, textAlign: "center", fontSize: 13, color: "#64748b" }}>
           👷 No employees registered. Add them in{" "}
           <Link href="/staff" style={{ color: "#0C4A6E", fontWeight: 700 }}>
@@ -78,7 +78,7 @@ export function Emp201View() {
       <Link href="/tax" style={{ fontSize: 12, color: "#64748b" }}>
         ← Tax &amp; Compliance
       </Link>
-      <h1 style={{ fontSize: 20, fontWeight: 800, color: "#1B4332", margin: "4px 0 18px" }}>EMP201</h1>
+      <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 18px" }}>EMP201</h1>
 
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
         <button onClick={() => step(-1)} style={{ background: "#f1f5f9", border: "none", borderRadius: 10, padding: "8px 14px", fontSize: 16, cursor: "pointer" }}>

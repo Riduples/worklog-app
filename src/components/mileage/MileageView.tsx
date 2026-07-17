@@ -29,12 +29,12 @@ export function MileageView() {
           <Link href="/dashboard" style={{ fontSize: 12, color: "#64748b" }}>
             ← Dashboard
           </Link>
-          <h1 style={{ fontSize: 20, fontWeight: 800, color: "#1B4332", margin: "4px 0 0" }}>Mileage</h1>
+          <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 0" }}>Mileage</h1>
         </div>
         {access.canEdit && (
           <button
             onClick={() => setShowNew(true)}
-            style={{ background: "#1B4332", color: "#fff", border: "none", borderRadius: 12, padding: "10px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+            style={{ background: "#0C4A6E", color: "#fff", border: "none", borderRadius: 12, padding: "10px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
           >
             + New
           </button>
@@ -44,7 +44,7 @@ export function MileageView() {
       {!access.loading && !access.canEdit && <ReadOnlyNotice level={access.level} what="trips" />}
 
       {(trips ?? []).length > 0 && (
-        <div style={{ background: "#f0fdf4", borderRadius: 12, padding: "12px 14px", marginBottom: 16, fontSize: 13, color: "#166534", display: "flex", justifyContent: "space-between" }}>
+        <div style={{ background: "#F0F9FF", borderRadius: 12, padding: "12px 14px", marginBottom: 16, fontSize: 13, color: "#0369A1", display: "flex", justifyContent: "space-between" }}>
           <span>{totalKm.toFixed(1)} km total</span>
           <span>
             SARS deduction: <strong>{fmt(totalDeduction)}</strong>

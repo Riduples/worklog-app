@@ -3,7 +3,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
     <div
       style={{
         minHeight: "100vh",
-        background: "#f0fdf4",
+        background: "#F0F9FF",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -24,13 +24,13 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
               justifyContent: "center",
               fontWeight: 900,
               fontSize: 17,
-              color: "#1B4332",
+              color: "#0C4A6E",
               fontFamily: "monospace",
             }}
           >
             W
           </div>
-          <div style={{ fontSize: 17, fontWeight: 900, color: "#1B4332", letterSpacing: 1.5 }}>WORKLOG</div>
+          <div style={{ fontSize: 17, fontWeight: 900, color: "#0C4A6E", letterSpacing: 1.5 }}>WORKLOG</div>
         </div>
         <div
           style={{

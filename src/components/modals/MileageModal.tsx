@@ -76,7 +76,7 @@ export function MileageModal({ onClose }: { onClose: () => void }) {
       </Field>
 
       {km > 0 && (
-        <div style={{ background: "#f0fdf4", borderRadius: 12, padding: "12px 14px", marginBottom: 16, fontSize: 13, color: "#166534" }}>
+        <div style={{ background: "#F0F9FF", borderRadius: 12, padding: "12px 14px", marginBottom: 16, fontSize: 13, color: "#0369A1" }}>
           {km.toFixed(1)} km · SARS deduction: <strong>{fmt(deduction)}</strong> (R{MILEAGE_RATE.toFixed(2)}/km)
         </div>
       )}

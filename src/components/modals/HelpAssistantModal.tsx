@@ -117,7 +117,7 @@ export function HelpAssistantModal({ onClose }: { onClose: () => void }) {
             if (m.role === "user") {
               return (
                 <div key={i} style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}>
-                  <div style={{ background: "#1B4332", color: "#fff", borderRadius: "14px 14px 4px 14px", padding: "10px 14px", fontSize: 13, maxWidth: "85%" }}>
+                  <div style={{ background: "#0C4A6E", color: "#fff", borderRadius: "14px 14px 4px 14px", padding: "10px 14px", fontSize: 13, maxWidth: "85%" }}>
                     {m.content}
                   </div>
                 </div>
@@ -178,7 +178,7 @@ export function HelpAssistantModal({ onClose }: { onClose: () => void }) {
         <button
           type="submit"
           disabled={!input.trim() || loading}
-          style={{ background: !input.trim() || loading ? "#94a3b8" : "#1B4332", border: "none", borderRadius: 12, padding: "0 18px", fontSize: 16, fontWeight: 700, color: "#fff", cursor: !input.trim() || loading ? "default" : "pointer" }}
+          style={{ background: !input.trim() || loading ? "#94a3b8" : "#0C4A6E", border: "none", borderRadius: 12, padding: "0 18px", fontSize: 16, fontWeight: 700, color: "#fff", cursor: !input.trim() || loading ? "default" : "pointer" }}
         >
           ↑
         </button>

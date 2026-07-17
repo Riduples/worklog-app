@@ -67,7 +67,7 @@ export function StockModal({ item, onClose }: { item?: StockItem; onClose: () =>
       </Field>
 
       {sellNum > 0 && (
-        <div style={{ background: "#f0fdf4", borderRadius: 12, padding: "12px 14px", marginBottom: 16, fontSize: 13, color: "#166534" }}>
+        <div style={{ background: "#F0F9FF", borderRadius: 12, padding: "12px 14px", marginBottom: 16, fontSize: 13, color: "#0369A1" }}>
           Margin: <strong>{marginPct.toFixed(1)}%</strong> ({fmt(sellNum - costNum)} per unit)
         </div>
       )}

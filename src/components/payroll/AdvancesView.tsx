@@ -53,7 +53,7 @@ export function AdvancesView() {
         <Link href="/dashboard" style={{ fontSize: 12, color: "#64748b" }}>
           ← Dashboard
         </Link>
-        <h1 style={{ fontSize: 20, fontWeight: 800, color: "#1B4332", margin: "4px 0 0" }}>Advances</h1>
+        <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 0" }}>Advances</h1>
       </div>
 
       <div style={{ background: "#fff7ed", border: "1.5px solid #fed7aa", borderRadius: 12, padding: "10px 14px", marginBottom: 14, fontSize: 12, color: "#92400e", lineHeight: 1.5 }}>

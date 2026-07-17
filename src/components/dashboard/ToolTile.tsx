@@ -10,7 +10,7 @@ const tileStyle: React.CSSProperties = {
   padding: "14px 16px",
   fontSize: 14,
   fontWeight: 700,
-  color: "#1B4332",
+  color: "#0C4A6E",
   boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
   cursor: "pointer",
 };

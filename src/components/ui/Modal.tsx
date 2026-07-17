@@ -31,7 +31,7 @@ export function Modal({
       >
         <div style={{ width: 40, height: 4, background: "#e2e8f0", borderRadius: 2, margin: "0 auto 20px" }} />
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 22 }}>
-          <h2 style={{ margin: 0, fontSize: 19, fontWeight: 800, color: "#1B4332" }}>{title}</h2>
+          <h2 style={{ margin: 0, fontSize: 19, fontWeight: 800, color: "#0C4A6E" }}>{title}</h2>
           <button
             onClick={onClose}
             style={{

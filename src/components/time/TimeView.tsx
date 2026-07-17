@@ -9,7 +9,7 @@ import { ReadOnlyNotice } from "@/components/ui/ReadOnlyNotice";
 import { useToolAccess } from "@/lib/supabase/hooks/useToolAccess";
 
 const TYPE_COLORS: Record<string, { bg: string; fg: string }> = {
-  Billable: { bg: "#f0fdf4", fg: "#166534" },
+  Billable: { bg: "#F0F9FF", fg: "#0369A1" },
   "Non-billable": { bg: "#f1f5f9", fg: "#64748b" },
   Admin: { bg: "#fff7ed", fg: "#b45309" },
   Travel: { bg: "#e0f2fe", fg: "#0369a1" },
@@ -38,12 +38,12 @@ export function TimeView() {
           <Link href="/dashboard" style={{ fontSize: 12, color: "#64748b" }}>
             ← Dashboard
           </Link>
-          <h1 style={{ fontSize: 20, fontWeight: 800, color: "#1B4332", margin: "4px 0 0" }}>Time Tracker</h1>
+          <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 0" }}>Time Tracker</h1>
         </div>
         {access.canEdit && (
           <button
             onClick={() => setShowNew(true)}
-            style={{ background: "#1B4332", color: "#fff", border: "none", borderRadius: 12, padding: "10px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+            style={{ background: "#0C4A6E", color: "#fff", border: "none", borderRadius: 12, padding: "10px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
           >
             + New
           </button>
@@ -53,7 +53,7 @@ export function TimeView() {
       {!access.loading && !access.canEdit && <ReadOnlyNotice level={access.level} what="time entries" />}
 
       {(entries ?? []).length > 0 && (
-        <div style={{ background: "#f0fdf4", borderRadius: 12, padding: "12px 14px", marginBottom: 16, fontSize: 13, color: "#166534", display: "flex", justifyContent: "space-between" }}>
+        <div style={{ background: "#F0F9FF", borderRadius: 12, padding: "12px 14px", marginBottom: 16, fontSize: 13, color: "#0369A1", display: "flex", justifyContent: "space-between" }}>
           <span>{totalHours.toFixed(1)}h logged</span>
           <span>
             Billable: <strong>{fmt(billableTotal)}</strong>

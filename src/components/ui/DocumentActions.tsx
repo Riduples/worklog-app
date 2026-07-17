@@ -60,9 +60,9 @@ export function DocumentActions({
         disabled={busy || !business}
         style={{
           flex: 1,
-          background: "#f0fdf4",
-          color: "#1B4332",
-          border: "1.5px solid #d1fae5",
+          background: "#F0F9FF",
+          color: "#0C4A6E",
+          border: "1.5px solid #BAE6FD",
           borderRadius: 12,
           padding: 13,
           fontWeight: 700,
@@ -77,9 +77,9 @@ export function DocumentActions({
         disabled={busy}
         style={{
           flex: 1,
-          background: "#f0fdf4",
-          color: "#1B4332",
-          border: "1.5px solid #d1fae5",
+          background: "#F0F9FF",
+          color: "#0C4A6E",
+          border: "1.5px solid #BAE6FD",
           borderRadius: 12,
           padding: 13,
           fontWeight: 700,

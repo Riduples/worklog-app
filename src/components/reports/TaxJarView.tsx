@@ -53,7 +53,7 @@ export function TaxJarView() {
       <Link href="/tax" style={{ fontSize: 12, color: "#64748b" }}>
         ← Tax &amp; SARS
       </Link>
-      <h1 style={{ fontSize: 20, fontWeight: 800, color: "#1B4332", margin: "4px 0 18px" }}>Tax Jar Tracker</h1>
+      <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 18px" }}>Tax Jar Tracker</h1>
 
       <div style={{ background: "#F0F9FF", border: "1.5px solid #7DD3FC", borderRadius: 12, padding: "11px 14px", marginBottom: 14, fontSize: 12, color: "#0369A1", lineHeight: 1.6 }}>
         {`🫙 Every time you log income, WORKLOG sets aside ${Math.round(TAX_JAR_RATE * 100)}% as an income tax provision. This shows what you've built up — so SARS is never a surprise. It's a guide, not a SARS return.`}

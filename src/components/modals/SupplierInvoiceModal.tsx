@@ -91,13 +91,13 @@ export function SupplierInvoiceModal({ onClose }: { onClose: () => void }) {
               width: "100%",
               padding: "12px 14px",
               borderRadius: 12,
-              border: `1.5px solid ${linkedPo ? "#1B4332" : "#fed7aa"}`,
-              background: linkedPo ? "#f0fdf4" : "#fffbeb",
+              border: `1.5px solid ${linkedPo ? "#0C4A6E" : "#fed7aa"}`,
+              background: linkedPo ? "#F0F9FF" : "#fffbeb",
               cursor: "pointer",
               textAlign: "left",
               fontSize: 13,
               fontWeight: 600,
-              color: linkedPo ? "#1B4332" : "#92400e",
+              color: linkedPo ? "#0C4A6E" : "#92400e",
             }}
           >
             {linkedPo ? `🛒 Linked to ${linkedPo.doc_number} — ${linkedPo.supplier_name}` : "🛒 Link to a purchase order (optional) — tap to pick"}
@@ -111,7 +111,7 @@ export function SupplierInvoiceModal({ onClose }: { onClose: () => void }) {
                 right: 0,
                 zIndex: 60,
                 background: "#fff",
-                border: "1.5px solid #d1fae5",
+                border: "1.5px solid #BAE6FD",
                 borderRadius: 12,
                 marginTop: 4,
                 boxShadow: "0 8px 20px rgba(0,0,0,0.12)",

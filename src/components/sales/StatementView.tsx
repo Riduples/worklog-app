@@ -89,7 +89,7 @@ export function StatementView() {
       <Link href="/dashboard" style={{ fontSize: 12, color: "#64748b" }}>
         ← Dashboard
       </Link>
-      <h1 style={{ fontSize: 20, fontWeight: 800, color: "#1B4332", margin: "4px 0 18px" }}>Customer Statement</h1>
+      <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 18px" }}>Customer Statement</h1>
 
       <div style={{ background: "#F0F9FF", border: "1.5px solid #7DD3FC", borderRadius: 12, padding: "12px 14px", marginBottom: 18, fontSize: 12, color: "#0369A1", lineHeight: 1.5 }}>
         A statement shows a customer their full account history — all invoices issued and what they still owe. Share it to resolve disputes or as a payment reminder.
@@ -174,13 +174,13 @@ export function StatementView() {
             <button
               onClick={handlePrint}
               disabled={!business || busy}
-              style={{ flex: 1, background: "#f0fdf4", color: "#1B4332", border: "1.5px solid #d1fae5", borderRadius: 12, padding: 13, fontWeight: 700, fontSize: 13, cursor: "pointer" }}
+              style={{ flex: 1, background: "#F0F9FF", color: "#0C4A6E", border: "1.5px solid #BAE6FD", borderRadius: 12, padding: 13, fontWeight: 700, fontSize: 13, cursor: "pointer" }}
             >
               {busy ? "📄 Preparing..." : "📄 Download PDF"}
             </button>
             <button
               onClick={handleShare}
-              style={{ flex: 1, background: "#f0fdf4", color: "#1B4332", border: "1.5px solid #d1fae5", borderRadius: 12, padding: 13, fontWeight: 700, fontSize: 13, cursor: "pointer" }}
+              style={{ flex: 1, background: "#F0F9FF", color: "#0C4A6E", border: "1.5px solid #BAE6FD", borderRadius: 12, padding: 13, fontWeight: 700, fontSize: 13, cursor: "pointer" }}
             >
               📤 Share
             </button>
