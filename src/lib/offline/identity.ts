@@ -71,3 +71,23 @@ export async function resolveIdentity(supabase: SupabaseClient<Database>): Promi
     throw error instanceof Error ? error : new Error("Could not resolve identity");
   }
 }
+
+/**
+ * Seed the remembered identity while we're (almost certainly) online, so a
+ * later signal blip can attribute a captured row even if nothing has been
+ * captured yet this session.
+ *
+ * Without this, identity is only cached as a side effect of the first
+ * successful capture — which means someone who logs in and immediately loses
+ * signal would have their very first entry error instead of queue. Called once
+ * on app load; a no-op when identity is already cached, and a harmless no-op
+ * when offline with nothing to cache yet.
+ */
+export async function primeIdentity(supabase: SupabaseClient<Database>): Promise<void> {
+  if (recall()) return; // already seeded on this device
+  try {
+    await resolveIdentity(supabase); // resolves and remembers when reachable
+  } catch {
+    // Offline with nothing cached — nothing to prime until we're next online.
+  }
+}

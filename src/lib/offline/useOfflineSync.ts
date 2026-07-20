@@ -6,6 +6,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { listOutbox, removeOutbox, markOutboxFailed } from "./outbox";
 import { resolveOutboxItem, type OutboxItem } from "./outboxCore";
+import { primeIdentity } from "./identity";
 
 /**
  * Drains the outbox whenever there's a chance of connectivity: on the browser's
@@ -28,6 +29,11 @@ export function useOfflineSync(): void {
 
   useEffect(() => {
     const supabase = createClient();
+
+    // Cache who this device is for, now, while we can reach the server — so a
+    // capture made in a later dead spot can be attributed even if it's the
+    // first one this session.
+    void primeIdentity(supabase);
 
     // A dynamic-table insert: the row is already complete (id, business_id,
     // user_id and all), so this is a dumb replay. The typed client can't accept
