@@ -5,6 +5,9 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useIncome } from "@/lib/supabase/hooks/useIncome";
 import { useExpenses } from "@/lib/supabase/hooks/useExpenses";
+import { useInvoices } from "@/lib/supabase/hooks/useInvoices";
+import { useSupplierInvoices } from "@/lib/supabase/hooks/useSupplierInvoices";
+import { useLedgerEntries } from "@/lib/supabase/hooks/useLedger";
 import { useStockItems } from "@/lib/supabase/hooks/useStock";
 import { IncomeModal } from "@/components/modals/IncomeModal";
 import { ExpenseModal } from "@/components/modals/ExpenseModal";
@@ -16,7 +19,7 @@ import { LogoutButton } from "@/components/auth/LogoutButton";
 import { ToolTile } from "@/components/dashboard/ToolTile";
 import { fmt, greeting } from "@/lib/format";
 import { inPeriod } from "@/lib/period";
-import { incomeNet } from "@/lib/taxRates";
+import { computePnl } from "@/lib/pnl";
 import { useToolGate } from "@/lib/useToolGate";
 import { type ToolId } from "@/lib/permissions";
 import type { Tables } from "@/lib/types/database";
@@ -25,6 +28,9 @@ import type { Tables } from "@/lib/types/database";
 export function DashboardView({ businessName }: { businessName: string }) {
   const { data: income } = useIncome();
   const { data: expenses } = useExpenses();
+  const { data: invoices } = useInvoices();
+  const { data: supplierInvoices } = useSupplierInvoices();
+  const { data: ledger } = useLedgerEntries();
   const { data: stock } = useStockItems();
   const [modal, setModal] = useState<"income" | "expense" | "quicklog" | "help" | "business" | null>(null);
   // requirePlanAccess() bounces someone off a page their plan doesn't include
@@ -47,14 +53,15 @@ export function DashboardView({ businessName }: { businessName: string }) {
   // module-level predicate would still think it was whatever day the tab opened.
   const isThisMonth = inPeriod("month");
 
-  // Net of VAT, so PROFIT is what the business actually earned rather than
-  // being inflated by VAT it is only holding for SARS — and IN − OUT still
-  // equals PROFIT. Cash Flow deliberately stays gross: it answers "what moved
-  // through the account", which is a different question. Nothing changes for a
-  // business that isn't VAT-registered (vat_amount is 0).
-  const monthIncome = (income ?? []).filter((r) => isThisMonth(r.transaction_date)).reduce((s, r) => s + incomeNet(r), 0);
-  const monthExpense = (expenses ?? []).filter((r) => isThisMonth(r.transaction_date)).reduce((s, r) => s + Number(r.amount), 0);
-  const profit = monthIncome - monthExpense;
+  // IN / OUT / PROFIT are this month on the same accrual, ex-VAT basis as the
+  // Profit & Loss report — the very same computePnl — so the two screens can't
+  // show a different profit for the same month. That means a supplier invoice or
+  // a customer invoice counts here the moment it's recorded, not only when the
+  // cash moves; Cash Flow is where the pure "what hit the account" view lives.
+  const month = computePnl({ income, expenses, invoices, supplierInvoices, ledger }, isThisMonth);
+  const monthIncome = month.revenue;
+  const monthExpense = month.costs;
+  const profit = month.profit;
   const taxJar = (income ?? []).reduce((s, r) => s + Number(r.tax_jar_amount || 0), 0);
   const lowStock = (stock ?? []).filter((s) => s.reorder_level != null && s.reorder_level > 0 && s.qty <= s.reorder_level);
 

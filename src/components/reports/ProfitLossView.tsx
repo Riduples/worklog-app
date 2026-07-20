@@ -9,7 +9,7 @@ import { useSupplierInvoices } from "@/lib/supabase/hooks/useSupplierInvoices";
 import { useLedgerEntries } from "@/lib/supabase/hooks/useLedger";
 import { useMileageTrips } from "@/lib/supabase/hooks/useMileage";
 import { inPeriod, type Period } from "@/lib/period";
-import { incomeNet } from "@/lib/taxRates";
+import { computePnl } from "@/lib/pnl";
 import { fmt } from "@/lib/format";
 import { BackLink } from "@/components/ui/BackLink";
 
@@ -24,47 +24,13 @@ export function ProfitLossView() {
 
   const within = inPeriod(period);
 
-  // Accrual revenue: invoices issued (even if unpaid) + cash income NOT already
-  // tied to an invoice (avoids double-counting a paid invoice's income row).
-  //
-  // Everything here is ex-VAT. invoice_amount already is; cash income is gross,
-  // so it goes through incomeNet() — VAT collected on a sale is SARS's money
-  // passing through, never revenue. Both income terms must be net or the
-  // subtraction wouldn't cancel.
-  const invoicesIssued = (invoices ?? [])
-    .filter((i) => within(i.issue_date))
-    .reduce((s, i) => s + Number(i.invoice_amount), 0);
-  const cashIncome = (income ?? []).filter((r) => within(r.transaction_date)).reduce((s, r) => s + incomeNet(r), 0);
-  const incomeLinkedToInvoice = (income ?? [])
-    .filter((r) => within(r.transaction_date) && r.matched_invoice_id)
-    .reduce((s, r) => s + incomeNet(r), 0);
-  const totalRevenue = invoicesIssued + (cashIncome - incomeLinkedToInvoice);
+  // Revenue, costs and profit come from the one shared definition, so this
+  // report and the dashboard can never show a different profit for the same
+  // period again — see computePnl for the accrual/ex-VAT rules.
+  const pnl = computePnl({ income, expenses, invoices, supplierInvoices, ledger }, within);
 
-  // Costs mirror revenue above, term for term. A supplier invoice counts the
-  // cost when it is issued (the twin of invoicesIssued); a supplier ledger entry
-  // counts it when incurred; and cash expenses count what isn't already in
-  // either — so an expense settling a bill or a credit entry is netted out, or
-  // "I owe Pipe Co R1000" plus the R1000 you later pay them reads as R2000.
-  // supplier_invoices.invoice_amount is ex-VAT, like invoice_amount on the
-  // sales side, so the input VAT stays out of costs and is claimed in VAT201.
-  const cashExpense = (expenses ?? []).filter((r) => within(r.transaction_date)).reduce((s, r) => s + Number(r.amount), 0);
-  const supplierInvoicesIssued = (supplierInvoices ?? [])
-    .filter((si) => within(si.issue_date))
-    .reduce((s, si) => s + Number(si.invoice_amount), 0);
-  const supplierCreditIncurred = (ledger ?? [])
-    .filter((e) => e.ledger_type === "supplier" && within(e.entry_date))
-    .reduce((s, e) => s + Number(e.amount), 0);
-  const expenseSettlingCredit = (expenses ?? [])
-    .filter((r) => within(r.transaction_date) && r.matched_ledger_entry_id)
-    .reduce((s, r) => s + Number(r.amount), 0);
-  const expenseSettlingSupplierInvoice = (expenses ?? [])
-    .filter((r) => within(r.transaction_date) && r.matched_supplier_invoice_id)
-    .reduce((s, r) => s + Number(r.amount), 0);
-  const totalCosts =
-    supplierInvoicesIssued + supplierCreditIncurred + (cashExpense - expenseSettlingCredit - expenseSettlingSupplierInvoice);
-
-  const netProfit = totalRevenue - totalCosts;
-  const margin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
+  const netProfit = pnl.profit;
+  const margin = pnl.revenue > 0 ? (netProfit / pnl.revenue) * 100 : 0;
   const taxJar = (income ?? []).filter((r) => within(r.transaction_date)).reduce((s, r) => s + Number(r.tax_jar_amount || 0), 0);
   const mileageDeduction = (mileage ?? [])
     .filter((t) => within(t.trip_date))
@@ -96,19 +62,19 @@ export function ProfitLossView() {
       </div>
 
       <div style={{ background: "#fff", borderRadius: 14, padding: "16px", marginBottom: 16, boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
-        <Row label="Invoices issued" value={fmt(invoicesIssued)} />
-        <Row label="+ Other cash income" value={fmt(cashIncome - incomeLinkedToInvoice)} />
-        <Row label="Total revenue" value={fmt(totalRevenue)} bold />
+        <Row label="Invoices issued" value={fmt(pnl.invoicesIssued)} />
+        <Row label="+ Other cash income" value={fmt(pnl.cashIncomeNotInvoiced)} />
+        <Row label="Total revenue" value={fmt(pnl.revenue)} bold />
         <div style={{ height: 12 }} />
         {/* Same shape as revenue above, and in the same order: what was
             incurred (invoices, then credit), then the cash that isn't already in
             either. Showing the full cash expense here would print numbers that
             don't add up. Zero-value accrual rows are hidden so a business that
             uses only one style of payable isn't shown the other reading nil. */}
-        {supplierInvoicesIssued > 0 && <Row label="Supplier invoices" value={fmt(supplierInvoicesIssued)} color="#b45309" />}
-        {supplierCreditIncurred > 0 && <Row label="Supplier credit" value={fmt(supplierCreditIncurred)} color="#b45309" />}
-        <Row label="+ Other cash expenses" value={fmt(cashExpense - expenseSettlingCredit - expenseSettlingSupplierInvoice)} color="#b45309" />
-        <Row label="Total costs" value={fmt(totalCosts)} bold color="#b45309" />
+        {pnl.supplierInvoicesIssued > 0 && <Row label="Supplier invoices" value={fmt(pnl.supplierInvoicesIssued)} color="#b45309" />}
+        {pnl.supplierCreditIncurred > 0 && <Row label="Supplier credit" value={fmt(pnl.supplierCreditIncurred)} color="#b45309" />}
+        <Row label="+ Other cash expenses" value={fmt(pnl.cashExpensesNotMatched)} color="#b45309" />
+        <Row label="Total costs" value={fmt(pnl.costs)} bold color="#b45309" />
       </div>
 
       <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
