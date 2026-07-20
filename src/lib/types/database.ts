@@ -326,6 +326,7 @@ export type Database = {
           details: string | null
           id: string
           matched_ledger_entry_id: string | null
+          matched_supplier_invoice_id: string | null
           paid_to: string | null
           paid_to_contact_id: string | null
           payment_method: string | null
@@ -344,6 +345,7 @@ export type Database = {
           details?: string | null
           id?: string
           matched_ledger_entry_id?: string | null
+          matched_supplier_invoice_id?: string | null
           paid_to?: string | null
           paid_to_contact_id?: string | null
           payment_method?: string | null
@@ -362,6 +364,7 @@ export type Database = {
           details?: string | null
           id?: string
           matched_ledger_entry_id?: string | null
+          matched_supplier_invoice_id?: string | null
           paid_to?: string | null
           paid_to_contact_id?: string | null
           payment_method?: string | null
@@ -385,6 +388,13 @@ export type Database = {
             columns: ["matched_ledger_entry_id"]
             isOneToOne: false
             referencedRelation: "ledger_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_matched_supplier_invoice_id_fkey"
+            columns: ["matched_supplier_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_invoices"
             referencedColumns: ["id"]
           },
           {

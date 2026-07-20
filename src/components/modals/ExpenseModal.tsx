@@ -9,11 +9,13 @@ import { ContactPicker } from "@/components/ui/ContactPicker";
 import { PaymentMethodPicker } from "@/components/ui/PaymentMethodPicker";
 import { SarsSuggestionDropdown } from "@/components/ui/SarsSuggestionDropdown";
 import { LedgerEntryMatcher, expenseSettlesEntry } from "@/components/ui/LedgerEntryMatcher";
+import { SupplierInvoiceMatcher, expenseSettlesSupplierInvoice } from "@/components/ui/SupplierInvoiceMatcher";
 import { getSarsMatch, type SarsCategory } from "@/lib/sarsCategories";
 import { todayStr } from "@/lib/format";
 import { useCreateExpense } from "@/lib/supabase/hooks/useExpenses";
 import { useContacts } from "@/lib/supabase/hooks/useContacts";
 import { useLedgerEntries, useUpdateLedgerEntry } from "@/lib/supabase/hooks/useLedger";
+import { useSupplierInvoices, useUpdateSupplierInvoice } from "@/lib/supabase/hooks/useSupplierInvoices";
 
 export function ExpenseModal({ onClose }: { onClose: () => void }) {
   const [amount, setAmount] = useState("");
@@ -27,12 +29,16 @@ export function ExpenseModal({ onClose }: { onClose: () => void }) {
   const [date, setDate] = useState(todayStr());
   const [matchedLedgerEntryId, setMatchedLedgerEntryId] = useState<string | null>(null);
   const [markPaid, setMarkPaid] = useState(false);
+  const [matchedSupplierInvoiceId, setMatchedSupplierInvoiceId] = useState<string | null>(null);
+  const [markSiPaid, setMarkSiPaid] = useState(false);
   const [error, setError] = useState("");
 
   const { data: contacts } = useContacts();
   const { data: ledgerEntries } = useLedgerEntries();
+  const { data: supplierInvoices } = useSupplierInvoices();
   const createExpense = useCreateExpense();
   const updateLedgerEntry = useUpdateLedgerEntry();
+  const updateSupplierInvoice = useUpdateSupplierInvoice();
 
   const amountNum = parseFloat(amount) || 0;
 
@@ -42,6 +48,9 @@ export function ExpenseModal({ onClose }: { onClose: () => void }) {
   const supplierEntries = (ledgerEntries ?? []).filter((e) => e.ledger_type === "supplier");
   const matchedEntry = supplierEntries.find((e) => e.id === matchedLedgerEntryId) ?? null;
   const settlesEntry = expenseSettlesEntry(matchedEntry, amountNum);
+
+  const matchedSi = (supplierInvoices ?? []).find((si) => si.id === matchedSupplierInvoiceId) ?? null;
+  const settlesSi = expenseSettlesSupplierInvoice(matchedSi, amountNum);
 
   const handleSave = () => {
     if (!amountNum || amountNum <= 0) {
@@ -61,11 +70,12 @@ export function ExpenseModal({ onClose }: { onClose: () => void }) {
         payment_method: method || null,
         transaction_date: date,
         matched_ledger_entry_id: matchedLedgerEntryId,
+        matched_supplier_invoice_id: matchedSupplierInvoiceId,
         source: "manual",
       },
       {
         onSuccess: async () => {
-          // Re-check settlesEntry rather than trusting the checkbox alone: the
+          // Re-check the settle rather than trusting the checkbox alone: the
           // amount can be edited after ticking it, and marking a R5,000 debt
           // settled because someone paid R50 is the kind of wrong that only
           // shows up at year end. The expense is saved either way — the link is
@@ -74,6 +84,17 @@ export function ExpenseModal({ onClose }: { onClose: () => void }) {
           if (matchedLedgerEntryId && markPaid && settlesEntry) {
             await updateLedgerEntry
               .mutateAsync({ id: matchedLedgerEntryId, changes: { status: "paid", paid_date: date } })
+              .catch(() => {});
+          }
+          // Same for a supplier invoice: settling it zeroes the balance and
+          // stamps paid_amount, so what-you-owe views stop listing it. paid_amount
+          // is the ex-VAT invoice_amount, matching the actions modal's Mark Paid.
+          if (matchedSupplierInvoiceId && markSiPaid && settlesSi && matchedSi) {
+            await updateSupplierInvoice
+              .mutateAsync({
+                id: matchedSupplierInvoiceId,
+                changes: { status: "paid", paid_date: date, paid_amount: matchedSi.invoice_amount, balance_due: 0 },
+              })
               .catch(() => {});
           }
           onClose();
@@ -135,6 +156,20 @@ export function ExpenseModal({ onClose }: { onClose: () => void }) {
         expenseAmount={amountNum}
         markPaid={markPaid}
         onMarkPaidChange={setMarkPaid}
+      />
+
+      <SupplierInvoiceMatcher
+        invoices={supplierInvoices ?? []}
+        matchedId={matchedSupplierInvoiceId}
+        onMatch={(id) => {
+          setMatchedSupplierInvoiceId(id);
+          if (!id) setMarkSiPaid(false);
+        }}
+        filterByParty={paidTo}
+        onAutoFillParty={setPaidTo}
+        expenseAmount={amountNum}
+        markPaid={markSiPaid}
+        onMarkPaidChange={setMarkSiPaid}
       />
 
       <PaymentMethodPicker selected={method} onSelect={setMethod} />

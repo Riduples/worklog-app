@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { expenseSettlesEntry, ledgerEntryOutstanding } from "@/components/ui/LedgerEntryMatcher";
 import { paymentSettlesInvoice, invoiceBalanceInclVat } from "@/components/ui/InvoiceMatcher";
+import { expenseSettlesSupplierInvoice, supplierInvoiceOutstanding } from "@/components/ui/SupplierInvoiceMatcher";
 import type { LedgerEntry } from "@/lib/supabase/hooks/useLedger";
 import type { Invoice } from "@/lib/supabase/hooks/useInvoices";
+import type { SupplierInvoice } from "@/lib/supabase/hooks/useSupplierInvoices";
 
 // Both matchers decide the same thing from opposite ends: has this money fully
 // settled the thing it points at, and may we therefore write status='paid'.
@@ -16,6 +18,9 @@ const entry = (over: Partial<LedgerEntry> = {}) =>
 
 const invoice = (over: Partial<Invoice> = {}) =>
   ({ id: "i1", doc_number: "INV-1", client_name: "Sarah", invoice_amount: 1000, vat_amount: 150, balance_due: 1000, status: "unpaid", ...over }) as Invoice;
+
+const supplierInvoice = (over: Partial<SupplierInvoice> = {}) =>
+  ({ id: "si1", supplier_name: "Supabase", invoice_amount: 1000, vat_amount: 150, balance_due: 1000, status: "unpaid", ...over }) as SupplierInvoice;
 
 describe("ledgerEntryOutstanding", () => {
   it("is the full amount while unpaid — entries have no amount-paid column", () => {
@@ -106,6 +111,48 @@ describe("paymentSettlesInvoice", () => {
   });
 });
 
+// A supplier invoice is the purchase-side mirror of a customer invoice: it
+// carries VAT, so what you owe is the incl-VAT balance and the same ex-VAT trap
+// applies from the other direction.
+describe("supplierInvoiceOutstanding", () => {
+  it("adds VAT to what is still owed, because you pay the supplier gross", () => {
+    expect(supplierInvoiceOutstanding(supplierInvoice({ balance_due: 1000, vat_amount: 150 }))).toBe(1150);
+  });
+
+  it("is nothing once the balance is cleared, VAT included", () => {
+    expect(supplierInvoiceOutstanding(supplierInvoice({ balance_due: 0, vat_amount: 150 }))).toBe(0);
+  });
+
+  it("copes with a bill carrying no VAT", () => {
+    expect(supplierInvoiceOutstanding(supplierInvoice({ balance_due: 500, vat_amount: null }))).toBe(500);
+  });
+});
+
+describe("expenseSettlesSupplierInvoice", () => {
+  it("settles when the gross expense covers the gross balance", () => {
+    expect(expenseSettlesSupplierInvoice(supplierInvoice({ balance_due: 1000, vat_amount: 150 }), 1150)).toBe(true);
+  });
+
+  it("does not settle when the expense only covers the ex-VAT amount", () => {
+    // The mirror of the invoice trap: 1000 looks like invoice_amount, but you
+    // owe 1150. Marking it paid would write off the input VAT.
+    expect(expenseSettlesSupplierInvoice(supplierInvoice({ balance_due: 1000, vat_amount: 150 }), 1000)).toBe(false);
+  });
+
+  it("forgives a cent", () => {
+    expect(expenseSettlesSupplierInvoice(supplierInvoice({ balance_due: 1000, vat_amount: 150 }), 1149.995)).toBe(true);
+  });
+
+  it("refuses a bill already paid", () => {
+    expect(expenseSettlesSupplierInvoice(supplierInvoice({ status: "paid" }), 99999)).toBe(false);
+  });
+
+  it("refuses a zero expense and an unmatched bill", () => {
+    expect(expenseSettlesSupplierInvoice(supplierInvoice(), 0)).toBe(false);
+    expect(expenseSettlesSupplierInvoice(null, 1150)).toBe(false);
+  });
+});
+
 describe("the two halves agree", () => {
   // They are mirrors: same rule, opposite direction. If one grows a cent of
   // tolerance or loses it, this notices.
@@ -114,5 +161,10 @@ describe("the two halves agree", () => {
     expect(expenseSettlesEntry(entry({ amount: 1000 }), 999.98)).toBe(false);
     expect(paymentSettlesInvoice(invoice({ balance_due: 1000, vat_amount: 0 }), 999.99)).toBe(true);
     expect(paymentSettlesInvoice(invoice({ balance_due: 1000, vat_amount: 0 }), 999.98)).toBe(false);
+  });
+
+  it("customer and supplier invoices settle by the same incl-VAT rule", () => {
+    expect(paymentSettlesInvoice(invoice({ balance_due: 1000, vat_amount: 150 }), 1150)).toBe(true);
+    expect(expenseSettlesSupplierInvoice(supplierInvoice({ balance_due: 1000, vat_amount: 150 }), 1150)).toBe(true);
   });
 });

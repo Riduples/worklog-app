@@ -5,6 +5,7 @@ import { PeriodSelector } from "@/components/ui/PeriodSelector";
 import { useIncome } from "@/lib/supabase/hooks/useIncome";
 import { useExpenses } from "@/lib/supabase/hooks/useExpenses";
 import { useInvoices } from "@/lib/supabase/hooks/useInvoices";
+import { useSupplierInvoices } from "@/lib/supabase/hooks/useSupplierInvoices";
 import { useLedgerEntries } from "@/lib/supabase/hooks/useLedger";
 import { useMileageTrips } from "@/lib/supabase/hooks/useMileage";
 import { inPeriod, type Period } from "@/lib/period";
@@ -17,6 +18,7 @@ export function ProfitLossView() {
   const { data: income } = useIncome();
   const { data: expenses } = useExpenses();
   const { data: invoices } = useInvoices();
+  const { data: supplierInvoices } = useSupplierInvoices();
   const { data: ledger } = useLedgerEntries();
   const { data: mileage } = useMileageTrips();
 
@@ -38,19 +40,28 @@ export function ProfitLossView() {
     .reduce((s, r) => s + incomeNet(r), 0);
   const totalRevenue = invoicesIssued + (cashIncome - incomeLinkedToInvoice);
 
-  // Costs mirror revenue above. A supplier ledger entry counts the cost when it
-  // is incurred, so an expense settling one would count it a second time —
-  // exactly the trap invoices set on the income side. Netting the linked
-  // expenses out is what stops "I owe Pipe Co R1000" plus the R1000 you later
-  // pay them reading as R2000 of costs.
+  // Costs mirror revenue above, term for term. A supplier invoice counts the
+  // cost when it is issued (the twin of invoicesIssued); a supplier ledger entry
+  // counts it when incurred; and cash expenses count what isn't already in
+  // either — so an expense settling a bill or a credit entry is netted out, or
+  // "I owe Pipe Co R1000" plus the R1000 you later pay them reads as R2000.
+  // supplier_invoices.invoice_amount is ex-VAT, like invoice_amount on the
+  // sales side, so the input VAT stays out of costs and is claimed in VAT201.
   const cashExpense = (expenses ?? []).filter((r) => within(r.transaction_date)).reduce((s, r) => s + Number(r.amount), 0);
+  const supplierInvoicesIssued = (supplierInvoices ?? [])
+    .filter((si) => within(si.issue_date))
+    .reduce((s, si) => s + Number(si.invoice_amount), 0);
   const supplierCreditIncurred = (ledger ?? [])
     .filter((e) => e.ledger_type === "supplier" && within(e.entry_date))
     .reduce((s, e) => s + Number(e.amount), 0);
   const expenseSettlingCredit = (expenses ?? [])
     .filter((r) => within(r.transaction_date) && r.matched_ledger_entry_id)
     .reduce((s, r) => s + Number(r.amount), 0);
-  const totalCosts = supplierCreditIncurred + (cashExpense - expenseSettlingCredit);
+  const expenseSettlingSupplierInvoice = (expenses ?? [])
+    .filter((r) => within(r.transaction_date) && r.matched_supplier_invoice_id)
+    .reduce((s, r) => s + Number(r.amount), 0);
+  const totalCosts =
+    supplierInvoicesIssued + supplierCreditIncurred + (cashExpense - expenseSettlingCredit - expenseSettlingSupplierInvoice);
 
   const netProfit = totalRevenue - totalCosts;
   const margin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
@@ -90,10 +101,13 @@ export function ProfitLossView() {
         <Row label="Total revenue" value={fmt(totalRevenue)} bold />
         <div style={{ height: 12 }} />
         {/* Same shape as revenue above, and in the same order: what was
-            incurred, then the cash that isn't already in it. Showing the full
-            cash expense here would print three numbers that don't add up. */}
-        <Row label="Supplier credit" value={fmt(supplierCreditIncurred)} color="#b45309" />
-        <Row label="+ Other cash expenses" value={fmt(cashExpense - expenseSettlingCredit)} color="#b45309" />
+            incurred (invoices, then credit), then the cash that isn't already in
+            either. Showing the full cash expense here would print numbers that
+            don't add up. Zero-value accrual rows are hidden so a business that
+            uses only one style of payable isn't shown the other reading nil. */}
+        {supplierInvoicesIssued > 0 && <Row label="Supplier invoices" value={fmt(supplierInvoicesIssued)} color="#b45309" />}
+        {supplierCreditIncurred > 0 && <Row label="Supplier credit" value={fmt(supplierCreditIncurred)} color="#b45309" />}
+        <Row label="+ Other cash expenses" value={fmt(cashExpense - expenseSettlingCredit - expenseSettlingSupplierInvoice)} color="#b45309" />
         <Row label="Total costs" value={fmt(totalCosts)} bold color="#b45309" />
       </div>
 
