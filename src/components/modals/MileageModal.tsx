@@ -10,7 +10,7 @@ import { fmt, todayStr } from "@/lib/format";
 import { useTaxRates } from "@/lib/taxRates";
 import { useCreateMileageTrip } from "@/lib/supabase/hooks/useMileage";
 
-const TRIP_TYPES = ["Client visit", "Materials run", "Platform trip", "Dead-head", "Business errand"];
+const TRIP_TYPES = ["Client visit", "Delivery", "Materials run", "Business errand"];
 
 export function MileageModal({ onClose }: { onClose: () => void }) {
   const [odoStart, setOdoStart] = useState("");
