@@ -1,0 +1,13 @@
+-- Retire tax_records: a table from the original 19-table schema the app was
+-- never wired to write. v1 keeps tax figures derived and read-only — the 28%
+-- tax-jar snapshot lives on income.tax_jar_amount, and the VAT201/EMP201/
+-- provisional estimates are computed on the fly — so this table has held 0 rows
+-- since it was created and nothing points at it: no code, no inbound FK, no
+-- view, no function, no trigger (all verified before this drop). Removing it
+-- takes away dead surface area rather than leaving an empty table that reads
+-- like it's meant to be used.
+--
+-- No CASCADE on purpose: with nothing depending on it, a plain DROP is correct,
+-- and would fail loudly instead of silently cascading if that ever stopped
+-- being true.
+DROP TABLE IF EXISTS tax_records;

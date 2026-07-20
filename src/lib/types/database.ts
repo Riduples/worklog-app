@@ -1500,56 +1500,6 @@ export type Database = {
           },
         ]
       }
-      tax_records: {
-        Row: {
-          amount: number
-          business_id: string
-          created_at: string | null
-          entry_date: string
-          id: string
-          notes: string | null
-          period: string | null
-          record_type: string
-          tax_year: number | null
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          amount: number
-          business_id: string
-          created_at?: string | null
-          entry_date: string
-          id?: string
-          notes?: string | null
-          period?: string | null
-          record_type: string
-          tax_year?: number | null
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          amount?: number
-          business_id?: string
-          created_at?: string | null
-          entry_date?: string
-          id?: string
-          notes?: string | null
-          period?: string | null
-          record_type?: string
-          tax_year?: number | null
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "tax_records_business_id_fkey"
-            columns: ["business_id"]
-            isOneToOne: false
-            referencedRelation: "business_profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       time_entries: {
         Row: {
           amount_to_bill: number | null

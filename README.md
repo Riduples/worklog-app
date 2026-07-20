@@ -52,6 +52,7 @@ The test suite runs at `Africa/Johannesburg` (set in `vitest.config.ts`). That's
 - **Dates are calendar days, not instants.** Use `toLocalIsoDate()`. `toISOString()` converts to UTC first and names the wrong day at UTC+2.
 - **Money is `NUMERIC(12,2)`** — a deliberate deviation from the spec's BIGINT-cents.
 - **Green is reserved for WhatsApp.** Navy `#0C4A6E` is primary, sky-blue means success.
+- **Income and expense capture survive a dropped signal.** A write that can't reach the server is queued in an IndexedDB outbox (`src/lib/offline/`) under a device-minted row id and replayed when the connection returns. The device-minted id is what makes replay safe — a write that actually landed before the drop collides on `23505` instead of entering the money twice. Classification is by SQLSTATE, never `navigator.onLine` (which lies on captive wifi). Quotes/invoices/POs are deliberately out: their document numbers are server-allocated and can't be minted on a phone.
 
 ## Deployment
 
