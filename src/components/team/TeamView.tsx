@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useBusinessMembers, useUpdateMemberPermissions } from "@/lib/supabase/hooks/useBusinessMembers";
 import { usePendingInvites, useRevokeInvite } from "@/lib/supabase/hooks/useInvites";
-import { useBusinessProfile, useUpdateBusinessPlan } from "@/lib/supabase/hooks/useBusinessProfile";
+import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 import { useCurrentMember } from "@/lib/supabase/hooks/useCurrentMember";
 import { InviteModal } from "@/components/modals/InviteModal";
 import { UpgradeModal } from "@/components/modals/UpgradeModal";
@@ -18,7 +19,6 @@ export function TeamView() {
   const { data: members, isLoading: membersLoading } = useBusinessMembers();
   const { data: invites, isLoading: invitesLoading } = usePendingInvites();
   const revokeInvite = useRevokeInvite();
-  const updatePlan = useUpdateBusinessPlan();
   const updateMemberPermissions = useUpdateMemberPermissions();
 
   const [inviteOpen, setInviteOpen] = useState(false);
@@ -76,27 +76,31 @@ export function TeamView() {
               {(members ?? []).length} user{(members ?? []).length !== 1 ? "s" : ""}
             </div>
           </div>
-          <div style={{ display: "flex", gap: 6 }}>
-            {(Object.keys(TIERS) as Plan[]).map((p) => (
-              <button
-                key={p}
-                onClick={() => p !== plan && updatePlan.mutate({ businessId: business.id, plan: p })}
-                disabled={updatePlan.isPending}
-                style={{
-                  padding: "6px 10px",
-                  borderRadius: 8,
-                  border: `1.5px solid ${p === plan ? "#7DD3FC" : "rgba(255,255,255,0.3)"}`,
-                  background: p === plan ? "#7DD3FC" : "transparent",
-                  color: p === plan ? "#0C4A6E" : "#fff",
-                  fontSize: 11,
-                  fontWeight: 700,
-                  cursor: updatePlan.isPending ? "default" : "pointer",
-                }}
-              >
-                {TIERS[p].label}
-              </button>
-            ))}
-          </div>
+          {/* A plan change goes through checkout, which respects the payment
+              lock (0054) — an upgrade needs a verified payment, and even a
+              downgrade is a deliberate act on its own page. This was three pills
+              that called update_business_plan directly: left over from before
+              the checkout flow existed, and a live foot-gun. One click on the
+              tier you weren't on silently changed your plan with no confirmation
+              — a downgrade went straight through (owners may downgrade), which
+              is exactly how a director exploring this page dropped herself to
+              Shoebox mid-test. */}
+          <Link
+            href="/billing/checkout"
+            style={{
+              padding: "8px 12px",
+              borderRadius: 8,
+              border: "1.5px solid #7DD3FC",
+              background: "#7DD3FC",
+              color: "#0C4A6E",
+              fontSize: 12,
+              fontWeight: 700,
+              textDecoration: "none",
+              whiteSpace: "nowrap",
+            }}
+          >
+            Change plan
+          </Link>
         </div>
       )}
 
