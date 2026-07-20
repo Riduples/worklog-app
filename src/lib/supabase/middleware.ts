@@ -36,7 +36,13 @@ export async function updateSession(request: NextRequest) {
   // /accept-invite must work both logged-out (preview + login/signup prompt)
   // and logged-in (accept button) — it's public but not an "auth route" (an
   // already-logged-in user should NOT be bounced away from it like /login).
-  const isPublicRoute = pathname === "/" || isAuthRoute || pathname.startsWith("/accept-invite");
+  //
+  // The PayFast ITN is a server-to-server POST with no session cookie. If it
+  // weren't public it would be redirected to /login and the payment would never
+  // be recorded — so it must pass through here; the route itself trusts nothing
+  // but PayFast's own signature and confirmation.
+  const isPublicRoute =
+    pathname === "/" || isAuthRoute || pathname.startsWith("/accept-invite") || pathname === "/api/payfast/notify";
 
   if (!user && !isPublicRoute) {
     const url = request.nextUrl.clone();

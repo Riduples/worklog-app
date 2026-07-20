@@ -15,6 +15,12 @@ export const TIERS: Record<Plan, { label: string; price: string; color: string; 
 
 export const PLAN_ORDER: Plan[] = ["shoebox", "solo", "business"];
 
+// The monthly price as a number, the single source PayFast bills from and the
+// ITN checks against. The "R50/mo" strings above are the display of these — keep
+// them the same figure. An amount the gateway charges that disagrees with the
+// price shown is the kind of drift that ends in a chargeback.
+export const PLAN_PRICE_ZAR: Record<Plan, number> = { shoebox: 50, solo: 99, business: 199 };
+
 // What each plan is sold as. Shared so the signup picker, the upgrade prompt
 // and the checkout summary can't describe the same plan three different ways.
 //

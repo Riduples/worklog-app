@@ -10,7 +10,7 @@ import { BackLink } from "@/components/ui/BackLink";
 
 const isPlan = (v: string | null): v is Plan => !!v && (PLAN_ORDER as string[]).includes(v);
 
-export function CheckoutView() {
+export function CheckoutView({ payfastReady = false, sandbox = false }: { payfastReady?: boolean; sandbox?: boolean }) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { data: business } = useBusinessProfile();
@@ -20,6 +20,9 @@ export function CheckoutView() {
   const currentPlan = (business?.plan ?? "shoebox") as Plan;
   const requested = searchParams.get("plan");
   const [selected, setSelected] = useState<Plan>(isPlan(requested) ? requested : currentPlan);
+  // The checkout route bounces back here with ?error=… when it won't start a
+  // payment (not an owner, not an upgrade, gateway off) — surface it plainly.
+  const redirectError = searchParams.get("error");
 
   const tier = TIERS[selected];
   const isDowngrade = PLAN_ORDER.indexOf(selected) < PLAN_ORDER.indexOf(currentPlan);
@@ -68,12 +71,27 @@ export function CheckoutView() {
               {updatePlan.isPending ? "Changing..." : `Move to ${tier.label}`}
             </button>
           </>
+        ) : payfastReady ? (
+          <>
+            {/* A plain navigation to the checkout route, which builds the signed
+                form server-side and forwards to PayFast. Not a fetch — the
+                browser needs to actually land on PayFast's page. */}
+            <a
+              href={`/api/payfast/checkout?plan=${selected}`}
+              style={{ display: "block", width: "100%", boxSizing: "border-box", background: "#0C4A6E", color: "#fff", border: "none", borderRadius: 14, padding: 16, fontWeight: 800, fontSize: 15, textAlign: "center", textDecoration: "none" }}
+            >
+              {`Pay ${tier.price} with PayFast`}
+            </a>
+            <div style={{ background: "#F0F9FF", border: "1.5px solid #BAE6FD", borderRadius: 12, padding: "12px 14px", marginTop: 10, fontSize: 12, color: "#0C4A6E", lineHeight: 1.6 }}>
+              {sandbox
+                ? "🧪 Test mode — this uses PayFast's sandbox, so no real money moves. Your plan activates once PayFast confirms the test payment."
+                : `🔒 Secured by PayFast. You'll be taken to PayFast to pay, then brought back. ${tier.label} activates the moment your payment is confirmed.`}
+            </div>
+          </>
         ) : (
           <>
-            {/* The PayFast redirect lands here. Deliberately inert and clearly
-                labelled rather than a button that looks live and does nothing —
-                the surrounding flow is real and testable, this one step isn't
-                wired until the merchant account exists. */}
+            {/* No merchant credentials configured — keep the step honest and
+                inert rather than a live-looking button that leads nowhere. */}
             <button
               disabled
               style={{ width: "100%", background: "#e2e8f0", color: "#94a3b8", border: "none", borderRadius: 14, padding: 16, fontWeight: 800, fontSize: 15, cursor: "not-allowed" }}
@@ -88,7 +106,7 @@ export function CheckoutView() {
           </>
         )}
 
-        {error && <p style={{ color: "#dc2626", fontSize: 13, marginTop: 12 }}>{error}</p>}
+        {(error || redirectError) && <p style={{ color: "#dc2626", fontSize: 13, marginTop: 12 }}>{error || redirectError}</p>}
 
         <Link
           href="/dashboard"
