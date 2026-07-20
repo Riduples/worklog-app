@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
-import { getCurrentBusinessId } from "@/lib/supabase/currentBusiness";
+import { captureWrite } from "@/lib/offline/capture";
 import type { Tables, TablesInsert } from "@/lib/types/database";
 
 export type Income = Tables<"income">;
@@ -29,20 +29,14 @@ export function useCreateIncome() {
   const supabase = createClient();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (income: Omit<TablesInsert<"income">, "user_id" | "business_id">) => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
-      const businessId = await getCurrentBusinessId(supabase);
-      const { data, error } = await supabase
-        .from("income")
-        .insert({ ...income, user_id: user.id, business_id: businessId })
-        .select()
-        .single();
-      if (error) throw error;
-      return data;
+    mutationFn: (income: Omit<TablesInsert<"income">, "user_id" | "business_id">) =>
+      captureWrite(supabase, "income", income),
+    onSuccess: (result) => {
+      // Refetch the list only when the write actually reached the server; a
+      // queued write has nothing new to fetch and the refetch would just fail
+      // offline. The flusher invalidates ["income"] itself once it syncs.
+      if (!result.queued) queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: ["outbox"] }); // update the sync indicator
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEY }),
   });
 }
