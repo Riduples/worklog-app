@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useIncome } from "@/lib/supabase/hooks/useIncome";
 import { useExpenses } from "@/lib/supabase/hooks/useExpenses";
 import { useInvoices } from "@/lib/supabase/hooks/useInvoices";
@@ -17,6 +17,7 @@ import { HelpAssistantModal } from "@/components/modals/HelpAssistantModal";
 import { BusinessDetailsModal } from "@/components/modals/BusinessDetailsModal";
 import { LogoutButton } from "@/components/auth/LogoutButton";
 import { TrialStatusBar } from "@/components/billing/TrialStatusBar";
+import { useWriteAccess } from "@/lib/writeAccess";
 import { ToolTile } from "@/components/dashboard/ToolTile";
 import { fmt, greeting } from "@/lib/format";
 import { inPeriod } from "@/lib/period";
@@ -38,6 +39,8 @@ export function DashboardView({ businessName }: { businessName: string }) {
   // and lands them here with ?upgrade=<tool>. Without this they'd arrive at the
   // dashboard with no idea why, which is worse than the hole it closes.
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const { isReadOnly } = useWriteAccess();
   const upgradeParam = searchParams.get("upgrade");
   const [upgradeFeature, setUpgradeFeature] = useState<ToolId | "team" | null>(
     (upgradeParam as ToolId | "team" | null) ?? null
@@ -131,7 +134,7 @@ export function DashboardView({ businessName }: { businessName: string }) {
       <div style={{ padding: "16px 16px 100px" }}>
         {(gate("income") || gate("expense")) && (
         <button
-          onClick={() => setModal("quicklog")}
+          onClick={() => (isReadOnly ? router.push("/billing/checkout") : setModal("quicklog"))}
           className="dash-quicklog"
           style={{
             background: "#F59E0B",

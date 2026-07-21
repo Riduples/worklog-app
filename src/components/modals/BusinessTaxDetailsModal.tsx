@@ -85,7 +85,7 @@ export function BusinessTaxDetailsModal({ business, onClose }: { business: Busin
       </Field>
 
       {error && <p style={{ color: "#dc2626", fontSize: 13, marginBottom: 12 }}>{error}</p>}
-      <SaveBtn label={updateProfile.isPending ? "Saving..." : "Save details"} icon="💾" onClick={handleSave} disabled={updateProfile.isPending} />
+      <SaveBtn label={updateProfile.isPending ? "Saving..." : "Save details"} icon="💾" onClick={handleSave} disabled={updateProfile.isPending} allowInReadOnly />
     </Modal>
   );
 }

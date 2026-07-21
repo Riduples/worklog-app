@@ -226,7 +226,7 @@ export function PermissionsEditor({
         </>
       )}
 
-      <SaveBtn label="Save permissions" icon="✅" onClick={() => onSave(localPerms)} />
+      <SaveBtn label="Save permissions" icon="✅" onClick={() => onSave(localPerms)} allowInReadOnly />
       <BackButton onClick={onBack} label="Back to team" block />
     </Modal>
   );

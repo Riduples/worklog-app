@@ -265,6 +265,7 @@ export function BusinessDetailsModal({ business, onClose }: { business: Business
         icon="💾"
         onClick={handleSave}
         disabled={updateProfile.isPending}
+        allowInReadOnly
       />
     </Modal>
   );
