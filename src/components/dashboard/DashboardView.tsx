@@ -16,6 +16,7 @@ import { UpgradeModal } from "@/components/modals/UpgradeModal";
 import { HelpAssistantModal } from "@/components/modals/HelpAssistantModal";
 import { BusinessDetailsModal } from "@/components/modals/BusinessDetailsModal";
 import { LogoutButton } from "@/components/auth/LogoutButton";
+import { TrialStatusBar } from "@/components/billing/TrialStatusBar";
 import { ToolTile } from "@/components/dashboard/ToolTile";
 import { fmt, greeting } from "@/lib/format";
 import { inPeriod } from "@/lib/period";
@@ -124,6 +125,8 @@ export function DashboardView({ businessName }: { businessName: string }) {
           ))}
         </div>
       </div>
+
+      <TrialStatusBar />
 
       <div style={{ padding: "16px 16px 100px" }}>
         {(gate("income") || gate("expense")) && (

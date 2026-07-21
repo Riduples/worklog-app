@@ -7,15 +7,12 @@ import { Field } from "@/components/ui/Field";
 import { Input } from "@/components/ui/Input";
 import { Chips } from "@/components/ui/Chips";
 import { SaveBtn } from "@/components/ui/SaveBtn";
-import { PlanPicker } from "@/components/billing/PlanPicker";
 import { BUSINESS_TYPES, type BusinessType } from "@/lib/businessTypes";
-import type { Plan } from "@/lib/tiers";
 
 export function OnboardingForm({ userId, userEmail }: { userId: string; userEmail: string }) {
   const router = useRouter();
   const [name, setName] = useState("");
   const [businessType, setBusinessType] = useState<BusinessType | "">("");
-  const [plan, setPlan] = useState<Plan>("solo");
   const [address, setAddress] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState(userEmail);
@@ -28,10 +25,9 @@ export function OnboardingForm({ userId, userEmail }: { userId: string; userEmai
     setLoading(true);
     setError("");
     const supabase = createClient();
-    // Note the plan is NOT inserted. A paid tier is only granted by a verified
-    // payment (migration 0054/0065); letting signup write its own plan would
-    // hand out a paid tier for free. New accounts land on the entry tier (the DB
-    // default) until the 30-day trial machinery lands.
+    // The plan is NOT inserted. A trigger starts a 30-day Structured trial for
+    // every new business (migration 0066) and the subscription drives the plan —
+    // signup writing its own tier would hand out a paid tier for free.
     const { error } = await supabase.from("business_profiles").insert({
       user_id: userId,
       name,
@@ -48,9 +44,9 @@ export function OnboardingForm({ userId, userEmail }: { userId: string; userEmai
       setError(error.message);
       return;
     }
-    // Starting on Solo? Go straight to work. Picked a higher tier? Carry the
-    // intent to checkout.
-    router.push(plan === "solo" ? "/dashboard" : `/billing/checkout?plan=${plan}`);
+    // Straight to work — the trial has everything unlocked; a plan is chosen
+    // later, from billing or when the trial ends.
+    router.push("/dashboard");
     router.refresh();
   };
 
@@ -83,19 +79,17 @@ export function OnboardingForm({ userId, userEmail }: { userId: string; userEmai
         <Input value={vatNumber} onChange={setVatNumber} placeholder="Leave blank if not VAT registered" />
       </Field>
 
-      <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 0.6, margin: "18px 0 10px" }}>
-        Pick a plan
+      <div style={{ background: "#F0F9FF", border: "1.5px solid #BAE6FD", borderRadius: 12, padding: "14px 16px", margin: "18px 0 16px" }}>
+        <div style={{ fontSize: 13, fontWeight: 800, color: "#0369A1", marginBottom: 4 }}>🎁 Your 30-day free trial starts now</div>
+        <div style={{ fontSize: 12, color: "#64748b", lineHeight: 1.6 }}>
+          Everything unlocked, no card needed. Pick a plan whenever you&apos;re ready — your records are always yours.
+        </div>
       </div>
-      <PlanPicker selected={plan} onSelect={setPlan} />
-      <p style={{ fontSize: 11, color: "#64748b", margin: "8px 0 16px", lineHeight: 1.5 }}>
-        Not sure? Start on Solo — you can move up whenever your business is ready, and nothing you&apos;ve captured is
-        lost either way.
-      </p>
 
       {error && <p style={{ color: "#dc2626", fontSize: 13, marginBottom: 12 }}>{error}</p>}
       <SaveBtn
         type="submit"
-        label={loading ? "Saving..." : plan === "solo" ? "Save and continue" : "Save and choose payment"}
+        label={loading ? "Saving..." : "Start my free trial"}
         disabled={loading}
       />
     </form>
