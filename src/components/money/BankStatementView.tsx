@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { useCreateIncome } from "@/lib/supabase/hooks/useIncome";
 import { useCreateExpense } from "@/lib/supabase/hooks/useExpenses";
@@ -10,6 +10,7 @@ import { useTaxRates } from "@/lib/taxRates";
 import { fmt } from "@/lib/format";
 import { inPeriod } from "@/lib/period";
 import { renderEncryptedPdf, pdfIsEncrypted } from "@/lib/pdf/decryptStatement";
+import { matchStatementAccount, type StatementMeta } from "@/lib/accounts";
 import { BackLink } from "@/components/ui/BackLink";
 import { BankAccountPicker } from "@/components/ui/BankAccountPicker";
 
@@ -90,20 +91,11 @@ export function BankStatementView() {
   const [attempts, setAttempts] = useState(0);
   const [warning, setWarning] = useState("");
   const [importAccountId, setImportAccountId] = useState<string | null>(null);
+  const [detection, setDetection] = useState<{ note: string; matched: boolean } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   // Which selected rows already committed, so a retry after a mid-way save failure
   // doesn't insert them a second time.
   const savedIdxRef = useRef<Set<number>>(new Set());
-
-  // Default the whole imported batch to the business's default account, once — the
-  // user picks the actual account on the review screen before importing.
-  const didInitAccount = useRef(false);
-  useEffect(() => {
-    if (!didInitAccount.current && accounts) {
-      didInitAccount.current = true;
-      setImportAccountId(accounts.find((a) => a.is_default)?.id ?? null);
-    }
-  }, [accounts]);
 
   const handleFile = async (file: File | undefined) => {
     if (!file) return;
@@ -115,6 +107,7 @@ export function BankStatementView() {
     setEncrypted(false);
     setRawBytes(null);
     setFileData(null);
+    setDetection(null);
     const name = file.name || "statement";
     setFileName(name);
     const mediaType = file.type || (name.toLowerCase().endsWith(".pdf") ? "application/pdf" : "image/jpeg");
@@ -150,6 +143,9 @@ export function BankStatementView() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Couldn't read the statement.");
       const txns = data.transactions as ParsedTxn[];
+      const match = matchStatementAccount(data.statement as StatementMeta, accounts ?? []);
+      setImportAccountId(match.accountId);
+      setDetection(match.note ? { note: match.note, matched: match.matched } : null);
       setTransactions(txns);
       setSelected(Object.fromEntries(txns.map((_, i) => [i, true])));
       savedIdxRef.current = new Set(); // fresh parse → nothing committed yet
@@ -495,7 +491,13 @@ export function BankStatementView() {
       </div>
 
       {(accounts?.length ?? 0) > 0 && (
-        <div style={{ background: "#fff", border: "1.5px solid #e2e8f0", borderRadius: 12, padding: "10px 14px 4px", marginBottom: 14 }}>
+        <div style={{ background: "#fff", border: `1.5px solid ${detection && !detection.matched ? "#fed7aa" : "#e2e8f0"}`, borderRadius: 12, padding: "10px 14px 4px", marginBottom: 14 }}>
+          {detection && (
+            <div style={{ fontSize: 12, fontWeight: 600, color: detection.matched ? "#0369A1" : "#92400e", marginBottom: 6, lineHeight: 1.5 }}>
+              {detection.matched ? "✓ " : "⚠️ "}
+              {detection.note}
+            </div>
+          )}
           <BankAccountPicker
             value={importAccountId}
             onChange={setImportAccountId}

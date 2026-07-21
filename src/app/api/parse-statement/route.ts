@@ -34,6 +34,15 @@ function looksLikeJpeg(base64: string): boolean {
 const TRANSACTIONS_SCHEMA = {
   type: "object",
   properties: {
+    statement: {
+      type: "object",
+      properties: {
+        bank_name: { type: "string" },
+        account_number: { type: "string" },
+      },
+      required: ["bank_name", "account_number"],
+      additionalProperties: false,
+    },
     transactions: {
       type: "array",
       items: {
@@ -52,7 +61,7 @@ const TRANSACTIONS_SCHEMA = {
       },
     },
   },
-  required: ["transactions"],
+  required: ["statement", "transactions"],
   additionalProperties: false,
 } as const;
 
@@ -70,6 +79,10 @@ Rules:
 - category: the best-guess SARS category, e.g. "Trading income", "Materials", "Fuel", "Telephone", "Rent", "Wages", "Bank charges", "Insurance".
 - confidence: "high" if the row is clearly legible, "low" if you had to guess any field.
 - If the statement is supplied as several images, they are consecutive pages of ONE statement, in order. Read them as one continuous statement, keep the dates in order, and do not double-count header rows or opening/closing balances that repeat across pages.
+
+Also read the statement header:
+- statement.bank_name: the bank name shown (e.g. "FNB", "Standard Bank", "Capitec"), or "" if not visible.
+- statement.account_number: the account number shown — the last 4 digits are enough; return "" if not visible.
 
 Extract every transaction you can see — do not skip any. Include unclear rows with confidence "low" rather than dropping them.`;
 }
@@ -215,7 +228,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "no_response", message: "No response from AI." }, { status: 502 });
     }
 
-    let parsed: { transactions: { amount: number }[] };
+    let parsed: { transactions: { amount: number }[]; statement?: { bank_name?: string; account_number?: string } };
     try {
       parsed = JSON.parse(textBlock.text);
     } catch {
@@ -224,7 +237,7 @@ export async function POST(request: Request) {
         { status: 502 }
       );
     }
-    const { transactions } = parsed;
+    const { transactions, statement } = parsed;
     if (!transactions?.length) {
       return NextResponse.json(
         { error: "no_transactions", message: "No transactions found in that file." },
@@ -235,7 +248,7 @@ export async function POST(request: Request) {
     // The model is told to return positives, but a statement's own minus signs
     // leak through often enough to be worth normalising here.
     const normalised = transactions.map((t) => ({ ...t, amount: Math.abs(Number(t.amount) || 0) }));
-    return NextResponse.json({ transactions: normalised });
+    return NextResponse.json({ transactions: normalised, statement: statement ?? null });
   } catch (err) {
     if (err instanceof Anthropic.RateLimitError) {
       return NextResponse.json(

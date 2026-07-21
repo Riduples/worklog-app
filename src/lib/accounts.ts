@@ -19,3 +19,37 @@ export function accountBalance(account: BankAccount, income: Movement[], expense
   }
   return balance;
 }
+
+export type StatementMeta = { bank_name?: string; account_number?: string } | null | undefined;
+type AccountMatchLite = { id: string; name: string; bank_name: string | null; account_number: string | null };
+
+export const last4 = (s: string | null | undefined) => (s ?? "").replace(/\D/g, "").slice(-4);
+
+// Match an uploaded statement to one of the saved accounts. The account number
+// (last 4 digits) is the reliable signal; bank name is a softer fallback. Returns
+// the matched id — or null, which forces a conscious pick rather than silently
+// filing a whole statement under the wrong account.
+export function matchStatementAccount(
+  stmt: StatementMeta,
+  accounts: AccountMatchLite[]
+): { accountId: string | null; note: string; matched: boolean } {
+  if (accounts.length === 0) return { accountId: null, note: "", matched: false };
+  if (accounts.length === 1) return { accountId: accounts[0]!.id, note: "", matched: true };
+
+  const stmtLast4 = last4(stmt?.account_number);
+  if (stmtLast4.length === 4) {
+    const byNumber = accounts.filter((a) => last4(a.account_number).length === 4 && last4(a.account_number) === stmtLast4);
+    if (byNumber.length === 1) return { accountId: byNumber[0]!.id, note: `Matched to ${byNumber[0]!.name} by account number`, matched: true };
+  }
+
+  const bank = (stmt?.bank_name ?? "").trim().toLowerCase();
+  if (bank.length >= 2) {
+    const byBank = accounts.filter((a) => {
+      const ab = (a.bank_name ?? "").trim().toLowerCase();
+      return ab.length >= 2 && (ab.includes(bank) || bank.includes(ab));
+    });
+    if (byBank.length === 1) return { accountId: byBank[0]!.id, note: `Looks like ${byBank[0]!.name} — check it's the right account`, matched: true };
+  }
+
+  return { accountId: null, note: "We couldn't tell which account this statement is for — please choose below.", matched: false };
+}

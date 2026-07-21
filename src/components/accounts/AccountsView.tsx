@@ -113,6 +113,7 @@ function AccountForm({ account, onClose }: { account: BankAccount | null; onClos
 
   const [name, setName] = useState(account?.name ?? "");
   const [bankName, setBankName] = useState(account?.bank_name ?? "");
+  const [accountNumber, setAccountNumber] = useState(account?.account_number ?? "");
   const [type, setType] = useState(account?.account_type ?? "bank");
   const [openingBalance, setOpeningBalance] = useState(account ? String(account.opening_balance) : "");
   const [openingDate, setOpeningDate] = useState(account?.opening_balance_date ?? todayStr());
@@ -131,6 +132,7 @@ function AccountForm({ account, onClose }: { account: BankAccount | null; onClos
     const payload = {
       name: name.trim(),
       bank_name: bankName.trim() || null,
+      account_number: accountNumber.trim() || null,
       account_type: type,
       opening_balance: parseFloat(openingBalance) || 0,
       opening_balance_date: openingDate || null,
@@ -151,6 +153,12 @@ function AccountForm({ account, onClose }: { account: BankAccount | null; onClos
       <Field label="Bank (optional)">
         <Input value={bankName} onChange={setBankName} placeholder="e.g. FNB" />
       </Field>
+      <Field label="Account number (optional)">
+        <Input value={accountNumber} onChange={setAccountNumber} placeholder="Last 4 digits are enough, e.g. 1234" />
+      </Field>
+      <div style={{ fontSize: 11, color: "#94a3b8", marginTop: -4, marginBottom: 12, lineHeight: 1.5 }}>
+        Lets Worklog match an uploaded statement to this account automatically.
+      </div>
       <Field label="Type">
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
           {TYPES.map((t) => (
