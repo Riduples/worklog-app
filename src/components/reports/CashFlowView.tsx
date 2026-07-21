@@ -8,25 +8,35 @@ import { useInvoices } from "@/lib/supabase/hooks/useInvoices";
 import { useSupplierInvoices } from "@/lib/supabase/hooks/useSupplierInvoices";
 import { useLedgerEntries } from "@/lib/supabase/hooks/useLedger";
 import { useStockItems } from "@/lib/supabase/hooks/useStock";
+import { useBankAccounts } from "@/lib/supabase/hooks/useBankAccounts";
 import { inPeriod, type Period } from "@/lib/period";
 import { fmt } from "@/lib/format";
 import { balanceInclVat } from "@/lib/balance";
+import { accountBalance } from "@/lib/accounts";
 import { BackLink } from "@/components/ui/BackLink";
+import { BankAccountSelector, ALL_ACCOUNTS, type AccountFilter } from "@/components/ui/BankAccountSelector";
 
 export function CashFlowView() {
   const [period, setPeriod] = useState<Period>("month");
+  const [account, setAccount] = useState<AccountFilter>(ALL_ACCOUNTS);
   const { data: income } = useIncome();
   const { data: expenses } = useExpenses();
   const { data: invoices } = useInvoices();
   const { data: supplierInvoices } = useSupplierInvoices();
   const { data: ledger } = useLedgerEntries();
   const { data: stock } = useStockItems();
+  const { data: accounts } = useBankAccounts();
 
   const within = inPeriod(period);
+  const isAll = account === ALL_ACCOUNTS;
+  const selectedAccount = (accounts ?? []).find((a) => a.id === account) ?? null;
+  const byAccount = <T extends { account_id: string | null }>(rows: T[]) =>
+    isAll ? rows : rows.filter((r) => r.account_id === account);
 
-  const moneyIn = (income ?? []).filter((r) => within(r.transaction_date)).reduce((s, r) => s + Number(r.amount), 0);
-  const moneyOut = (expenses ?? []).filter((r) => within(r.transaction_date)).reduce((s, r) => s + Number(r.amount), 0);
+  const moneyIn = byAccount(income ?? []).filter((r) => within(r.transaction_date)).reduce((s, r) => s + Number(r.amount), 0);
+  const moneyOut = byAccount(expenses ?? []).filter((r) => within(r.transaction_date)).reduce((s, r) => s + Number(r.amount), 0);
   const netCashFlow = moneyIn - moneyOut;
+  const acctBalance = selectedAccount ? accountBalance(selectedAccount, income ?? [], expenses ?? []) : 0;
 
   // Receivables/payables are point-in-time (not period-filtered) — they represent
   // what's outstanding right now regardless of the period selector.
@@ -54,6 +64,8 @@ export function CashFlowView() {
       <BackLink />
       <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 18px" }}>Cash Flow</h1>
 
+      <BankAccountSelector selected={account} onSelect={setAccount} />
+
       <PeriodSelector selected={period} onSelect={setPeriod} />
 
       <div style={{ background: "#0C4A6E", borderRadius: 16, padding: "18px 18px", marginBottom: 16 }}>
@@ -73,22 +85,34 @@ export function CashFlowView() {
         </div>
       </div>
 
-      <div style={{ background: "#fff", borderRadius: 14, padding: "16px", marginBottom: 16, boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
-        <div style={{ fontSize: 12, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 12 }}>
-          Adjusted position (incl. what&apos;s outstanding)
-        </div>
-        <Row label="Net cash flow" value={fmt(netCashFlow)} />
-        <Row label="+ Owed to you" value={fmt(owedToYou)} color="#0369A1" />
-        <Row label="− You owe suppliers" value={fmt(youOwe)} color="#b45309" />
-        <div style={{ borderTop: "1.5px solid #e2e8f0", marginTop: 8, paddingTop: 8 }}>
-          <Row label="Adjusted position" value={fmt(adjustedPosition)} bold />
-        </div>
-      </div>
+      {isAll ? (
+        <>
+          <div style={{ background: "#fff", borderRadius: 14, padding: "16px", marginBottom: 16, boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 12 }}>
+              Adjusted position (incl. what&apos;s outstanding)
+            </div>
+            <Row label="Net cash flow" value={fmt(netCashFlow)} />
+            <Row label="+ Owed to you" value={fmt(owedToYou)} color="#0369A1" />
+            <Row label="− You owe suppliers" value={fmt(youOwe)} color="#b45309" />
+            <div style={{ borderTop: "1.5px solid #e2e8f0", marginTop: 8, paddingTop: 8 }}>
+              <Row label="Adjusted position" value={fmt(adjustedPosition)} bold />
+            </div>
+          </div>
 
-      <div style={{ background: "#F0F9FF", borderRadius: 14, padding: "14px 16px", fontSize: 13, color: "#0369A1" }}>
-        Stock on hand (at cost): <strong>{fmt(stockValue)}</strong>
-        <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 4 }}>Not counted in cash position — value tied up in inventory.</div>
-      </div>
+          <div style={{ background: "#F0F9FF", borderRadius: 14, padding: "14px 16px", fontSize: 13, color: "#0369A1" }}>
+            Stock on hand (at cost): <strong>{fmt(stockValue)}</strong>
+            <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 4 }}>Not counted in cash position — value tied up in inventory.</div>
+          </div>
+        </>
+      ) : (
+        <div style={{ background: "#fff", borderRadius: 14, padding: "16px", boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
+          <Row label={`${selectedAccount?.name ?? "Account"} balance now`} value={fmt(acctBalance)} bold />
+          <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 6, lineHeight: 1.5 }}>
+            Opening balance plus money in, less money out, for this account. Money owed to or by the business is shown under
+            All accounts.
+          </div>
+        </div>
+      )}
     </div>
   );
 }

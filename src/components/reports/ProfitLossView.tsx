@@ -8,36 +8,49 @@ import { useInvoices } from "@/lib/supabase/hooks/useInvoices";
 import { useSupplierInvoices } from "@/lib/supabase/hooks/useSupplierInvoices";
 import { useLedgerEntries } from "@/lib/supabase/hooks/useLedger";
 import { useMileageTrips } from "@/lib/supabase/hooks/useMileage";
+import { useBankAccounts } from "@/lib/supabase/hooks/useBankAccounts";
 import { inPeriod, type Period } from "@/lib/period";
 import { computePnl } from "@/lib/pnl";
+import { accountBalance } from "@/lib/accounts";
 import { fmt } from "@/lib/format";
 import { BackLink } from "@/components/ui/BackLink";
+import { BankAccountSelector, ALL_ACCOUNTS, type AccountFilter } from "@/components/ui/BankAccountSelector";
 
 export function ProfitLossView() {
   const [period, setPeriod] = useState<Period>("month");
+  const [account, setAccount] = useState<AccountFilter>(ALL_ACCOUNTS);
   const { data: income } = useIncome();
   const { data: expenses } = useExpenses();
   const { data: invoices } = useInvoices();
   const { data: supplierInvoices } = useSupplierInvoices();
   const { data: ledger } = useLedgerEntries();
   const { data: mileage } = useMileageTrips();
+  const { data: accounts } = useBankAccounts();
 
   const within = inPeriod(period);
+  const isAll = account === ALL_ACCOUNTS;
+  const selectedAccount = (accounts ?? []).find((a) => a.id === account) ?? null;
+  const acctIncome = isAll ? (income ?? []) : (income ?? []).filter((r) => r.account_id === account);
+  const acctExpenses = isAll ? (expenses ?? []) : (expenses ?? []).filter((r) => r.account_id === account);
 
-  // Revenue, costs and profit come from the one shared definition, so this
-  // report and the dashboard can never show a different profit for the same
-  // period again — see computePnl for the accrual/ex-VAT rules.
-  const pnl = computePnl({ income, expenses, invoices, supplierInvoices, ledger }, within);
+  // "All accounts" is the full accrual report from the one shared definition, so
+  // this report and the dashboard can't disagree for a period. A single account is
+  // a cash-basis view of what moved through it — invoices and supplier credit are
+  // business-wide claims, not tied to an account, so they're dropped from the inputs.
+  const pnl = isAll
+    ? computePnl({ income, expenses, invoices, supplierInvoices, ledger }, within)
+    : computePnl({ income: acctIncome, expenses: acctExpenses, invoices: [], supplierInvoices: [], ledger: [] }, within);
 
   const netProfit = pnl.profit;
   const margin = pnl.revenue > 0 ? (netProfit / pnl.revenue) * 100 : 0;
-  const taxJar = (income ?? []).filter((r) => within(r.transaction_date)).reduce((s, r) => s + Number(r.tax_jar_amount || 0), 0);
+  const taxJar = acctIncome.filter((r) => within(r.transaction_date)).reduce((s, r) => s + Number(r.tax_jar_amount || 0), 0);
   const mileageDeduction = (mileage ?? [])
     .filter((t) => within(t.trip_date))
     .reduce((s, t) => s + Number(t.sars_deduction || 0), 0);
+  const acctBalance = selectedAccount ? accountBalance(selectedAccount, income ?? [], expenses ?? []) : 0;
 
   const expenseByCategory = Object.entries(
-    (expenses ?? [])
+    acctExpenses
       .filter((r) => within(r.transaction_date))
       .reduce<Record<string, number>>((acc, r) => {
         const cat = r.sars_category || r.what_for || "Uncategorised";
@@ -53,28 +66,44 @@ export function ProfitLossView() {
       <BackLink />
       <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 18px" }}>Profit &amp; Loss</h1>
 
+      <BankAccountSelector selected={account} onSelect={setAccount} />
+
       <PeriodSelector selected={period} onSelect={setPeriod} />
 
       <div style={{ background: "#0C4A6E", borderRadius: 16, padding: "18px", marginBottom: 16 }}>
         <div style={{ fontSize: 11, color: "rgba(255,255,255,0.6)", fontWeight: 700, letterSpacing: 1, marginBottom: 4 }}>NET PROFIT</div>
         <div style={{ fontSize: 28, fontWeight: 800, color: netProfit >= 0 ? "#7DD3FC" : "#FCA5A5" }}>{fmt(netProfit)}</div>
-        <div style={{ fontSize: 12, color: "#E0F2FE", marginTop: 4 }}>{margin.toFixed(1)}% margin (accrual basis)</div>
+        <div style={{ fontSize: 12, color: "#E0F2FE", marginTop: 4 }}>
+          {margin.toFixed(1)}% margin ({isAll ? "accrual basis" : `cash basis · ${selectedAccount?.name ?? "account"}`})
+        </div>
       </div>
 
       <div style={{ background: "#fff", borderRadius: 14, padding: "16px", marginBottom: 16, boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
-        <Row label="Invoices issued" value={fmt(pnl.invoicesIssued)} />
-        <Row label="+ Other cash income" value={fmt(pnl.cashIncomeNotInvoiced)} />
-        <Row label="Total revenue" value={fmt(pnl.revenue)} bold />
-        <div style={{ height: 12 }} />
-        {/* Same shape as revenue above, and in the same order: what was
-            incurred (invoices, then credit), then the cash that isn't already in
-            either. Showing the full cash expense here would print numbers that
-            don't add up. Zero-value accrual rows are hidden so a business that
-            uses only one style of payable isn't shown the other reading nil. */}
-        {pnl.supplierInvoicesIssued > 0 && <Row label="Supplier invoices" value={fmt(pnl.supplierInvoicesIssued)} color="#b45309" />}
-        {pnl.supplierCreditIncurred > 0 && <Row label="Supplier credit" value={fmt(pnl.supplierCreditIncurred)} color="#b45309" />}
-        <Row label="+ Other cash expenses" value={fmt(pnl.cashExpensesNotMatched)} color="#b45309" />
-        <Row label="Total costs" value={fmt(pnl.costs)} bold color="#b45309" />
+        {isAll ? (
+          <>
+            <Row label="Invoices issued" value={fmt(pnl.invoicesIssued)} />
+            <Row label="+ Other cash income" value={fmt(pnl.cashIncomeNotInvoiced)} />
+            <Row label="Total revenue" value={fmt(pnl.revenue)} bold />
+            <div style={{ height: 12 }} />
+            {/* Same shape as revenue above, and in the same order: what was
+                incurred (invoices, then credit), then the cash that isn't already in
+                either. Showing the full cash expense here would print numbers that
+                don't add up. Zero-value accrual rows are hidden so a business that
+                uses only one style of payable isn't shown the other reading nil. */}
+            {pnl.supplierInvoicesIssued > 0 && <Row label="Supplier invoices" value={fmt(pnl.supplierInvoicesIssued)} color="#b45309" />}
+            {pnl.supplierCreditIncurred > 0 && <Row label="Supplier credit" value={fmt(pnl.supplierCreditIncurred)} color="#b45309" />}
+            <Row label="+ Other cash expenses" value={fmt(pnl.cashExpensesNotMatched)} color="#b45309" />
+            <Row label="Total costs" value={fmt(pnl.costs)} bold color="#b45309" />
+          </>
+        ) : (
+          <>
+            <Row label="Money in (excl. VAT)" value={fmt(pnl.revenue)} bold />
+            <Row label="Money out" value={fmt(pnl.costs)} bold color="#b45309" />
+            <div style={{ borderTop: "1.5px solid #e2e8f0", marginTop: 8, paddingTop: 8 }}>
+              <Row label="Net" value={fmt(netProfit)} bold />
+            </div>
+          </>
+        )}
       </div>
 
       <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
@@ -82,10 +111,17 @@ export function ProfitLossView() {
           <div style={{ fontSize: 10, color: "#0369A1", fontWeight: 700, textTransform: "uppercase" }}>Tax jar</div>
           <div style={{ fontSize: 15, fontWeight: 800, color: "#0C4A6E" }}>{fmt(taxJar)}</div>
         </div>
-        <div style={{ flex: 1, background: "#F0F9FF", borderRadius: 12, padding: "12px 14px" }}>
-          <div style={{ fontSize: 10, color: "#0369A1", fontWeight: 700, textTransform: "uppercase" }}>Mileage deduction</div>
-          <div style={{ fontSize: 15, fontWeight: 800, color: "#0C4A6E" }}>{fmt(mileageDeduction)}</div>
-        </div>
+        {isAll ? (
+          <div style={{ flex: 1, background: "#F0F9FF", borderRadius: 12, padding: "12px 14px" }}>
+            <div style={{ fontSize: 10, color: "#0369A1", fontWeight: 700, textTransform: "uppercase" }}>Mileage deduction</div>
+            <div style={{ fontSize: 15, fontWeight: 800, color: "#0C4A6E" }}>{fmt(mileageDeduction)}</div>
+          </div>
+        ) : (
+          <div style={{ flex: 1, background: "#F0F9FF", borderRadius: 12, padding: "12px 14px" }}>
+            <div style={{ fontSize: 10, color: "#0369A1", fontWeight: 700, textTransform: "uppercase" }}>Balance now</div>
+            <div style={{ fontSize: 15, fontWeight: 800, color: "#0C4A6E" }}>{fmt(acctBalance)}</div>
+          </div>
+        )}
       </div>
 
       {expenseByCategory.length > 0 && (

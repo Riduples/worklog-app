@@ -9,6 +9,7 @@ import { useInvoices } from "@/lib/supabase/hooks/useInvoices";
 import { useSupplierInvoices } from "@/lib/supabase/hooks/useSupplierInvoices";
 import { useLedgerEntries } from "@/lib/supabase/hooks/useLedger";
 import { useStockItems } from "@/lib/supabase/hooks/useStock";
+import { useBankAccounts } from "@/lib/supabase/hooks/useBankAccounts";
 import { IncomeModal } from "@/components/modals/IncomeModal";
 import { ExpenseModal } from "@/components/modals/ExpenseModal";
 import { QuickLogModal } from "@/components/modals/QuickLogModal";
@@ -19,9 +20,11 @@ import { LogoutButton } from "@/components/auth/LogoutButton";
 import { TrialStatusBar } from "@/components/billing/TrialStatusBar";
 import { useWriteAccess } from "@/lib/writeAccess";
 import { ToolTile } from "@/components/dashboard/ToolTile";
+import { BankAccountSelector, ALL_ACCOUNTS, type AccountFilter } from "@/components/ui/BankAccountSelector";
 import { fmt, greeting } from "@/lib/format";
 import { inPeriod } from "@/lib/period";
 import { computePnl } from "@/lib/pnl";
+import { accountBalance } from "@/lib/accounts";
 import { useToolGate } from "@/lib/useToolGate";
 import { type ToolId } from "@/lib/permissions";
 import type { Tables } from "@/lib/types/database";
@@ -34,8 +37,10 @@ export function DashboardView({ businessName }: { businessName: string }) {
   const { data: supplierInvoices } = useSupplierInvoices();
   const { data: ledger } = useLedgerEntries();
   const { data: stock } = useStockItems();
+  const { data: accounts } = useBankAccounts();
   const [modal, setModal] = useState<"income" | "expense" | "quicklog" | "help" | "business" | null>(null);
   const [period, setPeriod] = useState<"month" | "year" | "all">("year");
+  const [account, setAccount] = useState<AccountFilter>(ALL_ACCOUNTS);
   // requirePlanAccess() bounces someone off a page their plan doesn't include
   // and lands them here with ?upgrade=<tool>. Without this they'd arrive at the
   // dashboard with no idea why, which is worse than the hole it closes.
@@ -58,10 +63,33 @@ export function DashboardView({ businessName }: { businessName: string }) {
   // account" view. The toggle exists because a single month is too narrow for
   // contracting work that runs over several months.
   const within = inPeriod(period);
+  const isAllAccounts = account === ALL_ACCOUNTS;
+  const selectedAccount = (accounts ?? []).find((a) => a.id === account) ?? null;
+
+  // "All accounts" keeps the full accrual picture — invoices count when issued.
   const pnl = computePnl({ income, expenses, invoices, supplierInvoices, ledger }, within);
-  const monthIncome = pnl.revenue;
-  const monthExpense = pnl.costs;
-  const profit = pnl.profit;
+
+  // A single account is a cash view: gross money that actually moved through it
+  // this period, plus its running balance (as of now, not period-bound).
+  const acctIn = (income ?? [])
+    .filter((r) => r.account_id === account && within(r.transaction_date))
+    .reduce((s, r) => s + Number(r.amount || 0), 0);
+  const acctOut = (expenses ?? [])
+    .filter((r) => r.account_id === account && within(r.transaction_date))
+    .reduce((s, r) => s + Number(r.amount || 0), 0);
+  const acctBalance = selectedAccount ? accountBalance(selectedAccount, income ?? [], expenses ?? []) : 0;
+
+  const stats = isAllAccounts
+    ? [
+        { label: "IN", value: fmt(pnl.revenue), color: "#7DD3FC" },
+        { label: "OUT", value: fmt(pnl.costs), color: "#FCA5A5" },
+        { label: "PROFIT", value: fmt(pnl.profit), color: pnl.profit >= 0 ? "#7DD3FC" : "#FCA5A5" },
+      ]
+    : [
+        { label: "IN", value: fmt(acctIn), color: "#7DD3FC" },
+        { label: "OUT", value: fmt(acctOut), color: "#FCA5A5" },
+        { label: "BALANCE", value: fmt(acctBalance), color: acctBalance >= 0 ? "#7DD3FC" : "#FCA5A5" },
+      ];
   const taxJar = (income ?? []).reduce((s, r) => s + Number(r.tax_jar_amount || 0), 0);
   const lowStock = (stock ?? []).filter((s) => s.reorder_level != null && s.reorder_level > 0 && s.qty <= s.reorder_level);
 
@@ -110,11 +138,7 @@ export function DashboardView({ businessName }: { businessName: string }) {
           </div>
         </div>
         <div className="dash-stats">
-          {[
-            { label: "IN", value: fmt(monthIncome), color: "#7DD3FC" },
-            { label: "OUT", value: fmt(monthExpense), color: "#FCA5A5" },
-            { label: "PROFIT", value: fmt(profit), color: profit >= 0 ? "#7DD3FC" : "#FCA5A5" },
-          ].map((s) => (
+          {stats.map((s) => (
             <div key={s.label} className="dash-stat">
               <div style={{ fontSize: 9, color: "rgba(255,255,255,0.5)", fontWeight: 700, letterSpacing: 1, marginBottom: 3 }}>
                 {s.label}
@@ -148,6 +172,7 @@ export function DashboardView({ businessName }: { businessName: string }) {
       <TrialStatusBar />
 
       <div style={{ padding: "16px 16px 100px" }}>
+        {(accounts?.length ?? 0) >= 2 && <BankAccountSelector selected={account} onSelect={setAccount} />}
         {(gate("income") || gate("expense")) && (
         <button
           onClick={() => (isReadOnly ? router.push("/billing/checkout") : setModal("quicklog"))}
