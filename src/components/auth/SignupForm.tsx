@@ -26,7 +26,10 @@ export function SignupForm() {
     const { data, error } = await supabase.auth.signUp({ email, password });
     setLoading(false);
     if (error) {
-      setError(error.message);
+      // Some auth failures (e.g. a 500 when the confirmation email can't be
+      // sent) come back with an empty or "{}" message — never surface that raw.
+      const raw = error.message?.trim();
+      setError(raw && raw !== "{}" ? raw : "We couldn't create your account just now — please try again in a moment.");
       return;
     }
     // If email confirmation is enabled in Supabase Auth settings, signUp()
