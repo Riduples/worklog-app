@@ -41,19 +41,23 @@ export type TrialState = {
   canWrite: boolean;
 };
 
+/**
+ * Read-only = an explicit read_only status, or a trial run past its end. Pure and
+ * React-free so the global mutation-error interceptor (QueryProvider) can reuse it
+ * to recognise a write that was blocked because the business has lapsed.
+ */
+export function isReadOnlySubscription(sub: Subscription | null | undefined): boolean {
+  if (!sub) return false;
+  const end = sub.current_period_end ? new Date(sub.current_period_end).getTime() : null;
+  return sub.status === "read_only" || (sub.status === "trialing" && end != null && end <= Date.now());
+}
+
 export function useTrialState(): TrialState {
   const { data: sub, isLoading } = useSubscription();
-
-  if (!sub) {
-    return { loading: isLoading, isTrialing: false, trialDaysLeft: null, isReadOnly: false, canWrite: true };
-  }
-
   const now = Date.now();
-  const end = sub.current_period_end ? new Date(sub.current_period_end).getTime() : null;
-  const trialExpired = sub.status === "trialing" && end != null && end <= now;
-  const isTrialing = sub.status === "trialing" && !trialExpired;
-  const isReadOnly = sub.status === "read_only" || trialExpired;
+  const end = sub?.current_period_end ? new Date(sub.current_period_end).getTime() : null;
+  const isReadOnly = isReadOnlySubscription(sub);
+  const isTrialing = sub?.status === "trialing" && !isReadOnly;
   const trialDaysLeft = isTrialing && end != null ? Math.max(0, Math.ceil((end - now) / DAY_MS)) : null;
-
   return { loading: isLoading, isTrialing, trialDaysLeft, isReadOnly, canWrite: !isReadOnly };
 }
