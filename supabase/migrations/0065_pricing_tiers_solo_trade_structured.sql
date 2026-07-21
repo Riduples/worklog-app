@@ -120,6 +120,69 @@ CREATE POLICY insert_member ON public.invites FOR INSERT
     AND member_slots_available(business_id)
   );
 
+-- Enforce the seat cap at ACCEPTANCE too — the moment a login seat is actually
+-- consumed. The invites INSERT policy alone is bypassable: an invite created
+-- under a higher tier, or one that outlives a downgrade, could otherwise be
+-- accepted past the cap. Lock the business row so concurrent accepts serialise,
+-- then re-check unless the caller is already a member (re-accept consumes none).
+CREATE OR REPLACE FUNCTION public.accept_invite(p_token uuid)
+RETURNS uuid
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_catalog
+AS $$
+DECLARE
+  v_invite invites%ROWTYPE;
+  v_user_email text;
+  v_plan text;
+BEGIN
+  IF auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'Must be signed in to accept an invite';
+  END IF;
+
+  SELECT * INTO v_invite FROM invites WHERE token = p_token;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Invite not found';
+  END IF;
+  IF v_invite.accepted_at IS NOT NULL THEN
+    RAISE EXCEPTION 'Invite already accepted';
+  END IF;
+  IF v_invite.expires_at < now() THEN
+    RAISE EXCEPTION 'Invite has expired';
+  END IF;
+
+  SELECT email INTO v_user_email FROM auth.users WHERE id = auth.uid();
+  IF v_user_email IS NULL OR lower(v_user_email) != lower(v_invite.email) THEN
+    RAISE EXCEPTION 'This invite was sent to a different email address';
+  END IF;
+
+  PERFORM 1 FROM business_profiles WHERE id = v_invite.business_id FOR UPDATE;
+  IF NOT EXISTS (
+    SELECT 1 FROM business_members
+    WHERE business_id = v_invite.business_id AND user_id = auth.uid()
+  ) THEN
+    SELECT plan INTO v_plan FROM business_profiles WHERE id = v_invite.business_id;
+    IF v_plan = 'solo' THEN
+      RAISE EXCEPTION 'This business is on the Solo plan (a single login). Ask the owner to upgrade to add staff logins.'
+        USING ERRCODE = 'insufficient_privilege';
+    ELSIF v_plan = 'trade' AND (
+      SELECT count(*) FROM business_members WHERE business_id = v_invite.business_id
+    ) >= 6 THEN
+      RAISE EXCEPTION 'This team is full — Trade includes the owner plus 5 logins. Ask the owner to upgrade to Structured for unlimited logins.'
+        USING ERRCODE = 'insufficient_privilege';
+    END IF;
+  END IF;
+
+  INSERT INTO business_members (business_id, user_id, role, permissions)
+  VALUES (v_invite.business_id, auth.uid(), v_invite.role, v_invite.permissions)
+  ON CONFLICT (business_id, user_id) DO NOTHING;
+
+  UPDATE invites SET accepted_at = now() WHERE token = p_token;
+
+  RETURN v_invite.business_id;
+END;
+$$;
+
 -- ── 5. plan_rank + the plan fallbacks in the sync trigger and downgrade path ──
 CREATE OR REPLACE FUNCTION public.plan_rank(p_plan text)
 RETURNS int
@@ -169,6 +232,16 @@ BEGIN
     WHERE business_id = target_business_id AND user_id = auth.uid() AND role = 'owner'
   ) THEN
     RAISE EXCEPTION 'Only an owner can change the plan';
+  END IF;
+
+  -- While a subscription is live, PayFast is the only thing that may move the
+  -- plan (0055) — otherwise the plan flag and the billing drift apart.
+  IF EXISTS (
+    SELECT 1 FROM subscriptions s
+    WHERE s.business_id = target_business_id AND s.status IN ('active', 'past_due')
+  ) AND NOT is_platform_admin() THEN
+    RAISE EXCEPTION 'This business has a live subscription — change or cancel it there, so the billing and the plan stay in step'
+      USING ERRCODE = 'insufficient_privilege';
   END IF;
 
   SELECT bp.plan INTO current_plan FROM business_profiles bp WHERE bp.id = target_business_id;
@@ -252,7 +325,9 @@ REVOKE EXECUTE ON FUNCTION public.plan_allows(uuid, text) FROM PUBLIC, anon;
 REVOKE EXECUTE ON FUNCTION public.member_slots_available(uuid) FROM PUBLIC, anon;
 REVOKE EXECUTE ON FUNCTION public.plan_rank(text) FROM PUBLIC, anon;
 REVOKE EXECUTE ON FUNCTION public.update_business_plan(uuid, text) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.accept_invite(uuid) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.plan_allows(uuid, text) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.member_slots_available(uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.plan_rank(text) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.update_business_plan(uuid, text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.accept_invite(uuid) TO authenticated;
