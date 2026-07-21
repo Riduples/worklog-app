@@ -42,7 +42,11 @@ export async function updateSession(request: NextRequest) {
   // be recorded — so it must pass through here; the route itself trusts nothing
   // but PayFast's own signature and confirmation.
   const isPublicRoute =
-    pathname === "/" || isAuthRoute || pathname.startsWith("/accept-invite") || pathname === "/api/payfast/notify";
+    pathname === "/" ||
+    isAuthRoute ||
+    pathname.startsWith("/accept-invite") ||
+    pathname.startsWith("/pricing") ||
+    pathname === "/api/payfast/notify";
 
   if (!user && !isPublicRoute) {
     const url = request.nextUrl.clone();

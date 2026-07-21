@@ -153,6 +153,11 @@ export function TaxView() {
         )}
       </div>
 
+      <p style={{ fontSize: 11, color: "#94a3b8", lineHeight: 1.6, marginTop: 16, textAlign: "center" }}>
+        Worklog helps you track and prepare your tax figures — it isn&apos;t tax advice. For anything specific to your
+        business, check with SARS or a registered accountant.
+      </p>
+
       {showDetails && business && <BusinessTaxDetailsModal business={business} onClose={() => setShowDetails(false)} />}
       {upgradeFeature && business && (
         <UpgradeModal feature={upgradeFeature} currentPlan={plan} isOwner={isOwner} onClose={() => setUpgradeFeature(null)} />
