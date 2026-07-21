@@ -35,6 +35,59 @@ export type Database = {
         }
         Relationships: []
       }
+      bank_accounts: {
+        Row: {
+          account_type: string
+          bank_name: string | null
+          business_id: string
+          created_at: string | null
+          deleted_at: string | null
+          id: string
+          is_default: boolean
+          name: string
+          opening_balance: number
+          opening_balance_date: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          account_type?: string
+          bank_name?: string | null
+          business_id: string
+          created_at?: string | null
+          deleted_at?: string | null
+          id?: string
+          is_default?: boolean
+          name: string
+          opening_balance?: number
+          opening_balance_date?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          account_type?: string
+          bank_name?: string | null
+          business_id?: string
+          created_at?: string | null
+          deleted_at?: string | null
+          id?: string
+          is_default?: boolean
+          name?: string
+          opening_balance?: number
+          opening_balance_date?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_accounts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bookings: {
         Row: {
           balance_due: number | null
@@ -319,6 +372,7 @@ export type Database = {
       }
       expenses: {
         Row: {
+          account_id: string | null
           amount: number
           business_id: string
           created_at: string | null
@@ -338,6 +392,7 @@ export type Database = {
           what_for: string | null
         }
         Insert: {
+          account_id?: string | null
           amount: number
           business_id: string
           created_at?: string | null
@@ -357,6 +412,7 @@ export type Database = {
           what_for?: string | null
         }
         Update: {
+          account_id?: string | null
           amount?: number
           business_id?: string
           created_at?: string | null
@@ -376,6 +432,13 @@ export type Database = {
           what_for?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "expenses_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "bank_accounts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "expenses_business_id_fkey"
             columns: ["business_id"]
@@ -449,6 +512,7 @@ export type Database = {
       }
       income: {
         Row: {
+          account_id: string | null
           amount: number
           business_id: string
           created_at: string | null
@@ -470,6 +534,7 @@ export type Database = {
           what_for: string | null
         }
         Insert: {
+          account_id?: string | null
           amount: number
           business_id: string
           created_at?: string | null
@@ -491,6 +556,7 @@ export type Database = {
           what_for?: string | null
         }
         Update: {
+          account_id?: string | null
           amount?: number
           business_id?: string
           created_at?: string | null
@@ -512,6 +578,13 @@ export type Database = {
           what_for?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "income_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "bank_accounts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "income_business_id_fkey"
             columns: ["business_id"]
@@ -1690,6 +1763,10 @@ export type Database = {
     }
     Functions: {
       accept_invite: { Args: { p_token: string }; Returns: string }
+      business_is_writable: {
+        Args: { p_business_id: string }
+        Returns: boolean
+      }
       consume_rate_limit: { Args: { p_route: string }; Returns: Json }
       convert_quote_to_invoice: {
         Args: {
@@ -1796,6 +1873,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      expire_trials: { Args: never; Returns: number }
       generate_recurring_invoices: { Args: never; Returns: number }
       get_business_members: {
         Args: { target_business_id: string }
@@ -1827,6 +1905,10 @@ export type Database = {
         Returns: boolean
       }
       is_platform_admin: { Args: never; Returns: boolean }
+      member_slots_available: {
+        Args: { p_business_id: string }
+        Returns: boolean
+      }
       plan_allows: {
         Args: { p_business_id: string; p_tool: string }
         Returns: boolean
@@ -1836,10 +1918,6 @@ export type Database = {
       recurrence_next: {
         Args: { p_from: string; p_recurrence: string }
         Returns: string
-      }
-      staff_slots_available: {
-        Args: { p_business_id: string }
-        Returns: boolean
       }
       tool_access_rank: { Args: { p_level: string }; Returns: number }
       update_business_plan: {
