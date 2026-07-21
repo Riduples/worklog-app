@@ -52,11 +52,6 @@ export default function PricingPage() {
         </Link>
       </section>
 
-      {/* Founding member banner */}
-      <div style={{ background: ORANGE, color: "#fff", textAlign: "center", padding: "12px 20px", fontSize: 13.5, fontWeight: 600, lineHeight: 1.5 }}>
-        🟠 <strong>Founding Member offer:</strong> the first 100 Worklog businesses keep their launch price for life. Once you&apos;re in, your price never goes up.
-      </div>
-
       {/* Plans */}
       <section style={{ maxWidth: 1040, margin: "0 auto", padding: "36px 16px 8px" }}>
         <p style={{ textAlign: "center", fontSize: 12.5, color: MUTED, marginBottom: 24 }}>
@@ -146,13 +141,6 @@ export default function PricingPage() {
             <div style={{ fontSize: 13, color: MUTED, lineHeight: 1.65 }}>{f.a}</div>
           </div>
         ))}
-      </section>
-
-      {/* Referral note */}
-      <section style={{ maxWidth: 720, margin: "0 auto", padding: "8px 16px 20px", textAlign: "center" }}>
-        <p style={{ fontSize: 13, color: MUTED, lineHeight: 1.6 }}>
-          <strong style={{ color: NAVY }}>Share Worklog, save money.</strong> Your link gives a friend R30 off their first month — and you get R30 off yours when they join.
-        </p>
       </section>
 
       {/* Footer CTA */}
