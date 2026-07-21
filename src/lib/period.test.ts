@@ -150,6 +150,37 @@ describe("inPeriod('week')", () => {
   });
 });
 
+describe("inPeriod('year')", () => {
+  it("runs 1 January to 31 December, excluding either side", () => {
+    vi.useFakeTimers();
+    at("2026-07-17T09:33:00Z");
+    const year = inPeriod("year");
+    expect(year("2026-01-01")).toBe(true);
+    expect(year("2026-12-31")).toBe(true);
+    expect(year("2025-12-31")).toBe(false);
+    expect(year("2027-01-01")).toBe(false);
+  });
+
+  it("keeps a month that the month view drops — the whole reason the toggle exists", () => {
+    // April is in this year but not in July. The dashboard's Month view hides an
+    // April invoice; Year keeps it. This is the multi-month contractor case.
+    vi.useFakeTimers();
+    at("2026-07-17T09:33:00Z");
+    expect(inPeriod("month")("2026-04-15")).toBe(false);
+    expect(inPeriod("year")("2026-04-15")).toBe(true);
+  });
+
+  it("holds just after midnight on 1 January", () => {
+    // 00:30 SAST on 1 Jan is still 31 Dec in UTC — the boundary the day-shift bug
+    // would have pulled back into the previous year.
+    vi.useFakeTimers();
+    at("2025-12-31T22:30:00Z"); // 00:30 SAST on 1 Jan 2026
+    const year = inPeriod("year");
+    expect(year("2026-01-01")).toBe(true);
+    expect(year("2025-12-31")).toBe(false);
+  });
+});
+
 describe("inPeriod('all')", () => {
   it("takes everything, including dates either side of now", () => {
     vi.useFakeTimers();

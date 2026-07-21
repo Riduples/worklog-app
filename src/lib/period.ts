@@ -1,11 +1,12 @@
 import { toLocalIsoDate } from "@/lib/format";
 
-export type Period = "today" | "week" | "month" | "all";
+export type Period = "today" | "week" | "month" | "year" | "all";
 
 export const PERIOD_LABELS: Record<Period, string> = {
   today: "Today",
   week: "This week",
   month: "This month",
+  year: "This year",
   all: "All time",
 };
 
@@ -48,6 +49,14 @@ export function inPeriod(period: Period): (dateStr: string) => boolean {
     sunday.setDate(monday.getDate() + 6);
     const from = toLocalIsoDate(monday);
     const to = toLocalIsoDate(sunday);
+    return (d) => d >= from && d <= to;
+  }
+
+  if (period === "year") {
+    // The whole calendar year, Jan 1 to Dec 31 — effectively year-to-date for
+    // normal data, since transactions aren't dated in the future.
+    const from = toLocalIsoDate(new Date(now.getFullYear(), 0, 1));
+    const to = toLocalIsoDate(new Date(now.getFullYear(), 11, 31));
     return (d) => d >= from && d <= to;
   }
 

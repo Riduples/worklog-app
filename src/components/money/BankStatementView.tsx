@@ -7,6 +7,7 @@ import { useCreateExpense } from "@/lib/supabase/hooks/useExpenses";
 import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 import { useTaxRates } from "@/lib/taxRates";
 import { fmt } from "@/lib/format";
+import { inPeriod } from "@/lib/period";
 import { BackLink } from "@/components/ui/BackLink";
 
 type ParsedTxn = {
@@ -34,6 +35,22 @@ const Header = () => (
   </>
 );
 
+const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+// Parse and format straight off the YYYY-MM-DD string — no Date object, so the
+// SAST/UTC boundary trap can't shift a date by a day. One month → "April 2026";
+// a span → "3 Apr – 28 Apr 2026".
+const fmtDay = (iso: string) => {
+  const [y, m, d] = iso.split("-").map(Number);
+  return `${d} ${(MONTHS[(m ?? 1) - 1] ?? "").slice(0, 3)} ${y}`;
+};
+const rangeLabel = (from: string, to: string) => {
+  const [fy, fm] = from.split("-").map(Number);
+  const [ty, tm] = to.split("-").map(Number);
+  if (fy === ty && fm === tm) return `${MONTHS[(fm ?? 1) - 1] ?? ""} ${fy}`;
+  return `${fmtDay(from)} – ${fmtDay(to)}`;
+};
+
 export function BankStatementView() {
   const createIncome = useCreateIncome();
   const createExpense = useCreateExpense();
@@ -47,7 +64,7 @@ export function BankStatementView() {
   const [transactions, setTransactions] = useState<ParsedTxn[]>([]);
   const [selected, setSelected] = useState<Record<number, boolean>>({});
   const [error, setError] = useState("");
-  const [savedCount, setSavedCount] = useState(0);
+  const [imported, setImported] = useState<{ count: number; from: string; to: string; outOfMonth: number } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFile = (file: File | undefined) => {
@@ -119,7 +136,14 @@ export function BankStatementView() {
           });
         }
       }
-      setSavedCount(toSave.length);
+      const dates = toSave.map((t) => t.date).sort();
+      const inMonth = inPeriod("month");
+      setImported({
+        count: toSave.length,
+        from: dates[0] ?? "",
+        to: dates[dates.length - 1] ?? "",
+        outOfMonth: toSave.filter((t) => !inMonth(t.date)).length,
+      });
       setStep("done");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Couldn't save the transactions.");
@@ -130,6 +154,10 @@ export function BankStatementView() {
   const totalIncome = transactions.reduce((s, t, i) => s + (selected[i] && t.type === "income" ? t.amount : 0), 0);
   const totalExpense = transactions.reduce((s, t, i) => s + (selected[i] && t.type === "expense" ? t.amount : 0), 0);
   const saving = createIncome.isPending || createExpense.isPending;
+  // How many ticked rows fall outside the current month — the dashboard's default
+  // "Month" view won't show them, so we say so before the import, not only after.
+  const isThisMonth = inPeriod("month");
+  const selectedOutOfMonth = transactions.filter((t, i) => selected[i] && !isThisMonth(t.date)).length;
 
   // ── CONSENT ──
   if (step === "consent") {
@@ -236,9 +264,23 @@ export function BankStatementView() {
         <div style={{ textAlign: "center", padding: "40px 0" }}>
           <div style={{ fontSize: 44, marginBottom: 14 }}>✅</div>
           <div style={{ fontSize: 17, fontWeight: 800, color: "#0C4A6E", marginBottom: 6 }}>
-            {savedCount} transaction{savedCount !== 1 ? "s" : ""} imported
+            {imported?.count ?? 0} transaction{(imported?.count ?? 0) !== 1 ? "s" : ""} imported
           </div>
-          <div style={{ fontSize: 13, color: "#64748b", marginBottom: 24 }}>They&apos;re now in your Money records.</div>
+          {imported?.from && (
+            <div style={{ fontSize: 13, color: "#0369A1", fontWeight: 700, marginBottom: 6 }}>
+              Dated {rangeLabel(imported.from, imported.to)}
+            </div>
+          )}
+          <div style={{ fontSize: 13, color: "#64748b", marginBottom: imported && imported.outOfMonth > 0 ? 16 : 24 }}>
+            They&apos;re now in your Money records.
+          </div>
+          {imported && imported.outOfMonth > 0 && (
+            <div style={{ background: "#fff7ed", border: "1px solid #fed7aa", borderRadius: 10, padding: "12px 14px", marginBottom: 22, fontSize: 12.5, color: "#92400e", textAlign: "left", lineHeight: 1.6 }}>
+              <strong>Heads-up:</strong> {imported.outOfMonth} of these {imported.outOfMonth === 1 ? "is" : "are"} dated outside this
+              month, so they won&apos;t show in your dashboard&apos;s <strong>Month</strong> total. Switch the dashboard to{" "}
+              <strong>Year</strong> or <strong>All</strong> to see them — they&apos;re always in your Money records and Profit &amp; Loss.
+            </div>
+          )}
           <Link
             href="/dashboard"
             style={{ display: "block", background: "#0C4A6E", borderRadius: 14, padding: 15, fontSize: 15, fontWeight: 700, color: "#fff", textDecoration: "none" }}
@@ -258,6 +300,14 @@ export function BankStatementView() {
         Found <strong>{transactions.length}</strong> transactions. Untick anything you don&apos;t want — nothing is saved
         until you tap Import.
       </div>
+
+      {selectedOutOfMonth > 0 && (
+        <div style={{ background: "#fff7ed", border: "1px solid #fed7aa", borderRadius: 12, padding: "10px 14px", marginBottom: 14, fontSize: 12, color: "#92400e", lineHeight: 1.5 }}>
+          ⚠️ {selectedOutOfMonth} selected {selectedOutOfMonth === 1 ? "transaction is" : "transactions are"} dated outside this
+          month. They&apos;ll still import — look under <strong>Year</strong> or <strong>All</strong> on the dashboard, not{" "}
+          <strong>Month</strong>.
+        </div>
+      )}
 
       <div style={{ background: "#0C4A6E", borderRadius: 12, padding: "12px 16px", marginBottom: 14, display: "flex", justifyContent: "space-between" }}>
         <div>

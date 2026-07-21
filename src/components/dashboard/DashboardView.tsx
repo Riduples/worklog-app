@@ -35,6 +35,7 @@ export function DashboardView({ businessName }: { businessName: string }) {
   const { data: ledger } = useLedgerEntries();
   const { data: stock } = useStockItems();
   const [modal, setModal] = useState<"income" | "expense" | "quicklog" | "help" | "business" | null>(null);
+  const [period, setPeriod] = useState<"month" | "year" | "all">("year");
   // requirePlanAccess() bounces someone off a page their plan doesn't include
   // and lands them here with ?upgrade=<tool>. Without this they'd arrive at the
   // dashboard with no idea why, which is worse than the hole it closes.
@@ -50,22 +51,17 @@ export function DashboardView({ businessName }: { businessName: string }) {
   // about every tool — see useToolGate.
   const { business, plan, isOwner, gate, tierLocked } = useToolGate();
 
-  // The same "this month" Profit & Loss uses. This used to be a private
-  // year-and-month check up at module scope, and the two screens disagreed:
-  // inPeriod("month") had no upper bound and counted post-dated rows. Built per
-  // render, not once at import — inPeriod reads the clock when you call it, so a
-  // module-level predicate would still think it was whatever day the tab opened.
-  const isThisMonth = inPeriod("month");
-
-  // IN / OUT / PROFIT are this month on the same accrual, ex-VAT basis as the
-  // Profit & Loss report — the very same computePnl — so the two screens can't
-  // show a different profit for the same month. That means a supplier invoice or
-  // a customer invoice counts here the moment it's recorded, not only when the
-  // cash moves; Cash Flow is where the pure "what hit the account" view lives.
-  const month = computePnl({ income, expenses, invoices, supplierInvoices, ledger }, isThisMonth);
-  const monthIncome = month.revenue;
-  const monthExpense = month.costs;
-  const profit = month.profit;
+  // IN / OUT / PROFIT over the chosen period (defaults to this year), on the same
+  // accrual, ex-VAT basis as the Profit & Loss report — the very same computePnl,
+  // so the two screens can't disagree for a period. An invoice counts the moment
+  // it's issued, not only when the cash moves; Cash Flow is the pure "what hit the
+  // account" view. The toggle exists because a single month is too narrow for
+  // contracting work that runs over several months.
+  const within = inPeriod(period);
+  const pnl = computePnl({ income, expenses, invoices, supplierInvoices, ledger }, within);
+  const monthIncome = pnl.revenue;
+  const monthExpense = pnl.costs;
+  const profit = pnl.profit;
   const taxJar = (income ?? []).reduce((s, r) => s + Number(r.tax_jar_amount || 0), 0);
   const lowStock = (stock ?? []).filter((s) => s.reorder_level != null && s.reorder_level > 0 && s.qty <= s.reorder_level);
 
@@ -125,6 +121,26 @@ export function DashboardView({ businessName }: { businessName: string }) {
               </div>
               <div style={{ fontSize: 14, fontWeight: 800, color: s.color, lineHeight: 1 }}>{s.value}</div>
             </div>
+          ))}
+        </div>
+        <div style={{ display: "flex", gap: 6, justifyContent: "center", marginTop: 10 }}>
+          {([["month", "Month"], ["year", "Year"], ["all", "All"]] as const).map(([p, label]) => (
+            <button
+              key={p}
+              onClick={() => setPeriod(p)}
+              style={{
+                background: period === p ? "rgba(255,255,255,0.22)" : "transparent",
+                color: "#fff",
+                border: "1px solid rgba(255,255,255,0.28)",
+                borderRadius: 999,
+                padding: "4px 15px",
+                fontSize: 11,
+                fontWeight: 700,
+                cursor: "pointer",
+              }}
+            >
+              {label}
+            </button>
           ))}
         </div>
       </div>
