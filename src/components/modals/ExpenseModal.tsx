@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { Field } from "@/components/ui/Field";
 import { Input } from "@/components/ui/Input";
@@ -16,6 +16,8 @@ import { useCreateExpense } from "@/lib/supabase/hooks/useExpenses";
 import { useContacts } from "@/lib/supabase/hooks/useContacts";
 import { useLedgerEntries, useUpdateLedgerEntry } from "@/lib/supabase/hooks/useLedger";
 import { useSupplierInvoices, useUpdateSupplierInvoice } from "@/lib/supabase/hooks/useSupplierInvoices";
+import { useBankAccounts } from "@/lib/supabase/hooks/useBankAccounts";
+import { BankAccountPicker } from "@/components/ui/BankAccountPicker";
 
 export function ExpenseModal({ onClose }: { onClose: () => void }) {
   const [amount, setAmount] = useState("");
@@ -31,6 +33,7 @@ export function ExpenseModal({ onClose }: { onClose: () => void }) {
   const [markPaid, setMarkPaid] = useState(false);
   const [matchedSupplierInvoiceId, setMatchedSupplierInvoiceId] = useState<string | null>(null);
   const [markSiPaid, setMarkSiPaid] = useState(false);
+  const [accountId, setAccountId] = useState<string | null>(null);
   const [error, setError] = useState("");
 
   const { data: contacts } = useContacts();
@@ -39,6 +42,16 @@ export function ExpenseModal({ onClose }: { onClose: () => void }) {
   const createExpense = useCreateExpense();
   const updateLedgerEntry = useUpdateLedgerEntry();
   const updateSupplierInvoice = useUpdateSupplierInvoice();
+  const { data: accounts } = useBankAccounts();
+
+  // Default new entries to the business's default account, once.
+  const didInitAccount = useRef(false);
+  useEffect(() => {
+    if (!didInitAccount.current && accounts) {
+      didInitAccount.current = true;
+      setAccountId(accounts.find((a) => a.is_default)?.id ?? null);
+    }
+  }, [accounts]);
 
   const amountNum = parseFloat(amount) || 0;
 
@@ -71,6 +84,7 @@ export function ExpenseModal({ onClose }: { onClose: () => void }) {
         transaction_date: date,
         matched_ledger_entry_id: matchedLedgerEntryId,
         matched_supplier_invoice_id: matchedSupplierInvoiceId,
+        account_id: accountId,
         source: "manual",
       },
       {
@@ -173,6 +187,8 @@ export function ExpenseModal({ onClose }: { onClose: () => void }) {
       />
 
       <PaymentMethodPicker selected={method} onSelect={setMethod} />
+
+      {(accounts?.length ?? 0) > 0 && <BankAccountPicker value={accountId} onChange={setAccountId} />}
 
       <Field label="Date">
         <Input value={date} onChange={setDate} type="date" />

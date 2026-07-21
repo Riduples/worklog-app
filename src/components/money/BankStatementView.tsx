@@ -1,15 +1,17 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useCreateIncome } from "@/lib/supabase/hooks/useIncome";
 import { useCreateExpense } from "@/lib/supabase/hooks/useExpenses";
 import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
+import { useBankAccounts } from "@/lib/supabase/hooks/useBankAccounts";
 import { useTaxRates } from "@/lib/taxRates";
 import { fmt } from "@/lib/format";
 import { inPeriod } from "@/lib/period";
 import { renderEncryptedPdf, pdfIsEncrypted } from "@/lib/pdf/decryptStatement";
 import { BackLink } from "@/components/ui/BackLink";
+import { BankAccountPicker } from "@/components/ui/BankAccountPicker";
 
 type ParsedTxn = {
   date: string;
@@ -70,6 +72,7 @@ export function BankStatementView() {
   const { TAX_JAR_RATE, VAT_RATE, vatFromGross } = useTaxRates();
   const { data: business } = useBusinessProfile();
   const isVatRegistered = !!business?.vat_number;
+  const { data: accounts } = useBankAccounts();
 
   const [step, setStep] = useState<Step>("consent");
   const [fileData, setFileData] = useState<{ base64: string; mediaType: string } | null>(null);
@@ -86,10 +89,21 @@ export function BankStatementView() {
   const [pwError, setPwError] = useState("");
   const [attempts, setAttempts] = useState(0);
   const [warning, setWarning] = useState("");
+  const [importAccountId, setImportAccountId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   // Which selected rows already committed, so a retry after a mid-way save failure
   // doesn't insert them a second time.
   const savedIdxRef = useRef<Set<number>>(new Set());
+
+  // Default the whole imported batch to the business's default account, once — the
+  // user picks the actual account on the review screen before importing.
+  const didInitAccount = useRef(false);
+  useEffect(() => {
+    if (!didInitAccount.current && accounts) {
+      didInitAccount.current = true;
+      setImportAccountId(accounts.find((a) => a.is_default)?.id ?? null);
+    }
+  }, [accounts]);
 
   const handleFile = async (file: File | undefined) => {
     if (!file) return;
@@ -232,6 +246,7 @@ export function BankStatementView() {
             payment_method: t.method,
             sars_category: t.category,
             source: "bank_statement",
+            account_id: importAccountId,
             vat_rate: isVatRegistered ? VAT_RATE : null,
             vat_amount: vatAmount,
             tax_jar_amount: net * TAX_JAR_RATE,
@@ -245,6 +260,7 @@ export function BankStatementView() {
             payment_method: t.method,
             sars_category: t.category,
             source: "bank_statement",
+            account_id: importAccountId,
           });
         }
         savedIdxRef.current.add(i);
@@ -477,6 +493,16 @@ export function BankStatementView() {
         Found <strong>{transactions.length}</strong> transactions. Untick anything you don&apos;t want — nothing is saved
         until you tap Import.
       </div>
+
+      {(accounts?.length ?? 0) > 0 && (
+        <div style={{ background: "#fff", border: "1.5px solid #e2e8f0", borderRadius: 12, padding: "10px 14px 4px", marginBottom: 14 }}>
+          <BankAccountPicker
+            value={importAccountId}
+            onChange={setImportAccountId}
+            label="Which account is this statement from?"
+          />
+        </div>
+      )}
 
       {warning && (
         <div style={{ background: "#fff7ed", border: "1px solid #fed7aa", borderRadius: 12, padding: "10px 14px", marginBottom: 14, fontSize: 12, color: "#92400e", lineHeight: 1.5 }}>

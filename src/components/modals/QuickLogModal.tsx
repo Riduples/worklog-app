@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { Field } from "@/components/ui/Field";
 import { Row } from "@/components/ui/Row";
@@ -12,6 +12,8 @@ import { useCreateIncome } from "@/lib/supabase/hooks/useIncome";
 import { useInvoices, useUpdateInvoice } from "@/lib/supabase/hooks/useInvoices";
 import { useCreateExpense } from "@/lib/supabase/hooks/useExpenses";
 import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
+import { useBankAccounts } from "@/lib/supabase/hooks/useBankAccounts";
+import { BankAccountPicker } from "@/components/ui/BankAccountPicker";
 
 const EXAMPLES = [
   "R450 cash from Thabo for the gate fix",
@@ -33,6 +35,7 @@ export function QuickLogModal({ onClose }: { onClose: () => void }) {
   const [matchedInvoiceId, setMatchedInvoiceId] = useState<string | null>(null);
   const [markPaid, setMarkPaid] = useState(false);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
+  const [accountId, setAccountId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
@@ -41,7 +44,18 @@ export function QuickLogModal({ onClose }: { onClose: () => void }) {
   const createExpense = useCreateExpense();
   const { data: invoices } = useInvoices();
   const { data: business } = useBusinessProfile();
+  const { data: accounts } = useBankAccounts();
   const updateInvoice = useUpdateInvoice();
+
+  // Default to the business's default account, once. It persists across entries
+  // (the modal stays open), which suits logging a run from the same account.
+  const didInitAccount = useRef(false);
+  useEffect(() => {
+    if (!didInitAccount.current && accounts) {
+      didInitAccount.current = true;
+      setAccountId(accounts.find((a) => a.is_default)?.id ?? null);
+    }
+  }, [accounts]);
 
   // Quick Log amounts are what the user says arrived, so VAT is inside them.
   const isVatRegistered = !!business?.vat_number;
@@ -153,6 +167,7 @@ export function QuickLogModal({ onClose }: { onClose: () => void }) {
           vat_rate: isVatRegistered ? VAT_RATE : null,
           vat_amount: draftVat,
           matched_invoice_id: matchedInvoiceId,
+          account_id: accountId,
           source: "quick_log",
         },
         { onSuccess: onIncomeSuccess }
@@ -165,6 +180,7 @@ export function QuickLogModal({ onClose }: { onClose: () => void }) {
           paid_to: person,
           payment_method: draft.method || null,
           transaction_date: todayStr(),
+          account_id: accountId,
           source: "quick_log",
         },
         { onSuccess }
@@ -274,6 +290,11 @@ export function QuickLogModal({ onClose }: { onClose: () => void }) {
                 markPaid={markPaid}
                 onMarkPaidChange={setMarkPaid}
               />
+            </div>
+          )}
+          {(accounts?.length ?? 0) > 0 && (
+            <div style={{ marginTop: 12 }}>
+              <BankAccountPicker value={accountId} onChange={setAccountId} />
             </div>
           )}
           <div style={{ display: "flex", gap: 10, marginTop: 16 }}>

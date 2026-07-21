@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { Field } from "@/components/ui/Field";
 import { Input } from "@/components/ui/Input";
@@ -16,6 +16,8 @@ import { useCreateIncome } from "@/lib/supabase/hooks/useIncome";
 import { useInvoices, useUpdateInvoice } from "@/lib/supabase/hooks/useInvoices";
 import { useContacts } from "@/lib/supabase/hooks/useContacts";
 import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
+import { useBankAccounts } from "@/lib/supabase/hooks/useBankAccounts";
+import { BankAccountPicker } from "@/components/ui/BankAccountPicker";
 
 export function IncomeModal({ onClose }: { onClose: () => void }) {
   const [amount, setAmount] = useState("");
@@ -29,6 +31,7 @@ export function IncomeModal({ onClose }: { onClose: () => void }) {
   const [date, setDate] = useState(todayStr());
   const [matchedInvoiceId, setMatchedInvoiceId] = useState<string | null>(null);
   const [markPaid, setMarkPaid] = useState(false);
+  const [accountId, setAccountId] = useState<string | null>(null);
   const [error, setError] = useState("");
 
   const { data: contacts } = useContacts();
@@ -37,6 +40,18 @@ export function IncomeModal({ onClose }: { onClose: () => void }) {
   const createIncome = useCreateIncome();
   const updateInvoice = useUpdateInvoice();
   const { TAX_JAR_RATE, VAT_RATE, vatFromGross } = useTaxRates();
+  const { data: accounts } = useBankAccounts();
+
+  // Default new entries to the business's default account, once, so tagging is
+  // zero-effort for the common single-primary-account case — without overriding
+  // a deliberate clear.
+  const didInitAccount = useRef(false);
+  useEffect(() => {
+    if (!didInitAccount.current && accounts) {
+      didInitAccount.current = true;
+      setAccountId(accounts.find((a) => a.is_default)?.id ?? null);
+    }
+  }, [accounts]);
 
   // The amount typed is the cash that arrived, so any VAT is already inside it
   // and has to be taken back out — unlike an invoice, which is built up from an
@@ -73,6 +88,7 @@ export function IncomeModal({ onClose }: { onClose: () => void }) {
         vat_rate: isVatRegistered ? VAT_RATE : null,
         vat_amount: vatAmount,
         matched_invoice_id: matchedInvoiceId,
+        account_id: accountId,
         source: "manual",
       },
       {
@@ -151,6 +167,8 @@ export function IncomeModal({ onClose }: { onClose: () => void }) {
       />
 
       <PaymentMethodPicker selected={method} onSelect={setMethod} />
+
+      {(accounts?.length ?? 0) > 0 && <BankAccountPicker value={accountId} onChange={setAccountId} />}
 
       <Field label="Date">
         <Input value={date} onChange={setDate} type="date" />

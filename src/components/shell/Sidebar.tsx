@@ -182,6 +182,7 @@ export function Sidebar() {
           >
             Business
           </div>
+          {navLink("/accounts", "💳", "Bank accounts", isActive("/accounts"))}
           {navLink("/team", "👤", "Team", isActive("/team"))}
         </div>
       )}
