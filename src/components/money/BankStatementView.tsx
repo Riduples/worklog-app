@@ -8,6 +8,7 @@ import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 import { useTaxRates } from "@/lib/taxRates";
 import { fmt } from "@/lib/format";
 import { inPeriod } from "@/lib/period";
+import { renderEncryptedPdf, pdfIsEncrypted } from "@/lib/pdf/decryptStatement";
 import { BackLink } from "@/components/ui/BackLink";
 
 type ParsedTxn = {
@@ -20,7 +21,7 @@ type ParsedTxn = {
   confidence: "high" | "low";
 };
 
-type Step = "consent" | "upload" | "processing" | "review" | "done";
+type Step = "consent" | "upload" | "processing" | "password" | "review" | "done";
 
 // Out here, not inside the component. Declared during render it was a new
 // function on every pass, so React saw a different component type each time and
@@ -51,6 +52,18 @@ const rangeLabel = (from: string, to: string) => {
   return `${fmtDay(from)} – ${fmtDay(to)}`;
 };
 
+// btoa needs a binary string; feed it the bytes in chunks so a large file doesn't
+// blow the argument limit on String.fromCharCode.
+function bufToBase64(buf: ArrayBuffer): string {
+  const bytes = new Uint8Array(buf);
+  let binary = "";
+  const CHUNK = 0x8000;
+  for (let i = 0; i < bytes.length; i += CHUNK) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
+  }
+  return btoa(binary);
+}
+
 export function BankStatementView() {
   const createIncome = useCreateIncome();
   const createExpense = useCreateExpense();
@@ -65,36 +78,67 @@ export function BankStatementView() {
   const [selected, setSelected] = useState<Record<number, boolean>>({});
   const [error, setError] = useState("");
   const [imported, setImported] = useState<{ count: number; from: string; to: string; outOfMonth: number } | null>(null);
+  // Encrypted-PDF path: the raw bytes stay on the device; only the password the
+  // user types (never stored, never sent) unlocks them locally.
+  const [rawBytes, setRawBytes] = useState<Uint8Array | null>(null);
+  const [encrypted, setEncrypted] = useState(false);
+  const [password, setPassword] = useState("");
+  const [pwError, setPwError] = useState("");
+  const [attempts, setAttempts] = useState(0);
+  const [warning, setWarning] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // Which selected rows already committed, so a retry after a mid-way save failure
+  // doesn't insert them a second time.
+  const savedIdxRef = useRef<Set<number>>(new Set());
 
-  const handleFile = (file: File | undefined) => {
+  const handleFile = async (file: File | undefined) => {
     if (!file) return;
     setError("");
-    setFileName(file.name || "statement");
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const result = e.target?.result;
-      if (typeof result !== "string") return;
-      setFileData({ base64: result.split(",")[1], mediaType: file.type || "image/jpeg" });
-    };
-    reader.readAsDataURL(file);
+    setWarning("");
+    setPwError("");
+    setPassword("");
+    setAttempts(0);
+    setEncrypted(false);
+    setRawBytes(null);
+    setFileData(null);
+    const name = file.name || "statement";
+    setFileName(name);
+    const mediaType = file.type || (name.toLowerCase().endsWith(".pdf") ? "application/pdf" : "image/jpeg");
+    try {
+      const buf = await file.arrayBuffer();
+      if (mediaType === "application/pdf") {
+        const bytes = new Uint8Array(buf);
+        const enc = pdfIsEncrypted(bytes);
+        setRawBytes(bytes);
+        setEncrypted(enc);
+        // Encrypted PDFs are sent as rasterised pages, never the raw base64 — so
+        // skip encoding it. fileData stays non-null as the "a file is loaded" gate.
+        setFileData({ base64: enc ? "" : bufToBase64(buf), mediaType });
+      } else {
+        setFileData({ base64: bufToBase64(buf), mediaType });
+      }
+    } catch {
+      setError("Couldn't read that file — try another one.");
+    }
   };
 
-  const parseStatement = async () => {
-    if (!fileData) return;
-    setStep("processing");
-    setError("");
+  // Sends whichever shape we ended up with — a native file, or the page images we
+  // rendered from a decrypted PDF — and moves to review.
+  const runParse = async (
+    payload: { file: { base64: string; mediaType: string } } | { pages: { base64: string; mediaType: string }[] }
+  ) => {
     try {
       const res = await fetch("/api/parse-statement", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ file: fileData }),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Couldn't read the statement.");
       const txns = data.transactions as ParsedTxn[];
       setTransactions(txns);
       setSelected(Object.fromEntries(txns.map((_, i) => [i, true])));
+      savedIdxRef.current = new Set(); // fresh parse → nothing committed yet
       setStep("review");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Couldn't read the statement.");
@@ -102,11 +146,79 @@ export function BankStatementView() {
     }
   };
 
+  // Unencrypted files go straight up; encrypted PDFs are unlocked + rasterised on
+  // the device first, so the PDF and its password never leave the phone.
+  const beginImport = async () => {
+    if (!fileData) return;
+    setError("");
+    setWarning("");
+    if (encrypted && rawBytes) {
+      await unlockAndRun(undefined);
+    } else {
+      setStep("processing");
+      await runParse({ file: fileData });
+    }
+  };
+
+  const unlockAndRun = async (pw: string | undefined) => {
+    if (!rawBytes) return;
+    setStep("processing");
+    const result = await renderEncryptedPdf(rawBytes, pw);
+    if (result.status === "need-password") {
+      setStep("password");
+      return;
+    }
+    if (result.status === "wrong-password") {
+      setAttempts((a) => a + 1);
+      setPwError("That password didn't work. Check the email the statement came in and try again.");
+      setStep("password");
+      return;
+    }
+    if (result.status === "too-large") {
+      setError(
+        "This statement has too many pages to unlock at once. Try a photo of the pages you need, or split the PDF into smaller parts."
+      );
+      setStep("upload");
+      return;
+    }
+    if (result.status === "failed") {
+      setError(
+        "We couldn't unlock this PDF on your phone. Try opening it in your banking app and re-downloading it without a password, or upload a clear photo of the statement."
+      );
+      setStep("upload");
+      return;
+    }
+    setPassword(""); // unlocked — don't keep it around
+    if (result.skipped > 0) {
+      setWarning(
+        `${result.skipped} page${result.skipped === 1 ? "" : "s"} couldn't be read on this phone and ${
+          result.skipped === 1 ? "was" : "were"
+        } skipped — check your records, or try a clearer photo of those pages.`
+      );
+    }
+    await runParse({ pages: result.pages.map((b64) => ({ base64: b64, mediaType: "image/jpeg" })) });
+  };
+
+  const submitPassword = () => {
+    const pw = password.trim();
+    if (!pw) return;
+    if (attempts >= 5) {
+      setStep("upload");
+      setError(
+        "Too many attempts. Try opening the PDF in your banking app and re-downloading it without a password, or upload a clear photo of the statement."
+      );
+      return;
+    }
+    setPwError("");
+    void unlockAndRun(pw);
+  };
+
   const saveSelected = async () => {
-    const toSave = transactions.filter((_, i) => selected[i]);
+    const toSave = transactions.map((t, i) => ({ t, i })).filter(({ i }) => selected[i]);
     setError("");
     try {
-      for (const t of toSave) {
+      for (const { t, i } of toSave) {
+        if (savedIdxRef.current.has(i)) continue; // already committed on an earlier attempt
         if (t.type === "income") {
           // A bank statement only ever shows the gross amount that landed, so
           // any VAT is inside it and has to be extracted rather than added.
@@ -135,14 +247,16 @@ export function BankStatementView() {
             source: "bank_statement",
           });
         }
+        savedIdxRef.current.add(i);
       }
-      const dates = toSave.map((t) => t.date).sort();
+      const saved = toSave.map(({ t }) => t);
+      const dates = saved.map((t) => t.date).sort();
       const inMonth = inPeriod("month");
       setImported({
-        count: toSave.length,
+        count: saved.length,
         from: dates[0] ?? "",
         to: dates[dates.length - 1] ?? "",
-        outOfMonth: toSave.filter((t) => !inMonth(t.date)).length,
+        outOfMonth: saved.filter((t) => !inMonth(t.date)).length,
       });
       setStep("done");
     } catch (e) {
@@ -172,6 +286,7 @@ export function BankStatementView() {
               "Your bank statement is sent to an AI service (Anthropic) to extract your transactions automatically.",
               "Anthropic does not store your data — it is processed and immediately discarded.",
               "Only the extracted transactions are saved in Worklog — not the original file.",
+              "If your PDF is password-protected, it's unlocked on your phone — your password is never sent to us or the AI.",
               "Your data is never used to train AI models.",
             ].map((t) => (
               <div key={t} style={{ display: "flex", gap: 10, marginBottom: 10, fontSize: 13, lineHeight: 1.5 }}>
@@ -217,7 +332,10 @@ export function BankStatementView() {
           type="file"
           accept="image/*,application/pdf"
           style={{ display: "none" }}
-          onChange={(e) => handleFile(e.target.files?.[0])}
+          onChange={(e) => {
+            void handleFile(e.target.files?.[0]);
+            e.target.value = ""; // let the same file be re-picked after an error
+          }}
         />
 
         <button
@@ -231,12 +349,18 @@ export function BankStatementView() {
 
         {error && <p style={{ color: "#dc2626", fontSize: 13, marginBottom: 12 }}>{error}</p>}
 
+        {encrypted && (
+          <div style={{ background: "#F0F9FF", border: "1px solid #BAE6FD", borderRadius: 10, padding: "10px 12px", marginBottom: 12, fontSize: 12, color: "#0369A1", lineHeight: 1.5 }}>
+            🔒 This PDF looks password-protected. We&apos;ll ask for the password next and unlock it on your phone.
+          </div>
+        )}
+
         <button
-          onClick={parseStatement}
+          onClick={beginImport}
           disabled={!fileData}
           style={{ width: "100%", background: fileData ? "#0C4A6E" : "#94a3b8", border: "none", borderRadius: 14, padding: 15, fontSize: 15, fontWeight: 700, color: "#fff", cursor: fileData ? "pointer" : "default" }}
         >
-          ✨ Read my statement
+          {encrypted ? "🔓 Unlock & read my statement" : "✨ Read my statement"}
         </button>
       </div>
     );
@@ -292,6 +416,59 @@ export function BankStatementView() {
     );
   }
 
+  // ── PASSWORD (encrypted PDF) ──
+  if (step === "password") {
+    return (
+      <div style={{ padding: "20px 16px 100px" }}>
+        <Header />
+        <div style={{ textAlign: "center", padding: "8px 0 4px" }}>
+          <div style={{ fontSize: 40, marginBottom: 12 }}>🔑</div>
+          <div style={{ fontSize: 17, fontWeight: 800, color: "#0C4A6E", marginBottom: 8 }}>This statement is password-protected</div>
+          <div style={{ fontSize: 13, color: "#64748b", marginBottom: 14, lineHeight: 1.5 }}>
+            Enter the password you use to open the PDF. It&apos;s unlocked here on your phone — your password is never sent
+            anywhere.
+          </div>
+        </div>
+        <div style={{ background: "#F0F9FF", border: "1px solid #BAE6FD", borderRadius: 10, padding: "10px 14px", marginBottom: 14, fontSize: 12, color: "#0369A1", lineHeight: 1.55 }}>
+          The password is usually in the email the statement came in. It&apos;s often your ID number, or one you set with your
+          bank. Tip: many banks let you re-download the statement <strong>without</strong> a password from their app.
+        </div>
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") submitPassword();
+          }}
+          placeholder="PDF password"
+          autoComplete="off"
+          autoCapitalize="off"
+          autoCorrect="off"
+          spellCheck={false}
+          style={{ width: "100%", boxSizing: "border-box", padding: "13px 14px", fontSize: 15, border: "1.5px solid #BAE6FD", borderRadius: 12, marginBottom: 10 }}
+        />
+        {pwError && <p style={{ color: "#dc2626", fontSize: 13, marginBottom: 10 }}>{pwError}</p>}
+        <button
+          onClick={submitPassword}
+          disabled={!password.trim()}
+          style={{ width: "100%", background: password.trim() ? "#0C4A6E" : "#94a3b8", border: "none", borderRadius: 14, padding: 15, fontSize: 15, fontWeight: 700, color: "#fff", cursor: password.trim() ? "pointer" : "default", marginBottom: 10 }}
+        >
+          🔓 Unlock &amp; read
+        </button>
+        <button
+          onClick={() => {
+            setStep("upload");
+            setPassword("");
+            setPwError("");
+          }}
+          style={{ width: "100%", background: "#f8fafc", border: "1.5px solid #e2e8f0", borderRadius: 12, padding: 12, fontSize: 13, fontWeight: 700, color: "#64748b", cursor: "pointer" }}
+        >
+          Choose a different file
+        </button>
+      </div>
+    );
+  }
+
   // ── REVIEW ──
   return (
     <div style={{ padding: "20px 16px 100px" }}>
@@ -300,6 +477,12 @@ export function BankStatementView() {
         Found <strong>{transactions.length}</strong> transactions. Untick anything you don&apos;t want — nothing is saved
         until you tap Import.
       </div>
+
+      {warning && (
+        <div style={{ background: "#fff7ed", border: "1px solid #fed7aa", borderRadius: 12, padding: "10px 14px", marginBottom: 14, fontSize: 12, color: "#92400e", lineHeight: 1.5 }}>
+          ⚠️ {warning}
+        </div>
+      )}
 
       {selectedOutOfMonth > 0 && (
         <div style={{ background: "#fff7ed", border: "1px solid #fed7aa", borderRadius: 12, padding: "10px 14px", marginBottom: 14, fontSize: 12, color: "#92400e", lineHeight: 1.5 }}>

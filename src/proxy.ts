@@ -8,5 +8,9 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"],
+  // .mjs is excluded so the self-hosted pdf.js worker (public/pdf.worker.min.mjs)
+  // is served as a plain static asset — it holds no user data and must load without
+  // an auth round-trip (a lapsed session would otherwise redirect it to an HTML
+  // login page and break the encrypted-statement unlock).
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|mjs)$).*)"],
 };

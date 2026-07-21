@@ -10,7 +10,26 @@ export const maxDuration = 60;
 
 type ParseStatementBody = {
   file?: { base64: string; mediaType: string };
+  // Page images rasterised client-side from a password-protected PDF (decrypted
+  // on the device — the PDF and its password never reach us).
+  pages?: { base64: string; mediaType: string }[];
 };
+
+// Caps for the client-rasterised `pages` path. The client already keeps its
+// payload under Vercel's ~4.5MB body limit; these are the server's own guard
+// against an oversized or abusive array (token/cost/memory blowup).
+const MAX_PAGES = 12;
+const MAX_IMAGE_BASE64 = 1_500_000; // ~1.1MB decoded per page
+const MAX_TOTAL_BASE64 = 5_000_000; // ~3.7MB decoded across the whole request
+
+function looksLikeJpeg(base64: string): boolean {
+  try {
+    const head = Buffer.from(base64.slice(0, 16), "base64");
+    return head.length >= 3 && head[0] === 0xff && head[1] === 0xd8 && head[2] === 0xff;
+  } catch {
+    return false;
+  }
+}
 
 const TRANSACTIONS_SCHEMA = {
   type: "object",
@@ -50,6 +69,7 @@ Rules:
 - method: exactly one of: ${ALL_PAYMENT_METHODS.join(", ")}
 - category: the best-guess SARS category, e.g. "Trading income", "Materials", "Fuel", "Telephone", "Rent", "Wages", "Bank charges", "Insurance".
 - confidence: "high" if the row is clearly legible, "low" if you had to guess any field.
+- If the statement is supplied as several images, they are consecutive pages of ONE statement, in order. Read them as one continuous statement, keep the dates in order, and do not double-count header rows or opening/closing balances that repeat across pages.
 
 Extract every transaction you can see — do not skip any. Include unclear rows with confidence "low" rather than dropping them.`;
 }
@@ -84,48 +104,89 @@ export async function POST(request: Request) {
   } catch {
     return NextResponse.json({ error: "bad_request", message: "Invalid request body." }, { status: 400 });
   }
-
-  const file = body.file;
-  if (!file?.base64 || !file.mediaType) {
-    return NextResponse.json({ error: "bad_request", message: "Attach a statement file." }, { status: 400 });
+  // request.json() returns null for a literal `null` body without throwing.
+  if (!body || typeof body !== "object") {
+    return NextResponse.json({ error: "bad_request", message: "Invalid request body." }, { status: 400 });
   }
 
-  const isImage = file.mediaType.startsWith("image/");
-  const isPdf = file.mediaType === "application/pdf";
-  if (!isImage && !isPdf) {
-    return NextResponse.json(
-      { error: "bad_request", message: "Upload a PDF or a photo of your statement." },
-      { status: 400 }
-    );
+  // Two request shapes normalise to one array of content blocks: a single native
+  // file (image or unencrypted PDF), or an array of page images from a decrypted
+  // password-protected PDF. Validate whichever we got before touching the DB or model.
+  let contentBlocks: Anthropic.ContentBlockParam[];
+
+  if (Array.isArray(body.pages) && body.pages.length > 0) {
+    const pages = body.pages;
+    if (pages.length > MAX_PAGES) {
+      return NextResponse.json(
+        { error: "too_large", message: "That statement has too many pages to import at once — try fewer pages." },
+        { status: 400 }
+      );
+    }
+    let total = 0;
+    for (const p of pages) {
+      if (!p || typeof p.base64 !== "string" || p.mediaType !== "image/jpeg" || !looksLikeJpeg(p.base64)) {
+        return NextResponse.json({ error: "bad_request", message: "Those statement pages weren't valid." }, { status: 400 });
+      }
+      if (p.base64.length > MAX_IMAGE_BASE64) {
+        return NextResponse.json({ error: "too_large", message: "One of the pages is too large." }, { status: 400 });
+      }
+      total += p.base64.length;
+    }
+    if (total > MAX_TOTAL_BASE64) {
+      return NextResponse.json(
+        { error: "too_large", message: "That statement is too large to import at once — try fewer pages." },
+        { status: 400 }
+      );
+    }
+    contentBlocks = pages.map((p) => ({
+      type: "image",
+      source: { type: "base64", media_type: "image/jpeg", data: p.base64 },
+    }));
+  } else {
+    const file = body.file;
+    if (!file || typeof file.base64 !== "string" || typeof file.mediaType !== "string") {
+      return NextResponse.json({ error: "bad_request", message: "Attach a statement file." }, { status: 400 });
+    }
+    const isImage = file.mediaType.startsWith("image/");
+    const isPdf = file.mediaType === "application/pdf";
+    if (!isImage && !isPdf) {
+      return NextResponse.json(
+        { error: "bad_request", message: "Upload a PDF or a photo of your statement." },
+        { status: 400 }
+      );
+    }
+    contentBlocks = [
+      isImage
+        ? {
+            type: "image",
+            source: {
+              type: "base64",
+              media_type: file.mediaType as "image/jpeg" | "image/png" | "image/gif" | "image/webp",
+              data: file.base64,
+            },
+          }
+        : { type: "document", source: { type: "base64", media_type: "application/pdf", data: file.base64 } },
+    ];
   }
 
   // Contact names are read server-side; never trust a client-supplied list.
   const { data: contacts } = await supabase.from("contacts").select("name").is("deleted_at", null);
   const contactNames = (contacts ?? []).map((c) => c.name);
 
-  const contentBlock: Anthropic.ContentBlockParam = isImage
-    ? {
-        type: "image",
-        source: {
-          type: "base64",
-          media_type: file.mediaType as "image/jpeg" | "image/png" | "image/gif" | "image/webp",
-          data: file.base64,
-        },
-      }
-    : { type: "document", source: { type: "base64", media_type: "application/pdf", data: file.base64 } };
-
   const client = new Anthropic();
 
   try {
     const response = await client.messages.create({
       model: "claude-haiku-4-5",
-      max_tokens: 8000,
+      // Headroom for a busy multi-page statement. You only pay for tokens actually
+      // generated, so a higher cap is free unless the statement is genuinely long.
+      max_tokens: 16000,
       system: buildSystemPrompt(contactNames),
       output_config: { format: { type: "json_schema", schema: TRANSACTIONS_SCHEMA } },
       messages: [
         {
           role: "user",
-          content: [contentBlock, { type: "text", text: "Extract every transaction from this bank statement." }],
+          content: [...contentBlocks, { type: "text", text: "Extract every transaction from this bank statement." }],
         },
       ],
     });
@@ -137,14 +198,33 @@ export async function POST(request: Request) {
       );
     }
 
+    // The response was cut off mid-JSON. Say so instead of failing the JSON.parse
+    // with an opaque error — this is the "very long statement" case.
+    if (response.stop_reason === "max_tokens") {
+      return NextResponse.json(
+        {
+          error: "too_long",
+          message: "That statement has more transactions than we can read in one go — try importing fewer pages at a time.",
+        },
+        { status: 502 }
+      );
+    }
+
     const textBlock = response.content.find((b) => b.type === "text");
     if (!textBlock) {
       return NextResponse.json({ error: "no_response", message: "No response from AI." }, { status: 502 });
     }
 
-    const { transactions } = JSON.parse(textBlock.text) as {
-      transactions: { amount: number }[];
-    };
+    let parsed: { transactions: { amount: number }[] };
+    try {
+      parsed = JSON.parse(textBlock.text);
+    } catch {
+      return NextResponse.json(
+        { error: "bad_response", message: "Couldn't read that statement — try a clearer photo or the PDF." },
+        { status: 502 }
+      );
+    }
+    const { transactions } = parsed;
     if (!transactions?.length) {
       return NextResponse.json(
         { error: "no_transactions", message: "No transactions found in that file." },
