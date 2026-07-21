@@ -28,9 +28,16 @@ export type PayfastConfig = {
 export function payfastConfig(): PayfastConfig {
   const mode: PayfastMode = process.env.PAYFAST_MODE === "live" ? "live" : "sandbox";
   // Public sandbox test credentials as the fallback — safe, not secret.
-  const merchantId = process.env.PAYFAST_MERCHANT_ID || (mode === "sandbox" ? "10000100" : "");
+  const merchantIdEnv = process.env.PAYFAST_MERCHANT_ID;
+  const merchantId = merchantIdEnv || (mode === "sandbox" ? "10000100" : "");
   const merchantKey = process.env.PAYFAST_MERCHANT_KEY || (mode === "sandbox" ? "46f0cd694581a" : "");
-  const passphrase = process.env.PAYFAST_PASSPHRASE ?? "";
+  // PayFast's shared sandbox merchant (10000100) carries no passphrase — signing
+  // with one makes PayFast reject it ("Generated signature does not match"). So
+  // the passphrase applies only when a real merchant id is configured: live, or
+  // your own sandbox account. The default sandbox merchant always signs
+  // passphrase-less, no matter what PAYFAST_PASSPHRASE happens to hold.
+  const usingDefaultSandbox = mode === "sandbox" && !merchantIdEnv;
+  const passphrase = usingDefaultSandbox ? "" : (process.env.PAYFAST_PASSPHRASE ?? "");
   const base = mode === "sandbox" ? "https://sandbox.payfast.co.za" : "https://www.payfast.co.za";
   return {
     mode,
@@ -121,7 +128,7 @@ export function buildSubscriptionFields(opts: {
     ["email_address", opts.email],
     ["m_payment_id", opts.mPaymentId],
     ["amount", amount],
-    ["item_name", `Worklog ${TIERS[opts.plan].label} — monthly`],
+    ["item_name", `Worklog ${TIERS[opts.plan].label} - monthly`],
     ["custom_str1", opts.businessId],
     ["custom_str2", opts.plan],
     // Recurring monthly subscription, indefinite, first charge today.
