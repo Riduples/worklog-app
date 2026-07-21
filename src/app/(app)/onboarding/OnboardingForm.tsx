@@ -15,7 +15,7 @@ export function OnboardingForm({ userId, userEmail }: { userId: string; userEmai
   const router = useRouter();
   const [name, setName] = useState("");
   const [businessType, setBusinessType] = useState<BusinessType | "">("");
-  const [plan, setPlan] = useState<Plan>("shoebox");
+  const [plan, setPlan] = useState<Plan>("solo");
   const [address, setAddress] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState(userEmail);
@@ -28,10 +28,10 @@ export function OnboardingForm({ userId, userEmail }: { userId: string; userEmai
     setLoading(true);
     setError("");
     const supabase = createClient();
-    // Note the plan is NOT inserted. Every business starts on Shoebox and a
-    // paid tier is only ever granted by a verified payment (migration 0054) —
-    // letting signup write its own plan would hand out Business for free and
-    // undo the whole point of the enforcement.
+    // Note the plan is NOT inserted. A paid tier is only granted by a verified
+    // payment (migration 0054/0065); letting signup write its own plan would
+    // hand out a paid tier for free. New accounts land on the entry tier (the DB
+    // default) until the 30-day trial machinery lands.
     const { error } = await supabase.from("business_profiles").insert({
       user_id: userId,
       name,
@@ -48,9 +48,9 @@ export function OnboardingForm({ userId, userEmail }: { userId: string; userEmai
       setError(error.message);
       return;
     }
-    // Chose a paid plan? Carry the intent to checkout. Chose Shoebox? They're
-    // already on it, so go straight to work.
-    router.push(plan === "shoebox" ? "/dashboard" : `/billing/checkout?plan=${plan}`);
+    // Starting on Solo? Go straight to work. Picked a higher tier? Carry the
+    // intent to checkout.
+    router.push(plan === "solo" ? "/dashboard" : `/billing/checkout?plan=${plan}`);
     router.refresh();
   };
 
@@ -88,14 +88,14 @@ export function OnboardingForm({ userId, userEmail }: { userId: string; userEmai
       </div>
       <PlanPicker selected={plan} onSelect={setPlan} />
       <p style={{ fontSize: 11, color: "#64748b", margin: "8px 0 16px", lineHeight: 1.5 }}>
-        Not sure? Start on Shoebox — you can move up whenever your business is ready, and nothing you&apos;ve captured is
+        Not sure? Start on Solo — you can move up whenever your business is ready, and nothing you&apos;ve captured is
         lost either way.
       </p>
 
       {error && <p style={{ color: "#dc2626", fontSize: 13, marginBottom: 12 }}>{error}</p>}
       <SaveBtn
         type="submit"
-        label={loading ? "Saving..." : plan === "shoebox" ? "Save and continue" : "Save and choose payment"}
+        label={loading ? "Saving..." : plan === "solo" ? "Save and continue" : "Save and choose payment"}
         disabled={loading}
       />
     </form>

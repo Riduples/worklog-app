@@ -49,15 +49,11 @@ export function InvoiceModal({ sourceQuote, onClose }: { sourceQuote?: Quote; on
   const depositNum = parseFloat(depositReceived) || 0;
   const balanceDue = subtotal - depositNum;
 
-  // Recurring is a Business feature. Gate on "is Business", not on
-  // isRestricted() — that only describes the Solo plan, so on Shoebox it
-  // returns nothing and the gate falls open, offering a picker whose choice
-  // the save path would then silently discard.
-  //
-  // Converting a quote stays once-off: convert_quote_to_invoice takes no
-  // recurrence params, and a quote is a one-time agreement anyway.
-  const plan = (business?.plan ?? "shoebox") as Plan;
-  const canRecur = !sourceQuote && plan === "business";
+  // Recurring invoices are a Trade+ feature — locked on Solo. Converting a quote
+  // stays once-off: convert_quote_to_invoice takes no recurrence params, and a
+  // quote is a one-time agreement anyway.
+  const plan = (business?.plan ?? "solo") as Plan;
+  const canRecur = !sourceQuote && plan !== "solo";
   // The template is itself the first invoice, so the next run is one interval
   // after its issue date — never the issue date itself, which would double-bill.
   const nextRunDate = recurrence === "none" ? null : recurrenceNext(issueDate, recurrence);

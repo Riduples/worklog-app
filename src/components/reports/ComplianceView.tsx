@@ -42,7 +42,7 @@ export function ComplianceView() {
 
   const groups = [...new Set(obligations.map((o) => o.group))];
   const count = (s: string) => obligations.filter((o) => o.status === s).length;
-  const plan = (business?.plan ?? "shoebox") as Plan;
+  const plan = (business?.plan ?? "solo") as Plan;
 
   return (
     <div style={{ padding: "20px 16px 100px" }}>

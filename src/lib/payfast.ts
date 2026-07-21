@@ -103,7 +103,7 @@ export function formatAmount(zar: number): string {
  */
 export function buildSubscriptionFields(opts: {
   config: PayfastConfig;
-  plan: Exclude<Plan, "shoebox">;
+  plan: Plan;
   businessId: string;
   mPaymentId: string;
   email: string;

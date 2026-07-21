@@ -185,7 +185,7 @@ export function StaffView() {
   const [editing, setEditing] = useState<StaffMember | null>(null);
 
   const isOwner = (currentMember ?? { role: "owner" }).role === "owner";
-  const plan = (business?.plan ?? "shoebox") as Plan;
+  const plan = (business?.plan ?? "solo") as Plan;
   const staffCount = (staff ?? []).length;
   // The cap and its wording live in SOLO_RESTRICTED so the plan's limits are
   // defined in one place rather than duplicated across every gated view.

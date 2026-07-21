@@ -12,8 +12,8 @@ import { TIERS, type Plan } from "@/lib/tiers";
 // paid, the upgrade went through.
 export default function BillingReturnPage() {
   const { data: business, refetch } = useBusinessProfile();
-  const plan = (business?.plan ?? "shoebox") as Plan;
-  const activated = plan === "solo" || plan === "business";
+  const plan = (business?.plan ?? "solo") as Plan;
+  const activated = plan === "trade" || plan === "structured";
   const [ticks, setTicks] = useState(0);
   const stillWaiting = !activated && ticks < 8; // ~16s before we stop spinning
 

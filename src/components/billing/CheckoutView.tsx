@@ -17,7 +17,7 @@ export function CheckoutView({ payfastReady = false, sandbox = false }: { payfas
   const updatePlan = useUpdateBusinessPlan();
   const [error, setError] = useState("");
 
-  const currentPlan = (business?.plan ?? "shoebox") as Plan;
+  const currentPlan = (business?.plan ?? "solo") as Plan;
   const requested = searchParams.get("plan");
   const [selected, setSelected] = useState<Plan>(isPlan(requested) ? requested : currentPlan);
   // The checkout route bounces back here with ?error=… when it won't start a
@@ -100,7 +100,7 @@ export function CheckoutView({ payfastReady = false, sandbox = false }: { payfas
             </button>
             <div style={{ background: "#F0F9FF", border: "1.5px solid #BAE6FD", borderRadius: 12, padding: "12px 14px", marginTop: 10, fontSize: 12, color: "#0C4A6E", lineHeight: 1.6 }}>
               🔒 Card payments aren&apos;t switched on yet — our PayFast registration is still being approved. Nothing is
-              charged and nothing is stored. Until then you can keep using Worklog on Shoebox, and we&apos;ll let you know
+              charged and nothing is stored. Until then you can keep using Worklog, and we&apos;ll let you know
               the moment {tier.label} can be activated.
             </div>
           </>
@@ -112,7 +112,7 @@ export function CheckoutView({ payfastReady = false, sandbox = false }: { payfas
           href="/dashboard"
           style={{ display: "block", textAlign: "center", marginTop: 14, fontSize: 13, color: "#64748b", textDecoration: "none" }}
         >
-          {currentPlan === "shoebox" ? "Continue on Shoebox for now" : "Not now — back to my dashboard"}
+          Not now — back to my dashboard
         </Link>
       </div>
     </div>

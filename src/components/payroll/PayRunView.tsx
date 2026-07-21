@@ -108,7 +108,7 @@ export function PayRunView() {
   const [leaveDays, setLeaveDays] = useState("");
   const [leaveType, setLeaveType] = useState("Annual");
 
-  const plan = (business?.plan ?? "shoebox") as Plan;
+  const plan = (business?.plan ?? "solo") as Plan;
   const payRunRestriction = isRestricted(plan, "payrun");
   const member = currentMember ?? { role: "owner", permissions: {} };
   const canApproveRun = canApprove(member, "payrun");
@@ -585,7 +585,7 @@ export function PayRunView() {
           </div>
         ))}
 
-      {plan === "business" ? (
+      {plan !== "solo" ? (
         <button
           onClick={() => {
             if (!saved) handleSave(canApproveRun ? "approved" : "prepared");

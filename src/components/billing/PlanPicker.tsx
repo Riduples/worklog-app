@@ -3,10 +3,10 @@
 import { PLAN_FEATURES, PLAN_ORDER, TIERS, type Plan } from "@/lib/tiers";
 
 /**
- * The three plans, side by side, as a real choice.
+ * The three plans — Solo, Trade, Structured — side by side, as a real choice.
  *
- * Used at signup and on the checkout page. Every plan is priced — there is no
- * free tier — so this never pretends Shoebox costs nothing.
+ * Used at signup and on the checkout page. Every plan is priced (VAT-inclusive)
+ * — there is no free tier.
  */
 export function PlanPicker({
   selected,
@@ -45,6 +45,11 @@ export function PlanPicker({
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <span style={{ fontSize: 16, color: isSelected ? tier.color : "#cbd5e1" }}>{isSelected ? "◉" : "○"}</span>
                 <span style={{ fontSize: 15, fontWeight: 800, color: isSelected ? tier.color : "#111" }}>{tier.label}</span>
+                {tier.badge && (
+                  <span style={{ fontSize: 9, fontWeight: 800, padding: "2px 7px", borderRadius: 10, background: "#E8A33D", color: "#fff", textTransform: "uppercase", letterSpacing: 0.4 }}>
+                    {tier.badge}
+                  </span>
+                )}
                 {isCurrent && (
                   <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 10, background: "#F0F9FF", color: "#0369A1" }}>
                     Your plan

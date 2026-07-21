@@ -25,7 +25,7 @@ export function useToolGate() {
   // Default to full access while the membership row loads, so the
   // overwhelmingly common single-owner case never flashes hidden tools.
   const member = currentMember ?? { role: "owner", permissions: {} };
-  const plan = (business?.plan ?? "shoebox") as Plan;
+  const plan = (business?.plan ?? "solo") as Plan;
 
   // Two independent filters, in the prototype's order: permission decides what
   // you're ALLOWED to see, business type decides what's WORTH showing you.

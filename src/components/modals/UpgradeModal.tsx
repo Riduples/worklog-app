@@ -44,14 +44,10 @@ export function UpgradeModal({
       </div>
       <div style={{ background: "#F0F9FF", border: "1.5px solid #7DD3FC", borderRadius: 14, padding: "12px 16px", marginBottom: 16, fontSize: 12, color: "#0369A1" }}>
         <div style={{ fontWeight: 700, marginBottom: 4 }}>
-          You&apos;re on {TIERS[currentPlan]?.label ?? "Shoebox"}
+          You&apos;re on {TIERS[currentPlan]?.label ?? "Solo"}
           {TIERS[currentPlan]?.price ? ` — ${TIERS[currentPlan].price}` : ""}
         </div>
-        <div>
-          {currentPlan === "shoebox"
-            ? "Shoebox covers Money, Sales and your Diary — the basics done properly."
-            : "Upgrade anytime — your data stays intact."}
-        </div>
+        <div>Upgrade anytime — your data stays intact.</div>
       </div>
 
       {/* Goes to checkout rather than changing the plan here. A plan is only

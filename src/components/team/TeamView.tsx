@@ -9,7 +9,7 @@ import { useCurrentMember } from "@/lib/supabase/hooks/useCurrentMember";
 import { InviteModal } from "@/components/modals/InviteModal";
 import { UpgradeModal } from "@/components/modals/UpgradeModal";
 import { PermissionsEditor } from "@/components/team/PermissionsEditor";
-import { TIERS, isLocked, type Plan } from "@/lib/tiers";
+import { TIERS, isLocked, entitlementsFor, type Plan } from "@/lib/tiers";
 import type { Permissions } from "@/lib/permissions";
 import { BackLink } from "@/components/ui/BackLink";
 
@@ -27,8 +27,14 @@ export function TeamView() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const isOwner = currentMember?.role === "owner";
-  const plan = (business?.plan ?? "shoebox") as Plan;
+  const plan = (business?.plan ?? "solo") as Plan;
   const teamLocked = isLocked(plan, "team");
+  // The 5-login cap on Trade counts owner + accepted members + still-live invites
+  // (a pending invite is a seat already spoken for). null = unlimited (Structured).
+  const maxMembers = entitlementsFor(plan).maxMembers;
+  const activeInvites = (invites ?? []).filter((i) => new Date(i.expires_at) >= new Date()).length;
+  const usedSeats = (members?.length ?? 0) + activeInvites;
+  const seatsFull = maxMembers !== null && usedSeats >= maxMembers;
 
   const copyInviteLink = async (token: string, id: string) => {
     const link = `${window.location.origin}/accept-invite?token=${token}`;
@@ -47,7 +53,7 @@ export function TeamView() {
   };
 
   const handleInviteClick = () => {
-    if (teamLocked) setUpgradeOpen(true);
+    if (teamLocked || seatsFull) setUpgradeOpen(true);
     else setInviteOpen(true);
   };
 
@@ -73,7 +79,9 @@ export function TeamView() {
               Worklog {TIERS[plan].label} · {TIERS[plan].price}
             </div>
             <div style={{ fontSize: 11, color: "#7DD3FC", marginTop: 2 }}>
-              {(members ?? []).length} user{(members ?? []).length !== 1 ? "s" : ""}
+              {maxMembers === null
+                ? `${(members ?? []).length} user${(members ?? []).length !== 1 ? "s" : ""} · unlimited logins`
+                : `${usedSeats} of ${maxMembers} logins used`}
             </div>
           </div>
           {/* A plan change goes through checkout, which respects the payment
@@ -84,7 +92,7 @@ export function TeamView() {
               tier you weren't on silently changed your plan with no confirmation
               — a downgrade went straight through (owners may downgrade), which
               is exactly how a director exploring this page dropped herself to
-              Shoebox mid-test. */}
+              the entry tier mid-test. */}
           <Link
             href="/billing/checkout"
             style={{

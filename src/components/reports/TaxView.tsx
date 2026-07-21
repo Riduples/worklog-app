@@ -38,7 +38,7 @@ export function TaxView() {
   const [upgradeFeature, setUpgradeFeature] = useState<ToolId | null>(null);
 
   const member = currentMember ?? { role: "owner", permissions: {} };
-  const plan = (business?.plan ?? "shoebox") as Plan;
+  const plan = (business?.plan ?? "solo") as Plan;
   const coreTools = coreToolsFor(business);
   const isOwner = member.role === "owner";
 

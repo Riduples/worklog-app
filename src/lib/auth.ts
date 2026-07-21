@@ -37,7 +37,7 @@ export async function requireBusinessProfile() {
  */
 export async function requirePlanAccess(tool: ToolId | "team") {
   const { user, profile } = await requireBusinessProfile();
-  const plan = (profile.plan ?? "shoebox") as Plan;
+  const plan = (profile.plan ?? "solo") as Plan;
   if (isLocked(plan, tool)) redirect(`/dashboard?upgrade=${encodeURIComponent(tool)}`);
   return { user, profile };
 }

@@ -115,7 +115,7 @@ describe("formatAmount", () => {
 describe("buildSubscriptionFields", () => {
   const fields = buildSubscriptionFields({
     config,
-    plan: "business",
+    plan: "structured",
     businessId: "biz-123",
     mPaymentId: "mp-1",
     email: "owner@example.com",
@@ -126,13 +126,13 @@ describe("buildSubscriptionFields", () => {
   const get = (k: string) => fields.find(([key]) => key === k)?.[1];
 
   it("prices the plan from the shared source and formats it", () => {
-    expect(get("amount")).toBe("199.00"); // PLAN_PRICE_ZAR.business
-    expect(get("recurring_amount")).toBe("199.00");
+    expect(get("amount")).toBe("229.00"); // PLAN_PRICE_ZAR.structured
+    expect(get("recurring_amount")).toBe("229.00");
   });
 
   it("carries the business and plan for the ITN, and sets up a monthly recurring subscription", () => {
     expect(get("custom_str1")).toBe("biz-123");
-    expect(get("custom_str2")).toBe("business");
+    expect(get("custom_str2")).toBe("structured");
     expect(get("subscription_type")).toBe("1");
     expect(get("frequency")).toBe("3"); // monthly
     expect(get("cycles")).toBe("0"); // until cancelled

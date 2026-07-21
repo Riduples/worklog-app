@@ -5,7 +5,7 @@ import { PLAN_ORDER, type Plan } from "@/lib/tiers";
 
 export const runtime = "nodejs";
 
-const isPaidPlan = (v: string | null): v is Exclude<Plan, "shoebox"> => v === "solo" || v === "business";
+const isPaidPlan = (v: string | null): v is Plan => v === "solo" || v === "trade" || v === "structured";
 
 // A minimal HTML escape for the hidden-field values we render. The values are
 // ours (ids, plan names, amounts), but item_name is a label and the origin is
@@ -61,7 +61,7 @@ export async function GET(request: Request) {
     .select("plan")
     .eq("id", membership.business_id)
     .single();
-  const currentPlan = (business?.plan ?? "shoebox") as Plan;
+  const currentPlan = (business?.plan ?? "solo") as Plan;
   if (PLAN_ORDER.indexOf(plan) <= PLAN_ORDER.indexOf(currentPlan)) {
     return backToCheckout(origin, "That isn't an upgrade from your current plan.");
   }

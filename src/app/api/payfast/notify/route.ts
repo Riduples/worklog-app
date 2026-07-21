@@ -15,12 +15,12 @@ export const runtime = "nodejs";
 //      "VALID") — the check that a forged request can't pass,
 //   3. the payment actually completed,
 //   4. the amount equals the price of the plan being claimed — because
-//      custom_str2 says "business" but the money is what we bill on.
+//      custom_str2 carries the tier, but the money is what we bill on.
 // Only then does the subscription get written (service role), and the database
 // trigger moves business_profiles.plan. A failed gate is recorded and
 // acknowledged, never acted on.
 
-const isPlan = (v: string | null | undefined): v is Exclude<Plan, "shoebox"> => v === "solo" || v === "business";
+const isPlan = (v: string | null | undefined): v is Plan => v === "solo" || v === "trade" || v === "structured";
 
 /** PayFast wants a 200 or it retries; we acknowledge receipt even when we reject
  *  the contents, so a junk or replayed ITN isn't retried forever. */

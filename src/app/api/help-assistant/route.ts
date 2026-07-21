@@ -64,7 +64,7 @@ KEY FACTS:
 - Leave tip: record leave in the Leave tool first — Pay Run then auto-suggests it
 - VAT201 = output VAT (invoices) minus input VAT (supplier invoices) = what you pay SARS, due by the 25th
 - EMP201 = PAYE + UIF + SDL for the month, due by the 7th
-- Plans: Shoebox (${TIERS.shoebox.price}) covers Money, basic Sales and Diary. Solo (${TIERS.solo.price}) adds quotes, invoices, up to 2 staff, VAT201, provisional tax, POs. Business (${TIERS.business.price}) adds unlimited staff, full payroll, EMP201, team access.
+- Plans: Solo (${TIERS.solo.price}) covers your money — income, expenses, quotes, invoices, cash-up and receipts for a one-person business. Trade (${TIERS.trade.price}) adds up to 5 staff logins, staff register & payroll, purchase orders, supplier invoices and age analysis. Structured (${TIERS.structured.price}) adds VAT201/EMP201 tracking, provisional tax, the compliance dashboard and the accountant pack. All prices include VAT.
 
 Respond with:
 - answer: your reply, in plain language
