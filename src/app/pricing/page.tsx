@@ -22,7 +22,7 @@ const WHY = [
 ];
 
 const FAQ = [
-  { q: "What happens after my 14-day trial?", a: "You get full access to everything (Structured level) for 14 days. After that, pick the plan that fits. No card needed to start — we only ask for payment when you're ready. If you don't choose a plan, your account becomes read-only: you can still see and download your records anytime." },
+  { q: "What happens after my 14-day trial?", a: "You get full access to everything (Structured level) for 14 days. After that, pick the plan that fits. No card needed to start — we only ask for payment when you're ready. If you don't choose a plan, your account becomes read-only: you can still see and download your records anytime — though documents carry a light trial watermark until you start a plan." },
   { q: "What if I miss a payment?", a: "Your account switches to read-only — you can always see and download your records. We'll never lock you out of your own numbers." },
   { q: "How do I pay?", a: "Card, instant EFT, SnapScan or Zapper. Whatever works for you." },
   { q: "Can I get my records out?", a: "Always. Every plan lets you download your own records anytime. They're yours." },
