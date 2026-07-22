@@ -10,6 +10,7 @@ import { useSupplierInvoices } from "@/lib/supabase/hooks/useSupplierInvoices";
 import { useLedgerEntries } from "@/lib/supabase/hooks/useLedger";
 import { useStockItems } from "@/lib/supabase/hooks/useStock";
 import { useBankAccounts } from "@/lib/supabase/hooks/useBankAccounts";
+import { useAccountTransfers } from "@/lib/supabase/hooks/useAccountTransfers";
 import { IncomeModal } from "@/components/modals/IncomeModal";
 import { ExpenseModal } from "@/components/modals/ExpenseModal";
 import { QuickLogModal } from "@/components/modals/QuickLogModal";
@@ -38,6 +39,7 @@ export function DashboardView({ businessName }: { businessName: string }) {
   const { data: ledger } = useLedgerEntries();
   const { data: stock } = useStockItems();
   const { data: accounts } = useBankAccounts();
+  const { data: transfers } = useAccountTransfers();
   const [modal, setModal] = useState<"income" | "expense" | "quicklog" | "help" | "business" | null>(null);
   const [period, setPeriod] = useState<"month" | "year" | "all">("year");
   const [account, setAccount] = useState<AccountFilter>(ALL_ACCOUNTS);
@@ -77,7 +79,7 @@ export function DashboardView({ businessName }: { businessName: string }) {
   const acctOut = (expenses ?? [])
     .filter((r) => r.account_id === account && within(r.transaction_date))
     .reduce((s, r) => s + Number(r.amount || 0), 0);
-  const acctBalance = selectedAccount ? accountBalance(selectedAccount, income ?? [], expenses ?? []) : 0;
+  const acctBalance = selectedAccount ? accountBalance(selectedAccount, income ?? [], expenses ?? [], transfers ?? []) : 0;
 
   const stats = isAllAccounts
     ? [
@@ -98,8 +100,13 @@ export function DashboardView({ businessName }: { businessName: string }) {
     ...(income ?? []).map((r) => ({ ...r, txType: "income" as const })),
     ...(expenses ?? []).map((r) => ({ ...r, txType: "expense" as const })),
   ]
+    .filter((t) => isAllAccounts || t.account_id === account)
     .sort((a, b) => new Date(b.created_at ?? b.transaction_date).getTime() - new Date(a.created_at ?? a.transaction_date).getTime())
     .slice(0, 6);
+  // In the combined view, label each row with the account it moved through so the
+  // list isn't ambiguous once there's more than one account.
+  const accountName = (id: string | null | undefined) => (accounts ?? []).find((a) => a.id === id)?.name ?? null;
+  const showAccountTag = isAllAccounts && (accounts?.length ?? 0) >= 2;
 
   return (
     <div>
@@ -422,6 +429,7 @@ export function DashboardView({ businessName }: { businessName: string }) {
                     </div>
                     <div style={{ fontSize: 11, color: "#94a3b8" }}>
                       {r.transaction_date} · {r.payment_method || ""}
+                      {showAccountTag && accountName(r.account_id) ? ` · ${accountName(r.account_id)}` : ""}
                     </div>
                   </div>
                 </div>

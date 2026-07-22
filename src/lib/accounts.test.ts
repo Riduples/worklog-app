@@ -104,4 +104,15 @@ describe("accountBalance", () => {
     // 0 + 500 + 100 (both a1, no date floor) − 200
     expect(accountBalance(acc, income, expenses)).toBe(400);
   });
+
+  it("shifts the balance on transfers in and out, from the opening date", () => {
+    const acc = mkAccount({ id: "a1", opening_balance: 1000, opening_balance_date: "2026-01-01" });
+    const transfers = [
+      { from_account_id: "a1", to_account_id: "a2", amount: 300, transfer_date: "2026-02-01" }, // out of a1
+      { from_account_id: "a2", to_account_id: "a1", amount: 50, transfer_date: "2026-02-05" }, // into a1
+      { from_account_id: "a1", to_account_id: "a2", amount: 999, transfer_date: "2025-12-01" }, // before opening → ignored
+    ];
+    // 1000 + 500 (Feb income) − 200 (Mar expense) − 300 (out) + 50 (in) = 1050
+    expect(accountBalance(acc, income, expenses, transfers)).toBe(1050);
+  });
 });

@@ -9,6 +9,7 @@ import { useSupplierInvoices } from "@/lib/supabase/hooks/useSupplierInvoices";
 import { useLedgerEntries } from "@/lib/supabase/hooks/useLedger";
 import { useMileageTrips } from "@/lib/supabase/hooks/useMileage";
 import { useBankAccounts } from "@/lib/supabase/hooks/useBankAccounts";
+import { useAccountTransfers } from "@/lib/supabase/hooks/useAccountTransfers";
 import { inPeriod, type Period } from "@/lib/period";
 import { computePnl } from "@/lib/pnl";
 import { accountBalance } from "@/lib/accounts";
@@ -26,6 +27,7 @@ export function ProfitLossView() {
   const { data: ledger } = useLedgerEntries();
   const { data: mileage } = useMileageTrips();
   const { data: accounts } = useBankAccounts();
+  const { data: transfers } = useAccountTransfers();
 
   const within = inPeriod(period);
   const isAll = account === ALL_ACCOUNTS;
@@ -47,7 +49,7 @@ export function ProfitLossView() {
   const mileageDeduction = (mileage ?? [])
     .filter((t) => within(t.trip_date))
     .reduce((s, t) => s + Number(t.sars_deduction || 0), 0);
-  const acctBalance = selectedAccount ? accountBalance(selectedAccount, income ?? [], expenses ?? []) : 0;
+  const acctBalance = selectedAccount ? accountBalance(selectedAccount, income ?? [], expenses ?? [], transfers ?? []) : 0;
 
   const expenseByCategory = Object.entries(
     acctExpenses

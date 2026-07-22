@@ -17,6 +17,7 @@ import {
   useDeleteBankAccount,
   type BankAccount,
 } from "@/lib/supabase/hooks/useBankAccounts";
+import { useAccountTransfers, useCreateTransfer, useDeleteTransfer } from "@/lib/supabase/hooks/useAccountTransfers";
 
 const TYPES: { id: string; label: string }[] = [
   { id: "bank", label: "Bank" },
@@ -42,11 +43,16 @@ export function AccountsView() {
   const { data: accounts } = useBankAccounts();
   const { data: income } = useIncome();
   const { data: expenses } = useExpenses();
+  const { data: transfers } = useAccountTransfers();
+  const deleteTransfer = useDeleteTransfer();
   const [editing, setEditing] = useState<BankAccount | "new" | null>(null);
+  const [showTransfer, setShowTransfer] = useState(false);
 
   const list = accounts ?? [];
   const inc = income ?? [];
   const exp = expenses ?? [];
+  const tfs = transfers ?? [];
+  const accountName = (id: string) => list.find((a) => a.id === id)?.name ?? "Closed account";
 
   return (
     <div style={{ padding: "20px 16px 100px" }}>
@@ -64,7 +70,7 @@ export function AccountsView() {
       )}
 
       {list.map((a) => {
-        const balance = accountBalance(a, inc, exp);
+        const balance = accountBalance(a, inc, exp, tfs);
         return (
           <button
             key={a.id}
@@ -100,8 +106,128 @@ export function AccountsView() {
         + Add account
       </button>
 
+      {list.length >= 2 && (
+        <button
+          onClick={() => setShowTransfer(true)}
+          style={{ width: "100%", background: "#fff", border: "1.5px solid #0C4A6E", borderRadius: 14, padding: 13, fontSize: 14, fontWeight: 700, color: "#0C4A6E", cursor: "pointer", marginTop: 10 }}
+        >
+          ↔ Move money between accounts
+        </button>
+      )}
+
+      {tfs.length > 0 && (
+        <div style={{ marginTop: 24 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>
+            Recent transfers
+          </div>
+          {tfs.slice(0, 8).map((t) => (
+            <div key={t.id} style={{ background: "#fff", border: "1.5px solid #e2e8f0", borderRadius: 12, padding: "10px 14px", marginBottom: 8, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "#111" }}>
+                  {accountName(t.from_account_id)} → {accountName(t.to_account_id)}
+                </div>
+                <div style={{ fontSize: 11, color: "#94a3b8" }}>
+                  {t.transfer_date}
+                  {t.note ? ` · ${t.note}` : ""}
+                </div>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+                <span style={{ fontSize: 14, fontWeight: 800, color: "#0C4A6E" }}>{fmt(Number(t.amount))}</span>
+                <button
+                  onClick={() => deleteTransfer.mutate(t.id)}
+                  title="Delete transfer"
+                  style={{ background: "none", border: "none", color: "#cbd5e1", fontSize: 18, cursor: "pointer", lineHeight: 1 }}
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       {editing && <AccountForm account={editing === "new" ? null : editing} onClose={() => setEditing(null)} />}
+      {showTransfer && <TransferModal accounts={list} onClose={() => setShowTransfer(false)} />}
     </div>
+  );
+}
+
+function TransferModal({ accounts, onClose }: { accounts: BankAccount[]; onClose: () => void }) {
+  const create = useCreateTransfer();
+  const [fromId, setFromId] = useState<string>(accounts[0]?.id ?? "");
+  const [toId, setToId] = useState<string>(accounts[1]?.id ?? "");
+  const [amount, setAmount] = useState("");
+  const [date, setDate] = useState(todayStr());
+  const [note, setNote] = useState("");
+  const [error, setError] = useState("");
+
+  const pickFrom = (id: string) => {
+    setFromId(id);
+    if (id === toId) setToId(accounts.find((a) => a.id !== id)?.id ?? "");
+  };
+
+  const save = () => {
+    const amt = parseFloat(amount) || 0;
+    if (!fromId || !toId) {
+      setError("Pick both accounts.");
+      return;
+    }
+    if (fromId === toId) {
+      setError("Choose two different accounts.");
+      return;
+    }
+    if (amt <= 0) {
+      setError("Enter an amount.");
+      return;
+    }
+    setError("");
+    create.mutate(
+      { from_account_id: fromId, to_account_id: toId, amount: amt, transfer_date: date, note: note.trim() || null },
+      { onSuccess: onClose }
+    );
+  };
+
+  return (
+    <Modal title="Move money" onClose={onClose}>
+      <div style={{ fontSize: 12, color: "#64748b", marginBottom: 12, lineHeight: 1.5 }}>
+        Moving money between your own accounts. This isn&apos;t income or expense — it just shifts each account&apos;s balance.
+      </div>
+      <Field label="From">
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+          {accounts.map((a) => (
+            <button key={a.id} type="button" onClick={() => pickFrom(a.id)} style={pill(fromId === a.id)}>
+              {a.name}
+            </button>
+          ))}
+        </div>
+      </Field>
+      <Field label="To">
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+          {accounts.map((a) => (
+            <button
+              key={a.id}
+              type="button"
+              disabled={a.id === fromId}
+              onClick={() => setToId(a.id)}
+              style={{ ...pill(toId === a.id), opacity: a.id === fromId ? 0.4 : 1, cursor: a.id === fromId ? "default" : "pointer" }}
+            >
+              {a.name}
+            </button>
+          ))}
+        </div>
+      </Field>
+      <Field label="Amount">
+        <Input value={amount} onChange={setAmount} type="number" placeholder="0.00" autoFocus />
+      </Field>
+      <Field label="Date">
+        <Input value={date} onChange={setDate} type="date" />
+      </Field>
+      <Field label="Note (optional)">
+        <Input value={note} onChange={setNote} placeholder="e.g. moved to savings" />
+      </Field>
+      {error && <p style={{ color: "#dc2626", fontSize: 13, marginBottom: 12 }}>{error}</p>}
+      <SaveBtn label={create.isPending ? "Saving..." : "Move money"} onClick={save} disabled={create.isPending} />
+    </Modal>
   );
 }
 

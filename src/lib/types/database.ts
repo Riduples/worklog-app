@@ -14,6 +14,67 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_transfers: {
+        Row: {
+          amount: number
+          business_id: string
+          created_at: string | null
+          deleted_at: string | null
+          from_account_id: string
+          id: string
+          note: string | null
+          to_account_id: string
+          transfer_date: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          business_id: string
+          created_at?: string | null
+          deleted_at?: string | null
+          from_account_id: string
+          id?: string
+          note?: string | null
+          to_account_id: string
+          transfer_date: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          business_id?: string
+          created_at?: string | null
+          deleted_at?: string | null
+          from_account_id?: string
+          id?: string
+          note?: string | null
+          to_account_id?: string
+          transfer_date?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_transfers_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "account_transfers_from_account_id_fkey"
+            columns: ["from_account_id"]
+            isOneToOne: false
+            referencedRelation: "bank_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "account_transfers_to_account_id_fkey"
+            columns: ["to_account_id"]
+            isOneToOne: false
+            referencedRelation: "bank_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       api_rate_limits: {
         Row: {
           request_count: number

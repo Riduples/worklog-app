@@ -9,6 +9,7 @@ import { useSupplierInvoices } from "@/lib/supabase/hooks/useSupplierInvoices";
 import { useLedgerEntries } from "@/lib/supabase/hooks/useLedger";
 import { useStockItems } from "@/lib/supabase/hooks/useStock";
 import { useBankAccounts } from "@/lib/supabase/hooks/useBankAccounts";
+import { useAccountTransfers } from "@/lib/supabase/hooks/useAccountTransfers";
 import { inPeriod, type Period } from "@/lib/period";
 import { fmt } from "@/lib/format";
 import { balanceInclVat } from "@/lib/balance";
@@ -26,6 +27,7 @@ export function CashFlowView() {
   const { data: ledger } = useLedgerEntries();
   const { data: stock } = useStockItems();
   const { data: accounts } = useBankAccounts();
+  const { data: transfers } = useAccountTransfers();
 
   const within = inPeriod(period);
   const isAll = account === ALL_ACCOUNTS;
@@ -36,7 +38,7 @@ export function CashFlowView() {
   const moneyIn = byAccount(income ?? []).filter((r) => within(r.transaction_date)).reduce((s, r) => s + Number(r.amount), 0);
   const moneyOut = byAccount(expenses ?? []).filter((r) => within(r.transaction_date)).reduce((s, r) => s + Number(r.amount), 0);
   const netCashFlow = moneyIn - moneyOut;
-  const acctBalance = selectedAccount ? accountBalance(selectedAccount, income ?? [], expenses ?? []) : 0;
+  const acctBalance = selectedAccount ? accountBalance(selectedAccount, income ?? [], expenses ?? [], transfers ?? []) : 0;
 
   // Receivables/payables are point-in-time (not period-filtered) — they represent
   // what's outstanding right now regardless of the period selector.

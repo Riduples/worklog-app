@@ -1,13 +1,20 @@
 import type { BankAccount } from "@/lib/supabase/hooks/useBankAccounts";
 
 type Movement = { account_id: string | null; amount: number; transaction_date: string };
+type TransferMovement = { from_account_id: string; to_account_id: string; amount: number; transfer_date: string };
 
 // A bank account's running balance is a cash figure: opening balance, plus the
-// gross money in, minus the gross money out, for rows tagged to it and dated on or
-// after the opening date (a null opening date counts everything). This is the
-// bank/reconciliation view — deliberately NOT the accrual profit, which has no
-// per-account meaning (an invoice isn't money sitting in any one account).
-export function accountBalance(account: BankAccount, income: Movement[], expenses: Movement[]): number {
+// gross money in, minus the gross money out, plus transfers in, minus transfers
+// out — for rows tagged to it and dated on or after the opening date (a null
+// opening date counts everything). This is the bank/reconciliation view —
+// deliberately NOT the accrual profit, which has no per-account meaning (an
+// invoice isn't money sitting in any one account).
+export function accountBalance(
+  account: BankAccount,
+  income: Movement[],
+  expenses: Movement[],
+  transfers: TransferMovement[] = []
+): number {
   const from = account.opening_balance_date;
   const onOrAfter = (d: string) => !from || d >= from;
   let balance = Number(account.opening_balance) || 0;
@@ -16,6 +23,13 @@ export function accountBalance(account: BankAccount, income: Movement[], expense
   }
   for (const e of expenses) {
     if (e.account_id === account.id && onOrAfter(e.transaction_date)) balance -= Number(e.amount) || 0;
+  }
+  // A transfer moves money between the business's own accounts — out of "from",
+  // into "to". Not income or expense; it only shifts the running balance.
+  for (const t of transfers) {
+    if (!onOrAfter(t.transfer_date)) continue;
+    if (t.to_account_id === account.id) balance += Number(t.amount) || 0;
+    if (t.from_account_id === account.id) balance -= Number(t.amount) || 0;
   }
   return balance;
 }

@@ -1,11 +1,14 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useIncome } from "@/lib/supabase/hooks/useIncome";
 import { useExpenses } from "@/lib/supabase/hooks/useExpenses";
+import { useBankAccounts } from "@/lib/supabase/hooks/useBankAccounts";
 import { isIncomeTaxPayment } from "@/lib/sarsCategories";
 import { useTaxRates, incomeNet } from "@/lib/taxRates";
 import { fmt } from "@/lib/format";
+import { BankAccountSelector, ALL_ACCOUNTS, type AccountFilter } from "@/components/ui/BankAccountSelector";
 
 // Ported from worklog-v65's TaxJarModal. Every income entry sets aside a
 // provision (TAX_JAR_RATE) against the income tax bill; this is where that
@@ -18,9 +21,12 @@ import { fmt } from "@/lib/format";
 export function TaxJarView() {
   const { data: income } = useIncome();
   const { data: expenses } = useExpenses();
+  const { data: accounts } = useBankAccounts();
   const { TAX_JAR_RATE } = useTaxRates();
+  const [account, setAccount] = useState<AccountFilter>(ALL_ACCOUNTS);
 
-  const rows = income ?? [];
+  const isAll = account === ALL_ACCOUNTS;
+  const rows = isAll ? (income ?? []) : (income ?? []).filter((r) => r.account_id === account);
   // Net of VAT throughout: the provision is against income tax, and the VAT
   // portion of a sale was never the business's to be taxed on. For a business
   // that isn't VAT-registered vat_amount is 0, so this is just the amount.
@@ -32,7 +38,7 @@ export function TaxJarView() {
   const effectiveRate = totalIncome > 0 ? (totalTaxJar / totalIncome) * 100 : 0;
 
   const paidTax = (expenses ?? [])
-    .filter((e) => isIncomeTaxPayment(e.sars_category))
+    .filter((e) => isIncomeTaxPayment(e.sars_category) && (isAll || e.account_id === account))
     .reduce((s, e) => s + Number(e.amount || 0), 0);
   const netJar = totalTaxJar - paidTax;
 
@@ -58,6 +64,8 @@ export function TaxJarView() {
       <div style={{ background: "#F0F9FF", border: "1.5px solid #7DD3FC", borderRadius: 12, padding: "11px 14px", marginBottom: 14, fontSize: 12, color: "#0369A1", lineHeight: 1.6 }}>
         {`🫙 Every time you log income, Worklog sets aside ${Math.round(TAX_JAR_RATE * 100)}% as an income tax provision. This shows what you've built up, to help you plan ahead for your tax. It's a guide, not a SARS return or tax advice.`}
       </div>
+
+      <BankAccountSelector selected={account} onSelect={setAccount} />
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
         <div style={{ background: "#0C4A6E", borderRadius: 14, padding: "14px 16px" }}>
