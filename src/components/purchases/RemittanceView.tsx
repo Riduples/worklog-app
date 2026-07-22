@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useSupplierInvoices } from "@/lib/supabase/hooks/useSupplierInvoices";
 import { useContacts } from "@/lib/supabase/hooks/useContacts";
 import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
+import { useTrialState } from "@/lib/supabase/hooks/useSubscription";
 import { Field } from "@/components/ui/Field";
 import { Input } from "@/components/ui/Input";
 import { PaymentMethodPicker } from "@/components/ui/PaymentMethodPicker";
@@ -18,6 +19,8 @@ export function RemittanceView() {
   const { data: supplierInvoices } = useSupplierInvoices();
   const { data: contacts } = useContacts();
   const { data: business } = useBusinessProfile();
+  const { isTrialing, isReadOnly } = useTrialState();
+  const watermark = isTrialing || isReadOnly;
 
   const [selectedSupplier, setSelectedSupplier] = useState("");
   const [showPicker, setShowPicker] = useState(false);
@@ -69,7 +72,7 @@ export function RemittanceView() {
       downloadBlob(blob, filename);
     } catch {
       // Fall back to the print flow rather than leaving the user stuck.
-      openDocumentForPrinting(buildRemittanceHTML(business, selectedSupplier, lines(), payment), filename);
+      openDocumentForPrinting(buildRemittanceHTML(business, selectedSupplier, lines(), payment, watermark), filename);
     } finally {
       setBusy(false);
     }

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useInvoices } from "@/lib/supabase/hooks/useInvoices";
 import { useContacts } from "@/lib/supabase/hooks/useContacts";
 import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
+import { useTrialState } from "@/lib/supabase/hooks/useSubscription";
 import { Field } from "@/components/ui/Field";
 import { Input } from "@/components/ui/Input";
 import { buildStatementHTML, type StatementLine } from "@/lib/docgen/buildLedgerHTML";
@@ -17,6 +18,8 @@ export function StatementView() {
   const { data: invoices } = useInvoices();
   const { data: contacts } = useContacts();
   const { data: business } = useBusinessProfile();
+  const { isTrialing, isReadOnly } = useTrialState();
+  const watermark = isTrialing || isReadOnly;
 
   const [selectedClient, setSelectedClient] = useState("");
   const [showPicker, setShowPicker] = useState(false);
@@ -65,7 +68,7 @@ export function StatementView() {
       downloadBlob(blob, filename);
     } catch {
       // Fall back to the print flow rather than leaving the user stuck.
-      openDocumentForPrinting(buildStatementHTML(business, selectedClient, lines, totals, asAt), filename);
+      openDocumentForPrinting(buildStatementHTML(business, selectedClient, lines, totals, asAt, watermark), filename);
     } finally {
       setBusy(false);
     }

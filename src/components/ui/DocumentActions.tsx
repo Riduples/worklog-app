@@ -5,6 +5,7 @@ import { buildDocumentHTML, type DocForRender, type DocKind } from "@/lib/docgen
 import { openDocumentForPrinting, shareDocumentText, archiveGeneratedDocument } from "@/lib/docgen/shareDocument";
 import { renderPdf, downloadBlob } from "@/lib/docgen/renderPdf";
 import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
+import { useTrialState } from "@/lib/supabase/hooks/useSubscription";
 
 export function DocumentActions({
   doc,
@@ -18,13 +19,17 @@ export function DocumentActions({
   shareText: string;
 }) {
   const { data: business } = useBusinessProfile();
+  // The client-render fallback (when the server PDF route is unavailable) and the
+  // archived copy both carry the same trial watermark the server would apply.
+  const { isTrialing, isReadOnly } = useTrialState();
+  const watermark = isTrialing || isReadOnly;
   const [busy, setBusy] = useState(false);
 
   const handlePrint = async () => {
     if (!business) return;
     setBusy(true);
     try {
-      const html = buildDocumentHTML(doc, business, kind);
+      const html = buildDocumentHTML(doc, business, kind, watermark);
       try {
         const blob = await renderPdf({ kind, doc });
         downloadBlob(blob, `${kind}-${doc.doc_number}`);
@@ -45,7 +50,7 @@ export function DocumentActions({
     try {
       await shareDocumentText(`Worklog — ${doc.doc_number}`, shareText);
       if (business) {
-        const html = buildDocumentHTML(doc, business, kind);
+        const html = buildDocumentHTML(doc, business, kind, watermark);
         await archiveGeneratedDocument(html, kind, sourceId).catch(() => {});
       }
     } finally {

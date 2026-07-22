@@ -27,6 +27,8 @@ const SHARED_CSS = `
   .totals-row.final { border-top: 2px solid #0C4A6E; margin-top: 6px; padding-top: 12px; font-size: 18px; font-weight: 800; color: #0C4A6E; }
   .footer { margin-top: 32px; padding-top: 16px; border-top: 1px solid #e5e7eb; font-size: 11px; color: #94a3b8; line-height: 1.6; }
   .vat-note { font-size: 10px; color: #94a3b8; margin-top: 4px; }
+  /* Trial watermark — position:fixed so Chromium repeats it on every printed page. */
+  .wm { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%) rotate(-32deg); font-size: 82px; font-weight: 900; color: rgba(220,38,38,0.10); letter-spacing: 6px; white-space: nowrap; z-index: 9999; pointer-events: none; }
 `;
 
 // The letterhead is the BUSINESS's, not ours. A statement goes from them to
@@ -88,7 +90,8 @@ export function buildStatementHTML(
   clientName: string,
   lines: StatementLine[],
   totals: { invoiced: number; received: number; outstanding: number },
-  asAt: string
+  asAt: string,
+  watermark = false
 ): string {
   const rows = lines
     .map(
@@ -107,6 +110,7 @@ export function buildStatementHTML(
 <html>
 <head><meta charset="utf-8" /><title>Statement — ${esc(clientName)}</title><style>${SHARED_CSS}</style></head>
 <body>
+  ${watermark ? `<div class="wm">TRIAL — NOT FINAL</div>` : ""}
   ${header(business, "ACCOUNT STATEMENT", `As at ${asAt}`)}
   <div class="meta-row">
     ${fromBlock(business, "From")}
@@ -129,7 +133,9 @@ export function buildStatementHTML(
     </div>
   </div>
   <div class="footer">
-    Please contact us if you have any queries regarding this statement.<br/>Generated via Worklog — worklog.co.za
+    Please contact us if you have any queries regarding this statement.<br/>Generated via Worklog — worklog.co.za${
+      watermark ? `<br/><strong style="color:#dc2626;">Draft — made on a free Worklog trial.</strong>` : ""
+    }
   </div>
 </body>
 </html>`;
@@ -146,7 +152,8 @@ export function buildRemittanceHTML(
   business: BusinessProfile,
   supplierName: string,
   lines: RemittanceLine[],
-  payment: { method: string; date: string; reference: string; total: number }
+  payment: { method: string; date: string; reference: string; total: number },
+  watermark = false
 ): string {
   const rows = lines
     .map(
@@ -164,6 +171,7 @@ export function buildRemittanceHTML(
 <html>
 <head><meta charset="utf-8" /><title>Remittance Advice — ${esc(supplierName)}</title><style>${SHARED_CSS}</style></head>
 <body>
+  ${watermark ? `<div class="wm">TRIAL — NOT FINAL</div>` : ""}
   ${header(business, "REMITTANCE ADVICE", payment.date)}
   <div class="meta-row">
     ${fromBlock(business, "Payment From")}
@@ -196,7 +204,9 @@ export function buildRemittanceHTML(
     </div>
   </div>
   <div class="footer">
-    Please apply this payment to the invoices listed above. Contact us if you have any queries.<br/>Generated via Worklog — worklog.co.za
+    Please apply this payment to the invoices listed above. Contact us if you have any queries.<br/>Generated via Worklog — worklog.co.za${
+      watermark ? `<br/><strong style="color:#dc2626;">Draft — made on a free Worklog trial.</strong>` : ""
+    }
   </div>
 </body>
 </html>`;

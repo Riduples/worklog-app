@@ -26,7 +26,7 @@ export type DocForRender = {
 };
 
 
-export function buildDocumentHTML(doc: DocForRender, business: BusinessProfile, kind: DocKind): string {
+export function buildDocumentHTML(doc: DocForRender, business: BusinessProfile, kind: DocKind, watermark = false): string {
   const isInvoice = kind === "invoice";
   const isPO = kind === "purchaseorder";
   const isPayslip = kind === "payslip";
@@ -140,9 +140,12 @@ export function buildDocumentHTML(doc: DocForRender, business: BusinessProfile, 
   .totals-row.final { border-top: 2px solid #0C4A6E; margin-top: 6px; padding-top: 12px; font-size: 18px; font-weight: 800; color: #0C4A6E; }
   .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; font-size: 11px; color: #94a3b8; line-height: 1.6; }
   .vat-note { font-size: 10px; color: #94a3b8; margin-top: 4px; }
+  /* Trial watermark — position:fixed so Chromium repeats it on every printed page. */
+  .wm { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%) rotate(-32deg); font-size: 82px; font-weight: 900; color: rgba(220,38,38,0.10); letter-spacing: 6px; white-space: nowrap; z-index: 9999; pointer-events: none; }
 </style>
 </head>
 <body>
+  ${watermark ? `<div class="wm">TRIAL — NOT FINAL</div>` : ""}
   <div class="header">
     <div class="brand">
       ${logoHTML}
@@ -207,7 +210,11 @@ ${bankingHTML}
               : "Please make payment by the due date above. Thank you for your business."
             : `This quote is valid until ${esc(doc.valid_until || "30 days from the issue date")}. Reply to accept or for any questions.`
     }
-    <br/>Generated via Worklog — worklog.co.za
+    <br/>Generated via Worklog — worklog.co.za${
+      watermark
+        ? `<br/><strong style="color:#dc2626;">Draft — made on a free Worklog trial. Start a plan to issue this as a final document.</strong>`
+        : ""
+    }
   </div>
 </body>
 </html>`;

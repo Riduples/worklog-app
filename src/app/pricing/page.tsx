@@ -4,7 +4,7 @@ import { PLAN_ORDER, TIERS, PLAN_FEATURES } from "@/lib/tiers";
 
 export const metadata: Metadata = {
   title: "Pricing — Worklog",
-  description: "Simple, honest bookkeeping pricing in Rand. Solo R79, Trade R149, Structured R229 — all VAT-inclusive. Try everything free for 30 days, no card needed.",
+  description: "Simple, honest bookkeeping pricing in Rand. Solo R79, Trade R149, Structured R229 — all VAT-inclusive. Try everything free for 14 days, no card needed.",
 };
 
 // Brand palette.
@@ -22,7 +22,7 @@ const WHY = [
 ];
 
 const FAQ = [
-  { q: "What happens after my 30-day trial?", a: "You get full access to everything (Structured level) for 30 days. After that, pick the plan that fits. No card needed to start — we only ask for payment when you're ready. If you don't choose a plan, your account becomes read-only: you can still see and download your records anytime." },
+  { q: "What happens after my 14-day trial?", a: "You get full access to everything (Structured level) for 14 days. After that, pick the plan that fits. No card needed to start — we only ask for payment when you're ready. If you don't choose a plan, your account becomes read-only: you can still see and download your records anytime." },
   { q: "What if I miss a payment?", a: "Your account switches to read-only — you can always see and download your records. We'll never lock you out of your own numbers." },
   { q: "How do I pay?", a: "Card, instant EFT, SnapScan or Zapper. Whatever works for you." },
   { q: "Can I get my records out?", a: "Always. Every plan lets you download your own records anytime. They're yours." },
@@ -43,7 +43,7 @@ export default function PricingPage() {
         <p style={{ fontSize: 15, color: "#BAE6FD", lineHeight: 1.6, maxWidth: 520, margin: "0 auto 18px" }}>
           Simple, honest pricing in Rand. No dollar surprises, no hidden costs, no limits on your records.
         </p>
-        <p style={{ fontSize: 16, fontWeight: 700, marginBottom: 22 }}>Try everything free for 30 days. No card needed.</p>
+        <p style={{ fontSize: 16, fontWeight: 700, marginBottom: 22 }}>Try everything free for 14 days. No card needed.</p>
         <Link
           href="/signup"
           style={{ display: "inline-block", background: ORANGE, color: "#fff", fontWeight: 800, fontSize: 15, padding: "13px 28px", borderRadius: 12, textDecoration: "none" }}
@@ -146,7 +146,7 @@ export default function PricingPage() {
       {/* Footer CTA */}
       <section style={{ background: NAVY, color: "#fff", textAlign: "center", padding: "40px 20px" }}>
         <h2 style={{ fontSize: 26, fontWeight: 800, marginBottom: 8 }}>Stop guessing. Start logging.</h2>
-        <p style={{ fontSize: 14, color: "#BAE6FD", marginBottom: 20 }}>Try Worklog free for 30 days — no card needed.</p>
+        <p style={{ fontSize: 14, color: "#BAE6FD", marginBottom: 20 }}>Try Worklog free for 14 days — no card needed.</p>
         <Link
           href="/signup"
           style={{ display: "inline-block", background: ORANGE, color: "#fff", fontWeight: 800, fontSize: 15, padding: "13px 30px", borderRadius: 12, textDecoration: "none" }}

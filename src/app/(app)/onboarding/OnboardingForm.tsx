@@ -25,7 +25,7 @@ export function OnboardingForm({ userId, userEmail }: { userId: string; userEmai
     setLoading(true);
     setError("");
     const supabase = createClient();
-    // The plan is NOT inserted. A trigger starts a 30-day Structured trial for
+    // The plan is NOT inserted. A trigger starts a 14-day Structured trial for
     // every new business (migration 0066) and the subscription drives the plan —
     // signup writing its own tier would hand out a paid tier for free.
     const { error } = await supabase.from("business_profiles").insert({
@@ -80,7 +80,7 @@ export function OnboardingForm({ userId, userEmail }: { userId: string; userEmai
       </Field>
 
       <div style={{ background: "#F0F9FF", border: "1.5px solid #BAE6FD", borderRadius: 12, padding: "14px 16px", margin: "18px 0 16px" }}>
-        <div style={{ fontSize: 13, fontWeight: 800, color: "#0369A1", marginBottom: 4 }}>🎁 Your 30-day free trial starts now</div>
+        <div style={{ fontSize: 13, fontWeight: 800, color: "#0369A1", marginBottom: 4 }}>🎁 Your 14-day free trial starts now</div>
         <div style={{ fontSize: 12, color: "#64748b", lineHeight: 1.6 }}>
           Everything unlocked, no card needed. Pick a plan whenever you&apos;re ready — your records are always yours.
         </div>

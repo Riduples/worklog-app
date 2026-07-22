@@ -24,17 +24,17 @@ type RenderRequest =
       payment: { method: string; date: string; reference: string; total: number };
     };
 
-function buildHtml(body: RenderRequest, business: BusinessProfile): string | null {
+function buildHtml(body: RenderRequest, business: BusinessProfile, watermark: boolean): string | null {
   switch (body.kind) {
     case "quote":
     case "invoice":
     case "purchaseorder":
     case "payslip":
-      return buildDocumentHTML(body.doc, business, body.kind);
+      return buildDocumentHTML(body.doc, business, body.kind, watermark);
     case "statement":
-      return buildStatementHTML(business, body.clientName, body.lines, body.totals, body.asAt);
+      return buildStatementHTML(business, body.clientName, body.lines, body.totals, body.asAt, watermark);
     case "remittance":
-      return buildRemittanceHTML(business, body.supplierName, body.lines, body.payment);
+      return buildRemittanceHTML(business, body.supplierName, body.lines, body.payment, watermark);
     default:
       return null;
   }
@@ -113,9 +113,16 @@ export async function POST(request: Request) {
   // the template a data: URI instead.
   const letterhead = { ...(business as BusinessProfile), logo_url: await inlineLogo(business.logo_url) };
 
+  // Trial / never-paid businesses get a "TRIAL — NOT FINAL" watermark: they can
+  // still generate and see every document, but it isn't a usable final artifact
+  // until they've paid once. `status` only becomes 'active' after a PayFast payment
+  // the server verified, so this can't be spoofed from the client.
+  const { data: sub } = await supabase.from("subscriptions").select("status").eq("business_id", business.id).maybeSingle();
+  const watermark = sub?.status === "trialing" || sub?.status === "read_only";
+
   let html: string | null;
   try {
-    html = buildHtml(body, letterhead);
+    html = buildHtml(body, letterhead, watermark);
   } catch {
     return NextResponse.json({ error: "bad_request", message: "Couldn't build that document." }, { status: 400 });
   }
