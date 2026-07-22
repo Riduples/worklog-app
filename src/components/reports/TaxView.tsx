@@ -13,6 +13,7 @@ import { UpgradeModal } from "@/components/modals/UpgradeModal";
 import { useTaxRates } from "@/lib/taxRates";
 import { fmt } from "@/lib/format";
 import { canSee, type ToolId } from "@/lib/permissions";
+import { isIncomeTaxPayment } from "@/lib/sarsCategories";
 import { coreToolsFor, isCoreTool } from "@/lib/businessTypes";
 import { isLocked, type Plan } from "@/lib/tiers";
 import { BackLink } from "@/components/ui/BackLink";
@@ -44,9 +45,12 @@ export function TaxView() {
 
   const totalIncome = (income ?? []).reduce((s, r) => s + Number(r.amount), 0);
   const taxJar = (income ?? []).reduce((s, r) => s + Number(r.tax_jar_amount || 0), 0);
-  // "Paid to SARS" = any expense filed under a Tax — category (VAT/PAYE payments).
+  // "Paid to SARS" = only income-tax and provisional-tax payments, since the jar
+  // provisions for income tax alone. VAT and PAYE are collected on others' behalf
+  // and settled from their own pools, not this jar — matching isIncomeTaxPayment /
+  // TaxJarView, so the two screens can't disagree for the same records.
   const paidToSARS = (expenses ?? [])
-    .filter((r) => (r.sars_category ?? "").startsWith("Tax —"))
+    .filter((r) => isIncomeTaxPayment(r.sars_category))
     .reduce((s, r) => s + Number(r.amount), 0);
   const netJar = taxJar - paidToSARS;
 

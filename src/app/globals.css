@@ -230,16 +230,6 @@ body {
   cursor: pointer;
   color: #fff;
 }
-.dash-stats {
-  display: flex;
-  gap: 10px;
-}
-.dash-stat {
-  flex: 1;
-  background: rgba(255, 255, 255, 0.09);
-  border-radius: 12px;
-  padding: 12px 10px;
-}
 /* The header's word buttons — Help and Log out. Help was a 34px "?" square,
    which only works if you already know what "?" means; the word doesn't ask. */
 .dash-text-btn {
@@ -298,14 +288,6 @@ body {
     background: #fff;
     color: #0c4a6e;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
-  }
-  /* The figures keep the navy — as a card of their own, sized to the numbers
-     rather than stretched across 1200px. */
-  .dash-stats {
-    background: #0c4a6e;
-    border-radius: 14px;
-    padding: 14px;
-    max-width: 620px;
   }
   .dash-quicklog {
     max-width: 380px;

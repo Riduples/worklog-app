@@ -105,6 +105,15 @@ describe("accountBalance", () => {
     expect(accountBalance(acc, income, expenses)).toBe(400);
   });
 
+  it("excludes rows dated on the opening date (the opening balance already reflects that day)", () => {
+    const acc = mkAccount({ id: "a1", opening_balance: 1000, opening_balance_date: "2026-01-01" });
+    const sameDay = [{ account_id: "a1", amount: 500, transaction_date: "2026-01-01" }];
+    const sameDayOut = [{ account_id: "a1", amount: 200, transaction_date: "2026-01-01" }];
+    // "Balance today" is as-of the opening date, so a same-dated movement is
+    // already in it — counting it again would double the boundary day.
+    expect(accountBalance(acc, sameDay, sameDayOut)).toBe(1000);
+  });
+
   it("shifts the balance on transfers in and out, from the opening date", () => {
     const acc = mkAccount({ id: "a1", opening_balance: 1000, opening_balance_date: "2026-01-01" });
     const transfers = [

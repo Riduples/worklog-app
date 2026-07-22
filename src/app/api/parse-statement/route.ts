@@ -97,7 +97,7 @@ export async function POST(request: Request) {
   }
 
   // Before the model call, and before we read a whole PDF into memory. This is
-  // the dearest of the four: a full statement in, up to 8k tokens out.
+  // the dearest of the four: a full statement in, up to 16k tokens out.
   const limited = await enforceRateLimit(supabase, "parse-statement");
   if (limited) return limited;
 

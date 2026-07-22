@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useIncome } from "@/lib/supabase/hooks/useIncome";
@@ -65,6 +65,14 @@ export function DashboardView({ businessName }: { businessName: string }) {
   const [upgradeFeature, setUpgradeFeature] = useState<ToolId | "team" | null>(
     (upgradeParam as ToolId | "team" | null) ?? null
   );
+  // A locked tool elsewhere routes here as /dashboard?upgrade=<tool> to trigger
+  // the modal. When we're already on the dashboard that's a same-route query
+  // change — no remount, so the useState initializer above never re-runs. Sync on
+  // the param so those upsell links actually open the modal instead of silently
+  // updating the URL and doing nothing.
+  useEffect(() => {
+    if (upgradeParam) setUpgradeFeature(upgradeParam as ToolId | "team");
+  }, [upgradeParam]);
 
   // Shared with the desktop sidebar, which has to reach exactly the same verdict
   // about every tool — see useToolGate.
@@ -237,7 +245,7 @@ export function DashboardView({ businessName }: { businessName: string }) {
               <div style={{ fontSize: 15, fontWeight: 800, color: "#fca5a5", marginTop: 3 }}>{fmt(heroOut)}</div>
             </div>
           </div>
-          {isAllAccounts && hasAccounts && (
+          {isAllAccounts && hasAccounts && gate("profit") && (
             <Link
               href="/cashflow"
               style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 12, paddingTop: 11, borderTop: "1px solid rgba(255,255,255,0.14)", fontSize: 12, color: "#dceffb", textDecoration: "none" }}

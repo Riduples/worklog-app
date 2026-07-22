@@ -7,7 +7,6 @@ import {
   calcRebate,
   calcUIF,
   incomeNet,
-  netOfVat,
   vatFromGross,
 } from "./taxRates";
 
@@ -226,7 +225,8 @@ describe("VAT extraction from a gross amount", () => {
     const exVat = 2_000;
     const gross = exVat * 1.15;
     expect(vatFromGross(gross, 0.15)).toBeCloseTo(300, 2);
-    expect(netOfVat(gross, vatFromGross(gross, 0.15))).toBeCloseTo(exVat, 2);
+    // The production ex-VAT recovery (incomeNet) must return exactly the subtotal.
+    expect(incomeNet({ amount: gross, vat_amount: vatFromGross(gross, 0.15) })).toBeCloseTo(exVat, 2);
   });
 
   it("is zero when not VAT registered or nothing received", () => {

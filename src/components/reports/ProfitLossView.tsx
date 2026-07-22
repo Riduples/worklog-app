@@ -38,10 +38,11 @@ export function ProfitLossView() {
   // "All accounts" is the full accrual report from the one shared definition, so
   // this report and the dashboard can't disagree for a period. A single account is
   // a cash-basis view of what moved through it — invoices and supplier credit are
-  // business-wide claims, not tied to an account, so they're dropped from the inputs.
+  // business-wide claims, not tied to an account, so cashBasis counts the account's
+  // own rows directly (no accrual netting, which would zero invoice-matched cash).
   const pnl = isAll
     ? computePnl({ income, expenses, invoices, supplierInvoices, ledger }, within)
-    : computePnl({ income: acctIncome, expenses: acctExpenses, invoices: [], supplierInvoices: [], ledger: [] }, within);
+    : computePnl({ income: acctIncome, expenses: acctExpenses }, within, { cashBasis: true });
 
   const netProfit = pnl.profit;
   const margin = pnl.revenue > 0 ? (netProfit / pnl.revenue) * 100 : 0;

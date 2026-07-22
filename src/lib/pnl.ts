@@ -44,8 +44,17 @@ export type Pnl = {
   profit: number;
 };
 
-/** `within` is an inPeriod(period) predicate over a YYYY-MM-DD string. */
-export function computePnl(inputs: PnlInputs, within: (dateStr: string) => boolean): Pnl {
+/**
+ * `within` is an inPeriod(period) predicate over a YYYY-MM-DD string.
+ *
+ * `cashBasis` is for a single bank account's own view: every rand that moved
+ * through the account is revenue (ex-VAT) or cost, with no accrual netting. The
+ * accrual path nets a payment against the invoice/credit it settles, which only
+ * balances when those documents are in the inputs — but an account holds its own
+ * cash rows, not the business-wide invoices/credit, so running its matched rows
+ * through the accrual path would silently zero every invoice-matched rand.
+ */
+export function computePnl(inputs: PnlInputs, within: (dateStr: string) => boolean, opts?: { cashBasis?: boolean }): Pnl {
   const { income, expenses, invoices, supplierInvoices, ledger } = inputs;
 
   // ── revenue ──
@@ -61,19 +70,35 @@ export function computePnl(inputs: PnlInputs, within: (dateStr: string) => boole
 
   // ── costs ──
   const cashExpense = (expenses ?? []).filter((r) => within(r.transaction_date)).reduce((s, r) => s + Number(r.amount), 0);
+
+  // Cash basis: plain money-in/money-out for one account, no accrual netting.
+  if (opts?.cashBasis) {
+    return {
+      invoicesIssued: 0,
+      cashIncomeNotInvoiced: cashIncome,
+      revenue: cashIncome,
+      supplierInvoicesIssued: 0,
+      supplierCreditIncurred: 0,
+      cashExpensesNotMatched: cashExpense,
+      costs: cashExpense,
+      profit: cashIncome - cashExpense,
+    };
+  }
+
   const supplierInvoicesIssued = (supplierInvoices ?? [])
     .filter((si) => within(si.issue_date))
     .reduce((s, si) => s + Number(si.invoice_amount), 0);
   const supplierCreditIncurred = (ledger ?? [])
     .filter((e) => e.ledger_type === "supplier" && within(e.entry_date))
     .reduce((s, e) => s + Number(e.amount), 0);
-  const expenseSettlingCredit = (expenses ?? [])
-    .filter((r) => within(r.transaction_date) && r.matched_ledger_entry_id)
+  // An expense settling a supplier invoice or a ledger credit is netted out once —
+  // the document it settles already counted the amount. A row can carry both
+  // matcher columns, so match on OR and subtract it a single time; summing two
+  // per-column totals would double-subtract it and understate costs.
+  const expenseSettlingAccrual = (expenses ?? [])
+    .filter((r) => within(r.transaction_date) && (r.matched_ledger_entry_id || r.matched_supplier_invoice_id))
     .reduce((s, r) => s + Number(r.amount), 0);
-  const expenseSettlingSupplierInvoice = (expenses ?? [])
-    .filter((r) => within(r.transaction_date) && r.matched_supplier_invoice_id)
-    .reduce((s, r) => s + Number(r.amount), 0);
-  const cashExpensesNotMatched = cashExpense - expenseSettlingCredit - expenseSettlingSupplierInvoice;
+  const cashExpensesNotMatched = cashExpense - expenseSettlingAccrual;
   const costs = supplierInvoicesIssued + supplierCreditIncurred + cashExpensesNotMatched;
 
   return {

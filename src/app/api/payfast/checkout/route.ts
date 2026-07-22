@@ -56,14 +56,25 @@ export async function GET(request: Request) {
     return backToCheckout(origin, "Only the business owner can change the plan.");
   }
 
-  const { data: business } = await supabase
-    .from("business_profiles")
-    .select("plan")
-    .eq("id", membership.business_id)
-    .single();
-  const currentPlan = (business?.plan ?? "solo") as Plan;
-  if (PLAN_ORDER.indexOf(plan) <= PLAN_ORDER.indexOf(currentPlan)) {
-    return backToCheckout(origin, "That isn't an upgrade from your current plan.");
+  // A business only "holds" a paid plan once a verified payment made its
+  // subscription active (or past_due — it paid, then a renewal lapsed). A trial
+  // carries business_profiles.plan='structured' by design, and read-only/cancelled
+  // businesses keep whatever plan they last had, so gating on business.plan would
+  // reject every tier for anyone who hasn't paid yet — the exact people we're
+  // sending here to pay. Gate on the subscription instead: only apply the
+  // upgrade-only rule to a genuinely paid subscription; otherwise any tier is a
+  // valid first purchase.
+  const { data: sub } = await supabase
+    .from("subscriptions")
+    .select("status, tier")
+    .eq("business_id", membership.business_id)
+    .maybeSingle();
+  const hasPaidPlan = sub?.status === "active" || sub?.status === "past_due";
+  if (hasPaidPlan) {
+    const currentPlan = (sub?.tier ?? "solo") as Plan;
+    if (PLAN_ORDER.indexOf(plan) <= PLAN_ORDER.indexOf(currentPlan)) {
+      return backToCheckout(origin, "That isn't an upgrade from your current plan.");
+    }
   }
 
   const mPaymentId = crypto.randomUUID();

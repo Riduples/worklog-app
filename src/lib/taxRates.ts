@@ -69,10 +69,6 @@ function vatFromGross(gross: number, rate: number): number {
   return gross * (rate / (1 + rate));
 }
 
-function netOfVat(gross: number, vat: number): number {
-  return gross - vat;
-}
-
 function calcPAYE(annualIncome: number): number {
   if (annualIncome <= 0) return 0;
   for (let i = PAYE_BRACKETS.length - 1; i >= 0; i--) {
@@ -148,14 +144,14 @@ function calcMedicalCredit(members: number): number {
 export { calcPAYE, calcMonthlyPAYE, calcUIF, calcMedicalCredit, calcRebate };
 
 export function useTaxRates() {
-  return { ...TAX_RATES, calcPAYE, calcMonthlyPAYE, calcUIF, calcMedicalCredit, calcRebate, vatFromGross, netOfVat };
+  return { ...TAX_RATES, calcPAYE, calcMonthlyPAYE, calcUIF, calcMedicalCredit, calcRebate, vatFromGross };
 }
 
 // Reports read income rows straight from the database rather than through the
 // hook, so expose the same arithmetic as plain functions. vat_amount is a
 // snapshot: a row keeps the VAT worked out at the rate that applied when it was
 // logged, so never re-derive it from the current rate here.
-export { vatFromGross, netOfVat };
+export { vatFromGross };
 
 /** Net (ex-VAT) revenue in a cash income row. Pre-VAT rows have vat_amount 0. */
 export function incomeNet(row: { amount: number | string; vat_amount?: number | string | null }): number {

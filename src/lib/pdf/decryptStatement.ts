@@ -61,6 +61,11 @@ const JPEG_QUALITY = 0.7;
 // Vercel rejects a request body over ~4.5MB at the edge, before our route runs;
 // base64 inflates ~33%, so keep the summed payload comfortably under that.
 const MAX_TOTAL_BASE64 = 3_600_000;
+// The parse-statement route also rejects any SINGLE page over its own
+// MAX_IMAGE_BASE64 (1,500,000). Match that here — with a little headroom — so a
+// dense page that fits the total but not the per-page cap is shrunk to fit rather
+// than uploaded and then 400-rejected after a successful (and slow) decrypt.
+const MAX_PAGE_BASE64 = 1_450_000;
 
 export async function renderEncryptedPdf(bytes: Uint8Array, password?: string): Promise<RenderResult> {
   let pdfjsLib: Pdfjs;
@@ -115,20 +120,32 @@ export async function renderEncryptedPdf(bytes: Uint8Array, password?: string): 
       // iOS silently returns a blank canvas once past its area/memory cap; sending
       // white pages would waste a model call and confuse the user. Sample first.
       const blank = isBlankCanvas(ctx, canvas.width, canvas.height);
-      const dataUrl = blank ? "" : canvas.toDataURL("image/jpeg", JPEG_QUALITY);
+      // Encode, then step the JPEG quality down until the page fits the server's
+      // per-page cap — a dense page can otherwise render larger than the cap and be
+      // rejected after upload. Must happen before the canvas is released below.
+      let b64 = "";
+      if (!blank) {
+        for (const q of [JPEG_QUALITY, 0.55, 0.4, 0.3]) {
+          const url = canvas.toDataURL("image/jpeg", q);
+          if (!url.startsWith("data:image/jpeg")) break; // encode failed → treat as blank
+          b64 = url.slice(url.indexOf(",") + 1);
+          if (b64.length <= MAX_PAGE_BASE64) break;
+        }
+      }
       page.cleanup();
       canvas.width = 0; // release the backing store before the next page
       canvas.height = 0;
 
-      // Skip a blank render rather than aborting: it's usually a genuinely empty
-      // page. If it happens to EVERY page (an iOS canvas failure), the empty-result
-      // check below turns that into a clean "failed".
-      if (blank || !dataUrl.startsWith("data:image/jpeg")) {
+      // Skip a blank/failed render rather than aborting: it's usually a genuinely
+      // empty page. If it happens to EVERY page (an iOS canvas failure), the
+      // empty-result check below turns that into a clean "failed".
+      if (blank || !b64) {
         skipped++;
         continue;
       }
+      // Couldn't shrink a dense page under the per-page cap even at low quality.
+      if (b64.length > MAX_PAGE_BASE64) return { status: "too-large" };
 
-      const b64 = dataUrl.slice(dataUrl.indexOf(",") + 1);
       total += b64.length;
       if (total > MAX_TOTAL_BASE64) return { status: "too-large" };
       pages.push(b64);
@@ -141,24 +158,41 @@ export async function renderEncryptedPdf(bytes: Uint8Array, password?: string): 
   }
 }
 
-// A real statement page varies across its rows; a failed (blank) render is a
-// single flat colour. Sample a few rows sparsely rather than pulling the whole
-// bitmap, which would be heavy on a phone.
+// A failed (blank) render is a single flat colour end to end; a real statement
+// page, however sparse, has a band of content somewhere. Sample a dense grid over
+// the WHOLE page and call it blank only when virtually every sample matches the
+// background — biased hard toward "not blank", because a false blank drops a real
+// page and loses its transactions, while a false non-blank merely sends a white
+// page the model reads as empty. (The old check sampled three fixed scanlines at
+// 25/50/75% height and missed any page whose only rows sat outside them — e.g. a
+// closing balance in the top fifth — dropping it silently.)
 function isBlankCanvas(ctx: CanvasRenderingContext2D, w: number, h: number): boolean {
   if (w === 0 || h === 0) return true;
   try {
-    const rows = [Math.floor(h * 0.25), Math.floor(h * 0.5), Math.floor(h * 0.75)];
-    const stride = 4 * Math.max(1, Math.floor(w / 64));
-    let first: number | null = null;
-    for (const y of rows) {
-      const data = ctx.getImageData(0, y, w, 1).data;
-      for (let i = 0; i + 2 < data.length; i += stride) {
-        const v = ((data[i] ?? 0) << 16) | ((data[i + 1] ?? 0) << 8) | (data[i + 2] ?? 0);
-        if (first === null) first = v;
-        else if (v !== first) return false;
+    const ROWS = 48;
+    const COLS = 64;
+    const px = (row: Uint8ClampedArray, x: number) => {
+      const i = 4 * x;
+      return ((row[i] ?? 0) << 16) | ((row[i + 1] ?? 0) << 8) | (row[i + 2] ?? 0);
+    };
+    // The top-left corner is the background reference. If it happens to sit inside
+    // a coloured header band, the white body rows below simply read as content —
+    // which is the right answer (the page isn't blank).
+    const corner = ctx.getImageData(0, 0, 1, 1).data;
+    const bg = ((corner[0] ?? 0) << 16) | ((corner[1] ?? 0) << 8) | (corner[2] ?? 0);
+    let sampled = 0;
+    let differing = 0;
+    for (let r = 0; r < ROWS; r++) {
+      const y = Math.min(h - 1, Math.floor((r + 0.5) * (h / ROWS)));
+      const row = ctx.getImageData(0, y, w, 1).data;
+      for (let c = 0; c < COLS; c++) {
+        const x = Math.min(w - 1, Math.floor((c + 0.5) * (w / COLS)));
+        sampled++;
+        if (px(row, x) !== bg) differing++;
       }
     }
-    return true; // every sampled pixel identical → the render produced nothing
+    // Tolerate a trace of stray pixels; any real content band trips well past this.
+    return differing <= Math.max(2, Math.floor(sampled * 0.001));
   } catch {
     return false; // couldn't sample — don't wrongly discard a real render
   }

@@ -6,6 +6,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { PlanPicker } from "@/components/billing/PlanPicker";
 import { PLAN_ORDER, TIERS, type Plan } from "@/lib/tiers";
 import { useBusinessProfile, useUpdateBusinessPlan } from "@/lib/supabase/hooks/useBusinessProfile";
+import { useSubscription } from "@/lib/supabase/hooks/useSubscription";
 import { BackLink } from "@/components/ui/BackLink";
 
 const isPlan = (v: string | null): v is Plan => !!v && (PLAN_ORDER as string[]).includes(v);
@@ -14,10 +15,19 @@ export function CheckoutView({ payfastReady = false, sandbox = false }: { payfas
   const searchParams = useSearchParams();
   const router = useRouter();
   const { data: business } = useBusinessProfile();
+  const { data: sub } = useSubscription();
   const updatePlan = useUpdateBusinessPlan();
   const [error, setError] = useState("");
 
   const currentPlan = (business?.plan ?? "solo") as Plan;
+  // A business only "holds" a paid plan once a verified payment made its
+  // subscription active (or past_due). A trial carries plan='structured' by
+  // design, so treating that as the current plan would mark every tier as
+  // "same" or "downgrade" and hide the pay button — the whole funnel leads
+  // here to pay. effectivePlan is null until there's a genuinely paid plan, so
+  // trial/read-only/cancelled businesses can start a subscription at any tier.
+  const hasPaidPlan = sub?.status === "active" || sub?.status === "past_due";
+  const effectivePlan: Plan | null = hasPaidPlan ? currentPlan : null;
   const requested = searchParams.get("plan");
   const [selected, setSelected] = useState<Plan>(isPlan(requested) ? requested : currentPlan);
   // The checkout route bounces back here with ?error=… when it won't start a
@@ -25,8 +35,8 @@ export function CheckoutView({ payfastReady = false, sandbox = false }: { payfas
   const redirectError = searchParams.get("error");
 
   const tier = TIERS[selected];
-  const isDowngrade = PLAN_ORDER.indexOf(selected) < PLAN_ORDER.indexOf(currentPlan);
-  const isSame = selected === currentPlan;
+  const isDowngrade = effectivePlan != null && PLAN_ORDER.indexOf(selected) < PLAN_ORDER.indexOf(effectivePlan);
+  const isSame = effectivePlan === selected;
 
   // A downgrade needs no payment and is allowed straight from the client
   // (update_business_plan permits it; only upgrades are locked to a verified
@@ -51,7 +61,7 @@ export function CheckoutView({ payfastReady = false, sandbox = false }: { payfas
         Every plan is billed monthly and you can change or cancel it any time.
       </p>
 
-      <PlanPicker selected={selected} onSelect={setSelected} currentPlan={currentPlan} />
+      <PlanPicker selected={selected} onSelect={setSelected} currentPlan={effectivePlan ?? undefined} />
 
       <div style={{ marginTop: 18 }}>
         {isSame ? (

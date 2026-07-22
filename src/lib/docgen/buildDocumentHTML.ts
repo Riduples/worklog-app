@@ -30,8 +30,13 @@ export function buildDocumentHTML(doc: DocForRender, business: BusinessProfile, 
   const isInvoice = kind === "invoice";
   const isPO = kind === "purchaseorder";
   const isPayslip = kind === "payslip";
-  const hasVat = !isPayslip && !!business.vat_number && doc.vat_rate != null;
-  const docTitle = isPayslip ? "PAYSLIP" : isPO ? "PURCHASE ORDER" : isInvoice ? (business.vat_number ? "TAX INVOICE" : "INVOICE") : "QUOTE";
+  // VAT is driven by the document's own vat_rate/vat_amount snapshot, NOT the live
+  // business.vat_number. The number is a freely-editable profile field; clearing it
+  // after issuing an invoice must not silently drop VAT from the PDF total while the
+  // on-screen modal and WhatsApp text (which add the stored vat_amount) still show
+  // the VAT-inclusive figure. The snapshot is the source of truth for what was billed.
+  const hasVat = !isPayslip && doc.vat_rate != null && doc.vat_amount > 0;
+  const docTitle = isPayslip ? "PAYSLIP" : isPO ? "PURCHASE ORDER" : isInvoice ? (hasVat ? "TAX INVOICE" : "INVOICE") : "QUOTE";
   const recipientLabel = isPayslip ? "Employee" : isPO ? "To (Supplier)" : isInvoice ? "Bill To" : "Quote For";
 
   const rows = doc.line_items

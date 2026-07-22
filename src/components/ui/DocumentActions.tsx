@@ -5,7 +5,7 @@ import { buildDocumentHTML, type DocForRender, type DocKind } from "@/lib/docgen
 import { openDocumentForPrinting, shareDocumentText, archiveGeneratedDocument } from "@/lib/docgen/shareDocument";
 import { renderPdf, downloadBlob } from "@/lib/docgen/renderPdf";
 import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
-import { useTrialState } from "@/lib/supabase/hooks/useSubscription";
+import { useSubscription, useTrialState } from "@/lib/supabase/hooks/useSubscription";
 
 export function DocumentActions({
   doc,
@@ -20,9 +20,15 @@ export function DocumentActions({
 }) {
   const { data: business } = useBusinessProfile();
   // The client-render fallback (when the server PDF route is unavailable) and the
-  // archived copy both carry the same trial watermark the server would apply.
-  const { isTrialing, isReadOnly } = useTrialState();
-  const watermark = isTrialing || isReadOnly;
+  // archived copy both carry the same trial watermark the server would apply. The
+  // server PDF route is authoritative (it recomputes from the DB); this only feeds
+  // the fallback + archive. Watermark whenever we can't PROVE the business has
+  // paid — trialing, read-only, OR the subscription query errored (status unknown)
+  // — so an unresolved paid state can't leak a clean document. While the status is
+  // still loading, the buttons stay disabled rather than acting on a false default.
+  const { isTrialing, isReadOnly, loading } = useTrialState();
+  const { isError } = useSubscription();
+  const watermark = isTrialing || isReadOnly || isError;
   const [busy, setBusy] = useState(false);
 
   const handlePrint = async () => {
@@ -62,7 +68,7 @@ export function DocumentActions({
     <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
       <button
         onClick={handlePrint}
-        disabled={busy || !business}
+        disabled={busy || !business || loading}
         style={{
           flex: 1,
           background: "#F0F9FF",
@@ -79,7 +85,7 @@ export function DocumentActions({
       </button>
       <button
         onClick={handleShare}
-        disabled={busy}
+        disabled={busy || loading}
         style={{
           flex: 1,
           background: "#F0F9FF",
