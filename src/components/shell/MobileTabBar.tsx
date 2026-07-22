@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useWriteAccess } from "@/lib/writeAccess";
+import { useToolGate } from "@/lib/useToolGate";
 import { QuickLogModal } from "@/components/modals/QuickLogModal";
 import { AllToolsGrid } from "@/components/dashboard/AllToolsGrid";
 
@@ -14,6 +15,7 @@ export function MobileTabBar() {
   const pathname = usePathname();
   const router = useRouter();
   const { isReadOnly } = useWriteAccess();
+  const { gate } = useToolGate();
   const [quickOpen, setQuickOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
 
@@ -41,9 +43,16 @@ export function MobileTabBar() {
 
   return (
     <>
+      {/* Left / right groups with a fixed centre keep Log dead-centre however many
+          side tabs a given member's permissions leave. Money (Cash Flow) and
+          Reports (Profit & Loss) only appear if the member can actually open them —
+          otherwise the tap would just bounce them to an upgrade prompt. Home, Log
+          and More are always there; More's sheet is self-gating. */}
       <nav className="mobile-tabbar" aria-label="Main">
-        {tab("/dashboard", "⌂", "Home")}
-        {tab("/cashflow", "💳", "Money")}
+        <div className="mtab-group">
+          {tab("/dashboard", "⌂", "Home")}
+          {gate("profit") && tab("/cashflow", "💳", "Money")}
+        </div>
         <button
           type="button"
           className="mtab mtab-log"
@@ -53,16 +62,18 @@ export function MobileTabBar() {
           <span className="mtab-log-ic">✨</span>
           Log
         </button>
-        {tab("/profit-loss", "📈", "Reports")}
-        <button
-          type="button"
-          className="mtab"
-          onClick={() => setMoreOpen(true)}
-          style={{ color: moreOpen ? "#0C4A6E" : "#94a3b8", fontWeight: moreOpen ? 800 : 600 }}
-        >
-          <span className="mtab-ic">⋯</span>
-          More
-        </button>
+        <div className="mtab-group">
+          {gate("profitloss") && tab("/profit-loss", "📈", "Reports")}
+          <button
+            type="button"
+            className="mtab"
+            onClick={() => setMoreOpen(true)}
+            style={{ color: moreOpen ? "#0C4A6E" : "#94a3b8", fontWeight: moreOpen ? 800 : 600 }}
+          >
+            <span className="mtab-ic">⋯</span>
+            More
+          </button>
+        </div>
       </nav>
 
       {quickOpen && <QuickLogModal onClose={() => setQuickOpen(false)} />}

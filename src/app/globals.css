@@ -360,9 +360,17 @@ body {
   font-size: 19px;
   line-height: 1;
 }
+/* Home + Money on the left, Reports + More on the right; each side flexes to the
+   same width so the centre Log button stays centred whatever's gated in or out. */
+.mtab-group {
+  flex: 1;
+  display: flex;
+}
 .mtab-log {
   color: #0c4a6e;
   font-weight: 800;
+  flex: 0 0 auto;
+  width: 64px;
 }
 .mtab-log-ic {
   width: 44px;
