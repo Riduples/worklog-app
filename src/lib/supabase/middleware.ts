@@ -37,16 +37,18 @@ export async function updateSession(request: NextRequest) {
   // and logged-in (accept button) — it's public but not an "auth route" (an
   // already-logged-in user should NOT be bounced away from it like /login).
   //
-  // The PayFast ITN is a server-to-server POST with no session cookie. If it
-  // weren't public it would be redirected to /login and the payment would never
-  // be recorded — so it must pass through here; the route itself trusts nothing
-  // but PayFast's own signature and confirmation.
+  // The PayFast ITN and the cron routes are called server-to-server with no
+  // session cookie (the ITN from PayFast, /api/cron/* from Vercel Cron). If they
+  // weren't public they'd be redirected to /login and never run — so they pass
+  // through here; each route enforces its own auth (PayFast's signature, or the
+  // CRON_SECRET bearer) and trusts nothing about the session.
   const isPublicRoute =
     pathname === "/" ||
     isAuthRoute ||
     pathname.startsWith("/accept-invite") ||
     pathname.startsWith("/pricing") ||
-    pathname === "/api/payfast/notify";
+    pathname === "/api/payfast/notify" ||
+    pathname.startsWith("/api/cron/");
 
   if (!user && !isPublicRoute) {
     const url = request.nextUrl.clone();

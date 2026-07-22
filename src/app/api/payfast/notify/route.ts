@@ -107,6 +107,9 @@ export async function POST(request: Request) {
         status: "active",
         payfast_token: token,
         current_period_end: periodEnd.toISOString(),
+        // A successful payment ends any dunning grace: clear the past-due warning
+        // flag so a future lapse sends a fresh "payment failed" email.
+        past_due_notified_at: null,
       },
       { onConflict: "business_id" }
     );

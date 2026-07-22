@@ -1480,9 +1480,11 @@ export type Database = {
           created_at: string
           current_period_end: string | null
           id: string
+          past_due_notified_at: string | null
           payfast_token: string | null
           status: string
           tier: string
+          trial_ending_notified_at: string | null
           updated_at: string
         }
         Insert: {
@@ -1490,9 +1492,11 @@ export type Database = {
           created_at?: string
           current_period_end?: string | null
           id?: string
+          past_due_notified_at?: string | null
           payfast_token?: string | null
           status?: string
           tier?: string
+          trial_ending_notified_at?: string | null
           updated_at?: string
         }
         Update: {
@@ -1500,9 +1504,11 @@ export type Database = {
           created_at?: string
           current_period_end?: string | null
           id?: string
+          past_due_notified_at?: string | null
           payfast_token?: string | null
           status?: string
           tier?: string
+          trial_ending_notified_at?: string | null
           updated_at?: string
         }
         Relationships: [
