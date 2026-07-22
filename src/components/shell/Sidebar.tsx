@@ -125,6 +125,10 @@ export function Sidebar() {
       </Link>
 
       {navLink("/dashboard", "⌂", "Home", pathname === "/dashboard")}
+      {/* Contacts spans clients and suppliers, so it sits above the groups and
+          gates on either — and it's the one tool the dashboard grid carried that
+          the sidebar didn't, which matters now the grid is hidden on desktop. */}
+      {(gate("clients") || gate("suppliers")) && navLink("/contacts", "👥", "Contacts", isActive("/contacts"))}
 
       {GROUPS.map((group) => {
         const visible = group.items.filter((i) => gate(i.tool));

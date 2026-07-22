@@ -258,6 +258,24 @@ body {
   width: 100%;
 }
 
+/* The money-first hero: a navy card carrying "money left", In/Out and the
+   real account balance. Replaces the old stats strip in the header band. */
+.dash-hero {
+  background: linear-gradient(135deg, #0c4a6e, #075985);
+  border-radius: 18px;
+  padding: 16px 16px 14px;
+  color: #fff;
+  margin-bottom: 14px;
+  box-shadow: 0 8px 24px -12px rgba(12, 74, 110, 0.5);
+}
+/* "Needs you today" and "Log something" — stacked on a phone, side by side once
+   there's room. */
+.dash-cols {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
 @media (min-width: 1024px) {
   .dash-header {
     background: transparent;
@@ -291,5 +309,19 @@ body {
   }
   .dash-quicklog {
     max-width: 380px;
+  }
+  /* Sized to its numbers, not stretched across the content column. */
+  .dash-hero {
+    max-width: 760px;
+  }
+  .dash-cols {
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+    max-width: 900px;
+  }
+  /* The full tool grid is redundant on desktop — the sidebar already is the
+     tool list, so the money-first content gets the width instead. */
+  .dash-tools {
+    display: none;
   }
 }
