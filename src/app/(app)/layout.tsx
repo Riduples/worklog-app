@@ -3,6 +3,7 @@ import { Sidebar } from "@/components/shell/Sidebar";
 import { SyncStatus } from "@/components/shell/SyncStatus";
 import { WriteAccessProvider } from "@/lib/writeAccess";
 import { ReadOnlyToast } from "@/components/billing/ReadOnlyToast";
+import { MobileTabBar } from "@/components/shell/MobileTabBar";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -20,6 +21,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             waiting to sync, on whichever screen the owner happens to be on. */}
         <SyncStatus />
         <ReadOnlyToast />
+        <MobileTabBar />
       </WriteAccessProvider>
     </QueryProvider>
   );

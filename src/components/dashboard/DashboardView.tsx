@@ -21,7 +21,7 @@ import { BusinessDetailsModal } from "@/components/modals/BusinessDetailsModal";
 import { LogoutButton } from "@/components/auth/LogoutButton";
 import { TrialStatusBar } from "@/components/billing/TrialStatusBar";
 import { useWriteAccess } from "@/lib/writeAccess";
-import { ToolTile } from "@/components/dashboard/ToolTile";
+import { AllToolsGrid } from "@/components/dashboard/AllToolsGrid";
 import { BankAccountSelector, ALL_ACCOUNTS, type AccountFilter } from "@/components/ui/BankAccountSelector";
 import { fmt, greeting, todayStr } from "@/lib/format";
 import { inPeriod } from "@/lib/period";
@@ -68,7 +68,7 @@ export function DashboardView({ businessName }: { businessName: string }) {
 
   // Shared with the desktop sidebar, which has to reach exactly the same verdict
   // about every tool — see useToolGate.
-  const { business, plan, isOwner, gate, tierLocked } = useToolGate();
+  const { business, plan, isOwner, gate } = useToolGate();
 
   // The money hero. "Money left" over the chosen period is the accrual profit —
   // the same computePnl the Profit & Loss report uses, so the two can't disagree.
@@ -335,61 +335,7 @@ export function DashboardView({ businessName }: { businessName: string }) {
 
           {toolsOpen && (
             <div style={{ marginTop: 12 }}>
-              <div className="tool-grid">
-                {(gate("clients") || gate("suppliers")) && <ToolTile href="/contacts" icon="👥" label="Contacts" />}
-                {gate("stock") && <ToolTile href="/stock" icon="📦" label="Stock" />}
-                {gate("quote") && <ToolTile href="/quotes" icon="📋" label="Quotes" />}
-                {gate("invoice") && <ToolTile href="/invoices" icon="📤" label="Invoices" />}
-                {gate("statement") && (
-                  <ToolTile href="/statement" icon="📃" label="Statements" locked={tierLocked("statement")} onLockedClick={() => setUpgradeFeature("statement")} />
-                )}
-                {gate("bankstatement") && <ToolTile href="/bank-statement" icon="🏦" label="Import Statement" />}
-                {gate("cashup") && <ToolTile href="/cash-up" icon="🧮" label="Daily Cash-Up" />}
-                {isOwner && <ToolTile href="/accounts" icon="💳" label="Bank Accounts" />}
-                {gate("purchaseorder") && (
-                  <ToolTile href="/purchase-orders" icon="🛒" label="Purchase Orders" locked={tierLocked("purchaseorder")} onLockedClick={() => setUpgradeFeature("purchaseorder")} />
-                )}
-                {gate("supplierinvoice") && (
-                  <ToolTile href="/supplier-invoices" icon="📥" label="Supplier Invoices" locked={tierLocked("supplierinvoice")} onLockedClick={() => setUpgradeFeature("supplierinvoice")} />
-                )}
-                {gate("remittance") && (
-                  <ToolTile href="/remittance" icon="🧾" label="Remittance" locked={tierLocked("remittance")} onLockedClick={() => setUpgradeFeature("remittance")} />
-                )}
-                {gate("recipe") && <ToolTile href="/recipes" icon="🍳" label="Cost Calculator" />}
-                {gate("booking") && <ToolTile href="/bookings" icon="📅" label="Bookings" />}
-                {gate("timetrack") && <ToolTile href="/time" icon="⏱️" label="Time Tracker" />}
-                {gate("mileage") && <ToolTile href="/mileage" icon="🚗" label="Mileage" />}
-                {gate("ledger") && <ToolTile href="/ledger" icon="📒" label="Ledgers" />}
-                {isOwner && <ToolTile href="/team" icon="👤" label="Team" />}
-              </div>
-
-              {(gate("staffregister") || gate("payrun") || gate("advances") || gate("leave")) && (
-                <>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 1, margin: "14px 0 10px" }}>Payroll</div>
-                  <div className="tool-grid">
-                    {gate("staffregister") && (
-                      <ToolTile href="/staff" icon="👤" label="Staff Register" locked={tierLocked("staffregister")} onLockedClick={() => setUpgradeFeature("staffregister")} />
-                    )}
-                    {gate("payrun") && <ToolTile href="/payroll" icon="💵" label="Pay Run" locked={tierLocked("payrun")} onLockedClick={() => setUpgradeFeature("payrun")} />}
-                    {gate("advances") && <ToolTile href="/advances" icon="💰" label="Advances" locked={tierLocked("advances")} onLockedClick={() => setUpgradeFeature("advances")} />}
-                    {gate("leave") && <ToolTile href="/leave" icon="🏖️" label="Leave" locked={tierLocked("leave")} onLockedClick={() => setUpgradeFeature("leave")} />}
-                  </div>
-                </>
-              )}
-
-              {(gate("tax") || gate("profit") || gate("profitloss") || gate("ageanalysis")) && (
-                <>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 1, margin: "14px 0 10px" }}>Reports</div>
-                  <div className="tool-grid">
-                    {gate("tax") && <ToolTile href="/tax" icon="🧾" label="Tax & SARS" />}
-                    {gate("profit") && <ToolTile href="/cashflow" icon="📊" label="Cash Flow" />}
-                    {gate("profitloss") && <ToolTile href="/profit-loss" icon="📈" label="Profit & Loss" />}
-                    {gate("ageanalysis") && (
-                      <ToolTile href="/age-analysis" icon="⏳" label="Age Analysis" locked={tierLocked("ageanalysis")} onLockedClick={() => setUpgradeFeature("ageanalysis")} />
-                    )}
-                  </div>
-                </>
-              )}
+              <AllToolsGrid onLockedClick={(t) => setUpgradeFeature(t)} />
             </div>
           )}
         </div>
