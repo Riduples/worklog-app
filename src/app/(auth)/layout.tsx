@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <div
@@ -28,6 +30,11 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         >
           {children}
         </div>
+        <p style={{ textAlign: "center", fontSize: 11.5, color: "#94a3b8", marginTop: 18, lineHeight: 1.6 }}>
+          <Link href="/terms" style={{ color: "#64748b", fontWeight: 600, textDecoration: "none" }}>Terms of Service</Link>
+          <span style={{ margin: "0 8px" }}>·</span>
+          <Link href="/privacy" style={{ color: "#64748b", fontWeight: 600, textDecoration: "none" }}>Privacy Policy</Link>
+        </p>
       </div>
     </div>
   );

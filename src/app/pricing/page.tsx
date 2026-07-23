@@ -157,6 +157,11 @@ export default function PricingPage() {
           Already have an account?{" "}
           <Link href="/login" style={{ color: "#7DD3FC", textDecoration: "none", fontWeight: 700 }}>Log in</Link>
         </div>
+        <div style={{ marginTop: 14, fontSize: 11.5, color: "rgba(255,255,255,0.45)" }}>
+          <Link href="/terms" style={{ color: "rgba(255,255,255,0.65)", textDecoration: "none" }}>Terms of Service</Link>
+          <span style={{ margin: "0 8px" }}>·</span>
+          <Link href="/privacy" style={{ color: "rgba(255,255,255,0.65)", textDecoration: "none" }}>Privacy Policy</Link>
+        </div>
       </section>
     </main>
   );

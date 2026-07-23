@@ -47,6 +47,11 @@ export async function updateSession(request: NextRequest) {
     isAuthRoute ||
     pathname.startsWith("/accept-invite") ||
     pathname.startsWith("/pricing") ||
+    // The legal documents must be readable before you have (or are logged into)
+    // an account — they're linked from the login/signup screen and the signup
+    // consent tick-box.
+    pathname.startsWith("/terms") ||
+    pathname.startsWith("/privacy") ||
     pathname === "/api/payfast/notify" ||
     pathname.startsWith("/api/cron/");
 

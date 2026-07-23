@@ -190,6 +190,12 @@ export function Sidebar() {
           {navLink("/team", "👤", "Team", isActive("/team"))}
         </div>
       )}
+
+      <div style={{ padding: "20px 9px 0", fontSize: 10.5, color: "rgba(255,255,255,0.4)" }}>
+        <Link href="/terms" style={{ color: "rgba(255,255,255,0.55)", textDecoration: "none" }}>Terms</Link>
+        <span style={{ margin: "0 6px" }}>·</span>
+        <Link href="/privacy" style={{ color: "rgba(255,255,255,0.55)", textDecoration: "none" }}>Privacy</Link>
+      </div>
     </nav>
   );
 }
