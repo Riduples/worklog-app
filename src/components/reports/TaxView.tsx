@@ -8,7 +8,7 @@ import { useIncome } from "@/lib/supabase/hooks/useIncome";
 import { useExpenses } from "@/lib/supabase/hooks/useExpenses";
 import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 import { useCurrentMember } from "@/lib/supabase/hooks/useCurrentMember";
-import { BusinessTaxDetailsModal } from "@/components/modals/BusinessTaxDetailsModal";
+import { BusinessDetailsModal } from "@/components/modals/BusinessDetailsModal";
 import { UpgradeModal } from "@/components/modals/UpgradeModal";
 import { useTaxRates } from "@/lib/taxRates";
 import { fmt } from "@/lib/format";
@@ -162,7 +162,7 @@ export function TaxView() {
         business, check with SARS or a registered accountant.
       </p>
 
-      {showDetails && business && <BusinessTaxDetailsModal business={business} onClose={() => setShowDetails(false)} />}
+      {showDetails && business && <BusinessDetailsModal business={business} onClose={() => setShowDetails(false)} />}
       {upgradeFeature && business && (
         <UpgradeModal feature={upgradeFeature} currentPlan={plan} isOwner={isOwner} onClose={() => setUpgradeFeature(null)} />
       )}

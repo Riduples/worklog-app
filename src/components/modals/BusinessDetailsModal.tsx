@@ -10,6 +10,8 @@ import { SaveBtn } from "@/components/ui/SaveBtn";
 import { BUSINESS_TYPES, coreToolsFor, type BusinessType } from "@/lib/businessTypes";
 import { LOGO_BUCKET, MAX_LOGO_BYTES, storagePathFromUrl } from "@/lib/logo";
 import { useUpdateBusinessProfile, type BusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
+import { TAX_RATES } from "@/lib/taxRates";
+import { fmt } from "@/lib/format";
 
 export function BusinessDetailsModal({ business, onClose }: { business: BusinessProfile; onClose: () => void }) {
   const updateProfile = useUpdateBusinessProfile();
@@ -23,6 +25,10 @@ export function BusinessDetailsModal({ business, onClose }: { business: Business
   const [bankAccount, setBankAccount] = useState(business.bank_account ?? "");
   const [bankBranch, setBankBranch] = useState(business.bank_branch ?? "");
   const [bankRef, setBankRef] = useState(business.bank_ref ?? "");
+  const [vatNumber, setVatNumber] = useState(business.vat_number ?? "");
+  const [vatPeriod, setVatPeriod] = useState(business.vat_period ?? "Bi-monthly");
+  const [payeRef, setPayeRef] = useState(business.paye_ref ?? "");
+  const [sdlRegistered, setSdlRegistered] = useState(business.sdl_registered ?? false);
   const [logoUrl, setLogoUrl] = useState(business.logo_url ?? "");
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
@@ -99,6 +105,10 @@ export function BusinessDetailsModal({ business, onClose }: { business: Business
           bank_account: bankAccount.trim() || null,
           bank_branch: bankBranch.trim() || null,
           bank_ref: bankRef.trim() || null,
+          vat_number: vatNumber.trim() || null,
+          vat_period: vatPeriod,
+          paye_ref: payeRef.trim() || null,
+          sdl_registered: sdlRegistered,
           logo_url: logoUrl.trim() || null,
         },
       },
@@ -257,6 +267,55 @@ export function BusinessDetailsModal({ business, onClose }: { business: Business
             ? `Customers will be asked to use "${bankRef.trim()} / INV-2026-0001" so you can match the payment.`
             : "Leave blank and the document number alone is used as the reference."}
         </p>
+      </Field>
+
+      <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 0.6, margin: "18px 0 10px" }}>
+        Tax &amp; SARS
+      </div>
+      <div style={{ background: "#F0F9FF", border: "1.5px solid #BAE6FD", borderRadius: 12, padding: "10px 14px", marginBottom: 14, fontSize: 12, color: "#0369A1", lineHeight: 1.5 }}>
+        These decide which SARS returns apply to you and appear on your tax reports. Leave blank whatever you&apos;re not
+        registered for.
+      </div>
+
+      <Field label="VAT number">
+        <Input value={vatNumber} onChange={setVatNumber} placeholder="Leave blank if not VAT registered" />
+      </Field>
+
+      {vatNumber.trim() && (
+        <Field label="VAT period">
+          <Chips options={["Monthly", "Bi-monthly"]} selected={vatPeriod} onSelect={(v) => v && setVatPeriod(v)} />
+        </Field>
+      )}
+
+      <Field label="PAYE reference number">
+        <Input value={payeRef} onChange={setPayeRef} placeholder="From SARS eFiling — needed for EMP201" />
+      </Field>
+
+      <Field label="SDL (Skills Development Levy)">
+        <button
+          type="button"
+          onClick={() => setSdlRegistered((p) => !p)}
+          style={{
+            width: "100%",
+            textAlign: "left",
+            padding: "12px 14px",
+            borderRadius: 12,
+            border: `1.5px solid ${sdlRegistered ? "#0C4A6E" : "#e2e8f0"}`,
+            background: sdlRegistered ? "#F0F9FF" : "#fff",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+          }}
+        >
+          <span style={{ fontSize: 18 }}>{sdlRegistered ? "✅" : "⬜"}</span>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: sdlRegistered ? "#0C4A6E" : "#111" }}>Registered for SDL</div>
+            <div style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>
+              {`Required once your annual payroll exceeds ${fmt(TAX_RATES.SDL_ANNUAL_THRESHOLD)}`}
+            </div>
+          </div>
+        </button>
       </Field>
 
       {error && <p style={{ color: "#dc2626", fontSize: 13, marginBottom: 12 }}>{error}</p>}
