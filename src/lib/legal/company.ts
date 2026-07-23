@@ -7,19 +7,19 @@
 
 export const COMPANY = {
   // The registered private company that operates Worklog.
-  name: "[REGISTERED COMPANY NAME] (Pty) Ltd",
-  regNo: "[COMPANY REGISTRATION NUMBER]",
-  registeredAddress: "[REGISTERED BUSINESS ADDRESS]",
+  name: "Worklog Solutions (Pty) Ltd",
+  regNo: "2026/561415/07",
+  registeredAddress: "Lamprecht Street, George, Western Cape",
   // POPIA Information Officer — the person accountable for data protection.
   // Defaults to the CEO / public officer if not separately registered with the
   // Information Regulator.
-  infoOfficer: "[INFORMATION OFFICER NAME]",
-  supportEmail: "[SUPPORT / LEGAL EMAIL]",
+  infoOfficer: "Adriaan du Plessis",
+  supportEmail: "hello@worklogsolutions.co.za",
   // ECTA s43 requires a phone number and web address in the supplier disclosure.
   supportPhone: "[SUPPORT PHONE NUMBER]",
   websiteUrl: "https://worklog.co.za",
   // The province whose High Court has jurisdiction (governing-law clause).
-  governingProvince: "[PROVINCE, e.g. Gauteng]",
+  governingProvince: "Western Cape",
   // Shown as the effective / last-updated date on both documents.
   effectiveDate: "23 July 2026",
 } as const;
