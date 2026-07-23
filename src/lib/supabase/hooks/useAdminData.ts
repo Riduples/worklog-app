@@ -43,6 +43,25 @@ export type AdminPaymentEvent = {
   raw_payload: unknown;
 };
 
+export type AdminAdmin = {
+  user_id: string;
+  email: string | null;
+  note: string | null;
+  created_at: string;
+};
+
+export function useAdminAdmins() {
+  const supabase = createClient();
+  return useQuery({
+    queryKey: ["admin-admins"],
+    queryFn: async (): Promise<AdminAdmin[]> => {
+      const { data, error } = await supabase.rpc("admin_list_admins");
+      if (error) throw error;
+      return (data ?? []) as AdminAdmin[];
+    },
+  });
+}
+
 export function useAdminPaymentEvents(businessId?: string) {
   const supabase = createClient();
   return useQuery({

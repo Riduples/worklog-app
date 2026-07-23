@@ -1953,6 +1953,17 @@ export type Database = {
     }
     Functions: {
       accept_invite: { Args: { p_token: string }; Returns: string }
+      admin_add_admin: { Args: { p_email: string }; Returns: undefined }
+      admin_list_admins: {
+        Args: never
+        Returns: {
+          user_id: string
+          email: string | null
+          note: string | null
+          created_at: string
+        }[]
+      }
+      admin_remove_admin: { Args: { p_user_id: string }; Returns: undefined }
       admin_extend_trial: {
         Args: { p_business_id: string; p_days: number }
         Returns: undefined

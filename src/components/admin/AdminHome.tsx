@@ -7,9 +7,11 @@ import { useAdminBusinesses } from "@/lib/supabase/hooks/useAdminData";
 const CARDS: { href: string; icon: string; title: string; desc: string }[] = [
   { href: "/admin/businesses", icon: "🏢", title: "Businesses", desc: "Every account: owner, plan, subscription state — with support controls." },
   { href: "/admin/revenue", icon: "📈", title: "Revenue & subscriptions", desc: "MRR, active/trial/past-due counts, and trials expiring soon." },
+  { href: "/admin/growth", icon: "🌱", title: "Growth", desc: "Signups over time, paying rate, and conversion." },
   { href: "/admin/payments", icon: "💳", title: "Payment events", desc: "The PayFast ITN audit trail — debug activation issues." },
   { href: "/admin/announcements", icon: "📣", title: "Announcements", desc: "Post a banner shown to every user across the app." },
   { href: "/admin/tax-rates", icon: "🧾", title: "SARS rates", desc: "National tax figures used across every business." },
+  { href: "/admin/admins", icon: "🛡️", title: "Admins", desc: "Who can access this console — add or remove platform admins." },
 ];
 
 export function AdminHome() {

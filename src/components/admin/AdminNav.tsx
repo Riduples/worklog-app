@@ -6,9 +6,11 @@ const TOOLS: { key: string; label: string; href: string }[] = [
   { key: "home", label: "Overview", href: "/admin" },
   { key: "businesses", label: "Businesses", href: "/admin/businesses" },
   { key: "revenue", label: "Revenue", href: "/admin/revenue" },
+  { key: "growth", label: "Growth", href: "/admin/growth" },
   { key: "payments", label: "Payments", href: "/admin/payments" },
   { key: "announcements", label: "Announcements", href: "/admin/announcements" },
   { key: "tax-rates", label: "Tax rates", href: "/admin/tax-rates" },
+  { key: "admins", label: "Admins", href: "/admin/admins" },
 ];
 
 /** Shared header + tool nav for every /admin page. */
