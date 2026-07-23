@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import Link from "next/link";
 import { useCreateIncome } from "@/lib/supabase/hooks/useIncome";
 import { useCreateExpense } from "@/lib/supabase/hooks/useExpenses";
+import { useInvoices, useUpdateInvoice } from "@/lib/supabase/hooks/useInvoices";
 import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 import { useBankAccounts } from "@/lib/supabase/hooks/useBankAccounts";
 import { useTaxRates } from "@/lib/taxRates";
@@ -13,6 +14,7 @@ import { renderEncryptedPdf, pdfIsEncrypted } from "@/lib/pdf/decryptStatement";
 import { matchStatementAccount, type StatementMeta } from "@/lib/accounts";
 import { BackLink } from "@/components/ui/BackLink";
 import { BankAccountPicker } from "@/components/ui/BankAccountPicker";
+import { InvoiceMatcher, paymentSettlesInvoice } from "@/components/ui/InvoiceMatcher";
 
 type ParsedTxn = {
   date: string;
@@ -70,6 +72,8 @@ function bufToBase64(buf: ArrayBuffer): string {
 export function BankStatementView() {
   const createIncome = useCreateIncome();
   const createExpense = useCreateExpense();
+  const { data: invoices } = useInvoices();
+  const updateInvoice = useUpdateInvoice();
   const { TAX_JAR_RATE, VAT_RATE, vatFromGross } = useTaxRates();
   const { data: business } = useBusinessProfile();
   const isVatRegistered = !!business?.vat_number;
@@ -80,6 +84,11 @@ export function BankStatementView() {
   const [fileName, setFileName] = useState("");
   const [transactions, setTransactions] = useState<ParsedTxn[]>([]);
   const [selected, setSelected] = useState<Record<number, boolean>>({});
+  // Per-row: the invoice a deposit is linked to, and whether linking it also
+  // marks that invoice paid. Linking is what keeps an imported payment from
+  // double-counting against the invoice that already booked the revenue.
+  const [matchByIndex, setMatchByIndex] = useState<Record<number, string | null>>({});
+  const [markPaidByIndex, setMarkPaidByIndex] = useState<Record<number, boolean>>({});
   const [error, setError] = useState("");
   const [imported, setImported] = useState<{ count: number; from: string; to: string; outOfMonth: number } | null>(null);
   // Encrypted-PDF path: the raw bytes stay on the device; only the password the
@@ -148,6 +157,8 @@ export function BankStatementView() {
       setDetection(match.note ? { note: match.note, matched: match.matched } : null);
       setTransactions(txns);
       setSelected(Object.fromEntries(txns.map((_, i) => [i, true])));
+      setMatchByIndex({});
+      setMarkPaidByIndex({});
       savedIdxRef.current = new Set(); // fresh parse → nothing committed yet
       setStep("review");
     } catch (e) {
@@ -234,6 +245,10 @@ export function BankStatementView() {
           // any VAT is inside it and has to be extracted rather than added.
           const vatAmount = isVatRegistered ? vatFromGross(t.amount, VAT_RATE) : 0;
           const net = t.amount - vatAmount;
+          // Linking a deposit to the invoice it settles is what stops Profit &
+          // Loss (and VAT201) counting the same money twice — the invoice already
+          // booked the revenue when it was issued.
+          const matchedInvoiceId = matchByIndex[i] ?? null;
           await createIncome.mutateAsync({
             amount: t.amount,
             transaction_date: t.date,
@@ -246,7 +261,21 @@ export function BankStatementView() {
             vat_rate: isVatRegistered ? VAT_RATE : null,
             vat_amount: vatAmount,
             tax_jar_amount: net * TAX_JAR_RATE,
+            matched_invoice_id: matchedInvoiceId,
           });
+          // Settle the linked invoice only once the income row is safely saved,
+          // and only when the deposit covers the full balance (mirrors
+          // IncomeModal). A partial payment stays linked — so it's still deduped
+          // in P&L — but leaves the invoice unpaid. If the update fails the income
+          // is still recorded and the invoice can be marked paid by hand.
+          if (matchedInvoiceId && markPaidByIndex[i]) {
+            const inv = (invoices ?? []).find((iv) => iv.id === matchedInvoiceId);
+            if (inv && paymentSettlesInvoice(inv, t.amount)) {
+              await updateInvoice
+                .mutateAsync({ id: matchedInvoiceId, changes: { status: "paid", paid_date: t.date, balance_due: 0 } })
+                .catch(() => {});
+            }
+          }
         } else {
           await createExpense.mutateAsync({
             amount: t.amount,
@@ -279,7 +308,7 @@ export function BankStatementView() {
   const selectedCount = Object.values(selected).filter(Boolean).length;
   const totalIncome = transactions.reduce((s, t, i) => s + (selected[i] && t.type === "income" ? t.amount : 0), 0);
   const totalExpense = transactions.reduce((s, t, i) => s + (selected[i] && t.type === "expense" ? t.amount : 0), 0);
-  const saving = createIncome.isPending || createExpense.isPending;
+  const saving = createIncome.isPending || createExpense.isPending || updateInvoice.isPending;
   // How many ticked rows fall outside the current month — the dashboard's default
   // "Month" view won't show them, so we say so before the import, not only after.
   const isThisMonth = inPeriod("month");
@@ -537,13 +566,19 @@ export function BankStatementView() {
         </div>
       </div>
 
+      {(invoices?.length ?? 0) > 0 && transactions.some((t) => t.type === "income") && (
+        <div style={{ background: "#F0F9FF", border: "1px solid #BAE6FD", borderRadius: 12, padding: "10px 14px", marginBottom: 12, fontSize: 12, color: "#0369A1", lineHeight: 1.5 }}>
+          💡 Was a deposit paying an invoice? Link it below so the same money isn&apos;t counted twice in Profit &amp; Loss.
+        </div>
+      )}
+
       {transactions.map((t, i) => {
         const on = !!selected[i];
         return (
+          <div key={i} style={{ marginBottom: 8 }}>
           <button
-            key={i}
             onClick={() => setSelected((p) => ({ ...p, [i]: !p[i] }))}
-            style={{ width: "100%", background: on ? "#fff" : "#f8fafc", border: `1.5px solid ${on ? "#BAE6FD" : "#e2e8f0"}`, borderRadius: 12, padding: "11px 14px", marginBottom: 8, cursor: "pointer", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center", opacity: on ? 1 : 0.55 }}
+            style={{ width: "100%", background: on ? "#fff" : "#f8fafc", border: `1.5px solid ${on ? "#BAE6FD" : "#e2e8f0"}`, borderRadius: 12, padding: "11px 14px", cursor: "pointer", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center", opacity: on ? 1 : 0.55 }}
           >
             <div style={{ minWidth: 0, flex: 1 }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: "#111" }}>
@@ -566,6 +601,25 @@ export function BankStatementView() {
               <span style={{ fontSize: 16, color: on ? "#0369A1" : "#cbd5e1" }}>{on ? "☑" : "☐"}</span>
             </div>
           </button>
+
+          {on && t.type === "income" && (invoices?.length ?? 0) > 0 && (
+            <div style={{ padding: "8px 6px 2px" }}>
+              <InvoiceMatcher
+                invoices={invoices ?? []}
+                matchedId={matchByIndex[i] ?? null}
+                onMatch={(id) => {
+                  setMatchByIndex((p) => ({ ...p, [i]: id }));
+                  // Default to marking paid when an invoice is picked; the matcher
+                  // only surfaces the checkbox when the deposit actually covers it.
+                  setMarkPaidByIndex((p) => ({ ...p, [i]: !!id }));
+                }}
+                paymentAmount={t.amount}
+                markPaid={!!markPaidByIndex[i]}
+                onMarkPaidChange={(next) => setMarkPaidByIndex((p) => ({ ...p, [i]: next }))}
+              />
+            </div>
+          )}
+          </div>
         );
       })}
 
