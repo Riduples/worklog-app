@@ -1,28 +1,28 @@
-// Hardcoded for v1 (matches the "manual flag, no live infra yet" decision).
-// Shape mirrors the source prototype's real useTaxRates() hook so a future
-// swap to a DB-backed/admin-editable rates table is a drop-in replacement,
-// not a call-site rewrite. PAYE/UIF/SDL added for Payroll — figures are the
-// prototype's 2025/26 SARS fallback constants.
+// SARS rate constants for the 2026/27 tax year (1 March 2026 – 28 Feb 2027),
+// verified against SARS's published tables. Hardcoded for now — the shape mirrors
+// a DB-backed/admin-editable rates source so a later swap is a drop-in, not a
+// call-site rewrite. Update these once a year when the February Budget lands, and
+// keep taxRates.test.ts (which pins them to the published figures) in step.
 
 const PAYE_BRACKETS = [
   { from: 0, base: 0, rate: 0.18 },
-  { from: 237100, base: 42678, rate: 0.26 },
-  { from: 370500, base: 77362, rate: 0.31 },
-  { from: 512800, base: 121475, rate: 0.36 },
-  { from: 673000, base: 179147, rate: 0.39 },
-  { from: 857900, base: 251258, rate: 0.41 },
-  { from: 1817000, base: 644489, rate: 0.45 },
+  { from: 245100, base: 44118, rate: 0.26 },
+  { from: 383100, base: 79998, rate: 0.31 },
+  { from: 530200, base: 125599, rate: 0.36 },
+  { from: 695800, base: 185215, rate: 0.39 },
+  { from: 887000, base: 259783, rate: 0.41 },
+  { from: 1878600, base: 666339, rate: 0.45 },
 ];
 
 // SARS grants an age-based rebate on top of the primary one. They stack: a
 // 76-year-old gets all three. The published tax thresholds fall straight out of
-// them — 17,235/0.18 = R95,750 under 65, (17,235+9,444)/0.18 = R148,217 at
-// 65-74, (17,235+9,444+3,145)/0.18 = R165,689 at 75+ — which is what the tests
+// them — 17,820/0.18 = R99,000 under 65, (17,820+9,765)/0.18 = R153,250 at
+// 65-74, (17,820+9,765+3,249)/0.18 = R171,300 at 75+ — which is what the tests
 // assert, so a typo here can't pass quietly.
-const PRIMARY_REBATE = 17235;
-const SECONDARY_REBATE = 9444; // additional, from age 65
-const TERTIARY_REBATE = 3145; // additional again, from age 75
-const PAYE_MONTHLY_THRESHOLD = 7979;
+const PRIMARY_REBATE = 17820;
+const SECONDARY_REBATE = 9765; // additional, from age 65
+const TERTIARY_REBATE = 3249; // additional again, from age 75
+const PAYE_MONTHLY_THRESHOLD = 8250; // R99,000 under-65 threshold ÷ 12
 const UIF_EMPLOYEE_RATE = 0.01;
 const UIF_EMPLOYER_RATE = 0.01;
 const UIF_CEILING = 17712;
@@ -30,15 +30,15 @@ const SDL_RATE = 0.01;
 // Annual payroll above which SDL registration is required.
 const SDL_ANNUAL_THRESHOLD = 500000;
 const COMPANY_TAX_RATE = 0.27;
-const MEDICAL_CREDIT_FIRST_TWO = 364;
-const MEDICAL_CREDIT_ADDITIONAL = 246;
+const MEDICAL_CREDIT_FIRST_TWO = 376;
+const MEDICAL_CREDIT_ADDITIONAL = 254;
 
 // Exported as plain values as well as via the hook: server code (the help
 // assistant's system prompt) needs the same figures, and must not call a
 // use*-prefixed function to get them.
 export const TAX_RATES = {
   VAT_RATE: 0.15,
-  MILEAGE_RATE: 4.84,
+  MILEAGE_RATE: 4.95,
   TAX_JAR_RATE: 0.28,
   UIF_EMPLOYEE_RATE,
   UIF_EMPLOYER_RATE,
@@ -52,7 +52,7 @@ export const TAX_RATES = {
   COMPANY_TAX_RATE,
   MEDICAL_CREDIT_FIRST_TWO,
   MEDICAL_CREDIT_ADDITIONAL,
-  TAX_YEAR: "2025/26",
+  TAX_YEAR: "2026/27",
 };
 
 // The VAT contained *within* an amount already received, as opposed to VAT
