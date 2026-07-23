@@ -206,7 +206,7 @@ export function DashboardView({ businessName }: { businessName: string }) {
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             {isPlatformAdmin && (
-              <Link href="/admin/tax-rates" className="dash-text-btn" style={{ textDecoration: "none" }}>
+              <Link href="/admin" className="dash-text-btn" style={{ textDecoration: "none" }}>
                 Admin
               </Link>
             )}

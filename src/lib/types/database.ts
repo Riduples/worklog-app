@@ -1911,6 +1911,42 @@ export type Database = {
     }
     Functions: {
       accept_invite: { Args: { p_token: string }; Returns: string }
+      admin_extend_trial: {
+        Args: { p_business_id: string; p_days: number }
+        Returns: undefined
+      }
+      admin_list_businesses: {
+        Args: never
+        Returns: {
+          business_id: string
+          name: string
+          plan: string
+          business_type: string | null
+          created_at: string
+          owner_email: string | null
+          member_count: number
+          sub_status: string | null
+          sub_tier: string | null
+          current_period_end: string | null
+        }[]
+      }
+      admin_list_payment_events: {
+        Args: { p_business_id?: string; p_limit?: number }
+        Returns: {
+          id: string
+          business_id: string | null
+          business_name: string | null
+          event_type: string | null
+          signature_valid: boolean | null
+          source_ip: string | null
+          processed_at: string
+          raw_payload: Json | null
+        }[]
+      }
+      admin_set_plan: {
+        Args: { p_business_id: string; p_period_end: string; p_status: string; p_tier: string }
+        Returns: undefined
+      }
       business_is_writable: {
         Args: { p_business_id: string }
         Returns: boolean

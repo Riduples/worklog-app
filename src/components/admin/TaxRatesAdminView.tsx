@@ -7,7 +7,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Field } from "@/components/ui/Field";
 import { Input } from "@/components/ui/Input";
 import { SaveBtn } from "@/components/ui/SaveBtn";
-import { BackLink } from "@/components/ui/BackLink";
+import { AdminNav } from "@/components/admin/AdminNav";
 import { todayStr } from "@/lib/format";
 import { TAX_RATES } from "@/lib/taxRates";
 import type { Tables } from "@/lib/types/database";
@@ -173,7 +173,7 @@ export function TaxRatesAdminView() {
 
   return (
     <div style={{ padding: "20px 16px 100px", maxWidth: 760, margin: "0 auto" }}>
-      <BackLink />
+      <AdminNav active="tax-rates" />
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, margin: "4px 0 6px" }}>
         <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E" }}>SARS rates (admin)</h1>
         <button
