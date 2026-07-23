@@ -270,7 +270,7 @@ export function LandingPage() {
             </p>
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 40 }}>
-            <FooterCol title="Product" links={[["Features", "/#features"], ["Pricing", "/pricing"], ["Log in", "/login"], ["Start free", "/signup"]]} />
+            <FooterCol title="Product" links={[["Features", "/#features"], ["Pricing", "/pricing"], ["Help Centre", "/help"], ["Log in", "/login"], ["Start free", "/signup"]]} />
             <FooterCol title="Legal" links={[["Terms of Service", "/terms"], ["Privacy Policy", "/privacy"]]} />
             <FooterCol title="Contact" links={[["hello@worklogsolutions.co.za", "mailto:hello@worklogsolutions.co.za"]]} />
           </div>

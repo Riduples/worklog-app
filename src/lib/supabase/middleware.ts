@@ -52,6 +52,7 @@ export async function updateSession(request: NextRequest) {
     // consent tick-box.
     pathname.startsWith("/terms") ||
     pathname.startsWith("/privacy") ||
+    pathname.startsWith("/help") ||
     pathname === "/api/payfast/notify" ||
     pathname.startsWith("/api/cron/");
 
