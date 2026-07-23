@@ -4,6 +4,7 @@ import { SyncStatus } from "@/components/shell/SyncStatus";
 import { WriteAccessProvider } from "@/lib/writeAccess";
 import { ReadOnlyToast } from "@/components/billing/ReadOnlyToast";
 import { MobileTabBar } from "@/components/shell/MobileTabBar";
+import { AnnouncementBanner } from "@/components/announcements/AnnouncementBanner";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -15,7 +16,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             same reason it isn't repeated here. */}
         <div className="app-shell">
           <Sidebar />
-          <div className="app-content">{children}</div>
+          <div className="app-content">
+            <AnnouncementBanner />
+            {children}
+          </div>
         </div>
         {/* Fixed to the viewport and self-hiding — shows only when entries are
             waiting to sync, on whichever screen the owner happens to be on. */}

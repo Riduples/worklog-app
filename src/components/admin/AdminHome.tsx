@@ -8,6 +8,7 @@ const CARDS: { href: string; icon: string; title: string; desc: string }[] = [
   { href: "/admin/businesses", icon: "🏢", title: "Businesses", desc: "Every account: owner, plan, subscription state — with support controls." },
   { href: "/admin/revenue", icon: "📈", title: "Revenue & subscriptions", desc: "MRR, active/trial/past-due counts, and trials expiring soon." },
   { href: "/admin/payments", icon: "💳", title: "Payment events", desc: "The PayFast ITN audit trail — debug activation issues." },
+  { href: "/admin/announcements", icon: "📣", title: "Announcements", desc: "Post a banner shown to every user across the app." },
   { href: "/admin/tax-rates", icon: "🧾", title: "SARS rates", desc: "National tax figures used across every business." },
 ];
 

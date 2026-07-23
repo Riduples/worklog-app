@@ -7,6 +7,7 @@ const TOOLS: { key: string; label: string; href: string }[] = [
   { key: "businesses", label: "Businesses", href: "/admin/businesses" },
   { key: "revenue", label: "Revenue", href: "/admin/revenue" },
   { key: "payments", label: "Payments", href: "/admin/payments" },
+  { key: "announcements", label: "Announcements", href: "/admin/announcements" },
   { key: "tax-rates", label: "Tax rates", href: "/admin/tax-rates" },
 ];
 

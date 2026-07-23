@@ -96,6 +96,48 @@ export type Database = {
         }
         Relationships: []
       }
+      announcements: {
+        Row: {
+          active: boolean
+          created_at: string
+          dismissible: boolean
+          ends_at: string | null
+          id: string
+          level: string
+          link_label: string | null
+          link_url: string | null
+          message: string
+          starts_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          dismissible?: boolean
+          ends_at?: string | null
+          id?: string
+          level?: string
+          link_label?: string | null
+          link_url?: string | null
+          message: string
+          starts_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          dismissible?: boolean
+          ends_at?: string | null
+          id?: string
+          level?: string
+          link_label?: string | null
+          link_url?: string | null
+          message?: string
+          starts_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       bank_accounts: {
         Row: {
           account_number: string | null
