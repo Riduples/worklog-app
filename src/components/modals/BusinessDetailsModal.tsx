@@ -10,11 +10,12 @@ import { SaveBtn } from "@/components/ui/SaveBtn";
 import { BUSINESS_TYPES, coreToolsFor, type BusinessType } from "@/lib/businessTypes";
 import { LOGO_BUCKET, MAX_LOGO_BYTES, storagePathFromUrl } from "@/lib/logo";
 import { useUpdateBusinessProfile, type BusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
-import { TAX_RATES } from "@/lib/taxRates";
+import { useTaxRates } from "@/lib/taxRates";
 import { fmt } from "@/lib/format";
 
 export function BusinessDetailsModal({ business, onClose }: { business: BusinessProfile; onClose: () => void }) {
   const updateProfile = useUpdateBusinessProfile();
+  const { SDL_ANNUAL_THRESHOLD } = useTaxRates();
   const [name, setName] = useState(business.name ?? "");
   const [businessType, setBusinessType] = useState<BusinessType | "">((business.business_type as BusinessType) ?? "");
   const [showAllTools, setShowAllTools] = useState(business.show_all_tools ?? false);
@@ -312,7 +313,7 @@ export function BusinessDetailsModal({ business, onClose }: { business: Business
           <div>
             <div style={{ fontSize: 13, fontWeight: 700, color: sdlRegistered ? "#0C4A6E" : "#111" }}>Registered for SDL</div>
             <div style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>
-              {`Required once your annual payroll exceeds ${fmt(TAX_RATES.SDL_ANNUAL_THRESHOLD)}`}
+              {`Required once your annual payroll exceeds ${fmt(SDL_ANNUAL_THRESHOLD)}`}
             </div>
           </div>
         </button>

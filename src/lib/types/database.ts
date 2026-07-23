@@ -1653,6 +1653,84 @@ export type Database = {
           },
         ]
       }
+      tax_rates: {
+        Row: {
+          company_tax_rate: number
+          created_at: string
+          effective_from: string
+          effective_to: string
+          id: string
+          medical_credit_additional: number
+          medical_credit_first_two: number
+          mileage_rate: number
+          note: string | null
+          paye_brackets: Json
+          paye_monthly_threshold: number
+          primary_rebate: number
+          sdl_annual_threshold: number
+          sdl_rate: number
+          secondary_rebate: number
+          tax_jar_rate: number
+          tax_year: string
+          tertiary_rebate: number
+          uif_ceiling: number
+          uif_employee_rate: number
+          uif_employer_rate: number
+          updated_at: string
+          vat_rate: number
+        }
+        Insert: {
+          company_tax_rate: number
+          created_at?: string
+          effective_from: string
+          effective_to: string
+          id?: string
+          medical_credit_additional: number
+          medical_credit_first_two: number
+          mileage_rate: number
+          note?: string | null
+          paye_brackets: Json
+          paye_monthly_threshold: number
+          primary_rebate: number
+          sdl_annual_threshold: number
+          sdl_rate: number
+          secondary_rebate: number
+          tax_jar_rate: number
+          tax_year: string
+          tertiary_rebate: number
+          uif_ceiling: number
+          uif_employee_rate: number
+          uif_employer_rate: number
+          updated_at?: string
+          vat_rate: number
+        }
+        Update: {
+          company_tax_rate?: number
+          created_at?: string
+          effective_from?: string
+          effective_to?: string
+          id?: string
+          medical_credit_additional?: number
+          medical_credit_first_two?: number
+          mileage_rate?: number
+          note?: string | null
+          paye_brackets?: Json
+          paye_monthly_threshold?: number
+          primary_rebate?: number
+          sdl_annual_threshold?: number
+          sdl_rate?: number
+          secondary_rebate?: number
+          tax_jar_rate?: number
+          tax_year?: string
+          tertiary_rebate?: number
+          uif_ceiling?: number
+          uif_employee_rate?: number
+          uif_employer_rate?: number
+          updated_at?: string
+          vat_rate?: number
+        }
+        Relationships: []
+      }
       time_entries: {
         Row: {
           amount_to_bill: number | null

@@ -12,6 +12,19 @@ export async function requireUser() {
   return user;
 }
 
+/**
+ * Guards a platform-admin page (e.g. the SARS rates editor). These edit NATIONAL
+ * data shared by every tenant, so access is the platform_admins list (migration
+ * 0054), not business ownership. A non-admin is bounced to their own dashboard.
+ */
+export async function requirePlatformAdmin() {
+  const user = await requireUser();
+  const supabase = await createClient();
+  const { data: isAdmin } = await supabase.rpc("is_platform_admin");
+  if (!isAdmin) redirect("/dashboard");
+  return user;
+}
+
 export async function requireBusinessProfile() {
   const user = await requireUser();
   const supabase = await createClient();

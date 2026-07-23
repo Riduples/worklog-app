@@ -21,6 +21,8 @@ import { BusinessDetailsModal } from "@/components/modals/BusinessDetailsModal";
 import { LogoutButton } from "@/components/auth/LogoutButton";
 import { TrialStatusBar } from "@/components/billing/TrialStatusBar";
 import { useWriteAccess } from "@/lib/writeAccess";
+import { useIsPlatformAdmin } from "@/lib/supabase/hooks/usePlatformAdmin";
+import { TaxRatesStaleNudge } from "@/components/admin/TaxRatesStaleNudge";
 import { AllToolsGrid } from "@/components/dashboard/AllToolsGrid";
 import { BankAccountSelector, ALL_ACCOUNTS, type AccountFilter } from "@/components/ui/BankAccountSelector";
 import { fmt, greeting, todayStr } from "@/lib/format";
@@ -61,6 +63,7 @@ export function DashboardView({ businessName }: { businessName: string }) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { isReadOnly } = useWriteAccess();
+  const isPlatformAdmin = useIsPlatformAdmin();
   const upgradeParam = searchParams.get("upgrade");
   const [upgradeFeature, setUpgradeFeature] = useState<ToolId | "team" | null>(
     (upgradeParam as ToolId | "team" | null) ?? null
@@ -202,6 +205,11 @@ export function DashboardView({ businessName }: { businessName: string }) {
             </div>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {isPlatformAdmin && (
+              <Link href="/admin/tax-rates" className="dash-text-btn" style={{ textDecoration: "none" }}>
+                Admin
+              </Link>
+            )}
             {isOwner && business && (
               <button onClick={() => setModal("business")} aria-label="Business details" className="dash-icon-btn">
                 ⚙
@@ -216,6 +224,7 @@ export function DashboardView({ businessName }: { businessName: string }) {
       </div>
 
       <TrialStatusBar />
+      <TaxRatesStaleNudge />
 
       <div style={{ padding: "16px 16px 100px" }}>
         {(accounts?.length ?? 0) >= 2 && <BankAccountSelector selected={account} onSelect={setAccount} />}
