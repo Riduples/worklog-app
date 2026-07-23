@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useCreateIncome } from "@/lib/supabase/hooks/useIncome";
 import { useCreateExpense } from "@/lib/supabase/hooks/useExpenses";
 import { useInvoices, useUpdateInvoice } from "@/lib/supabase/hooks/useInvoices";
+import { useLedgerEntries, useUpdateLedgerEntry } from "@/lib/supabase/hooks/useLedger";
+import { useSupplierInvoices, useUpdateSupplierInvoice } from "@/lib/supabase/hooks/useSupplierInvoices";
 import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 import { useBankAccounts } from "@/lib/supabase/hooks/useBankAccounts";
 import { useTaxRates } from "@/lib/taxRates";
@@ -15,6 +17,8 @@ import { matchStatementAccount, type StatementMeta } from "@/lib/accounts";
 import { BackLink } from "@/components/ui/BackLink";
 import { BankAccountPicker } from "@/components/ui/BankAccountPicker";
 import { InvoiceMatcher, paymentSettlesInvoice } from "@/components/ui/InvoiceMatcher";
+import { SupplierInvoiceMatcher, expenseSettlesSupplierInvoice } from "@/components/ui/SupplierInvoiceMatcher";
+import { LedgerEntryMatcher, expenseSettlesEntry } from "@/components/ui/LedgerEntryMatcher";
 
 type ParsedTxn = {
   date: string;
@@ -27,6 +31,12 @@ type ParsedTxn = {
 };
 
 type Step = "consent" | "upload" | "processing" | "password" | "review" | "done";
+
+// Per expense row: which supplier invoice / credit-book entry a bank payment
+// settles, and whether to also mark them paid. Linking keeps the cost out of
+// Profit & Loss so it isn't counted twice against the bill that already booked it.
+type ExpLinks = { ledgerId: string | null; ledgerPaid: boolean; siId: string | null; siPaid: boolean };
+const EMPTY_EXP: ExpLinks = { ledgerId: null, ledgerPaid: false, siId: null, siPaid: false };
 
 // Out here, not inside the component. Declared during render it was a new
 // function on every pass, so React saw a different component type each time and
@@ -74,10 +84,17 @@ export function BankStatementView() {
   const createExpense = useCreateExpense();
   const { data: invoices } = useInvoices();
   const updateInvoice = useUpdateInvoice();
+  const { data: ledgerEntries } = useLedgerEntries();
+  const { data: supplierInvoices } = useSupplierInvoices();
+  const updateLedgerEntry = useUpdateLedgerEntry();
+  const updateSupplierInvoice = useUpdateSupplierInvoice();
   const { TAX_JAR_RATE, VAT_RATE, vatFromGross } = useTaxRates();
   const { data: business } = useBusinessProfile();
   const isVatRegistered = !!business?.vat_number;
   const { data: accounts } = useBankAccounts();
+  // Supplier entries only — a client entry is money owed TO the business, which
+  // a bank payment out can never settle.
+  const supplierEntries = (ledgerEntries ?? []).filter((e) => e.ledger_type === "supplier");
 
   const [step, setStep] = useState<Step>("consent");
   const [fileData, setFileData] = useState<{ base64: string; mediaType: string } | null>(null);
@@ -89,6 +106,9 @@ export function BankStatementView() {
   // double-counting against the invoice that already booked the revenue.
   const [matchByIndex, setMatchByIndex] = useState<Record<number, string | null>>({});
   const [markPaidByIndex, setMarkPaidByIndex] = useState<Record<number, boolean>>({});
+  const [expLinksByIndex, setExpLinksByIndex] = useState<Record<number, ExpLinks>>({});
+  const setExpLinks = (i: number, patch: Partial<ExpLinks>) =>
+    setExpLinksByIndex((p) => ({ ...p, [i]: { ...(p[i] ?? EMPTY_EXP), ...patch } }));
   const [error, setError] = useState("");
   const [imported, setImported] = useState<{ count: number; from: string; to: string; outOfMonth: number } | null>(null);
   // Encrypted-PDF path: the raw bytes stay on the device; only the password the
@@ -159,6 +179,7 @@ export function BankStatementView() {
       setSelected(Object.fromEntries(txns.map((_, i) => [i, true])));
       setMatchByIndex({});
       setMarkPaidByIndex({});
+      setExpLinksByIndex({});
       savedIdxRef.current = new Set(); // fresh parse → nothing committed yet
       setStep("review");
     } catch (e) {
@@ -277,6 +298,10 @@ export function BankStatementView() {
             }
           }
         } else {
+          // Same de-dup on the cost side: a bank payment that settles a supplier
+          // invoice or a credit-book entry must be linked, or Profit & Loss counts
+          // the cost twice — once when the bill was issued, once as this payment.
+          const links = expLinksByIndex[i] ?? EMPTY_EXP;
           await createExpense.mutateAsync({
             amount: t.amount,
             transaction_date: t.date,
@@ -286,7 +311,30 @@ export function BankStatementView() {
             sars_category: t.category,
             source: "bank_statement",
             account_id: importAccountId,
+            matched_ledger_entry_id: links.ledgerId,
+            matched_supplier_invoice_id: links.siId,
           });
+          // Best-effort settle, gated on the payment actually covering it
+          // (mirrors ExpenseModal). A shortfall stays linked but leaves it open.
+          if (links.ledgerId && links.ledgerPaid) {
+            const entry = supplierEntries.find((e) => e.id === links.ledgerId);
+            if (entry && expenseSettlesEntry(entry, t.amount)) {
+              await updateLedgerEntry
+                .mutateAsync({ id: links.ledgerId, changes: { status: "paid", paid_date: t.date } })
+                .catch(() => {});
+            }
+          }
+          if (links.siId && links.siPaid) {
+            const si = (supplierInvoices ?? []).find((s) => s.id === links.siId);
+            if (si && expenseSettlesSupplierInvoice(si, t.amount)) {
+              await updateSupplierInvoice
+                .mutateAsync({
+                  id: links.siId,
+                  changes: { status: "paid", paid_date: t.date, paid_amount: si.invoice_amount, balance_due: 0 },
+                })
+                .catch(() => {});
+            }
+          }
         }
         savedIdxRef.current.add(i);
       }
@@ -308,7 +356,12 @@ export function BankStatementView() {
   const selectedCount = Object.values(selected).filter(Boolean).length;
   const totalIncome = transactions.reduce((s, t, i) => s + (selected[i] && t.type === "income" ? t.amount : 0), 0);
   const totalExpense = transactions.reduce((s, t, i) => s + (selected[i] && t.type === "expense" ? t.amount : 0), 0);
-  const saving = createIncome.isPending || createExpense.isPending || updateInvoice.isPending;
+  const saving =
+    createIncome.isPending ||
+    createExpense.isPending ||
+    updateInvoice.isPending ||
+    updateLedgerEntry.isPending ||
+    updateSupplierInvoice.isPending;
   // How many ticked rows fall outside the current month — the dashboard's default
   // "Month" view won't show them, so we say so before the import, not only after.
   const isThisMonth = inPeriod("month");
@@ -566,9 +619,9 @@ export function BankStatementView() {
         </div>
       </div>
 
-      {(invoices?.length ?? 0) > 0 && transactions.some((t) => t.type === "income") && (
+      {((invoices?.length ?? 0) > 0 || supplierEntries.length > 0 || (supplierInvoices ?? []).some((si) => si.status !== "paid")) && (
         <div style={{ background: "#F0F9FF", border: "1px solid #BAE6FD", borderRadius: 12, padding: "10px 14px", marginBottom: 12, fontSize: 12, color: "#0369A1", lineHeight: 1.5 }}>
-          💡 Was a deposit paying an invoice? Link it below so the same money isn&apos;t counted twice in Profit &amp; Loss.
+          💡 Was a payment settling an invoice or bill you already logged? Link it below so the same money isn&apos;t counted twice in Profit &amp; Loss.
         </div>
       )}
 
@@ -616,6 +669,27 @@ export function BankStatementView() {
                 paymentAmount={t.amount}
                 markPaid={!!markPaidByIndex[i]}
                 onMarkPaidChange={(next) => setMarkPaidByIndex((p) => ({ ...p, [i]: next }))}
+              />
+            </div>
+          )}
+
+          {on && t.type === "expense" && (supplierEntries.length > 0 || (supplierInvoices ?? []).some((si) => si.status !== "paid")) && (
+            <div style={{ padding: "8px 6px 2px" }}>
+              <LedgerEntryMatcher
+                entries={supplierEntries}
+                matchedId={(expLinksByIndex[i] ?? EMPTY_EXP).ledgerId}
+                onMatch={(id) => setExpLinks(i, { ledgerId: id, ledgerPaid: !!id })}
+                expenseAmount={t.amount}
+                markPaid={(expLinksByIndex[i] ?? EMPTY_EXP).ledgerPaid}
+                onMarkPaidChange={(next) => setExpLinks(i, { ledgerPaid: next })}
+              />
+              <SupplierInvoiceMatcher
+                invoices={supplierInvoices ?? []}
+                matchedId={(expLinksByIndex[i] ?? EMPTY_EXP).siId}
+                onMatch={(id) => setExpLinks(i, { siId: id, siPaid: !!id })}
+                expenseAmount={t.amount}
+                markPaid={(expLinksByIndex[i] ?? EMPTY_EXP).siPaid}
+                onMarkPaidChange={(next) => setExpLinks(i, { siPaid: next })}
               />
             </div>
           )}
