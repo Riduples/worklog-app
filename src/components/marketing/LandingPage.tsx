@@ -28,7 +28,7 @@ const FEATURES = [
   { icon: "🏦", title: "Snap your bank statement", desc: "Upload a statement and Worklog reads every transaction for you — no typing them out one by one." },
   { icon: "🧾", title: "Tax made clear", desc: "VAT, PAYE, provisional tax — see what's due and when, with a tax jar that sets money aside as you earn." },
   { icon: "📊", title: "Know your numbers", desc: "Profit, cash flow and what you're owed — always up to date, in language that actually makes sense." },
-  { icon: "📱", title: "Lives on your phone", desc: "Install it like an app. Built mobile-first for people who run their business on the move." },
+  { icon: "💻", title: "Phone, tablet or desktop", desc: "Snap a slip on your phone on-site, then do the admin on your laptop at home — it works on any screen and keeps everything in sync." },
 ];
 
 const STEPS = [
