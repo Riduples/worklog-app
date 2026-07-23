@@ -4,9 +4,9 @@ import { createClient } from "@/lib/supabase/server";
 import { LandingPage } from "@/components/marketing/LandingPage";
 
 export const metadata: Metadata = {
-  title: "Worklog — Bookkeeping for South African small businesses",
+  title: "Worklog — All-in-one app for South African small businesses",
   description:
-    "Track every Rand, send invoices, and stay ready for SARS — in plain English, priced in Rand. Try Worklog free for 14 days, no card needed.",
+    "Run the money, invoices, stock, staff and tax for your small business — all in one simple app, in plain English and priced in Rand. Try Worklog free for 14 days, no card needed.",
 };
 
 export default async function Home() {

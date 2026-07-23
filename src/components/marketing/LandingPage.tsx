@@ -23,6 +23,8 @@ const WHO = [
 const FEATURES = [
   { icon: "💰", title: "Money in & out", desc: "Log income and expenses in seconds — or just type it in plain words and let Quick Log sort it out." },
   { icon: "📤", title: "Invoices & quotes", desc: "Send professional invoices and quotes from your phone, and see at a glance who still owes you." },
+  { icon: "📦", title: "Stock & pricing", desc: "Track what you've got on hand, work out your true costs, and price every job so you never sell at a loss." },
+  { icon: "👷", title: "Staff & payroll", desc: "Keep a staff register and run pay with PAYE, UIF and SDL worked out for you — payslips and all." },
   { icon: "🏦", title: "Snap your bank statement", desc: "Upload a statement and Worklog reads every transaction for you — no typing them out one by one." },
   { icon: "🧾", title: "Tax made clear", desc: "VAT, PAYE, provisional tax — see what's due and when, with a tax jar that sets money aside as you earn." },
   { icon: "📊", title: "Know your numbers", desc: "Profit, cash flow and what you're owed — always up to date, in language that actually makes sense." },
@@ -86,15 +88,15 @@ export function LandingPage() {
         <div style={{ maxWidth: 1040, margin: "0 auto", display: "flex", flexWrap: "wrap", gap: 40, alignItems: "center" }}>
           <div style={{ flex: "1 1 340px", minWidth: 0 }}>
             <div style={{ fontSize: 12.5, fontWeight: 800, color: "#7DD3FC", textTransform: "uppercase", letterSpacing: 1, marginBottom: 14 }}>
-              Bookkeeping for South African small businesses
+              Money, stock, staff &amp; tax — all in one app
             </div>
             <h1 style={{ fontSize: 40, fontWeight: 800, lineHeight: 1.1, margin: "0 0 16px" }}>
               Every Rand.<br />Every Job.<br />
               <span style={{ color: ORANGE }}>Logged.</span>
             </h1>
             <p style={{ fontSize: 16, color: "#BAE6FD", lineHeight: 1.6, marginBottom: 24, maxWidth: 480 }}>
-              The dead-simple way for tradespeople, freelancers and small shops to track money in and out, send
-              invoices, and stay ready for SARS — without the accountant-speak.
+              The dead-simple way for tradespeople, freelancers and small shops to run their money, invoices, stock and
+              staff — and stay ready for SARS — without the accountant-speak.
             </p>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 16 }}>
               <Link
@@ -264,7 +266,7 @@ export function LandingPage() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/worklog-logo-light.png" alt="Worklog" style={{ height: 24, marginBottom: 12 }} />
             <p style={{ fontSize: 12.5, color: "#94a3b8", lineHeight: 1.6, maxWidth: 300 }}>
-              Bookkeeping that speaks your language. Every Rand, every job, logged.
+              Everything you need to run your small business — every Rand, every job, logged.
             </p>
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 40 }}>
