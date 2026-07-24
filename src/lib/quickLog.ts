@@ -31,6 +31,21 @@ export type QuickLogDraft = {
   suggestedTool: string; // handoff target, else ""
 };
 
+// Carries the server's error code so the modal can tell a monthly-cap block
+// ("quota_reached" → show an upgrade prompt) from a generic failure.
+export class QuickLogError extends Error {
+  code: string;
+  resetAt: string | null;
+  limit: number | null;
+  constructor(message: string, code: string, extra?: { resetAt?: string | null; limit?: number | null }) {
+    super(message);
+    this.name = "QuickLogError";
+    this.code = code;
+    this.resetAt = extra?.resetAt ?? null;
+    this.limit = extra?.limit ?? null;
+  }
+}
+
 export async function parseQuickLog(input: { text?: string; image?: QuickLogImage }): Promise<QuickLogDraft> {
   const res = await fetch("/api/quick-log", {
     method: "POST",
@@ -39,7 +54,11 @@ export async function parseQuickLog(input: { text?: string; image?: QuickLogImag
   });
   const data = await res.json();
   if (!res.ok) {
-    throw new Error(data.message || "Couldn't read that — please try again or type it manually.");
+    throw new QuickLogError(
+      data.message || "Couldn't read that — please try again or type it manually.",
+      data.error || "error",
+      { resetAt: data.reset_at, limit: data.limit }
+    );
   }
   return data.draft as QuickLogDraft;
 }

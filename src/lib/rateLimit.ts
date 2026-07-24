@@ -76,3 +76,60 @@ export async function enforceRateLimit(
     }
   );
 }
+
+type QuotaVerdict = {
+  allowed: boolean;
+  unlimited: boolean;
+  limit: number | null;
+  used: number;
+  remaining: number | null;
+  reset_at: string | null;
+};
+
+/** e.g. "1 August" — the SA-local day a monthly quota rolls over. */
+function resetLabel(iso: string | null): string {
+  if (!iso) return "the 1st of next month";
+  try {
+    return new Date(iso).toLocaleDateString("en-ZA", { day: "numeric", month: "long", timeZone: "Africa/Johannesburg" });
+  } catch {
+    return "the 1st of next month";
+  }
+}
+
+/**
+ * Counts this request against the business's MONTHLY AI quota (the per-tier
+ * packaging cap: Solo 150 / Trade 500 / Structured unlimited), keyed on the
+ * caller's business so staff logins share one pool. Separate from the hourly
+ * abuse limiter above and meant to run right after it — this consumes one log,
+ * so only call it once the request is really going to hit the model.
+ *
+ * Returns a 429 with error "quota_reached" (distinct from "rate_limited", so the
+ * client can show an upgrade prompt rather than a wait timer), or null to carry
+ * on. Fails OPEN for the same reason enforceRateLimit does — a broken quota
+ * check must not take Quick Log down. Unlimited plans always pass.
+ */
+export async function enforceAiQuota(
+  supabase: SupabaseClient,
+  route: RateLimitedRoute
+): Promise<NextResponse | null> {
+  const { data, error } = await supabase.rpc("consume_ai_quota", { p_route: route });
+
+  if (error) {
+    console.error(`[ai-quota] ${route}: quota check unavailable, allowing request —`, error.message);
+    return null;
+  }
+
+  const verdict = data as QuotaVerdict | null;
+  if (!verdict || verdict.allowed) return null;
+
+  return NextResponse.json(
+    {
+      error: "quota_reached",
+      message: `You've used all ${verdict.limit ?? ""} of this month's AI logs. You can still add income & expenses the normal way — or upgrade for more. Your AI logs reset on ${resetLabel(verdict.reset_at)}.`,
+      limit: verdict.limit,
+      used: verdict.used,
+      reset_at: verdict.reset_at,
+    },
+    { status: 429 }
+  );
+}

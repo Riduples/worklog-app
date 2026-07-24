@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@/lib/supabase/server";
-import { enforceRateLimit } from "@/lib/rateLimit";
+import { enforceRateLimit, enforceAiQuota } from "@/lib/rateLimit";
 import { ALL_PAYMENT_METHODS } from "@/lib/sarsCategories";
 
 export const runtime = "nodejs";
@@ -203,6 +203,13 @@ export async function POST(request: Request) {
         },
       ]
     : text;
+
+  // The per-tier monthly cap (Solo 150 / Trade 500 / Structured unlimited),
+  // consumed from the business's shared pool. After the hourly limiter and right
+  // before the model call, so a request blocked by the cap never spends. Manual
+  // income/expense entry is unaffected — only this AI shortcut is capped.
+  const overQuota = await enforceAiQuota(supabase, "quick-log");
+  if (overQuota) return overQuota;
 
   const client = new Anthropic();
 

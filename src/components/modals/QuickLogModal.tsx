@@ -2,13 +2,14 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { Modal } from "@/components/ui/Modal";
 import { Field } from "@/components/ui/Field";
 import { Row } from "@/components/ui/Row";
 import { InvoiceMatcher, paymentSettlesInvoice } from "@/components/ui/InvoiceMatcher";
 import { fmt, todayStr } from "@/lib/format";
 import { useTaxRates } from "@/lib/taxRates";
-import { parseQuickLog, fileToBase64, type QuickLogAction, type QuickLogDraft, type QuickLogImage } from "@/lib/quickLog";
+import { parseQuickLog, fileToBase64, QuickLogError, type QuickLogAction, type QuickLogDraft, type QuickLogImage } from "@/lib/quickLog";
 import { useCreateIncome } from "@/lib/supabase/hooks/useIncome";
 import { useInvoices, useUpdateInvoice } from "@/lib/supabase/hooks/useInvoices";
 import { useCreateExpense } from "@/lib/supabase/hooks/useExpenses";
@@ -19,6 +20,7 @@ import { useCreateTimeEntry } from "@/lib/supabase/hooks/useTimeEntries";
 import { useCreateContact } from "@/lib/supabase/hooks/useContacts";
 import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 import { useBankAccounts } from "@/lib/supabase/hooks/useBankAccounts";
+import { useAiQuota } from "@/lib/supabase/hooks/useAiQuota";
 import { BankAccountPicker } from "@/components/ui/BankAccountPicker";
 
 const EXAMPLES = [
@@ -54,6 +56,16 @@ const HANDOFF_TOOLS: Record<string, { label: string; href: string }> = {
   tax: { label: "Tax & SARS", href: "/tax" },
 };
 
+// "1 August" — the SA-local day the monthly AI allowance rolls over.
+function formatReset(iso: string | null): string {
+  if (!iso) return "next month";
+  try {
+    return new Date(iso).toLocaleDateString("en-ZA", { day: "numeric", month: "long", timeZone: "Africa/Johannesburg" });
+  } catch {
+    return "next month";
+  }
+}
+
 // Only the field with no sensible default blocks a save; dates fall back to today.
 function validateDraft(d: QuickLogDraft): string | null {
   switch (d.action) {
@@ -81,6 +93,7 @@ type HistoryEntry = { role: "user" | "assistant"; text: string };
 
 export function QuickLogModal({ onClose }: { onClose: () => void }) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [text, setText] = useState("");
   const [imageData, setImageData] = useState<QuickLogImage | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -92,6 +105,7 @@ export function QuickLogModal({ onClose }: { onClose: () => void }) {
   const [markPaid, setMarkPaid] = useState(false);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [accountId, setAccountId] = useState<string | null>(null);
+  const [quotaBlock, setQuotaBlock] = useState<{ message: string; resetAt: string | null } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
@@ -106,6 +120,7 @@ export function QuickLogModal({ onClose }: { onClose: () => void }) {
   const { data: invoices } = useInvoices();
   const { data: business } = useBusinessProfile();
   const { data: accounts } = useBankAccounts();
+  const { data: quota } = useAiQuota();
   const updateInvoice = useUpdateInvoice();
 
   // Default to the business's default account, once. It persists across entries
@@ -117,6 +132,14 @@ export function QuickLogModal({ onClose }: { onClose: () => void }) {
       setAccountId(accounts.find((a) => a.is_default)?.id ?? null);
     }
   }, [accounts]);
+
+  // Which tier to nudge toward when the monthly AI cap is hit.
+  const upgradePitch =
+    business?.plan === "solo"
+      ? " Upgrade to Trade for 500 AI logs a month."
+      : business?.plan === "trade"
+        ? " Upgrade to Structured for unlimited AI logging."
+        : "";
 
   // Quick Log amounts are what the user says arrived, so VAT is inside them.
   const isVatRegistered = !!business?.vat_number;
@@ -170,8 +193,15 @@ export function QuickLogModal({ onClose }: { onClose: () => void }) {
       }
       setDraft(result);
       setHistory((h) => [...h, { role: "user", text: imageData ? "📷 Photo/document uploaded" : text.trim() }]);
+      // A successful read consumed one from the monthly pool — refresh the count.
+      queryClient.invalidateQueries({ queryKey: ["ai-quota"] });
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Couldn't read that — please try again or type it manually.");
+      if (e instanceof QuickLogError && e.code === "quota_reached") {
+        setQuotaBlock({ message: e.message, resetAt: e.resetAt });
+        queryClient.invalidateQueries({ queryKey: ["ai-quota"] });
+      } else {
+        setError(e instanceof Error ? e.message : "Couldn't read that — please try again or type it manually.");
+      }
     } finally {
       setLoading(false);
     }
@@ -362,6 +392,51 @@ export function QuickLogModal({ onClose }: { onClose: () => void }) {
         Log money in or out, a booking, stock, a trip, hours or a new contact — type it, say it, or snap a photo. Worklog
         reads it and logs it for you to confirm.
       </div>
+
+      {quota && !quota.unlimited && quota.remaining != null && !quotaBlock && (
+        <div
+          style={{
+            fontSize: 11.5,
+            fontWeight: 700,
+            color: quota.remaining <= 10 ? "#b45309" : "#94a3b8",
+            margin: "-8px 2px 14px",
+          }}
+        >
+          {quota.remaining > 0
+            ? `${quota.remaining} of ${quota.limit} AI logs left this month`
+            : "No AI logs left this month"}
+        </div>
+      )}
+
+      {quotaBlock && (
+        <div style={{ background: "#fff", border: "2px solid #F59E0B", borderRadius: 16, padding: 18, marginBottom: 18 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+            <span style={{ fontSize: 20 }}>🚦</span>
+            <span style={{ fontSize: 15, fontWeight: 800, color: "#92400e" }}>That&apos;s this month&apos;s AI logs</span>
+          </div>
+          <p style={{ fontSize: 13, color: "#475569", lineHeight: 1.6, margin: "0 0 16px" }}>
+            You can still add income &amp; expenses the normal way — Quick Log&apos;s AI just takes a rest until{" "}
+            {formatReset(quotaBlock.resetAt)}.{upgradePitch}
+          </p>
+          <div style={{ display: "flex", gap: 10 }}>
+            <button
+              onClick={onClose}
+              style={{ flex: 1, background: "#f1f5f9", border: "none", borderRadius: 12, padding: "13px", fontSize: 14, fontWeight: 700, color: "#64748b", cursor: "pointer" }}
+            >
+              Close
+            </button>
+            <button
+              onClick={() => {
+                router.push("/pricing");
+                onClose();
+              }}
+              style={{ flex: 2, background: "#F59E0B", border: "none", borderRadius: 12, padding: "13px", fontSize: 14, fontWeight: 700, color: "#fff", cursor: "pointer" }}
+            >
+              See plans →
+            </button>
+          </div>
+        </div>
+      )}
 
       {history.length > 0 && (
         <div style={{ marginBottom: 16 }}>
@@ -593,7 +668,7 @@ export function QuickLogModal({ onClose }: { onClose: () => void }) {
         </div>
       )}
 
-      {!draft && (
+      {!draft && !quotaBlock && (
         <>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 16 }}>
             <button

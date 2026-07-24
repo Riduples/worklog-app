@@ -75,26 +75,40 @@ export type Database = {
           },
         ]
       }
-      api_rate_limits: {
+      ai_usage_monthly: {
         Row: {
+          business_id: string
+          created_at: string
+          period: string
           request_count: number
           route: string
-          user_id: string
-          window_start: string
+          updated_at: string
         }
         Insert: {
+          business_id: string
+          created_at?: string
+          period: string
           request_count?: number
           route: string
-          user_id: string
-          window_start: string
+          updated_at?: string
         }
         Update: {
+          business_id?: string
+          created_at?: string
+          period?: string
           request_count?: number
           route?: string
-          user_id?: string
-          window_start?: string
+          updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "ai_usage_monthly_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       announcements: {
         Row: {
@@ -135,6 +149,27 @@ export type Database = {
           message?: string
           starts_at?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      api_rate_limits: {
+        Row: {
+          request_count: number
+          route: string
+          user_id: string
+          window_start: string
+        }
+        Insert: {
+          request_count?: number
+          route: string
+          user_id: string
+          window_start: string
+        }
+        Update: {
+          request_count?: number
+          route?: string
+          user_id?: string
+          window_start?: string
         }
         Relationships: []
       }
@@ -1954,56 +1989,63 @@ export type Database = {
     Functions: {
       accept_invite: { Args: { p_token: string }; Returns: string }
       admin_add_admin: { Args: { p_email: string }; Returns: undefined }
-      admin_list_admins: {
-        Args: never
-        Returns: {
-          user_id: string
-          email: string | null
-          note: string | null
-          created_at: string
-        }[]
-      }
-      admin_remove_admin: { Args: { p_user_id: string }; Returns: undefined }
       admin_extend_trial: {
         Args: { p_business_id: string; p_days: number }
         Returns: undefined
+      }
+      admin_list_admins: {
+        Args: never
+        Returns: {
+          created_at: string
+          email: string
+          note: string
+          user_id: string
+        }[]
       }
       admin_list_businesses: {
         Args: never
         Returns: {
           business_id: string
-          name: string
-          plan: string
-          business_type: string | null
+          business_type: string
           created_at: string
-          owner_email: string | null
+          current_period_end: string
           member_count: number
-          sub_status: string | null
-          sub_tier: string | null
-          current_period_end: string | null
+          name: string
+          owner_email: string
+          plan: string
+          sub_status: string
+          sub_tier: string
         }[]
       }
       admin_list_payment_events: {
         Args: { p_business_id?: string; p_limit?: number }
         Returns: {
+          business_id: string
+          business_name: string
+          event_type: string
           id: string
-          business_id: string | null
-          business_name: string | null
-          event_type: string | null
-          signature_valid: boolean | null
-          source_ip: string | null
           processed_at: string
-          raw_payload: Json | null
+          raw_payload: Json
+          signature_valid: boolean
+          source_ip: string
         }[]
       }
+      admin_remove_admin: { Args: { p_user_id: string }; Returns: undefined }
       admin_set_plan: {
-        Args: { p_business_id: string; p_period_end: string; p_status: string; p_tier: string }
+        Args: {
+          p_business_id: string
+          p_period_end: string
+          p_status: string
+          p_tier: string
+        }
         Returns: undefined
       }
+      ai_monthly_cap: { Args: { p_plan: string }; Returns: number }
       business_is_writable: {
         Args: { p_business_id: string }
         Returns: boolean
       }
+      consume_ai_quota: { Args: { p_route: string }; Returns: Json }
       consume_rate_limit: { Args: { p_route: string }; Returns: Json }
       convert_quote_to_invoice: {
         Args: {
@@ -2112,6 +2154,7 @@ export type Database = {
       }
       expire_trials: { Args: never; Returns: number }
       generate_recurring_invoices: { Args: never; Returns: number }
+      get_ai_quota: { Args: { p_route: string }; Returns: Json }
       get_business_members: {
         Args: { target_business_id: string }
         Returns: {
@@ -2155,6 +2198,13 @@ export type Database = {
       recurrence_next: {
         Args: { p_from: string; p_recurrence: string }
         Returns: string
+      }
+      run_dunning: {
+        Args: never
+        Returns: {
+          moved_to_past_due: number
+          moved_to_read_only: number
+        }[]
       }
       tool_access_rank: { Args: { p_level: string }; Returns: number }
       update_business_plan: {

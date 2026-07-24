@@ -77,6 +77,11 @@ export const PLAN_FEATURES: Record<Plan, { tagline: string; features: string[] }
 // even though their features land later — an inert flag no UI reads yet.
 export type Entitlements = {
   maxMembers: number | null; // null = unlimited
+  // AI Quick Log calls per calendar month, per business (shared across staff
+  // logins). null = unlimited. The DB is the authority — ai_monthly_cap() in the
+  // ai_usage_monthly_quota migration mirrors these; keep the two in step, same as
+  // maxMembers/plan_allows. This copy drives the client's remaining-count display.
+  monthlyAiLogs: number | null;
   hasStaffTools: boolean; // staff register + payroll (staffregister/payrun/advances/leave)
   hasBuyingDocs: boolean; // purchase orders, supplier invoices, remittances, statements
   hasRecurringInvoices: boolean;
@@ -91,6 +96,7 @@ export type Entitlements = {
 export const ENTITLEMENTS: Record<Plan, Entitlements> = {
   solo: {
     maxMembers: 1,
+    monthlyAiLogs: 150,
     hasStaffTools: false,
     hasBuyingDocs: false,
     hasRecurringInvoices: false,
@@ -103,6 +109,7 @@ export const ENTITLEMENTS: Record<Plan, Entitlements> = {
   },
   trade: {
     maxMembers: 6,
+    monthlyAiLogs: 500,
     hasStaffTools: true,
     hasBuyingDocs: true,
     hasRecurringInvoices: true,
@@ -115,6 +122,7 @@ export const ENTITLEMENTS: Record<Plan, Entitlements> = {
   },
   structured: {
     maxMembers: null,
+    monthlyAiLogs: null,
     hasStaffTools: true,
     hasBuyingDocs: true,
     hasRecurringInvoices: true,
