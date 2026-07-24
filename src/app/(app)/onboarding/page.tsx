@@ -15,11 +15,7 @@ export default async function OnboardingPage() {
   if (profile) redirect("/dashboard");
 
   return (
-    <div style={{ padding: "40px 20px" }}>
-      <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", marginBottom: 4 }}>Set up your business</h1>
-      <p style={{ fontSize: 13, color: "#64748b", marginBottom: 22 }}>
-        This shows up as the &ldquo;From&rdquo; details on every quote, invoice and purchase order.
-      </p>
+    <div style={{ padding: "28px 20px 60px", maxWidth: 520, margin: "0 auto" }}>
       <OnboardingForm userId={user.id} userEmail={user.email ?? ""} />
     </div>
   );
