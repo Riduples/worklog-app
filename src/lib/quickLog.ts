@@ -1,12 +1,34 @@
 export type QuickLogImage = { base64: string; mediaType: string };
 
+// The inline actions Quick Log can save on its own, plus "handoff" — the marker
+// for anything that needs a full Worklog tool (invoice, payroll, tax, …) instead.
+export type QuickLogAction =
+  | "income"
+  | "expense"
+  | "booking"
+  | "stock"
+  | "mileage"
+  | "time"
+  | "contact"
+  | "handoff";
+
+// One flat shape covers every action; the fields that don't apply to a given
+// action come back as "" or null (the model is told to fill every field).
 export type QuickLogDraft = {
-  type: "income" | "expense";
+  action: QuickLogAction;
+  confidence: "high" | "low";
   amount: number | null;
   whatFor: string;
   person: string;
   method: string;
-  confidence: "high" | "low";
+  date: string; // YYYY-MM-DD (booking / mileage / time), else ""
+  time: string; // HH:MM (booking), else ""
+  quantity: number | null; // stock
+  km: number | null; // mileage
+  hours: number | null; // time
+  contactType: string; // "client" | "supplier" | ""
+  phone: string; // contact
+  suggestedTool: string; // handoff target, else ""
 };
 
 export async function parseQuickLog(input: { text?: string; image?: QuickLogImage }): Promise<QuickLogDraft> {
