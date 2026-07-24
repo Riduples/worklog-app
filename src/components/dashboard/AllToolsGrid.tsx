@@ -79,7 +79,6 @@ const NAV_CATEGORIES: { id: string; items: NavItem[] }[] = [
       { href: "/payroll", icon: "💵", label: "Pay Run", toolId: "payrun", lockId: "payrun" },
       { href: "/advances", icon: "💰", label: "Advances", toolId: "advances", lockId: "advances" },
       { href: "/leave", icon: "🏖️", label: "Leave", toolId: "leave", lockId: "leave" },
-      { href: "/team", icon: "👥", label: "Team", ownerOnly: true },
     ],
   },
   {
@@ -87,7 +86,6 @@ const NAV_CATEGORIES: { id: string; items: NavItem[] }[] = [
     items: [
       { href: "/bank-statement", icon: "🏦", label: "Import Statement", toolId: "bankstatement" },
       { href: "/cash-up", icon: "🧮", label: "Daily Cash-Up", toolId: "cashup" },
-      { href: "/accounts", icon: "💳", label: "Bank Accounts", ownerOnly: true },
       { href: "/ledger", icon: "📒", label: "Ledgers", toolId: "ledger" },
     ],
   },

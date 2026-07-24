@@ -186,8 +186,7 @@ export function Sidebar() {
           >
             Business
           </div>
-          {navLink("/accounts", "💳", "Bank accounts", isActive("/accounts"))}
-          {navLink("/team", "👤", "Team", isActive("/team"))}
+          {navLink("/business", "🏢", "Business Hub", isActive("/business") || isActive("/accounts") || isActive("/team"))}
         </div>
       )}
 

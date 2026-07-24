@@ -17,7 +17,6 @@ import { ExpenseModal } from "@/components/modals/ExpenseModal";
 import { QuickLogModal } from "@/components/modals/QuickLogModal";
 import { UpgradeModal } from "@/components/modals/UpgradeModal";
 import { HelpAssistantModal } from "@/components/modals/HelpAssistantModal";
-import { BusinessDetailsModal } from "@/components/modals/BusinessDetailsModal";
 import { LogoutButton } from "@/components/auth/LogoutButton";
 import { TrialStatusBar } from "@/components/billing/TrialStatusBar";
 import { useWriteAccess } from "@/lib/writeAccess";
@@ -53,7 +52,7 @@ export function DashboardView({ businessName }: { businessName: string }) {
   const { data: bookings } = useBookings();
   const { data: accounts } = useBankAccounts();
   const { data: transfers } = useAccountTransfers();
-  const [modal, setModal] = useState<"income" | "expense" | "quicklog" | "help" | "business" | null>(null);
+  const [modal, setModal] = useState<"income" | "expense" | "quicklog" | "help" | null>(null);
   const [period, setPeriod] = useState<"month" | "year" | "all">("year");
   const [account, setAccount] = useState<AccountFilter>(ALL_ACCOUNTS);
   const [toolsOpen, setToolsOpen] = useState(false);
@@ -211,9 +210,9 @@ export function DashboardView({ businessName }: { businessName: string }) {
               </Link>
             )}
             {isOwner && business && (
-              <button onClick={() => setModal("business")} aria-label="Business details" className="dash-icon-btn">
-                ⚙
-              </button>
+              <Link href="/business" className="dash-text-btn" style={{ textDecoration: "none" }}>
+                Business Hub
+              </Link>
             )}
             <button onClick={() => setModal("help")} className="dash-text-btn">
               Help
@@ -400,7 +399,6 @@ export function DashboardView({ businessName }: { businessName: string }) {
       {modal === "expense" && <ExpenseModal onClose={() => setModal(null)} />}
       {modal === "quicklog" && <QuickLogModal onClose={() => setModal(null)} />}
       {modal === "help" && <HelpAssistantModal onClose={() => setModal(null)} />}
-      {modal === "business" && business && <BusinessDetailsModal business={business} onClose={() => setModal(null)} />}
       {upgradeFeature && business && (
         <UpgradeModal feature={upgradeFeature} currentPlan={plan} isOwner={isOwner} onClose={() => setUpgradeFeature(null)} />
       )}
