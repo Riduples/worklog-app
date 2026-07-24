@@ -24,7 +24,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
         "blocks": [
           {
             "type": "paragraph",
-            "text": "On this first screen you fill in a short form. Only the business name is needed to carry on. Everything else you can leave blank and add later."
+            "text": "Setting up is a short setup wizard — a few quick steps with a progress bar along the top. Only the business name is required to carry on. On the later steps you can tap \"Skip for now\" and add them another time."
           },
           {
             "type": "steps",
@@ -35,7 +35,8 @@ export const HELP_ARTICLES: HelpArticle[] = [
               "In \"Phone\", type your contact number.",
               "In \"Email\", check the address that is already filled in and change it if you need to.",
               "If you are VAT registered, type your number in \"VAT number (optional)\". Leave it blank if you are not.",
-              "Tap \"Start my free trial\" to save and go to your home screen."
+              "Tap \"Continue\" to move through the remaining steps — your contact details, how customers pay you, and Tax & SARS — filling in what you can and tapping \"Skip for now\" on the rest, then tap \"Finish setup\" on the last step.",
+              "Worklog then shows a \"You're all set up! 🎉\" screen with optional next steps, like adding your bank accounts or inviting your team, and a \"Go to my dashboard\" button to start."
             ]
           },
           {
@@ -63,7 +64,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "bullets",
             "items": [
-              "From the home screen, tap the gear icon (⚙) at the top right.",
+              "From the home screen, tap the \"Business Hub\" button at the top right, then tap the \"Business details\" card.",
               "Or open Tax & SARS, find the \"Business tax details\" block, and tap \"Edit\"."
             ]
           },
@@ -73,7 +74,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           },
           {
             "type": "tip",
-            "text": "Only the business owner sees the gear icon and the Edit button, so only the owner can change these details."
+            "text": "Only the business owner sees the \"Business Hub\" button and the Edit button, so only the owner can change these details."
           }
         ]
       },
@@ -173,7 +174,43 @@ export const HELP_ARTICLES: HelpArticle[] = [
       "add-customers-and-suppliers",
       "log-money-in-and-out",
       "tax-jar",
-      "getting-help"
+      "getting-help",
+      "business-hub"
+    ]
+  },
+  {
+    "slug": "business-hub",
+    "category": "Getting started",
+    "title": "Find everything in the Business Hub",
+    "summary": "The Business Hub is where the owner sets the business up once — your business details, your bank accounts, and your team — all in one place.",
+    "sections": [
+      {
+        "heading": "What the Business Hub is",
+        "blocks": [
+          { "type": "paragraph", "text": "The Business Hub is where you set your business up once and change it whenever you need to. Tap the \"Business Hub\" button at the top right of your home screen to open it. Only the business owner sees this button." },
+          { "type": "paragraph", "text": "It is a page of cards. Each card opens one part of your setup, so the things you do not touch every day are gathered in one place instead of being mixed in with your daily tools." }
+        ]
+      },
+      {
+        "heading": "The three cards",
+        "blocks": [
+          { "type": "bullets", "items": [
+            "Business details — your logo, contact details, how customers pay you (the bank details that print on your documents), and your VAT & SARS tax details. Opens the Business details screen.",
+            "Bank accounts — the accounts you track your money against, with balances and a view per account. Opens the Bank accounts screen.",
+            "Team & permissions — invite people to your business and set what each person is allowed to see and do. Opens the Team screen."
+          ] }
+        ]
+      },
+      {
+        "heading": "Moved here from somewhere else?",
+        "blocks": [
+          { "type": "tip", "text": "If you used Worklog before, a few things now live here. The old gear icon at the top of the home screen is now the \"Business Hub\" button, and Bank accounts and Team are no longer in the tools list — you reach them from the Business Hub instead." }
+        ]
+      }
+    ],
+    "related": [
+      "invite-your-team",
+      "team-permissions"
     ]
   },
   {
@@ -353,12 +390,16 @@ export const HELP_ARTICLES: HelpArticle[] = [
         "blocks": [
           {
             "type": "paragraph",
-            "text": "Quick Log is the gold button on your home screen. Instead of filling in a form, you tell Worklog what happened in plain words — or show it a receipt — and it fills in the entry for you to check. It works out on its own whether it was income or an expense."
+            "text": "Quick Log is the gold button on your home screen. Instead of filling in a form, you tell Worklog what happened in plain words — or show it a receipt — and it fills in the entry for you to check. For money, it works out on its own whether it was income or an expense."
+          },
+          {
+            "type": "paragraph",
+            "text": "Quick Log is not only for money any more. From the same box it can also start a booking, add stock, log a trip or hours worked, or save a new contact — and when you describe something bigger, like an invoice or a pay run, it points you to the right tool instead. The full Quick Log guide lists everything it handles; this section covers the money side."
           },
           {
             "type": "steps",
             "items": [
-              "Tap the gold Quick Log button.",
+              "Tap the gold \"Just tell me\" button (it opens a window titled Quick Log).",
               "Choose how you want to tell it: type in the What happened? box, tap Speak to say it out loud, tap Camera to photograph a receipt, or tap Upload to add a photo or document you already have.",
               "For typing or speaking, say it naturally, for example: R450 cash from Thabo for the gate fix, or Bought R200 fuel at Engen, paid card. There are example lines you can tap to fill in the box.",
               "Tap Log it. Worklog reads it and shows a card marked Income detected or Expense detected, with the amount, what it was for, who it was from or to, and the payment method.",
@@ -372,7 +413,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           },
           {
             "type": "warning",
-            "text": "Quick Log makes its best guess. If it puts a small double-check label on the card, or the amount or who-paid looks wrong, fix it in the form or discard it before saving. Speaking works best in Chrome or Safari; if voice does not work on your phone, just type it instead."
+            "text": "Quick Log makes its best guess. If it puts a small double-check label on the card, or the amount or who-paid looks wrong, fix it in the form or discard it before saving. Speaking works best in Chrome or Safari; if voice does not work on your phone, just type it instead. Reading your words or a photo uses AI, which has a monthly limit on each plan — see How many AI Quick Logs you get. When it runs out, Log income and Log expense above always keep working."
           }
         ]
       },
@@ -391,10 +432,234 @@ export const HELP_ARTICLES: HelpArticle[] = [
       }
     ],
     "related": [
+      "quick-log",
+      "quick-log-ai-limits",
       "match-a-payment-to-an-invoice",
       "import-a-bank-statement",
       "tax-jar",
       "set-up-bank-accounts"
+    ]
+  },
+  {
+    "slug": "quick-log",
+    "category": "Getting started",
+    "title": "Quick Log — record almost anything",
+    "summary": "The gold button that turns a typed, spoken or photographed note into the right entry — income, an expense, a booking, stock, a trip, hours worked or a new contact — and points bigger jobs at the right tool.",
+    "sections": [
+      {
+        "heading": "What Quick Log is",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "Quick Log is the gold button on your home screen. It is the fastest way to get something into Worklog: instead of finding the right tool and filling in a form, you just say what happened — in plain words, out loud, or by snapping a photo — and Worklog works out what it was and fills in the entry for you to check and save."
+          },
+          {
+            "type": "paragraph",
+            "text": "It used to be for money in and out only. Now one note can become any of seven kinds of entry, and anything too big for a quick note gets pointed at the proper tool instead. You never have to decide which one first — you just describe it."
+          }
+        ]
+      },
+      {
+        "heading": "The seven things it can log",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "Quick Log reads your note and picks one of these on its own. You do not choose — you just describe what happened:"
+          },
+          {
+            "type": "bullets",
+            "items": [
+              "Income — money that came in. \"R450 cash from Thabo for the gate fix\".",
+              "Expense — money that went out. \"Bought R200 fuel at Engen, paid card\". A photo of a till slip is almost always an expense.",
+              "Booking — an appointment set for a client, with no money paid yet. \"Book Sarah for Friday 2pm, braai catering R1500\".",
+              "Stock — an item and quantity to add to your price list. \"Add 20 bags cement at R80 each\".",
+              "Trip — kilometres driven for the business, for your mileage log. \"Drove 45km to Sandton for a site visit\".",
+              "Time — hours worked on a job. \"3 hours plumbing for Mrs Khumalo\".",
+              "Contact — a new client or supplier to save. \"Add a new supplier, BuildIt, 0123456789\"."
+            ]
+          },
+          {
+            "type": "tip",
+            "text": "If money changed hands, Quick Log treats it as income or an expense first — even if a job or appointment is mentioned. \"Sarah paid R500 for today's appointment\" is logged as income, not a booking."
+          }
+        ]
+      },
+      {
+        "heading": "Four ways to tell it",
+        "blocks": [
+          {
+            "type": "bullets",
+            "items": [
+              "Type — write it in the What happened? box. Tap one of the example lines to fill the box, then change it.",
+              "Speak — tap Speak and say it out loud. Worklog turns your voice into words for you.",
+              "Camera — tap Camera to photograph a receipt, invoice or handwritten note. Worklog reads the total and the details off it.",
+              "Upload — tap Upload to add a photo or document already on your phone."
+            ]
+          },
+          {
+            "type": "warning",
+            "text": "Speaking works best in Chrome or Safari. If voice does not work on your phone, just type it instead — it reads exactly the same. Voice is set to South African English, so local names and places come through better."
+          }
+        ]
+      },
+      {
+        "heading": "How it works, step by step",
+        "blocks": [
+          {
+            "type": "steps",
+            "items": [
+              "Tap the gold \"Just tell me\" button on your home screen (it opens a window titled Quick Log).",
+              "Tell it what happened — type, Speak, Camera or Upload. Say it naturally; mixing English, Afrikaans, isiZulu or other languages, and short SMS-style spelling, are all fine.",
+              "Tap Log it. Worklog reads it and shows a card with what it worked out — for example Income detected, Booking detected or Trip detected — with the amounts and details filled in.",
+              "Check the card. Fix anything that looks wrong, and add the extra bits each kind of entry offers (for income, link an invoice you sent and pick the bank account).",
+              "Tap Confirm & Save to keep it, or Discard to throw it away and start again."
+            ]
+          },
+          {
+            "type": "tip",
+            "text": "The window stays open after you save, so you can rattle off several entries one after another — an income here, a trip there, a new contact — handy at the end of a busy day. Each one you save is listed at the top so you can see what went in."
+          }
+        ]
+      },
+      {
+        "heading": "When it hands you to a bigger tool",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "Some jobs need a proper document or a few more details than a quick note can hold. When you describe one of these, Quick Log does not try to build it — instead it shows a card that says something like \"Better in the Invoices tool\", with a button to open that tool now or leave it for later."
+          },
+          {
+            "type": "bullets",
+            "items": [
+              "Making or sending an invoice → opens Invoices.",
+              "Making a quote → opens Quotes.",
+              "A purchase order → opens Purchase Orders.",
+              "Recording a supplier's invoice → opens Supplier Invoices.",
+              "A customer statement → opens Statements.",
+              "Running payroll or a payslip → opens Pay Run.",
+              "Adding a staff member → opens Staff Register.",
+              "Anything about VAT or tax → opens Tax & SARS."
+            ]
+          },
+          {
+            "type": "tip",
+            "text": "So \"make an invoice for Sipho for R2000\" does not log R2000 as income — an invoice is a bill you send, not money received yet. Quick Log opens the Invoices tool with that in mind, and you log the payment later when Sipho actually pays."
+          }
+        ]
+      },
+      {
+        "heading": "Snapping receipts and photos",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "A photo is often the quickest way of all — no typing. Point the camera at a till slip or supplier invoice, or upload one you already have, and Worklog pulls out the total, what it was for, and who it was from. You can add a line of extra detail underneath, like \"paid by card, from Sipho\", before you tap Log it."
+          },
+          {
+            "type": "tip",
+            "text": "Worklog automatically shrinks the photo before sending it, so a Quick Log uses far less of your mobile data than sending the full-size picture — while keeping the receipt sharp enough to read. Hold the phone steady and get the whole slip in the frame for the best read."
+          }
+        ]
+      },
+      {
+        "heading": "Good to know",
+        "blocks": [
+          {
+            "type": "bullets",
+            "items": [
+              "Always check the card before saving. If Worklog is not sure, it puts a small \"double-check\" label on the card — look twice at the amount and the name.",
+              "For income, the amount is the full amount that came in; Worklog takes any VAT back out for you and sets aside a share in your tax jar.",
+              "Reading your words or a photo uses AI, which has a monthly limit on each plan. When you reach it the AI reading pauses, but you can always keep logging money by hand — see How many AI Quick Logs you get.",
+              "Quick Log is a shortcut, not a separate set of records. Everything it saves lands in the same place as the normal tools, so your reports and tax numbers stay right."
+            ]
+          }
+        ]
+      }
+    ],
+    "related": [
+      "log-money-in-and-out",
+      "quick-log-ai-limits",
+      "diary-bookings",
+      "trip-log-mileage",
+      "time-log",
+      "manage-your-stock",
+      "add-customers-and-suppliers"
+    ]
+  },
+  {
+    "slug": "quick-log-ai-limits",
+    "category": "Getting started",
+    "title": "How many AI Quick Logs you get",
+    "summary": "Quick Log's AI reading has a monthly limit on each plan. Here is how many you get, what happens when you reach it, and why you can always keep logging by hand.",
+    "sections": [
+      {
+        "heading": "Why there is a limit",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "When you type, speak or photograph something into Quick Log, Worklog uses AI to read it and work out the entry. That reading costs money to run, so each plan includes a set number of AI logs a month. It is a generous bundle — enough for normal day-to-day logging — and the ordinary forms are never limited."
+          }
+        ]
+      },
+      {
+        "heading": "How many you get",
+        "blocks": [
+          {
+            "type": "bullets",
+            "items": [
+              "Solo — 150 AI logs a month.",
+              "Trade — 500 AI logs a month.",
+              "Structured — unlimited AI logs."
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "The count is per calendar month and starts fresh on the 1st. Anything you did not use does not carry over."
+          }
+        ]
+      },
+      {
+        "heading": "What counts as one log",
+        "blocks": [
+          {
+            "type": "bullets",
+            "items": [
+              "Each time Worklog reads a note for you counts as one — whether you typed it, spoke it, or sent a photo. A photo and a line of text both count the same: one each.",
+              "The bundle belongs to the business, not to each person. If you have staff with their own logins, everyone shares the same monthly pool.",
+              "Only the AI reading counts. Saving the entry, and everything you do in the normal forms, does not use the bundle."
+            ]
+          }
+        ]
+      },
+      {
+        "heading": "You can always log by hand",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "If the business uses up its AI logs for the month, the Quick Log AI shortcut pauses until the 1st — but logging your money never stops. Log income and Log expense on the home screen keep working exactly as before, with no limit at all. The other tools — the Diary, your price list, the Trip Log and so on — are always there to enter things by hand too."
+          },
+          {
+            "type": "tip",
+            "text": "So reaching the limit only takes away the AI shortcut, not the ability to keep your books. Your records carry on as normal; you just fill in the form yourself instead of describing it."
+          }
+        ]
+      },
+      {
+        "heading": "Seeing how many you have left, and getting more",
+        "blocks": [
+          {
+            "type": "bullets",
+            "items": [
+              "Worklog keeps track of how many AI logs the business has used this month and shows how many are left.",
+              "When the bundle runs out, Quick Log tells you and offers to move to a plan with more — Trade for 500 a month, or Structured for unlimited.",
+              "Upgrading takes effect straight away, so the AI shortcut comes back as soon as you are on the new plan; you do not have to wait for the 1st."
+            ]
+          }
+        ]
+      }
+    ],
+    "related": [
+      "quick-log",
+      "log-money-in-and-out"
     ]
   },
   {
@@ -950,6 +1215,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "bullets",
             "items": [
+              "Customer Statements are included from the Trade plan. On Solo the tool shows a lock and opening it prompts you to upgrade.",
               "You need invoices for the customer already. A statement is built from those invoices, so a customer with no invoices will just show No invoices found.",
               "Worklog does not send email. You share a statement by saving it as a PDF or through your phone's share sheet, usually WhatsApp."
             ]
@@ -1002,7 +1268,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           },
           {
             "type": "warning",
-            "text": "If you are on a free trial or your account is read-only, the statement may come out with a watermark across it. Once you are on a paid plan, the watermark falls away."
+            "text": "If you are on a free trial or your account is read-only, the statement may come out with a watermark across it. Once your trial converts to a paid subscription (statements come with the Trade plan and up), the watermark falls away."
           }
         ]
       }
@@ -1408,8 +1674,8 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "steps",
             "items": [
-              "Open Remittance Advice from the Purchases section.",
-              "Under Select supplier, start typing the supplier's name, or tap the 🏪 List button to pick from your suppliers. Suppliers who still owe you show how much next to their name.",
+              "Open Remittance from the Purchases section.",
+              "Under Select supplier, start typing the supplier's name, or tap the 🏪 List button to pick from your suppliers. Suppliers you still owe show how much next to their name.",
               "Under Select invoices you are paying, tap each invoice you want to settle. The box turns orange and shows a ticked ☑ mark. Tap it again to remove it.",
               "Check the dark blue summary bar, which shows how many invoices you have selected and the total.",
               "Leave Payment amount blank to pay the full selected total, or type an amount if you are paying a different figure.",
@@ -1703,7 +1969,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           },
           {
             "type": "paragraph",
-            "text": "You will find this under Money, on the Bank accounts screen."
+            "text": "You reach this from the \"Business Hub\" button at the top right of your home screen, then the \"Bank accounts\" card. Only the business owner sees the Business Hub."
           }
         ]
       },
@@ -1722,7 +1988,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "steps",
             "items": [
-              "Open Bank accounts under Money.",
+              "Open the Business Hub (the button at the top right of your home screen) and tap the \"Bank accounts\" card.",
               "Tap + Add account.",
               "In Account name, type a name you will recognise, for example FNB Cheque or Till float.",
               "Bank (optional): type the bank, for example FNB. You can leave this blank.",
@@ -1824,7 +2090,8 @@ export const HELP_ARTICLES: HelpArticle[] = [
       "log-money-in-and-out",
       "import-a-bank-statement",
       "daily-cash-up",
-      "cash-flow"
+      "cash-flow",
+      "business-hub"
     ]
   },
   {
@@ -2054,7 +2321,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           },
           {
             "type": "paragraph",
-            "text": "You will find it under Scheduling. The screen is called Time Tracker."
+            "text": "You will find it under the \"Scheduling System\" tools card — the group that also holds Bookings and Mileage — or the \"Work\" group on the desktop sidebar. The screen is called Time Tracker."
           }
         ]
       },
@@ -2152,7 +2419,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
             "type": "bullets",
             "items": [
               "Check your car's odometer before you leave and again when you get back, so you have a start and an end reading.",
-              "The Mileage tool is under Scheduling. Open it and you will see the heading Mileage."
+              "The Mileage tool is under the \"Scheduling System\" tools card — the group that also holds Bookings and Time — or the \"Work\" group on the desktop sidebar. Open it and you will see the heading Mileage."
             ]
           }
         ]
@@ -2342,7 +2609,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           },
           {
             "type": "tip",
-            "text": "Contractors are treated differently on purpose: no UIF, no PAYE and no leave. When you pay a contractor, log it as an expense under \"Subcontractor / contract labour\" rather than running them through Pay Run."
+            "text": "Contractors are treated differently on purpose: no UIF, no PAYE and no leave. You can still pay a contractor through Pay Run — it simply leaves off UIF and PAYE. Or, if you would rather not run them through payroll, log what you pay them as an expense under \"Subcontractor / contract labour\"."
           }
         ]
       }
@@ -2380,7 +2647,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
             "type": "bullets",
             "items": [
               "Add the person in your Staff Register first. If nobody is registered, step 1 shows a link that says Add them in Staff Register.",
-              "Payroll is part of the Trade and Structured plans. On the Solo plan you can still work out a pay run, but sharing the payslip is locked until you upgrade.",
+              "Pay Run is part of the Trade and Structured plans. It is not available on the Solo plan, so if you are on Solo the app will prompt you to upgrade before you can run payroll.",
               "Make sure the worker's pay type and rate (hourly, daily or monthly) are set on their staff record, because the wizard uses those to work out the money."
             ]
           }
@@ -2720,7 +2987,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "steps",
             "items": [
-              "From Tax & Compliance, open EMP201.",
+              "From the Tax & Compliance card, open Tax & SARS, then tap the EMP201 tile.",
               "Use the ‹ and › arrows at the top to move to the month you want. The month and year show in the middle.",
               "Read the dark blue card. Along the top it shows the month and how many employees were paid, then the lines: PAYE (employee tax), UIF — employee, UIF — employer, and SDL (only if it applies to you).",
               "Check Total due to SARS at the bottom of the card, and the Due date shown just under it — the 7th of the following month."
@@ -2888,7 +3155,8 @@ export const HELP_ARTICLES: HelpArticle[] = [
       "team-permissions",
       "add-staff",
       "set-up-your-business",
-      "getting-help"
+      "getting-help",
+      "business-hub"
     ]
   },
   {
@@ -3036,7 +3304,8 @@ export const HELP_ARTICLES: HelpArticle[] = [
     "related": [
       "invite-your-team",
       "run-a-pay-run",
-      "compliance-dashboard"
+      "compliance-dashboard",
+      "business-hub"
     ]
   },
   {
@@ -3068,7 +3337,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "steps",
             "items": [
-              "Open Tax & Compliance.",
+              "Open Tax & SARS.",
               "In the Business tax details block, tap Edit.",
               "Type your VAT number, then choose your VAT period by tapping Monthly or Bi-monthly (the two-month cycle).",
               "Tap Save details. The VAT201 screen will now group the right months together."
@@ -3086,7 +3355,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "steps",
             "items": [
-              "Open Tax & Compliance and tap the VAT201 tile.",
+              "Open Tax & SARS and tap the VAT201 tile.",
               "Use the ‹ and › arrows at the top to move to the period you want. The month, or month-pair, you are looking at shows in the middle.",
               "Read the dark blue card. Output VAT (on sales) is the VAT you charged. Input VAT (on purchases) is the VAT you paid to suppliers.",
               "The bottom line shows VAT payable if you owe SARS, or VAT refund due if SARS owes you. That is Output VAT minus Input VAT."
@@ -3187,7 +3456,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
             "type": "bullets",
             "items": [
               "Provisional Tax is on the Structured plan.",
-              "You will find it under Tax & Compliance. There is a link at the top of the screen that reads Tax & Compliance to take you back.",
+              "You will find it under Tax & SARS. There is a link at the top of the screen that reads Tax & Compliance to take you back.",
               "Have any allowable deductions in mind (for example a home office or retirement annuity), and if you are doing Period 2, know what you already paid in Period 1."
             ]
           }
@@ -3199,7 +3468,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "steps",
             "items": [
-              "Open Provisional Tax under Tax & Compliance.",
+              "Open Provisional Tax under Tax & SARS.",
               "Under Tax period, tap the period you are estimating for. Each button shows the year, the months it covers and the due date, for example 2026 Period 1 (Feb–Aug) or 2026 Period 2 (Aug–Feb).",
               "Under Business type, choose Sole proprietor / Individual or Company (Pty) Ltd.",
               "If you chose Sole proprietor / Individual, pick Your age: Under 65, 65 – 74, or 75 or older. From 65 SARS gives you a bigger rebate, and bigger again from 75, which lowers what you owe.",
@@ -3284,7 +3553,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
             "type": "steps",
             "items": [
               "Go to Tax & SARS.",
-              "Open the Tax Jar Tracker.",
+              "Open the Tax Jar tile.",
               "Read the blue note near the top. It tells you the exact percentage Worklog is setting aside from each income entry.",
               "If you keep more than one bank account, use the account selector to switch between all accounts or just one."
             ]
@@ -3335,7 +3604,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "steps",
             "items": [
-              "Log the payment as an expense using Log Expense, or the gold Quick Log button on the home screen.",
+              "Log the payment as an expense using Log Expense, or the gold \"Just tell me\" button on the home screen (it opens a window titled Quick Log).",
               "For the category, choose \"Income tax paid to SARS\" or \"Provisional tax paid to SARS\".",
               "Come back to the Tax Jar Tracker and you'll see the amount reflected under Already paid to SARS."
             ]
@@ -3382,7 +3651,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           },
           {
             "type": "tip",
-            "text": "If you have not filled in your tax details yet, the dark business profile banner near the top shows a link that says Set up Business Details. Tap it to open your business tax details, where you add your VAT number, PAYE reference and SDL setting, then come back for a status that fits your business."
+            "text": "If you have not filled in your tax details yet, the dark business profile banner near the top shows a link that says Set up Business Details. Tap it to open the Tax & SARS page, then tap \"Edit\" on the \"Business tax details\" block to add your VAT number, PAYE reference and SDL setting, then come back for a status that fits your business."
           }
         ]
       },
@@ -3497,7 +3766,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "steps",
             "items": [
-              "Open Profit and Loss (under Reports).",
+              "Open Profit and Loss, under the \"Tax & Compliance\" tools card (or the \"Tax & Reports\" group on desktop).",
               "Choose the time you want to look at with the period buttons near the top: Today, This week, This month, This year, or All time. It opens on This month.",
               "Read the big Net Profit number at the top. It shows in blue when you are in profit and red when you are in the red.",
               "Just under that number you will see your margin as a percentage, which is how much of your revenue is left as profit. In brackets it tells you the basis it used, for example accrual basis."
@@ -3629,7 +3898,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "steps",
             "items": [
-              "Go to Cash Flow (under Money, or open /cashflow).",
+              "Go to Cash Flow — under the \"Tax & Compliance\" tools card, or the \"Tax & Reports\" group on desktop (or open /cashflow).",
               "Find the row of period buttons: Today, This week, This month, This year and All time. Tap the one you want. This month is chosen to start with.",
               "The dark blue NET CASH FLOW card updates straight away, showing your IN, your OUT, and the net figure for that period."
             ]
@@ -3732,10 +4001,14 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "steps",
             "items": [
-              "Go to Age Analysis under your reports.",
+              "Go to Age Analysis, under the \"Tax & Compliance\" tools card (or the \"Tax & Reports\" group on desktop).",
               "At the top you will see two buttons: Debtors, with Clients who owe you underneath, and Creditors, with Suppliers you owe underneath. The report opens on Debtors, so you are already looking at who owes you.",
               "Tap Creditors any time to flip over to what you owe your suppliers, and Debtors to flip back."
             ]
+          },
+          {
+            "type": "tip",
+            "text": "Age Analysis is a Trade feature, included from the Trade plan up. On the Solo plan the tool is locked, and opening it prompts you to upgrade."
           }
         ]
       },
@@ -3766,7 +4039,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
         "blocks": [
           {
             "type": "paragraph",
-            "text": "Under the summary bar, each unpaid invoice is listed inside its bucket, with the most overdue at the top. Every bucket also shows its own heading, like 31 to 60 days overdue, with the bucket total next to it. For each invoice you see the customer or supplier name, the document number, the date, how many days old it is, and the amount still owing."
+            "text": "Under the summary bar, each unpaid invoice is listed inside its bucket. The buckets run down the page freshest first — 0 to 30 days at the top, 90+ at the bottom — and within each bucket the most overdue invoice sits at the top. Every bucket also shows its own heading, like 31 to 60 days overdue, with the bucket total next to it. For each invoice you see the customer or supplier name, the document number, the date, how many days old it is, and the amount still owing."
           },
           {
             "type": "tip",
