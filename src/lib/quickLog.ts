@@ -44,15 +44,51 @@ export async function parseQuickLog(input: { text?: string; image?: QuickLogImag
   return data.draft as QuickLogDraft;
 }
 
+// The model caps a photo at ~1,576 input tokens once it's past ~1.4MP and resizes
+// server-side anyway, so a 12MP camera shot costs the same tokens as a 1568px one —
+// but uploading it costs the user 10-20x the mobile data and can blow past the API's
+// 5MB-per-image limit. So we downscale to a 1568px long edge before upload: same
+// token cost, full receipt legibility, a fraction of the bytes over the wire. Kept
+// at 1568 (not lower) because receipts have small print and OCR needs the pixels.
+const MAX_EDGE = 1568;
+
 export function fileToBase64(file: File): Promise<QuickLogImage> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = (e) => {
-      const result = e.target?.result as string;
-      const base64 = result.split(",")[1] ?? "";
-      resolve({ base64, mediaType: file.type || "image/jpeg" });
-    };
     reader.onerror = () => reject(new Error("Couldn't read that file."));
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      const raw = (): QuickLogImage => ({ base64: dataUrl.split(",")[1] ?? "", mediaType: file.type || "image/jpeg" });
+
+      const img = new Image();
+      img.onload = () => {
+        const longEdge = Math.max(img.width, img.height);
+        // Already within budget — don't re-encode (that would only add JPEG artefacts).
+        if (longEdge <= MAX_EDGE || !img.width || !img.height) {
+          resolve(raw());
+          return;
+        }
+        const scale = MAX_EDGE / longEdge;
+        const w = Math.round(img.width * scale);
+        const h = Math.round(img.height * scale);
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          resolve(raw());
+          return;
+        }
+        ctx.drawImage(img, 0, 0, w, h);
+        // JPEG at 0.85 keeps a receipt sharp at a fraction of the original's size.
+        const out = canvas.toDataURL("image/jpeg", 0.85);
+        resolve({ base64: out.split(",")[1] ?? "", mediaType: "image/jpeg" });
+      };
+      // Undecodable (e.g. HEIC on a browser without support) — send the original and
+      // let the API try, rather than failing the whole entry over a resize.
+      img.onerror = () => resolve(raw());
+      img.src = dataUrl;
+    };
     reader.readAsDataURL(file);
   });
 }
