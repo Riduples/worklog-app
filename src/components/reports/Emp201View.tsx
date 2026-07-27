@@ -6,6 +6,8 @@ import { usePayRuns } from "@/lib/supabase/hooks/usePayRuns";
 import { useStaffRegister } from "@/lib/supabase/hooks/useStaffRegister";
 import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 import { useTaxFilings, useMarkFiled } from "@/lib/supabase/hooks/useTaxFilings";
+import { useTaxRates } from "@/lib/taxRates";
+import { calcETI, monthsEmployedFrom } from "@/lib/eti";
 import { fmt } from "@/lib/format";
 import { shareReport } from "@/lib/docgen/shareReport";
 
@@ -17,6 +19,7 @@ export function Emp201View() {
   const { data: payRuns } = usePayRuns();
   const { data: filings } = useTaxFilings();
   const markFiled = useMarkFiled();
+  const { SDL_ANNUAL_THRESHOLD } = useTaxRates();
 
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
@@ -44,8 +47,31 @@ export function Emp201View() {
   const uifEmployee = monthRuns.reduce((s, p) => s + Number(p.uif_employee ?? 0), 0);
   const uifEmployer = monthRuns.reduce((s, p) => s + Number(p.uif_employer ?? 0), 0);
   const sdl = monthRuns.reduce((s, p) => s + Number(p.sdl ?? 0), 0);
-  const totalDue = paye + uifEmployee + uifEmployer + sdl;
+
+  // ETI (Employment Tax Incentive) — reduces PAYE for qualifying 18–29 staff.
+  // Sum each run's ETI from its staff row, then cap the claim at PAYE (ETI can
+  // never make the PAYE line negative — the excess is carried by the accountant).
+  const etiRaw = monthRuns.reduce((s, p) => {
+    const staffRow = (staff ?? []).find((sm) => sm.id === p.staff_id);
+    if (!staffRow) return s;
+    const e = calcETI(staffRow, Number(p.gross_wages), monthsEmployedFrom(staffRow.start_date));
+    return s + (e.eligible ? e.amount : 0);
+  }, 0);
+  const eti = Math.min(etiRaw, paye);
+
+  const totalDue = paye + uifEmployee + uifEmployer + sdl - eti;
   const employeesPaid = new Set(monthRuns.map((p) => p.staff_id)).size;
+
+  // SDL threshold nudge — annualise this month's gross and flag if it crosses the
+  // registration threshold while the business isn't yet SDL-registered.
+  const monthGross = monthRuns.reduce((s, p) => s + Number(p.gross_wages ?? 0), 0);
+  const annualisedWages = monthGross * 12;
+  const sdlNudge = annualisedWages > SDL_ANNUAL_THRESHOLD && !business?.sdl_registered;
+
+  // COIDA (annual Return of Earnings) — total gross wages paid this calendar year.
+  const coidaEarnings = (payRuns ?? [])
+    .filter((p) => p.pay_date.startsWith(`${year}-`))
+    .reduce((s, p) => s + Number(p.gross_wages ?? 0), 0);
 
   const emp201Filings = (filings ?? []).filter((f) => f.filing_type === "emp201");
   const alreadyFiled = emp201Filings.some((f) => f.period_label === label);
@@ -61,6 +87,7 @@ export function Emp201View() {
       `UIF (employee + employer): ${fmt(uifEmployee + uifEmployer)}`,
     ];
     if (sdl > 0) lines.push(`SDL (1%): ${fmt(sdl)}`);
+    if (eti > 0) lines.push(`Less: ETI claimed: −${fmt(eti)}`);
     lines.push(`Total due to SARS: ${fmt(totalDue)}`);
     void shareReport("EMP201", `${label} · ${employeesPaid} employee${employeesPaid !== 1 ? "s" : ""} paid`, lines, business);
   };
@@ -115,6 +142,12 @@ export function Emp201View() {
             <span style={{ fontSize: 14, fontWeight: 700, color: "#fff" }}>{fmt(v as number)}</span>
           </div>
         ))}
+        {eti > 0 && (
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+            <span style={{ fontSize: 13, color: "#7DD3FC" }}>Less: ETI claimed</span>
+            <span style={{ fontSize: 14, fontWeight: 700, color: "#fff" }}>−{fmt(eti)}</span>
+          </div>
+        )}
         <div style={{ borderTop: "1px solid rgba(255,255,255,0.2)", marginTop: 10, paddingTop: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <span style={{ fontSize: 15, color: "#38BDF8", fontWeight: 700 }}>Total due to SARS</span>
           <span style={{ fontSize: 24, color: "#fff", fontWeight: 900 }}>{fmt(totalDue)}</span>
@@ -129,6 +162,16 @@ export function Emp201View() {
             Business Details
           </Link>{" "}
           — SARS requires it on every EMP201 submission.
+        </div>
+      )}
+
+      {sdlNudge && (
+        <div style={{ background: "#fffbeb", border: "1.5px solid #fde68a", borderRadius: 10, padding: "10px 14px", marginBottom: 14, fontSize: 12, color: "#92400e" }}>
+          ⚠️ SDL may now apply — your payroll annualises above {fmt(SDL_ANNUAL_THRESHOLD)}. Check with your accountant, then switch SDL on in{" "}
+          <Link href="/tax" style={{ color: "#92400e", fontWeight: 700 }}>
+            Business Details
+          </Link>
+          .
         </div>
       )}
 
@@ -191,6 +234,23 @@ export function Emp201View() {
           ))}
         </div>
       )}
+
+      <div style={{ marginTop: 16 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>Related returns</div>
+        <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 10, padding: "10px 12px", marginBottom: 6 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "#111", marginBottom: 2 }}>EMP501 reconciliation</div>
+          <div style={{ fontSize: 11, color: "#94a3b8", lineHeight: 1.5 }}>
+            Twice-yearly reconciliation of your EMP201s — interim due 31 Oct, annual due 31 May. Reconcile these EMP201 totals with your IRP5/IT3(a) certificates on SARS eFiling.
+          </div>
+        </div>
+        <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 10, padding: "10px 12px", marginBottom: 6 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 2 }}>
+            <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>COIDA (annual Return of Earnings)</span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: "#0C4A6E" }}>{fmt(coidaEarnings)}</span>
+          </div>
+          <div style={{ fontSize: 11, color: "#94a3b8", lineHeight: 1.5 }}>Earnings to report for {year} — total gross wages paid this calendar year.</div>
+        </div>
+      </div>
     </div>
   );
 }

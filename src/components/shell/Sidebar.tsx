@@ -64,6 +64,7 @@ const GROUPS: Group[] = [
       { tool: "payrun", href: "/payroll", icon: "💵", label: "Pay Run" },
       { tool: "advances", href: "/advances", icon: "💰", label: "Advances" },
       { tool: "leave", href: "/leave", icon: "🏖️", label: "Leave" },
+      { tool: "payrollcompliance", href: "/payroll-compliance", icon: "📋", label: "Payroll Compliance" },
     ],
   },
   {

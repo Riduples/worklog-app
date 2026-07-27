@@ -79,6 +79,7 @@ const NAV_CATEGORIES: { id: string; items: NavItem[] }[] = [
       { href: "/advances", icon: "💰", label: "Advances", toolId: "advances", lockId: "advances" },
       { href: "/leave", icon: "🏖️", label: "Leave", toolId: "leave", lockId: "leave" },
       { href: "/payroll", icon: "💵", label: "Pay Run", toolId: "payrun", lockId: "payrun" },
+      { href: "/payroll-compliance", icon: "📋", label: "Payroll Compliance", toolId: "payrollcompliance", lockId: "payrollcompliance" },
     ],
   },
   {

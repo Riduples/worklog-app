@@ -1580,6 +1580,10 @@ export type Database = {
           recurring_allowance_desc: string | null
           start_date: string | null
           tax_number: string | null
+          term_end_date: string | null
+          term_notice_worked: boolean | null
+          term_reason: string | null
+          terminated: boolean
           trading_name: string | null
           updated_at: string | null
           user_id: string
@@ -1612,6 +1616,10 @@ export type Database = {
           recurring_allowance_desc?: string | null
           start_date?: string | null
           tax_number?: string | null
+          term_end_date?: string | null
+          term_notice_worked?: boolean | null
+          term_reason?: string | null
+          terminated?: boolean
           trading_name?: string | null
           updated_at?: string | null
           user_id: string
@@ -1644,6 +1652,10 @@ export type Database = {
           recurring_allowance_desc?: string | null
           start_date?: string | null
           tax_number?: string | null
+          term_end_date?: string | null
+          term_notice_worked?: boolean | null
+          term_reason?: string | null
+          terminated?: boolean
           trading_name?: string | null
           updated_at?: string | null
           user_id?: string

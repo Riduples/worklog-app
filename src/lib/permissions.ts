@@ -27,6 +27,7 @@ export type ToolId =
   | "payrun"
   | "advances"
   | "leave"
+  | "payrollcompliance"
   | "timetrack"
   | "mileage"
   | "profitloss"
@@ -72,7 +73,7 @@ export const TOOL_CATEGORIES: { id: string; label: string; icon: string; desc: s
   { id: "invoicing", label: "Sales", icon: "📤", desc: "Quotes & invoices you send to customers", tools: ["quote", "invoice", "statement"] },
   { id: "purchases", label: "Purchases", icon: "📥", desc: "Purchase orders & supplier invoices you receive", tools: ["purchaseorder", "supplierinvoice", "remittance"] },
   { id: "bookings", label: "Scheduling System", icon: "📅", desc: "Diary, appointments, time & travel — manage how you spend your day", tools: ["booking", "timetrack", "mileage"] },
-  { id: "workers", label: "Payroll", icon: "💼", desc: "Employees, wages, payslips & advances", tools: ["staffregister", "payrun", "advances", "leave"] },
+  { id: "workers", label: "Payroll", icon: "💼", desc: "Employees, wages, payslips & advances", tools: ["staffregister", "payrun", "advances", "leave", "payrollcompliance"] },
   // "ledger" isn't in the source prototype's categories (it dropped Ledgers
   // from the matrix) but the tool exists here, so it needs a home to be gated.
   { id: "money", label: "Money", icon: "💰", desc: "Track what comes in and goes out", tools: ["income", "expense", "bankstatement", "cashup", "ledger"] },
@@ -104,6 +105,7 @@ export const TOOL_LABELS: Partial<Record<ToolId, { icon: string; label: string; 
   payrun: { icon: "💵", label: "Pay Run", desc: "Calculate wages, deductions & generate payslips" },
   advances: { icon: "💰", label: "Advances", desc: "Record employee loans & track repayments" },
   leave: { icon: "🏖️", label: "Leave", desc: "Record & track leave per employee — links to Pay Run" },
+  payrollcompliance: { icon: "📋", label: "Payroll Compliance", desc: "PAYE, UIF, SDL & ETI payable, EMP201/EMP501 & COIDA reminders — your payroll statutory items in one place" },
   timetrack: { icon: "⏱️", label: "Time Log", desc: "Log hours per client — links to quotes, rates & appointments" },
   mileage: { icon: "🚗", label: "Trip Log", desc: "Log business trips — SARS deduction auto-calculated" },
   profitloss: { icon: "📈", label: "Profit & Loss", desc: "The official summary of what your business earned vs spent — needed for SARS and for loan/funding applications" },

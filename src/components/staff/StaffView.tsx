@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useStaffRegister, type StaffMember } from "@/lib/supabase/hooks/useStaffRegister";
+import { useStaffRegister, useUpdateStaffMember, type StaffMember } from "@/lib/supabase/hooks/useStaffRegister";
 import { useWorkerLoans } from "@/lib/supabase/hooks/useWorkerLoans";
 import { useWorkerLeave } from "@/lib/supabase/hooks/useWorkerLeave";
 import { usePayRuns } from "@/lib/supabase/hooks/usePayRuns";
@@ -12,8 +12,12 @@ import { StaffModal } from "@/components/modals/StaffModal";
 import { UpgradeModal } from "@/components/modals/UpgradeModal";
 import { Modal } from "@/components/ui/Modal";
 import { Row } from "@/components/ui/Row";
+import { Field } from "@/components/ui/Field";
+import { Input } from "@/components/ui/Input";
+import { Chips } from "@/components/ui/Chips";
 import { fmt } from "@/lib/format";
 import { calcLeaveBalances, getLoanBalance, rateLabel } from "@/lib/payroll";
+import { calcETI, monthsEmployedFrom, monthlyRemunerationOf } from "@/lib/eti";
 import { isRestricted, TIERS, type Plan } from "@/lib/tiers";
 import { BackLink } from "@/components/ui/BackLink";
 
@@ -23,10 +27,20 @@ const EMPLOYMENT_BADGE: Record<string, { label: string; bg: string; fg: string; 
   casual: { label: "🔁 Casual", bg: "#F0F9FF", fg: "#0369A1", border: "#BAE6FD" },
 };
 
+// The UI-19 needs a reason for every departure, so it's captured on exit.
+const TERM_REASONS = ["Resignation", "Dismissal", "Retrenchment", "Contract ended", "Retirement", "Death", "Other"];
+
 function StaffDetailModal({ staff, onClose, onEdit }: { staff: StaffMember; onClose: () => void; onEdit: (() => void) | null }) {
   const { data: loans } = useWorkerLoans();
   const { data: leave } = useWorkerLeave();
   const { data: payRuns } = usePayRuns();
+  const access = useToolAccess("staffregister");
+  const updateStaff = useUpdateStaffMember();
+
+  const [showTerminate, setShowTerminate] = useState(false);
+  const [termEnd, setTermEnd] = useState("");
+  const [termReason, setTermReason] = useState("");
+  const [termNotice, setTermNotice] = useState(true);
 
   const staffLoans = (loans ?? []).filter((l) => l.staff_id === staff.id);
   const staffLeave = (leave ?? []).filter((l) => l.staff_id === staff.id);
@@ -41,6 +55,30 @@ function StaffDetailModal({ staff, onClose, onEdit }: { staff: StaffMember; onCl
   const lb = staff.is_contractor ? null : calcLeaveBalances(staff.start_date, leaveEntries);
   const badge = EMPLOYMENT_BADGE[staff.employment_type];
   const rate = rateLabel(fmt, staff.pay_type, staff.daily_wage ?? 0, staff.hourly_rate ?? 0, staff.monthly_salary ?? 0);
+
+  // ETI is an employees-only, still-employed opportunity: never for a contractor
+  // or someone who has already left. calcETI itself excludes contractors and
+  // gates age/ceiling — we only skip the call for the terminated case here.
+  const isTerminated = staff.terminated === true;
+  const eti = !staff.is_contractor && !isTerminated ? calcETI(staff, monthlyRemunerationOf(staff), monthsEmployedFrom(staff.start_date)) : null;
+
+  // Guided (not automated) final-pay figures for the offboarding checklist. The
+  // daily rate is derived the same way Pay Run would read it back per pay type.
+  const dailyRate =
+    staff.pay_type === "Hourly"
+      ? (staff.hourly_rate ?? 0) * (staff.hours_per_day ?? 8)
+      : staff.pay_type === "Monthly"
+        ? (staff.monthly_salary ?? 0) / ((staff.days_per_week ?? 5) * 4.33)
+        : staff.daily_wage ?? 0;
+  const termMonths = monthsEmployedFrom(staff.start_date);
+  const leavePayout = (lb?.annualBalance ?? 0) * dailyRate;
+
+  const handleTerminate = () => {
+    updateStaff.mutate(
+      { id: staff.id, changes: { terminated: true, term_end_date: termEnd || null, term_reason: termReason || null, term_notice_worked: termNotice } },
+      { onSuccess: onClose }
+    );
+  };
 
   return (
     <Modal title={staff.full_name} onClose={onClose}>
@@ -84,6 +122,30 @@ function StaffDetailModal({ staff, onClose, onEdit }: { staff: StaffMember; onCl
           </div>
         </div>
       </div>
+
+      {eti && eti.eligible && (
+        <div style={{ background: "#f0fdf4", border: "1.5px solid #bbf7d0", borderRadius: 12, padding: "11px 14px", marginBottom: 10 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "#15803d" }}>💚 Qualifies for ETI — ~{fmt(eti.amount)}/month</div>
+          <div style={{ fontSize: 11, color: "#16a34a", marginTop: 3, lineHeight: 1.5 }}>
+            Estimated saving to claim on your EMP201 — confirm with your accountant.
+          </div>
+        </div>
+      )}
+      {eti && !eti.eligible && eti.needsInfo && (
+        <div style={{ fontSize: 12, color: "#94a3b8", marginBottom: 10, lineHeight: 1.5 }}>Add this employee&apos;s SA ID (in Edit) to check ETI eligibility.</div>
+      )}
+
+      {isTerminated && (
+        <div style={{ background: "#f8fafc", border: "1.5px solid #e2e8f0", borderRadius: 12, padding: "12px 14px", marginBottom: 12 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "#475569" }}>
+            🚪 Left{staff.term_end_date ? ` ${staff.term_end_date}` : ""}
+            {staff.term_reason ? ` · ${staff.term_reason}` : ""}
+          </div>
+          <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 4, lineHeight: 1.5 }}>
+            Remember to submit a UI-19 to the Department of Labour and issue a Certificate of Service.
+          </div>
+        </div>
+      )}
 
       {loanBalance > 0 && (
         <div style={{ background: "#fff7ed", border: "1.5px solid #fed7aa", borderRadius: 12, padding: "11px 14px", marginBottom: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -153,6 +215,65 @@ function StaffDetailModal({ staff, onClose, onEdit }: { staff: StaffMember; onCl
         </>
       )}
 
+      {/* Offboarding lives behind a collapse so the profile stays a profile until
+          you actually need to end the employment. Employees only (contractors have
+          no exit obligations), never once already terminated, and only when RLS
+          would accept the write. */}
+      {!staff.is_contractor && !isTerminated && access.canEdit && (
+        <div style={{ marginTop: 16 }}>
+          <button
+            onClick={() => setShowTerminate((p) => !p)}
+            style={{ width: "100%", background: "#fff7ed", border: "1.5px solid #fed7aa", borderRadius: 12, padding: "11px 16px", display: "flex", justifyContent: "space-between", cursor: "pointer" }}
+          >
+            <span style={{ fontSize: 13, fontWeight: 700, color: "#92400e" }}>🚪 Mark as left / terminate</span>
+            <span style={{ color: "#b45309" }}>{showTerminate ? "▲" : "▼"}</span>
+          </button>
+          {showTerminate && (
+            <div style={{ background: "#fff7ed", border: "1.5px solid #fed7aa", borderRadius: 12, padding: 14, marginTop: 10 }}>
+              <Field label="Last day of employment">
+                <Input type="date" value={termEnd} onChange={setTermEnd} />
+              </Field>
+              <Field label="Reason for leaving">
+                <Chips options={TERM_REASONS} selected={termReason} onSelect={setTermReason} />
+              </Field>
+              <Field label="Notice worked?">
+                <Chips options={["Yes", "No"]} selected={termNotice ? "Yes" : "No"} onSelect={(v) => v && setTermNotice(v === "Yes")} />
+              </Field>
+
+              <div style={{ background: "#fff", border: "1px solid #fed7aa", borderRadius: 10, padding: "11px 13px", marginBottom: 12 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: "#92400e", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>Final pay checklist</div>
+                <div style={{ fontSize: 12, color: "#7c2d12", lineHeight: 1.6 }}>
+                  • Accrued annual leave: <strong>{lb?.annualBalance ?? 0}d</strong>
+                  {termMonths > 4 && (
+                    <>
+                      {" "}
+                      — suggested payout <strong>{fmt(leavePayout)}</strong> ({lb?.annualBalance ?? 0}d × {fmt(dailyRate)}/day). BCEA s40: leave must be paid out for anyone employed longer than 4 months.
+                    </>
+                  )}
+                </div>
+                {!termNotice && (
+                  <div style={{ fontSize: 12, color: "#7c2d12", lineHeight: 1.6, marginTop: 6 }}>
+                    • Notice not worked — rough notice pay ≈ <strong>{fmt(dailyRate * 20)}</strong> (about one month).
+                  </div>
+                )}
+                <div style={{ fontSize: 12, color: "#7c2d12", lineHeight: 1.6, marginTop: 6 }}>• Run a final Pay Run, submit a UI-19, and issue a Certificate of Service.</div>
+                <div style={{ fontSize: 11, color: "#b45309", lineHeight: 1.5, marginTop: 8, fontStyle: "italic" }}>
+                  Worklog records the exit but doesn&apos;t compute the legal final amount — confirm the final figure with an accountant.
+                </div>
+              </div>
+
+              <button
+                onClick={handleTerminate}
+                disabled={updateStaff.isPending}
+                style={{ width: "100%", background: "#b45309", color: "#fff", border: "none", borderRadius: 12, padding: "12px", fontSize: 13, fontWeight: 700, cursor: updateStaff.isPending ? "default" : "pointer", opacity: updateStaff.isPending ? 0.6 : 1 }}
+              >
+                {updateStaff.isPending ? "Saving..." : "Confirm — mark as left"}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* The way to give someone a raise. Until now the register was write-once,
           so the only route was deleting them and typing them in again — losing
           their start date, ID and tax reference, and with them the leave accrual
@@ -207,6 +328,11 @@ export function StaffView() {
   const staffLimit = restriction?.limit;
   const soloCapped = staffLimit !== undefined && staffCount >= staffLimit;
 
+  // Terminated staff drop to the bottom but are never filtered out — a final pay
+  // run may still be owed. Array.sort is stable, so the query's full_name order
+  // is preserved within the active and left groups.
+  const sortedStaff = [...(staff ?? [])].sort((a, b) => (a.terminated ? 1 : 0) - (b.terminated ? 1 : 0));
+
   const handleAddClick = () => {
     if (soloCapped) setShowUpgrade(true);
     else setShowAdd(true);
@@ -239,7 +365,7 @@ export function StaffView() {
         </div>
       )}
 
-      {(staff ?? []).map((w) => {
+      {sortedStaff.map((w) => {
         const staffLoans = (loans ?? []).filter((l) => l.staff_id === w.id);
         const staffLeave = (leave ?? []).filter((l) => l.staff_id === w.id);
         const staffPayRuns = (payRuns ?? []).filter((p) => p.staff_id === w.id);
@@ -256,12 +382,15 @@ export function StaffView() {
           <button
             key={w.id}
             onClick={() => setSelected(w)}
-            style={{ width: "100%", background: "#fff", border: "1.5px solid #e2e8f0", borderRadius: 14, padding: "14px 16px", marginBottom: 10, cursor: "pointer", textAlign: "left" }}
+            style={{ width: "100%", background: "#fff", border: "1.5px solid #e2e8f0", borderRadius: 14, padding: "14px 16px", marginBottom: 10, cursor: "pointer", textAlign: "left", opacity: w.terminated ? 0.6 : 1 }}
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
               <div>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 2 }}>
                   <div style={{ fontSize: 15, fontWeight: 700, color: "#111" }}>{w.full_name}</div>
+                  {w.terminated && (
+                    <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 6, background: "#f1f5f9", color: "#64748b", border: "1px solid #e2e8f0" }}>🚪 Left</span>
+                  )}
                   {badge && (
                     <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 6, background: badge.bg, color: badge.fg, border: `1px solid ${badge.border}` }}>
                       {badge.label}
@@ -272,7 +401,14 @@ export function StaffView() {
                   {w.pay_type} · {rate}
                   {!w.is_contractor && ` · ${w.days_per_week}d/wk`}
                 </div>
-                {w.contract_end_date && <div style={{ fontSize: 11, color: "#6d28d9", marginTop: 2 }}>Contract ends {w.contract_end_date}</div>}
+                {w.terminated ? (
+                  <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>
+                    Left{w.term_end_date ? ` ${w.term_end_date}` : ""}
+                    {w.term_reason ? ` · ${w.term_reason}` : ""}
+                  </div>
+                ) : (
+                  w.contract_end_date && <div style={{ fontSize: 11, color: "#6d28d9", marginTop: 2 }}>Contract ends {w.contract_end_date}</div>
+                )}
               </div>
               <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
                 {loanBal > 0 && <span style={{ fontSize: 11, fontWeight: 700, color: "#b45309", background: "#fff7ed", padding: "2px 8px", borderRadius: 8 }}>Loan {fmt(loanBal)}</span>}
