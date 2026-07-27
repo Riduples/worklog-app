@@ -1573,6 +1573,8 @@ export type Database = {
           last_name: string
           monthly_salary: number | null
           pay_type: string
+          recurring_allowance: number
+          recurring_allowance_desc: string | null
           start_date: string | null
           tax_number: string | null
           trading_name: string | null
@@ -1603,6 +1605,8 @@ export type Database = {
           last_name: string
           monthly_salary?: number | null
           pay_type?: string
+          recurring_allowance?: number
+          recurring_allowance_desc?: string | null
           start_date?: string | null
           tax_number?: string | null
           trading_name?: string | null
@@ -1633,6 +1637,8 @@ export type Database = {
           last_name?: string
           monthly_salary?: number | null
           pay_type?: string
+          recurring_allowance?: number
+          recurring_allowance_desc?: string | null
           start_date?: string | null
           tax_number?: string | null
           trading_name?: string | null
@@ -2088,6 +2094,7 @@ export type Database = {
           id: string
           loan_type: string
           note: string | null
+          repay_per_run: number | null
           staff_id: string | null
           user_id: string
           worker_name: string
@@ -2100,6 +2107,7 @@ export type Database = {
           id?: string
           loan_type: string
           note?: string | null
+          repay_per_run?: number | null
           staff_id?: string | null
           user_id: string
           worker_name: string
@@ -2112,6 +2120,7 @@ export type Database = {
           id?: string
           loan_type?: string
           note?: string | null
+          repay_per_run?: number | null
           staff_id?: string | null
           user_id?: string
           worker_name?: string

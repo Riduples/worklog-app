@@ -52,6 +52,9 @@ export function StaffModal({ staff, onClose }: { staff?: StaffMember; onClose: (
   const [employmentType, setEmploymentType] = useState<EmploymentType>((staff?.employment_type as EmploymentType) ?? "permanent");
   const [payType, setPayType] = useState(staff?.pay_type ?? "Daily");
   const [rate, setRate] = useState(staff ? rateOf(staff) : "");
+  // 0 is the column default, so treat it as blank rather than showing "0".
+  const [recurringAllowance, setRecurringAllowance] = useState(staff?.recurring_allowance ? String(staff.recurring_allowance) : "");
+  const [recurringAllowanceDesc, setRecurringAllowanceDesc] = useState(staff?.recurring_allowance_desc ?? "");
   const [startDate, setStartDate] = useState(staff?.start_date ?? todayStr());
   const [contractEndDate, setContractEndDate] = useState(staff?.contract_end_date ?? "");
   const [tradingName, setTradingName] = useState(staff?.trading_name ?? "");
@@ -121,6 +124,8 @@ export function StaffModal({ staff, onClose }: { staff?: StaffMember; onClose: (
       monthly_salary: payType === "Monthly" ? rateNum : 0,
       days_per_week: parseFloat(daysPerWeek || "5"),
       hours_per_day: parseFloat(hoursPerDay || "8"),
+      recurring_allowance: parseFloat(recurringAllowance) || 0,
+      recurring_allowance_desc: recurringAllowanceDesc.trim() || null,
     };
 
     const handlers = {
@@ -239,6 +244,21 @@ export function StaffModal({ staff, onClose }: { staff?: StaffMember; onClose: (
           placeholder={payType === "Daily" ? "e.g. 350" : payType === "Hourly" ? "e.g. 75" : "e.g. 8 500"}
         />
       </Field>
+
+      <div style={{ background: "#f8fafc", borderRadius: 12, padding: 14, marginBottom: 12 }}>
+        <div style={{ fontSize: 12, fontWeight: 700, color: "#374151", marginBottom: 8 }}>Recurring allowance (optional)</div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+          <Field label="Allowance per month (R)">
+            <Input type="number" value={recurringAllowance} onChange={setRecurringAllowance} placeholder="e.g. 500" />
+          </Field>
+          <Field label="What it's for">
+            <Input value={recurringAllowanceDesc} onChange={setRecurringAllowanceDesc} placeholder="e.g. Travel, Phone" />
+          </Field>
+        </div>
+        <div style={{ fontSize: 11, color: "#64748b", lineHeight: 1.5 }}>
+          A standing allowance added to every pay run — the Pay Run pulls it in automatically; you can still add one-off allowances there.
+        </div>
+      </div>
 
       {!isContractor && (
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>

@@ -61,6 +61,11 @@ function StaffDetailModal({ staff, onClose, onEdit }: { staff: StaffMember; onCl
             Started {staff.start_date} · {lb?.months ?? 0} months employed
           </div>
         )}
+        {(staff.recurring_allowance ?? 0) > 0 && (
+          <div style={{ fontSize: 12, color: "#7DD3FC", marginTop: 4 }}>
+            🔁 {fmt(staff.recurring_allowance ?? 0)}/mo{staff.recurring_allowance_desc ? ` · ${staff.recurring_allowance_desc}` : ""}
+          </div>
+        )}
         {staff.contract_end_date && <div style={{ fontSize: 12, color: "#F59E0B", marginTop: 4 }}>⚠️ Contract ends {staff.contract_end_date}</div>}
         {staff.is_contractor && staff.trading_name && <div style={{ fontSize: 12, color: "#7DD3FC", marginTop: 4 }}>{staff.trading_name}</div>}
         {staff.is_contractor && (

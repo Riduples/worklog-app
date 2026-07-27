@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useStaffRegister } from "@/lib/supabase/hooks/useStaffRegister";
+import { useStaffRegister, type StaffMember } from "@/lib/supabase/hooks/useStaffRegister";
 import { useWorkerLoans } from "@/lib/supabase/hooks/useWorkerLoans";
 import { useWorkerLeave } from "@/lib/supabase/hooks/useWorkerLeave";
 import { usePayRuns, useCreatePayRun } from "@/lib/supabase/hooks/usePayRuns";
@@ -117,6 +117,32 @@ export function PayRunView() {
   const selectedWorker = (staff ?? []).find((w) => w.id === staffId) ?? null;
   const staffLoans = (loans ?? []).filter((l) => l.staff_id === staffId);
   const loanBalance = getLoanBalance(staffLoans);
+
+  // Most recent advance (loans arrive entry_date-desc) that carries an agreed
+  // per-run repayment — drives the Step-4 pre-fill and its note.
+  const agreedRepayLoan = staffLoans.find((l) => l.loan_type === "advance" && l.repay_per_run != null) ?? null;
+  const agreedRepay = agreedRepayLoan && loanBalance > 0 ? Math.min(Number(agreedRepayLoan.repay_per_run), loanBalance) : null;
+  const recurringAllowance = selectedWorker?.recurring_allowance ?? 0;
+  const allowanceIsPulled = recurringAllowance > 0 && allowances === String(recurringAllowance);
+
+  // Pull the worker's standing setup onto the run when they're picked. Done in
+  // the selection handler (not an effect) so it fires exactly on selection and
+  // resets cleanly between workers — switching person doesn't carry the previous
+  // one's allowance or deduction across. Re-picking the same worker is a no-op so
+  // it never wipes edits made mid-run. Every value stays editable per run.
+  const selectWorker = (w: StaffMember) => {
+    if (w.id === staffId) return;
+    setStaffId(w.id);
+    const rec = w.recurring_allowance ?? 0;
+    setShowAllowance(rec > 0);
+    setAllowances(rec > 0 ? String(rec) : "");
+    setAllowanceDesc(w.recurring_allowance_desc ?? "");
+    const wLoans = (loans ?? []).filter((l) => l.staff_id === w.id);
+    const bal = getLoanBalance(wLoans);
+    const plan = wLoans.find((l) => l.loan_type === "advance" && l.repay_per_run != null);
+    const repay = plan && bal > 0 ? Math.min(Number(plan.repay_per_run), bal) : null;
+    setLoanDeduction(repay != null ? String(repay) : "");
+  };
   const isContractor = selectedWorker?.is_contractor ?? false;
   const unitLabel = selectedWorker?.pay_type === "Hourly" ? "hours" : "days";
   const daysPerMonth = (selectedWorker?.days_per_week ?? 5) * 4.33;
@@ -282,7 +308,7 @@ export function PayRunView() {
             return (
               <button
                 key={w.id}
-                onClick={() => setStaffId(w.id)}
+                onClick={() => selectWorker(w)}
                 style={{ width: "100%", background: isSelected ? "#F0F9FF" : "#fff", border: `2px solid ${isSelected ? "#0C4A6E" : "#e2e8f0"}`, borderRadius: 14, padding: "14px 16px", marginBottom: 8, cursor: "pointer", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center" }}
               >
                 <div>
@@ -391,6 +417,11 @@ export function PayRunView() {
                 <Input value={allowanceDesc} onChange={setAllowanceDesc} placeholder="Travel, Meal..." />
               </Field>
             </div>
+            <div style={{ fontSize: 11, color: allowanceIsPulled ? "#0369A1" : "#94a3b8", marginTop: 8 }}>
+              {allowanceIsPulled
+                ? "🔁 Pulled from this person's setup — edit or clear for this run only (won't change their setup)"
+                : "One-off allowance for this pay run only; set a monthly one in Staff Register."}
+            </div>
           </div>
         )}
 
@@ -455,6 +486,11 @@ export function PayRunView() {
                 None this time
               </button>
             </div>
+            {agreedRepay != null && (
+              <div style={{ fontSize: 11, color: "#92400e", marginTop: 8 }}>
+                🔁 Pre-filled {fmt(agreedRepay)} from the agreed repayment plan — edit for this run if needed{agreedRepay === loanBalance ? " (final repayment)" : ""}
+              </div>
+            )}
           </div>
         )}
 

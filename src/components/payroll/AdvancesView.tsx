@@ -19,12 +19,17 @@ export function AdvancesView() {
   const [staffId, setStaffId] = useState("");
   const [showPicker, setShowPicker] = useState(false);
   const [amount, setAmount] = useState("");
+  const [repayPerRun, setRepayPerRun] = useState("");
   const [note, setNote] = useState("");
   const [editId, setEditId] = useState<string | null>(null);
   const [error, setError] = useState("");
 
   const selectedWorker = (staff ?? []).find((w) => w.id === staffId) ?? null;
   const balanceFor = (id: string) => getLoanBalance((loans ?? []).filter((l) => l.staff_id === id));
+  const repayPlanFor = (id: string) =>
+    (loans ?? [])
+      .filter((l) => l.staff_id === id && l.loan_type === "advance" && l.repay_per_run != null && l.repay_per_run > 0)
+      .sort((a, b) => new Date(b.entry_date).getTime() - new Date(a.entry_date).getTime())[0] ?? null;
   const totalOutstanding = (staff ?? []).reduce((s, w) => s + balanceFor(w.id), 0);
   const selectedBalance = staffId ? balanceFor(staffId) : 0;
   const workerHistory = staffId
@@ -37,6 +42,7 @@ export function AdvancesView() {
     setEditId(l.id);
     setStaffId(l.staff_id ?? "");
     setAmount(String(l.amount));
+    setRepayPerRun(l.repay_per_run != null ? String(l.repay_per_run) : "");
     setNote(l.note ?? "");
     setShowPicker(false);
     setError("");
@@ -45,6 +51,7 @@ export function AdvancesView() {
   const cancelEdit = () => {
     setEditId(null);
     setAmount("");
+    setRepayPerRun("");
     setNote("");
     setError("");
   };
@@ -57,11 +64,12 @@ export function AdvancesView() {
     setError("");
     if (editId) {
       updateAdvance.mutate(
-        { id: editId, changes: { amount: parseFloat(amount), note: note || null } },
+        { id: editId, changes: { amount: parseFloat(amount), repay_per_run: parseFloat(repayPerRun) || null, note: note || null } },
         {
           onSuccess: () => {
             setEditId(null);
             setAmount("");
+            setRepayPerRun("");
             setNote("");
           },
           onError: (e) => setError(e instanceof Error ? e.message : "Couldn't update the advance."),
@@ -70,10 +78,11 @@ export function AdvancesView() {
       return;
     }
     createAdvance.mutate(
-      { staff_id: staffId, worker_name: selectedWorker!.full_name, amount: parseFloat(amount), note: note || null, entry_date: todayStr() },
+      { staff_id: staffId, worker_name: selectedWorker!.full_name, amount: parseFloat(amount), repay_per_run: parseFloat(repayPerRun) || null, note: note || null, entry_date: todayStr() },
       {
         onSuccess: () => {
           setAmount("");
+          setRepayPerRun("");
           setNote("");
         },
         onError: (e) => setError(e instanceof Error ? e.message : "Couldn't record the advance."),
@@ -98,12 +107,23 @@ export function AdvancesView() {
           <div style={{ fontSize: 22, fontWeight: 900, color: "#fff", marginBottom: 8 }}>{fmt(totalOutstanding)} total</div>
           {(staff ?? [])
             .filter((w) => balanceFor(w.id) > 0)
-            .map((w) => (
-              <div key={w.id} style={{ display: "flex", justifyContent: "space-between", borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: 6, marginTop: 6 }}>
-                <span style={{ fontSize: 13, color: "#7DD3FC" }}>{w.full_name}</span>
-                <span style={{ fontSize: 13, fontWeight: 700, color: "#F59E0B" }}>{fmt(balanceFor(w.id))}</span>
-              </div>
-            ))}
+            .map((w) => {
+              const bal = balanceFor(w.id);
+              const plan = repayPlanFor(w.id);
+              return (
+                <div key={w.id} style={{ borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: 6, marginTop: 6 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span style={{ fontSize: 13, color: "#7DD3FC" }}>{w.full_name}</span>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: "#F59E0B" }}>{fmt(bal)}</span>
+                  </div>
+                  {plan && plan.repay_per_run != null && (
+                    <div style={{ fontSize: 11, color: "#7DD3FC", marginTop: 2, textAlign: "right" }}>
+                      🔁 {fmt(plan.repay_per_run)}/pay run · ~{Math.ceil(bal / plan.repay_per_run)} runs left
+                    </div>
+                  )}
+                </div>
+              );
+            })}
         </div>
       )}
 
@@ -150,6 +170,14 @@ export function AdvancesView() {
       <Field label="Amount (R)">
         <Input type="number" value={amount} onChange={setAmount} placeholder="0.00" />
       </Field>
+      <Field label="Repay per pay run (R)">
+        <Input type="number" value={repayPerRun} onChange={setRepayPerRun} placeholder="Leave blank to deduct manually" />
+      </Field>
+      {parseFloat(amount) > 0 && parseFloat(repayPerRun) > 0 && (
+        <div style={{ fontSize: 12, color: "#64748b", margin: "-6px 0 10px" }}>
+          ≈ {Math.ceil(parseFloat(amount) / parseFloat(repayPerRun))} pay runs to repay
+        </div>
+      )}
       <Field label="Reason (optional)">
         <Input value={note} onChange={setNote} placeholder="e.g. Emergency, transport, groceries..." />
       </Field>
