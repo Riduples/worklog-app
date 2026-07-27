@@ -1,33 +1,39 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-const TABLE_BY_PREFIX = {
-  QTE: "quotes",
-  INV: "invoices",
-  PO: "purchase_orders",
-  CN: "credit_notes",
+// Each numbered series lives in a table + column. Most use a shared "doc_number"
+// column; employee numbers (EMP-YYYY-NNNN) live in staff_register.employee_number.
+// (Payslip numbers PS-YYYY-NNNN are assigned server-side inside create_pay_run so
+// they stay atomic/race-safe, so there is no client series for them.)
+const SERIES = {
+  QTE: { table: "quotes", column: "doc_number" },
+  INV: { table: "invoices", column: "doc_number" },
+  PO: { table: "purchase_orders", column: "doc_number" },
+  CN: { table: "credit_notes", column: "doc_number" },
+  EMP: { table: "staff_register", column: "employee_number" },
 } as const;
 
 export async function getNextDocNumber(
   supabase: SupabaseClient,
   businessId: string,
-  prefix: keyof typeof TABLE_BY_PREFIX
+  prefix: keyof typeof SERIES
 ): Promise<string> {
   const year = new Date().getFullYear();
-  const table = TABLE_BY_PREFIX[prefix];
+  const { table, column } = SERIES[prefix];
   const yearPrefix = `${prefix}-${year}-`;
 
-  // Scoped by business (not the individual user) so every team member shares
-  // one sequence — two members generating a doc number concurrently should
-  // never collide within the same business.
+  // Scoped by business (not the individual user) so every team member shares one
+  // sequence — two members generating a number concurrently should never collide
+  // within the same business.
   const { data, error } = await supabase
     .from(table)
-    .select("doc_number")
+    .select(column)
     .eq("business_id", businessId)
-    .like("doc_number", `${yearPrefix}%`);
+    .like(column, `${yearPrefix}%`);
   if (error) throw error;
 
-  const maxNum = (data ?? []).reduce((max, row) => {
-    const match = /(\d{4})$/.exec(row.doc_number as string);
+  const maxNum = ((data ?? []) as Array<Record<string, unknown>>).reduce((max, row) => {
+    const value = row[column];
+    const match = typeof value === "string" ? /(\d{4})$/.exec(value) : null;
     const n = match ? parseInt(match[1], 10) : 0;
     return n > max ? n : max;
   }, 0);

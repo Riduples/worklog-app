@@ -1178,6 +1178,7 @@ export type Database = {
           pay_date: string
           pay_period: string
           paye: number | null
+          payslip_number: string | null
           sdl: number | null
           staff_id: string | null
           status: string
@@ -1208,6 +1209,7 @@ export type Database = {
           pay_date: string
           pay_period: string
           paye?: number | null
+          payslip_number?: string | null
           sdl?: number | null
           staff_id?: string | null
           status?: string
@@ -1238,6 +1240,7 @@ export type Database = {
           pay_date?: string
           pay_period?: string
           paye?: number | null
+          payslip_number?: string | null
           sdl?: number | null
           staff_id?: string | null
           status?: string
@@ -1547,13 +1550,18 @@ export type Database = {
       }
       staff_register: {
         Row: {
+          address: string | null
+          bank_account: string | null
+          bank_name: string | null
           business_id: string
           contact_number: string | null
           contract_end_date: string | null
           created_at: string | null
           daily_wage: number | null
+          date_of_birth: string | null
           days_per_week: number | null
           deleted_at: string | null
+          employee_number: string | null
           employment_type: string
           first_name: string
           full_name: string
@@ -1572,13 +1580,18 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          address?: string | null
+          bank_account?: string | null
+          bank_name?: string | null
           business_id: string
           contact_number?: string | null
           contract_end_date?: string | null
           created_at?: string | null
           daily_wage?: number | null
+          date_of_birth?: string | null
           days_per_week?: number | null
           deleted_at?: string | null
+          employee_number?: string | null
           employment_type?: string
           first_name: string
           full_name: string
@@ -1597,13 +1610,18 @@ export type Database = {
           user_id: string
         }
         Update: {
+          address?: string | null
+          bank_account?: string | null
+          bank_name?: string | null
           business_id?: string
           contact_number?: string | null
           contract_end_date?: string | null
           created_at?: string | null
           daily_wage?: number | null
+          date_of_birth?: string | null
           days_per_week?: number | null
           deleted_at?: string | null
+          employee_number?: string | null
           employment_type?: string
           first_name?: string
           full_name?: string
@@ -2267,6 +2285,7 @@ export type Database = {
           pay_date: string
           pay_period: string
           paye: number | null
+          payslip_number: string | null
           sdl: number | null
           staff_id: string | null
           status: string

@@ -9,6 +9,10 @@ import { SaveBtn } from "@/components/ui/SaveBtn";
 import { useCreateStaffMember, useUpdateStaffMember, type StaffMember } from "@/lib/supabase/hooks/useStaffRegister";
 import { useTaxRates } from "@/lib/taxRates";
 import { fmt, todayStr } from "@/lib/format";
+import { dobFromSaId } from "@/lib/saId";
+import { getNextDocNumber } from "@/lib/docNumber";
+import { createClient } from "@/lib/supabase/client";
+import { getCurrentBusinessId } from "@/lib/supabase/currentBusiness";
 
 const EMPLOYMENT_TYPES = [
   { value: "permanent", icon: "👔", label: "Permanent employee", desc: "Works for you indefinitely. UIF, PAYE and leave all apply." },
@@ -54,9 +58,13 @@ export function StaffModal({ staff, onClose }: { staff?: StaffMember; onClose: (
   const [idNumber, setIdNumber] = useState(staff?.id_number ?? "");
   const [taxNumber, setTaxNumber] = useState(staff?.tax_number ?? "");
   const [contactNumber, setContactNumber] = useState(staff?.contact_number ?? "");
+  const [address, setAddress] = useState(staff?.address ?? "");
+  const [bankName, setBankName] = useState(staff?.bank_name ?? "");
+  const [bankAccount, setBankAccount] = useState(staff?.bank_account ?? "");
   const [daysPerWeek, setDaysPerWeek] = useState(String(staff?.days_per_week ?? 5));
   const [hoursPerDay, setHoursPerDay] = useState(String(staff?.hours_per_day ?? 8));
   const [showExtras, setShowExtras] = useState(false);
+  const [showSars, setShowSars] = useState(false);
   const [error, setError] = useState("");
 
   const daysPerMonth = parseFloat(daysPerWeek || "5") * 4.33;
@@ -64,6 +72,9 @@ export function StaffModal({ staff, onClose }: { staff?: StaffMember; onClose: (
   const rateNum = parseFloat(rate || "0");
   const estimatedMonthly = payType === "Daily" ? rateNum * daysPerMonth : payType === "Hourly" ? rateNum * hoursPerMonth : rateNum;
   const isContractor = employmentType === "contractor";
+  // Derived live from the ID entered under "More details" — never stored as an
+  // independent field, so it can't drift from the ID it comes from.
+  const dob = dobFromSaId(idNumber);
 
   // Preview the same way the Pay Run will actually calculate. This used to
   // hardcode 2% of the full wage, which ignored the UIF ceiling — so anyone
@@ -80,7 +91,7 @@ export function StaffModal({ staff, onClose }: { staff?: StaffMember; onClose: (
 
   const saving = createStaffMember.isPending || updateStaffMember.isPending;
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!firstName.trim() || !lastName.trim() || !rate) {
       setError("Enter a first name, last name and rate.");
       return;
@@ -97,6 +108,11 @@ export function StaffModal({ staff, onClose }: { staff?: StaffMember; onClose: (
       id_number: idNumber || null,
       tax_number: !isContractor ? taxNumber || null : null,
       contact_number: contactNumber || null,
+      // Always kept in step with the ID number rather than captured separately.
+      date_of_birth: dobFromSaId(idNumber),
+      address: address || null,
+      bank_name: bankName || null,
+      bank_account: bankAccount || null,
       start_date: !isContractor ? startDate : null,
       contract_end_date: employmentType === "fixed_term" ? contractEndDate || null : null,
       pay_type: payType,
@@ -112,8 +128,27 @@ export function StaffModal({ staff, onClose }: { staff?: StaffMember; onClose: (
       onError: (e: unknown) => setError(e instanceof Error ? e.message : "Couldn't save."),
     };
 
-    if (isEdit) updateStaffMember.mutate({ id: staff.id, changes: values }, handlers);
-    else createStaffMember.mutate(values, handlers);
+    if (isEdit) {
+      // Never touch employee_number on edit — it's assigned once and permanent.
+      updateStaffMember.mutate({ id: staff.id, changes: values }, handlers);
+      return;
+    }
+
+    // Assign an employee number only when creating an employee (contractors
+    // self-file, so they don't get one).
+    let createValues: typeof values & { employee_number?: string } = values;
+    if (!isContractor) {
+      try {
+        const supabase = createClient();
+        const businessId = await getCurrentBusinessId(supabase);
+        const employee_number = await getNextDocNumber(supabase, businessId, "EMP");
+        createValues = { ...values, employee_number };
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Couldn't assign an employee number.");
+        return;
+      }
+    }
+    createStaffMember.mutate(createValues, handlers);
   };
 
   return (
@@ -171,12 +206,6 @@ export function StaffModal({ staff, onClose }: { staff?: StaffMember; onClose: (
         </div>
       )}
 
-      {employmentType === "fixed_term" && (
-        <Field label="Contract end date">
-          <Input type="date" value={contractEndDate} onChange={setContractEndDate} />
-        </Field>
-      )}
-
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
         <Field label="First name">
           <Input value={firstName} onChange={setFirstName} placeholder="e.g. Sipho" />
@@ -185,6 +214,18 @@ export function StaffModal({ staff, onClose }: { staff?: StaffMember; onClose: (
           <Input value={lastName} onChange={setLastName} placeholder="e.g. Dlamini" />
         </Field>
       </div>
+
+      {!isContractor && (
+        <Field label="Start date">
+          <Input type="date" value={startDate} onChange={setStartDate} />
+        </Field>
+      )}
+
+      {employmentType === "fixed_term" && (
+        <Field label="Contract end date">
+          <Input type="date" value={contractEndDate} onChange={setContractEndDate} />
+        </Field>
+      )}
 
       <Field label="Pay type">
         <Chips options={["Daily", "Hourly", "Monthly"]} selected={payType} onSelect={(v) => v && setPayType(v)} />
@@ -200,9 +241,16 @@ export function StaffModal({ staff, onClose }: { staff?: StaffMember; onClose: (
       </Field>
 
       {!isContractor && (
-        <Field label="Start date">
-          <Input type="date" value={startDate} onChange={setStartDate} />
-        </Field>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+          <Field label="Days/week">
+            <Input type="number" value={daysPerWeek} onChange={setDaysPerWeek} placeholder="5" />
+          </Field>
+          {payType === "Hourly" && (
+            <Field label="Hours/day">
+              <Input type="number" value={hoursPerDay} onChange={setHoursPerDay} placeholder="8" />
+            </Field>
+          )}
+        </div>
       )}
 
       {estimatedMonthly > 0 && (
@@ -242,18 +290,6 @@ export function StaffModal({ staff, onClose }: { staff?: StaffMember; onClose: (
       </button>
       {showExtras && (
         <div style={{ background: "#f8fafc", borderRadius: 12, padding: 14, marginBottom: 12 }}>
-          {!isContractor && (
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-              <Field label="Days/week">
-                <Input type="number" value={daysPerWeek} onChange={setDaysPerWeek} placeholder="5" />
-              </Field>
-              {payType === "Hourly" && (
-                <Field label="Hours/day">
-                  <Input type="number" value={hoursPerDay} onChange={setHoursPerDay} placeholder="8" />
-                </Field>
-              )}
-            </div>
-          )}
           <Field label="SA ID number">
             <div style={{ background: "#fff7ed", border: "1px solid #fed7aa", borderRadius: 8, padding: "7px 10px", marginBottom: 6, fontSize: 11, color: "#92400e", lineHeight: 1.5 }}>
               🔒 <span style={{ fontWeight: 700 }}>POPIA:</span> By entering this employee&apos;s ID number, you confirm they have been informed their personal data is being stored and processed.
@@ -275,6 +311,47 @@ export function StaffModal({ staff, onClose }: { staff?: StaffMember; onClose: (
             </Field>
           )}
         </div>
+      )}
+
+      {!isContractor && (
+        <>
+          <button
+            onClick={() => setShowSars((p) => !p)}
+            style={{ width: "100%", background: "#f8fafc", border: "1.5px solid #e2e8f0", borderRadius: 12, padding: "11px 16px", marginBottom: 10, display: "flex", justifyContent: "space-between", cursor: "pointer" }}
+          >
+            <span style={{ fontSize: 13, fontWeight: 600, color: "#64748b" }}>🏛️ For SARS / UIF filing</span>
+            <span style={{ color: "#94a3b8" }}>{showSars ? "▲" : "▼"}</span>
+          </button>
+          {showSars && (
+            <div style={{ background: "#f8fafc", borderRadius: 12, padding: 14, marginBottom: 12 }}>
+              <div style={{ fontSize: 11, color: "#64748b", marginBottom: 12, lineHeight: 1.5 }}>
+                These are optional — you only need them to <strong>file</strong> with SARS / UIF, not to run a pay run. Confirm exactly what your submission requires with your accountant.
+              </div>
+              <Field label="Employee number">
+                <div style={{ padding: "13px 14px", borderRadius: 12, border: "1.5px solid #e2e8f0", fontSize: 15, background: "#f1f5f9", color: isEdit ? "#111" : "#94a3b8" }}>
+                  {isEdit ? (staff.employee_number ?? "—") : "Assigned automatically when you save"}
+                </div>
+              </Field>
+              <Field label="Date of birth">
+                <div style={{ padding: "13px 14px", borderRadius: 12, border: "1.5px solid #e2e8f0", fontSize: 15, background: "#f1f5f9", color: dob ? "#111" : "#94a3b8" }}>
+                  {dob ?? "Add the SA ID number above to auto-fill"}
+                </div>
+              </Field>
+              <Field label="Residential address">
+                <Input value={address} onChange={setAddress} placeholder="Street, suburb, city, code" />
+              </Field>
+              <Field label="Bank & account number">
+                <div style={{ background: "#fff7ed", border: "1px solid #fed7aa", borderRadius: 8, padding: "7px 10px", marginBottom: 6, fontSize: 11, color: "#92400e", lineHeight: 1.5 }}>
+                  🔒 <span style={{ fontWeight: 700 }}>POPIA:</span> Banking details are sensitive personal data — capture them only with the employee&apos;s knowledge and use them for payment and filing purposes only.
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  <Input value={bankName} onChange={setBankName} placeholder="Bank name" />
+                  <Input value={bankAccount} onChange={setBankAccount} placeholder="Account number" />
+                </div>
+              </Field>
+            </div>
+          )}
+        </>
       )}
 
       {error && <p style={{ color: "#dc2626", fontSize: 13, marginBottom: 12 }}>{error}</p>}

@@ -86,6 +86,7 @@ export function PayRunView() {
   const [step, setStep] = useState(1);
   const [saved, setSaved] = useState(false);
   const [savedPayRunId, setSavedPayRunId] = useState<string | null>(null);
+  const [savedPayslipNumber, setSavedPayslipNumber] = useState<string | null>(null);
   const [showPayslip, setShowPayslip] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [error, setError] = useState("");
@@ -188,6 +189,7 @@ export function PayRunView() {
     setLeaveType("Annual");
     setSaved(false);
     setSavedPayRunId(null);
+    setSavedPayslipNumber(null);
     setShowPayslip(false);
     setError("");
   };
@@ -222,6 +224,7 @@ export function PayRunView() {
         onSuccess: (pr) => {
           setSaved(true);
           setSavedPayRunId(pr.id);
+          setSavedPayslipNumber(pr.payslip_number);
         },
         onError: (e) => setError(e instanceof Error ? e.message : "Couldn't save the pay run."),
       }
@@ -230,7 +233,7 @@ export function PayRunView() {
 
   const payslipDoc: DocForRender | null = selectedWorker
     ? {
-        doc_number: `PAY-${payDate}-${selectedWorker.full_name.replace(/\s+/g, "").slice(0, 6).toUpperCase()}`,
+        doc_number: savedPayslipNumber ?? `PAY-${payDate}-${selectedWorker.full_name.replace(/\s+/g, "").slice(0, 6).toUpperCase()}`,
         issue_date: payDate,
         recipient_name: selectedWorker.full_name,
         line_items: [

@@ -106,12 +106,21 @@ function StaffDetailModal({ staff, onClose, onEdit }: { staff: StaffMember; onCl
         </div>
       )}
 
-      {(staff.id_number || staff.contact_number || staff.tax_number) && (
+      {(staff.id_number ||
+        staff.tax_number ||
+        staff.contact_number ||
+        staff.address ||
+        staff.bank_name ||
+        (!staff.is_contractor && (staff.employee_number || staff.date_of_birth))) && (
         <div style={{ background: "#f8fafc", borderRadius: 12, padding: "11px 14px", marginBottom: 12 }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>Details</div>
+          {!staff.is_contractor && staff.employee_number && <Row label="Employee no." value={staff.employee_number} />}
           {staff.id_number && <Row label="SA ID" value={staff.id_number} />}
           {staff.tax_number && <Row label="Tax ref" value={staff.tax_number} />}
+          {!staff.is_contractor && staff.date_of_birth && <Row label="Date of birth" value={staff.date_of_birth} />}
           {staff.contact_number && <Row label="Contact" value={staff.contact_number} />}
+          {staff.address && <Row label="Address" value={staff.address} />}
+          {staff.bank_name && <Row label="Bank" value={staff.bank_account ? `${staff.bank_name} · ${staff.bank_account}` : staff.bank_name} />}
         </div>
       )}
 
