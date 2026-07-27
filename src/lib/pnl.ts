@@ -1,4 +1,5 @@
 import type { Tables } from "@/lib/types/database";
+import type { CreditNote } from "@/lib/creditNotes";
 import { incomeNet } from "@/lib/taxRates";
 
 // The one place profit is defined, so the dashboard and the Profit & Loss report
@@ -28,6 +29,7 @@ export type PnlInputs = {
   invoices?: Invoice[] | null;
   supplierInvoices?: SupplierInvoice[] | null;
   ledger?: LedgerEntry[] | null;
+  creditNotes?: CreditNote[] | null;
 };
 
 export type Pnl = {
@@ -55,21 +57,30 @@ export type Pnl = {
  * through the accrual path would silently zero every invoice-matched rand.
  */
 export function computePnl(inputs: PnlInputs, within: (dateStr: string) => boolean, opts?: { cashBasis?: boolean }): Pnl {
-  const { income, expenses, invoices, supplierInvoices, ledger } = inputs;
+  const { income, expenses, invoices, supplierInvoices, ledger, creditNotes } = inputs;
+
+  // Refund settlements are the cash leg of a credit note that already adjusted
+  // profit when it was raised (customer refund out, supplier refund in). Counting
+  // that cash here too would hit profit a second time, so it is skipped from every
+  // income/expense reducer below, in both the accrual and cash-basis paths.
 
   // ── revenue ──
   const invoicesIssued = (invoices ?? [])
     .filter((i) => within(i.issue_date))
     .reduce((s, i) => s + Number(i.invoice_amount), 0);
-  const cashIncome = (income ?? []).filter((r) => within(r.transaction_date)).reduce((s, r) => s + incomeNet(r), 0);
+  const cashIncome = (income ?? [])
+    .filter((r) => within(r.transaction_date) && !r.is_credit_settlement)
+    .reduce((s, r) => s + incomeNet(r), 0);
   const incomeLinkedToInvoice = (income ?? [])
-    .filter((r) => within(r.transaction_date) && r.matched_invoice_id)
+    .filter((r) => within(r.transaction_date) && r.matched_invoice_id && !r.is_credit_settlement)
     .reduce((s, r) => s + incomeNet(r), 0);
   const cashIncomeNotInvoiced = cashIncome - incomeLinkedToInvoice;
   const revenue = invoicesIssued + cashIncomeNotInvoiced;
 
   // ── costs ──
-  const cashExpense = (expenses ?? []).filter((r) => within(r.transaction_date)).reduce((s, r) => s + Number(r.amount), 0);
+  const cashExpense = (expenses ?? [])
+    .filter((r) => within(r.transaction_date) && !r.is_credit_settlement)
+    .reduce((s, r) => s + Number(r.amount), 0);
 
   // Cash basis: plain money-in/money-out for one account, no accrual netting.
   if (opts?.cashBasis) {
@@ -96,19 +107,34 @@ export function computePnl(inputs: PnlInputs, within: (dateStr: string) => boole
   // matcher columns, so match on OR and subtract it a single time; summing two
   // per-column totals would double-subtract it and understate costs.
   const expenseSettlingAccrual = (expenses ?? [])
-    .filter((r) => within(r.transaction_date) && (r.matched_ledger_entry_id || r.matched_supplier_invoice_id))
+    .filter((r) => within(r.transaction_date) && !r.is_credit_settlement && (r.matched_ledger_entry_id || r.matched_supplier_invoice_id))
     .reduce((s, r) => s + Number(r.amount), 0);
   const cashExpensesNotMatched = cashExpense - expenseSettlingAccrual;
-  const costs = supplierInvoicesIssued + supplierCreditIncurred + cashExpensesNotMatched;
+
+  // Credit notes are contra-revenue / contra-cost the moment they are raised: a
+  // customer credit reduces revenue, a supplier credit reduces cost, each by its
+  // EX-VAT value (amount is VAT-inclusive; vat_amount is SARS's money, never P&L).
+  // Summed locally rather than via sumCredits(), which returns the incl-VAT total.
+  // Business-wide like invoices, so they only net this accrual view — the single-
+  // account cash-basis path above is left untouched.
+  const customerCreditExVat = (creditNotes ?? [])
+    .filter((c) => c.ledger === "customer" && within(c.issue_date))
+    .reduce((s, c) => s + (Number(c.amount || 0) - Number(c.vat_amount || 0)), 0);
+  const supplierCreditExVat = (creditNotes ?? [])
+    .filter((c) => c.ledger === "supplier" && within(c.issue_date))
+    .reduce((s, c) => s + (Number(c.amount || 0) - Number(c.vat_amount || 0)), 0);
+
+  const revenueNetOfCredits = revenue - customerCreditExVat;
+  const costs = supplierInvoicesIssued + supplierCreditIncurred + cashExpensesNotMatched - supplierCreditExVat;
 
   return {
     invoicesIssued,
     cashIncomeNotInvoiced,
-    revenue,
+    revenue: revenueNetOfCredits,
     supplierInvoicesIssued,
     supplierCreditIncurred,
     cashExpensesNotMatched,
     costs,
-    profit: revenue - costs,
+    profit: revenueNetOfCredits - costs,
   };
 }

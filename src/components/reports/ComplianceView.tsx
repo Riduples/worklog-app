@@ -26,7 +26,11 @@ export function ComplianceView() {
     hasPaye: !!business?.paye_ref,
     hasEmployees: employeeCount > 0,
     employeeCount,
-    annualIncome: (income ?? []).reduce((s, r) => s + Number(r.amount), 0),
+    // Exclude credit-settlement rows (refund income booked against a credit note)
+    // so refunds don't inflate the VAT-registration / threshold figure.
+    annualIncome: (income ?? [])
+      .filter((r) => !r.is_credit_settlement)
+      .reduce((s, r) => s + Number(r.amount), 0),
     lastVat201Date: (filings ?? []).find((f) => f.filing_type === "vat201")?.filed_date ?? null,
     lastEmp201Date: (filings ?? []).find((f) => f.filing_type === "emp201")?.filed_date ?? null,
   });

@@ -7,6 +7,8 @@ import { useIncome } from "@/lib/supabase/hooks/useIncome";
 import { useSupplierInvoices } from "@/lib/supabase/hooks/useSupplierInvoices";
 import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 import { useTaxFilings, useMarkFiled } from "@/lib/supabase/hooks/useTaxFilings";
+import { useCreditNotes } from "@/lib/supabase/hooks/useCreditNotes";
+import { sumCreditVat } from "@/lib/creditNotes";
 import { fmt, toLocalIsoDate } from "@/lib/format";
 import { shareReport } from "@/lib/docgen/shareReport";
 
@@ -38,6 +40,7 @@ export function Vat201View() {
   const { data: invoices } = useInvoices();
   const { data: income } = useIncome();
   const { data: supplierInvoices } = useSupplierInvoices();
+  const { data: creditNotes } = useCreditNotes();
   const { data: filings } = useTaxFilings();
   const markFiled = useMarkFiled();
 
@@ -78,10 +81,17 @@ export function Vat201View() {
     .filter((r) => !r.matched_invoice_id && r.transaction_date >= fromDate && r.transaction_date <= toDate)
     .reduce((s, r) => s + Number(r.vat_amount ?? 0), 0);
 
-  const outputVAT = invoicedVAT + cashSalesVAT;
+  // Credit notes reverse VAT already declared. A customer credit note lowers the
+  // output VAT charged on a sale; a supplier credit note lowers the input VAT
+  // claimed on a purchase. Net each against its own side of the return.
+  const periodCredits = (creditNotes ?? []).filter((c) => c.issue_date >= fromDate && c.issue_date <= toDate);
+  const custCreditVat = sumCreditVat(periodCredits, "customer");
+  const suppCreditVat = sumCreditVat(periodCredits, "supplier");
+
+  const outputVAT = invoicedVAT + cashSalesVAT - custCreditVat;
   const inputVAT = (supplierInvoices ?? [])
     .filter((r) => r.issue_date >= fromDate && r.issue_date <= toDate)
-    .reduce((s, r) => s + Number(r.vat_amount ?? 0), 0);
+    .reduce((s, r) => s + Number(r.vat_amount ?? 0), 0) - suppCreditVat;
   const vatDue = outputVAT - inputVAT;
 
   const vat201Filings = (filings ?? []).filter((f) => f.filing_type === "vat201");
@@ -90,7 +100,9 @@ export function Vat201View() {
   const handleShare = () => {
     const lines = [
       `Output VAT (on sales): ${fmt(outputVAT)}`,
+      ...(custCreditVat > 0 ? [`Less credit notes: −${fmt(custCreditVat)}`] : []),
       `Input VAT (on purchases): ${fmt(inputVAT)}`,
+      ...(suppCreditVat > 0 ? [`Less credit notes: −${fmt(suppCreditVat)}`] : []),
       `${vatDue >= 0 ? "VAT payable" : "VAT refund due"}: ${fmt(Math.abs(vatDue))}`,
     ];
     void shareReport("VAT201", `${label} · ${business?.vat_period ?? ""}`, lines, business);
@@ -139,10 +151,22 @@ export function Vat201View() {
           <span style={{ fontSize: 13, color: "#7DD3FC" }}>Output VAT (on sales)</span>
           <span style={{ fontSize: 14, fontWeight: 700, color: "#fff" }}>{fmt(outputVAT)}</span>
         </div>
+        {custCreditVat > 0 && (
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+            <span style={{ fontSize: 13, color: "#7DD3FC" }}>Less credit notes</span>
+            <span style={{ fontSize: 14, fontWeight: 700, color: "#fff" }}>−{fmt(custCreditVat)}</span>
+          </div>
+        )}
         <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
           <span style={{ fontSize: 13, color: "#7DD3FC" }}>Input VAT (on purchases)</span>
           <span style={{ fontSize: 14, fontWeight: 700, color: "#fff" }}>−{fmt(inputVAT)}</span>
         </div>
+        {suppCreditVat > 0 && (
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
+            <span style={{ fontSize: 13, color: "#7DD3FC" }}>Less credit notes</span>
+            <span style={{ fontSize: 14, fontWeight: 700, color: "#fff" }}>−{fmt(suppCreditVat)}</span>
+          </div>
+        )}
         <div style={{ borderTop: "1px solid rgba(255,255,255,0.2)", paddingTop: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <span style={{ fontSize: 15, color: "#38BDF8", fontWeight: 700 }}>{vatDue >= 0 ? "VAT payable" : "VAT refund due"}</span>
           <span style={{ fontSize: 24, color: "#fff", fontWeight: 900 }}>{fmt(Math.abs(vatDue))}</span>

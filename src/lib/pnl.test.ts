@@ -14,6 +14,8 @@ const supplierInvoice = (over: Partial<Tables<"supplier_invoices">> = {}) =>
   ({ id: "si1", issue_date: "2026-07-10", invoice_amount: 344, ...over }) as Tables<"supplier_invoices">;
 const ledgerEntry = (over: Partial<Tables<"ledger_entries">> = {}) =>
   ({ id: "le1", ledger_type: "supplier", entry_date: "2026-07-10", amount: 800, ...over }) as Tables<"ledger_entries">;
+const creditNote = (over: Partial<Tables<"credit_notes">> = {}) =>
+  ({ id: "cn1", ledger: "customer", issue_date: "2026-07-10", amount: 575, vat_amount: 75, ...over }) as Tables<"credit_notes">;
 
 const all = () => true;
 
@@ -82,6 +84,39 @@ describe("computePnl", () => {
       all
     );
     expect(p.profit).toBe(2000 - 344);
+  });
+
+  it("a customer credit note reduces revenue by its ex-VAT value", () => {
+    // R2000 revenue, less a R575 incl (R500 ex-VAT) customer credit → R1500.
+    const p = computePnl(
+      { invoices: [invoice({ invoice_amount: 2000 })], creditNotes: [creditNote({ ledger: "customer", amount: 575, vat_amount: 75 })] },
+      all
+    );
+    expect(p.revenue).toBe(1500);
+    expect(p.profit).toBe(1500);
+  });
+
+  it("a supplier credit note reduces cost by its ex-VAT value", () => {
+    // R344 cost, less a R230 incl (R200 ex-VAT) supplier credit → R144.
+    const p = computePnl(
+      { supplierInvoices: [supplierInvoice({ invoice_amount: 344 })], creditNotes: [creditNote({ ledger: "supplier", amount: 230, vat_amount: 30 })] },
+      all
+    );
+    expect(p.costs).toBe(144);
+  });
+
+  it("excludes a refund settlement from P&L — the credit note already adjusted profit", () => {
+    // Customer refund (expense) and supplier refund (income), both flagged, must
+    // not hit profit a second time (Cash Flow counts them; P&L must not).
+    const p = computePnl(
+      {
+        income: [income({ amount: 230, vat_amount: 0, is_credit_settlement: true })],
+        expenses: [expense({ amount: 500, is_credit_settlement: true })],
+      },
+      all
+    );
+    expect(p.revenue).toBe(0);
+    expect(p.costs).toBe(0);
   });
 
   it("only counts rows inside the period", () => {

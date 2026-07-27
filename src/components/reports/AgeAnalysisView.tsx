@@ -4,8 +4,10 @@ import { useState } from "react";
 import { useInvoices } from "@/lib/supabase/hooks/useInvoices";
 import { useSupplierInvoices } from "@/lib/supabase/hooks/useSupplierInvoices";
 import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
+import { useCreditNotes } from "@/lib/supabase/hooks/useCreditNotes";
 import { fmt, todayStr } from "@/lib/format";
 import { balanceInclVat } from "@/lib/balance";
+import { sumOnAccount } from "@/lib/creditNotes";
 import { shareReport } from "@/lib/docgen/shareReport";
 import { BackLink } from "@/components/ui/BackLink";
 
@@ -38,10 +40,11 @@ export function AgeAnalysisView() {
   const { data: invoices } = useInvoices();
   const { data: supplierInvoices } = useSupplierInvoices();
   const { data: business } = useBusinessProfile();
+  const { data: credits } = useCreditNotes();
   const [tab, setTab] = useState<"debtors" | "creditors">("debtors");
 
   const debtors: AgedItem[] = (invoices ?? [])
-    .filter((r) => r.status !== "paid")
+    .filter((r) => r.status !== "paid" && r.status !== "credited")
     .map((r) => {
       const days = ageDays(r.due_date ?? r.issue_date);
       return {
@@ -57,7 +60,7 @@ export function AgeAnalysisView() {
     .sort((a, b) => b.days - a.days);
 
   const creditors: AgedItem[] = (supplierInvoices ?? [])
-    .filter((r) => r.status !== "paid")
+    .filter((r) => r.status !== "paid" && r.status !== "credited")
     .map((r) => {
       const days = ageDays(r.due_date ?? r.issue_date);
       return {
@@ -80,11 +83,20 @@ export function AgeAnalysisView() {
   });
   const grandTotal = Object.values(totals).reduce((s, v) => s + v, 0);
 
+  const onAccount = sumOnAccount(credits ?? [], isDebtors ? "customer" : "supplier");
+  const netOwed = grandTotal - onAccount;
+
   const handleShare = () => {
     const lines = [
       ...BUCKETS.map((b) => `${b} days: ${fmt(totals[b])}`),
       `Total ${isDebtors ? "owed to you" : "you owe"}: ${fmt(grandTotal)}`,
     ];
+    if (onAccount > 0) {
+      lines.push(
+        `Less credit on account (owed ${isDebtors ? "back" : "to you"}): -${fmt(onAccount)}`,
+        `Net ${isDebtors ? "owed to you" : "you owe"}: ${fmt(netOwed)}`,
+      );
+    }
     void shareReport("Age Analysis", `${isDebtors ? "Debtors" : "Creditors"} · as at ${todayStr()}`, lines, business);
   };
 
@@ -133,6 +145,21 @@ export function AgeAnalysisView() {
         </div>
         <div style={{ fontSize: 20, fontWeight: 800, color: isDebtors ? "#0369A1" : "#be123c" }}>{fmt(grandTotal)}</div>
       </div>
+
+      {onAccount > 0 && (
+        <>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 16px", marginBottom: 6 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: "#64748b" }}>
+              Less credit on account (owed {isDebtors ? "back" : "to you"})
+            </div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "#64748b" }}>-{fmt(onAccount)}</div>
+          </div>
+          <div style={{ background: "#f8fafc", border: "1.5px solid #e2e8f0", borderRadius: 12, padding: "12px 16px", marginBottom: 14, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: "#0f172a" }}>{isDebtors ? "Net owed to you" : "Net you owe"}</div>
+            <div style={{ fontSize: 18, fontWeight: 800, color: "#0f172a" }}>{fmt(netOwed)}</div>
+          </div>
+        </>
+      )}
 
       {items.length === 0 ? (
         <div style={{ textAlign: "center", padding: "32px 0", color: "#94a3b8", fontSize: 13 }}>

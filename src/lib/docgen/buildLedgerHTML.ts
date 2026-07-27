@@ -85,13 +85,18 @@ export type StatementLine = {
   paid: boolean;
 };
 
+// Shared shape for a credit-note row shown on a statement or remittance.
+export type LedgerCreditLine = { date: string; reference: string; amount: number; status: string };
+export type StatementCredits = { lines: LedgerCreditLine[]; onAccount: number; netOutstanding: number };
+
 export function buildStatementHTML(
   business: BusinessProfile,
   clientName: string,
   lines: StatementLine[],
   totals: { invoiced: number; received: number; outstanding: number },
   asAt: string,
-  watermark = false
+  watermark = false,
+  credits?: StatementCredits
 ): string {
   const rows = lines
     .map(
@@ -105,6 +110,32 @@ export function buildStatementHTML(
       </tr>`
     )
     .join("");
+
+  const creditRows = credits
+    ? credits.lines
+        .map(
+          (c) => `
+      <tr>
+        <td>${esc(c.date)}</td>
+        <td>${esc(c.reference)}</td>
+        <td style="text-align:right;">−${fmt(c.amount)}</td>
+        <td style="text-align:right;">${esc(c.status)}</td>
+      </tr>`
+        )
+        .join("")
+    : "";
+
+  const creditsSection =
+    credits && credits.lines.length
+      ? `<div style="font-size:11px;font-weight:700;color:#0C4A6E;text-transform:uppercase;letter-spacing:0.6px;margin:8px 0 10px;">Credit notes</div>
+  <table>
+    <thead>
+      <tr><th>Date</th><th>Reference</th><th style="text-align:right;">Amount</th><th style="text-align:right;">Status</th></tr>
+    </thead>
+    <tbody>${creditRows}</tbody>
+  </table>
+  `
+      : "";
 
   return `<!DOCTYPE html>
 <html>
@@ -125,11 +156,11 @@ export function buildStatementHTML(
     </thead>
     <tbody>${rows}</tbody>
   </table>
-  <div class="totals">
+  ${creditsSection}<div class="totals">
     <div class="totals-box">
       <div class="totals-row"><span>Total invoiced</span><span>${fmt(totals.invoiced)}</span></div>
       <div class="totals-row"><span>Total received</span><span>${fmt(totals.received)}</span></div>
-      <div class="totals-row final"><span>Balance outstanding</span><span>${fmt(totals.outstanding)}</span></div>
+      ${credits && credits.onAccount > 0 ? `<div class="totals-row" style="color:#0C4A6E;"><span>Credit on account (owed back)</span><span>−${fmt(credits.onAccount)}</span></div>\n      ` : ""}<div class="totals-row final"><span>${credits ? "Net outstanding" : "Balance outstanding"}</span><span>${credits ? fmt(credits.netOutstanding) : fmt(totals.outstanding)}</span></div>
     </div>
   </div>
   <div class="footer">
@@ -148,12 +179,15 @@ export type RemittanceLine = {
   amountPaying: number;
 };
 
+export type RemittanceCredits = { lines: LedgerCreditLine[]; onAccount: number; netPayable: number };
+
 export function buildRemittanceHTML(
   business: BusinessProfile,
   supplierName: string,
   lines: RemittanceLine[],
   payment: { method: string; date: string; reference: string; total: number },
-  watermark = false
+  watermark = false,
+  credits?: RemittanceCredits
 ): string {
   const rows = lines
     .map(
@@ -166,6 +200,32 @@ export function buildRemittanceHTML(
       </tr>`
     )
     .join("");
+
+  const creditRows = credits
+    ? credits.lines
+        .map(
+          (c) => `
+      <tr>
+        <td>${esc(c.date)}</td>
+        <td>${esc(c.reference)}</td>
+        <td style="text-align:right;">−${fmt(c.amount)}</td>
+        <td style="text-align:right;">${esc(c.status)}</td>
+      </tr>`
+        )
+        .join("")
+    : "";
+
+  const creditsSection =
+    credits && credits.lines.length
+      ? `<div style="font-size:11px;font-weight:700;color:#b45309;text-transform:uppercase;letter-spacing:0.6px;margin:8px 0 10px;">Supplier credit notes</div>
+  <table>
+    <thead>
+      <tr><th>Date</th><th>Reference</th><th style="text-align:right;">Amount</th><th style="text-align:right;">Status</th></tr>
+    </thead>
+    <tbody>${creditRows}</tbody>
+  </table>
+  `
+      : "";
 
   return `<!DOCTYPE html>
 <html>
@@ -198,9 +258,9 @@ export function buildRemittanceHTML(
     </thead>
     <tbody>${rows}</tbody>
   </table>
-  <div class="totals">
+  ${creditsSection}<div class="totals">
     <div class="totals-box">
-      <div class="totals-row final"><span>Total payment</span><span>${fmt(payment.total)}</span></div>
+      ${credits ? `<div class="totals-row"><span>Total payment</span><span>${fmt(payment.total)}</span></div>\n      ${credits.onAccount > 0 ? `<div class="totals-row" style="color:#0C4A6E;"><span>Credit on account (owed to you)</span><span>−${fmt(credits.onAccount)}</span></div>\n      ` : ""}<div class="totals-row final"><span>Net payable</span><span>${fmt(credits.netPayable)}</span></div>` : `<div class="totals-row final"><span>Total payment</span><span>${fmt(payment.total)}</span></div>`}
     </div>
   </div>
   <div class="footer">

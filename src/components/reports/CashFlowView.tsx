@@ -11,9 +11,11 @@ import { useStockItems } from "@/lib/supabase/hooks/useStock";
 import { useBankAccounts } from "@/lib/supabase/hooks/useBankAccounts";
 import { useAccountTransfers } from "@/lib/supabase/hooks/useAccountTransfers";
 import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
+import { useCreditNotes } from "@/lib/supabase/hooks/useCreditNotes";
 import { inPeriod, PERIOD_LABELS, type Period } from "@/lib/period";
 import { fmt } from "@/lib/format";
 import { balanceInclVat } from "@/lib/balance";
+import { sumOnAccount } from "@/lib/creditNotes";
 import { accountBalance } from "@/lib/accounts";
 import { shareReport } from "@/lib/docgen/shareReport";
 import { BackLink } from "@/components/ui/BackLink";
@@ -31,6 +33,7 @@ export function CashFlowView() {
   const { data: accounts } = useBankAccounts();
   const { data: transfers } = useAccountTransfers();
   const { data: business } = useBusinessProfile();
+  const { data: creditNotes } = useCreditNotes();
 
   const within = inPeriod(period);
   const isAll = account === ALL_ACCOUNTS;
@@ -45,21 +48,27 @@ export function CashFlowView() {
 
   // Receivables/payables are point-in-time (not period-filtered) — they represent
   // what's outstanding right now regardless of the period selector.
+  // A fully-credited invoice (status "credited") is no longer owed.
   const invoicesOwed = (invoices ?? [])
-    .filter((i) => i.status !== "paid")
+    .filter((i) => i.status !== "paid" && i.status !== "credited")
     .reduce((s, i) => s + balanceInclVat(i.balance_due, i.vat_amount), 0);
   const clientLedgerOwed = (ledger ?? [])
     .filter((e) => e.ledger_type === "client" && e.status !== "paid")
     .reduce((s, e) => s + Number(e.amount), 0);
-  const owedToYou = invoicesOwed + clientLedgerOwed;
+  // On-account customer credit is owed BACK to customers — a liability that nets
+  // down what's owed to you.
+  const customerCreditOnAccount = sumOnAccount(creditNotes ?? [], "customer");
+  const owedToYou = invoicesOwed + clientLedgerOwed - customerCreditOnAccount;
 
   const supplierInvoicesOwed = (supplierInvoices ?? [])
-    .filter((si) => si.status !== "paid")
+    .filter((si) => si.status !== "paid" && si.status !== "credited")
     .reduce((s, si) => s + balanceInclVat(si.balance_due, si.vat_amount), 0);
   const supplierLedgerOwed = (ledger ?? [])
     .filter((e) => e.ledger_type === "supplier" && e.status !== "paid")
     .reduce((s, e) => s + Number(e.amount), 0);
-  const youOwe = supplierInvoicesOwed + supplierLedgerOwed;
+  // On-account supplier credit is owed TO you — nets down what you owe suppliers.
+  const supplierCreditOnAccount = sumOnAccount(creditNotes ?? [], "supplier");
+  const youOwe = supplierInvoicesOwed + supplierLedgerOwed - supplierCreditOnAccount;
 
   const adjustedPosition = netCashFlow + owedToYou - youOwe;
   const stockValue = (stock ?? []).reduce((s, item) => s + Number(item.cost_price || 0) * Number(item.qty || 0), 0);
@@ -71,9 +80,11 @@ export function CashFlowView() {
       `Net cash flow: ${fmt(netCashFlow)}`,
     ];
     if (isAll) {
+      lines.push(`Owed to you: ${fmt(owedToYou)}`);
+      if (customerCreditOnAccount > 0) lines.push(`  Less credit on account (customers): ${fmt(customerCreditOnAccount)}`);
+      lines.push(`You owe suppliers: ${fmt(youOwe)}`);
+      if (supplierCreditOnAccount > 0) lines.push(`  Less credit on account (suppliers): ${fmt(supplierCreditOnAccount)}`);
       lines.push(
-        `Owed to you: ${fmt(owedToYou)}`,
-        `You owe suppliers: ${fmt(youOwe)}`,
         `Adjusted position: ${fmt(adjustedPosition)}`,
         `Stock on hand (at cost): ${fmt(stockValue)}`
       );

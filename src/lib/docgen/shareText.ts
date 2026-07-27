@@ -2,6 +2,7 @@ import { fmt } from "@/lib/format";
 import { balanceInclVat } from "@/lib/balance";
 import type { Quote } from "@/lib/supabase/hooks/useQuotes";
 import type { Invoice } from "@/lib/supabase/hooks/useInvoices";
+import type { CreditNote } from "@/lib/supabase/hooks/useCreditNotes";
 
 type SalesItem = { desc?: string; qty?: number; labour?: number; materials?: number };
 
@@ -62,6 +63,25 @@ export function buildInvoiceText(inv: Invoice): string {
     ``,
     `_Please make payment by the due date._`,
     `_Thank you for your business!_`,
+  ]
+    .filter((l) => l !== null)
+    .join("\n");
+}
+
+export function buildCreditNoteText(cn: CreditNote): string {
+  return [
+    `↩️ *CREDIT NOTE ${cn.doc_number}*`,
+    `━━━━━━━━━━━━━━━━━━━`,
+    `*Client:* ${cn.contact_name}`,
+    `*Date:* ${cn.issue_date}`,
+    cn.original_doc_number ? `*Against invoice ${cn.original_doc_number}*` : null,
+    cn.reason ? `*Reason:* ${cn.reason}` : null,
+    ``,
+    `━━━━━━━━━━━━━━━━━━━`,
+    `*Credit total: ${fmt(cn.amount)}*`,
+    Number(cn.vat_amount ?? 0) > 0 ? `*VAT reversed (incl.):* ${fmt(cn.vat_amount)}` : null,
+    ``,
+    `_Retain this credit note for your records._`,
   ]
     .filter((l) => l !== null)
     .join("\n");

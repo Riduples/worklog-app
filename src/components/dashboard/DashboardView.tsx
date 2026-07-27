@@ -116,7 +116,9 @@ export function DashboardView({ businessName }: { businessName: string }) {
   // ── Needs you today ── the buildable three: overdue/unpaid invoices, today's
   // bookings, low stock — each gated on the same permission as its tool.
   const today = todayStr();
-  const unpaidInvoices = gate("invoice") ? (invoices ?? []).filter((i) => i.status !== "paid") : [];
+  const unpaidInvoices = gate("invoice")
+    ? (invoices ?? []).filter((i) => i.status !== "paid" && i.status !== "credited")
+    : [];
   const overdueTotal = unpaidInvoices
     .filter((i) => i.due_date && i.due_date < today)
     .reduce((s, i) => s + balanceInclVat(i.balance_due, i.vat_amount), 0);

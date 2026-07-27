@@ -7,6 +7,7 @@ import { useExpenses } from "@/lib/supabase/hooks/useExpenses";
 import { useInvoices } from "@/lib/supabase/hooks/useInvoices";
 import { useSupplierInvoices } from "@/lib/supabase/hooks/useSupplierInvoices";
 import { useLedgerEntries } from "@/lib/supabase/hooks/useLedger";
+import { useCreditNotes } from "@/lib/supabase/hooks/useCreditNotes";
 import { useMileageTrips } from "@/lib/supabase/hooks/useMileage";
 import { useBankAccounts } from "@/lib/supabase/hooks/useBankAccounts";
 import { useAccountTransfers } from "@/lib/supabase/hooks/useAccountTransfers";
@@ -27,6 +28,7 @@ export function ProfitLossView() {
   const { data: invoices } = useInvoices();
   const { data: supplierInvoices } = useSupplierInvoices();
   const { data: ledger } = useLedgerEntries();
+  const { data: creditNotes } = useCreditNotes();
   const { data: mileage } = useMileageTrips();
   const { data: accounts } = useBankAccounts();
   const { data: transfers } = useAccountTransfers();
@@ -44,12 +46,14 @@ export function ProfitLossView() {
   // business-wide claims, not tied to an account, so cashBasis counts the account's
   // own rows directly (no accrual netting, which would zero invoice-matched cash).
   const pnl = isAll
-    ? computePnl({ income, expenses, invoices, supplierInvoices, ledger }, within)
+    ? computePnl({ income, expenses, invoices, supplierInvoices, ledger, creditNotes }, within)
     : computePnl({ income: acctIncome, expenses: acctExpenses }, within, { cashBasis: true });
 
   const netProfit = pnl.profit;
   const margin = pnl.revenue > 0 ? (netProfit / pnl.revenue) * 100 : 0;
-  const taxJar = acctIncome.filter((r) => within(r.transaction_date)).reduce((s, r) => s + Number(r.tax_jar_amount || 0), 0);
+  const taxJar = acctIncome
+    .filter((r) => within(r.transaction_date) && !r.is_credit_settlement)
+    .reduce((s, r) => s + Number(r.tax_jar_amount || 0), 0);
   const mileageDeduction = (mileage ?? [])
     .filter((t) => within(t.trip_date))
     .reduce((s, t) => s + Number(t.sars_deduction || 0), 0);
@@ -57,7 +61,7 @@ export function ProfitLossView() {
 
   const expenseByCategory = Object.entries(
     acctExpenses
-      .filter((r) => within(r.transaction_date))
+      .filter((r) => within(r.transaction_date) && !r.is_credit_settlement)
       .reduce<Record<string, number>>((acc, r) => {
         const cat = r.sars_category || r.what_for || "Uncategorised";
         acc[cat] = (acc[cat] || 0) + Number(r.amount);

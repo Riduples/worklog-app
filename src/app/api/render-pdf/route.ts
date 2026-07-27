@@ -4,7 +4,14 @@ import puppeteer, { type Browser } from "puppeteer-core";
 import { createClient } from "@/lib/supabase/server";
 import { enforceRateLimit } from "@/lib/rateLimit";
 import { buildDocumentHTML, type DocForRender, type DocKind } from "@/lib/docgen/buildDocumentHTML";
-import { buildStatementHTML, buildRemittanceHTML, type StatementLine, type RemittanceLine } from "@/lib/docgen/buildLedgerHTML";
+import {
+  buildStatementHTML,
+  buildRemittanceHTML,
+  type StatementLine,
+  type RemittanceLine,
+  type StatementCredits,
+  type RemittanceCredits,
+} from "@/lib/docgen/buildLedgerHTML";
 import type { BusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 
 export const runtime = "nodejs";
@@ -16,12 +23,13 @@ export const maxDuration = 60;
 // document from our own templates instead of trusting anything renderable.
 type RenderRequest =
   | { kind: DocKind; doc: DocForRender }
-  | { kind: "statement"; clientName: string; lines: StatementLine[]; totals: { invoiced: number; received: number; outstanding: number }; asAt: string }
+  | { kind: "statement"; clientName: string; lines: StatementLine[]; totals: { invoiced: number; received: number; outstanding: number }; asAt: string; credits?: StatementCredits }
   | {
       kind: "remittance";
       supplierName: string;
       lines: RemittanceLine[];
       payment: { method: string; date: string; reference: string; total: number };
+      credits?: RemittanceCredits;
     };
 
 function buildHtml(body: RenderRequest, business: BusinessProfile, watermark: boolean): string | null {
@@ -30,11 +38,12 @@ function buildHtml(body: RenderRequest, business: BusinessProfile, watermark: bo
     case "invoice":
     case "purchaseorder":
     case "payslip":
+    case "creditnote":
       return buildDocumentHTML(body.doc, business, body.kind, watermark);
     case "statement":
-      return buildStatementHTML(business, body.clientName, body.lines, body.totals, body.asAt, watermark);
+      return buildStatementHTML(business, body.clientName, body.lines, body.totals, body.asAt, watermark, body.credits);
     case "remittance":
-      return buildRemittanceHTML(business, body.supplierName, body.lines, body.payment, watermark);
+      return buildRemittanceHTML(business, body.supplierName, body.lines, body.payment, watermark, body.credits);
     default:
       return null;
   }

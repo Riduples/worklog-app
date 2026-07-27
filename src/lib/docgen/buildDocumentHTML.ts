@@ -8,7 +8,7 @@ import { esc } from "@/lib/docgen/esc";
 import { balanceInclVat } from "@/lib/balance";
 import type { BusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 
-export type DocKind = "quote" | "invoice" | "purchaseorder" | "payslip";
+export type DocKind = "quote" | "invoice" | "purchaseorder" | "payslip" | "creditnote";
 
 export type DocForRender = {
   doc_number: string;
@@ -23,6 +23,8 @@ export type DocForRender = {
   due_date?: string | null;
   valid_until?: string | null;
   requested_delivery?: string | null;
+  reference_doc_number?: string | null;
+  reason?: string | null;
 };
 
 
@@ -30,14 +32,15 @@ export function buildDocumentHTML(doc: DocForRender, business: BusinessProfile, 
   const isInvoice = kind === "invoice";
   const isPO = kind === "purchaseorder";
   const isPayslip = kind === "payslip";
+  const isCreditNote = kind === "creditnote";
   // VAT is driven by the document's own vat_rate/vat_amount snapshot, NOT the live
   // business.vat_number. The number is a freely-editable profile field; clearing it
   // after issuing an invoice must not silently drop VAT from the PDF total while the
   // on-screen modal and WhatsApp text (which add the stored vat_amount) still show
   // the VAT-inclusive figure. The snapshot is the source of truth for what was billed.
   const hasVat = !isPayslip && doc.vat_rate != null && doc.vat_amount > 0;
-  const docTitle = isPayslip ? "PAYSLIP" : isPO ? "PURCHASE ORDER" : isInvoice ? (hasVat ? "TAX INVOICE" : "INVOICE") : "QUOTE";
-  const recipientLabel = isPayslip ? "Employee" : isPO ? "To (Supplier)" : isInvoice ? "Bill To" : "Quote For";
+  const docTitle = isCreditNote ? "CREDIT NOTE" : isPayslip ? "PAYSLIP" : isPO ? "PURCHASE ORDER" : isInvoice ? (hasVat ? "TAX INVOICE" : "INVOICE") : "QUOTE";
+  const recipientLabel = isCreditNote ? "Credit To" : isPayslip ? "Employee" : isPO ? "To (Supplier)" : isInvoice ? "Bill To" : "Quote For";
 
   const rows = doc.line_items
     .map((i) => {
@@ -68,12 +71,12 @@ export function buildDocumentHTML(doc: DocForRender, business: BusinessProfile, 
       ? `<div class="totals-row"><span>Subtotal (excl. VAT)</span><span>${fmt(doc.subtotal)}</span></div>
          <div class="totals-row"><span>VAT (${vatPctLabel})</span><span>${fmt(doc.vat_amount)}</span></div>`
       : "",
-    doc.deposit > 0
+    !isCreditNote && doc.deposit > 0
       ? `<div class="totals-row"><span>${hasVat ? "Total incl. VAT" : "Subtotal"}</span><span>${fmt(totalInclVat)}</span></div>
          <div class="totals-row"><span>Deposit ${isInvoice ? "received" : "required"}</span><span>−${fmt(doc.deposit)}</span></div>`
       : "",
     `<div class="totals-row final">
-       <span>${isPayslip ? "NET PAY" : isInvoice ? (doc.deposit > 0 ? "Balance Due" : "Total Due") : "Total"}${hasVat ? " (incl. VAT)" : ""}</span>
+       <span>${isCreditNote ? "Total credit" : isPayslip ? "NET PAY" : isInvoice ? (doc.deposit > 0 ? "Balance Due" : "Total Due") : "Total"}${hasVat ? " (incl. VAT)" : ""}</span>
        <span>${fmt(finalDue)}</span>
      </div>`,
   ].join("");
@@ -183,8 +186,10 @@ export function buildDocumentHTML(doc: DocForRender, business: BusinessProfile, 
       </div>
       ${isInvoice && doc.due_date ? `<div class="vat-note" style="margin-top:8px;"><strong>Due date:</strong> ${esc(doc.due_date)}</div>` : ""}
       ${isPO && doc.requested_delivery ? `<div class="vat-note" style="margin-top:8px;"><strong>Requested delivery:</strong> ${esc(doc.requested_delivery)}</div>` : ""}
-      ${!isInvoice && !isPO && !isPayslip && doc.valid_until ? `<div class="vat-note" style="margin-top:8px;">Valid until ${esc(doc.valid_until)}</div>` : ""}
+      ${!isInvoice && !isPO && !isPayslip && !isCreditNote && doc.valid_until ? `<div class="vat-note" style="margin-top:8px;">Valid until ${esc(doc.valid_until)}</div>` : ""}
       ${isPayslip && doc.due_date ? `<div class="vat-note" style="margin-top:8px;"><strong>Pay date:</strong> ${esc(doc.due_date)}</div>` : ""}
+      ${isCreditNote && doc.reference_doc_number ? `<div class="vat-note" style="margin-top:8px;"><strong>Against invoice:</strong> ${esc(doc.reference_doc_number)}</div>` : ""}
+      ${isCreditNote && doc.reason ? `<div class="vat-note" style="margin-top:4px;">Reason: ${esc(doc.reason)}</div>` : ""}
     </div>
   </div>
 
@@ -205,7 +210,9 @@ export function buildDocumentHTML(doc: DocForRender, business: BusinessProfile, 
 ${bankingHTML}
   <div class="footer">
     ${
-      isPayslip
+      isCreditNote
+        ? "This credit note reverses part or all of the invoice above. Retain it for your records."
+        : isPayslip
         ? "This is a computer-generated payslip. Retain it for your records."
         : isPO
           ? "This purchase order is subject to the terms agreed with the supplier."
