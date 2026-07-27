@@ -4,6 +4,7 @@ const TABLE_BY_PREFIX = {
   QTE: "quotes",
   INV: "invoices",
   PO: "purchase_orders",
+  CN: "credit_notes",
 } as const;
 
 export async function getNextDocNumber(

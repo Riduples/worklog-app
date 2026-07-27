@@ -1,4 +1,4 @@
-export type Json =
+﻿export type Json =
   | string
   | number
   | boolean
@@ -511,15 +511,124 @@ export type Database = {
           },
         ]
       }
+      credit_notes: {
+        Row: {
+          amount: number
+          business_id: string
+          contact_id: string | null
+          contact_name: string
+          created_at: string | null
+          deleted_at: string | null
+          doc_number: string
+          id: string
+          invoice_id: string | null
+          issue_date: string
+          ledger: string
+          line_items: Json
+          on_account_balance: number
+          original_doc_number: string | null
+          reason: string | null
+          scope: string
+          settlement: string
+          status: string
+          supplier_invoice_id: string | null
+          updated_at: string | null
+          user_id: string
+          vat_amount: number
+          vat_rate: number | null
+        }
+        Insert: {
+          amount: number
+          business_id: string
+          contact_id?: string | null
+          contact_name: string
+          created_at?: string | null
+          deleted_at?: string | null
+          doc_number: string
+          id?: string
+          invoice_id?: string | null
+          issue_date: string
+          ledger: string
+          line_items?: Json
+          on_account_balance?: number
+          original_doc_number?: string | null
+          reason?: string | null
+          scope?: string
+          settlement?: string
+          status?: string
+          supplier_invoice_id?: string | null
+          updated_at?: string | null
+          user_id: string
+          vat_amount?: number
+          vat_rate?: number | null
+        }
+        Update: {
+          amount?: number
+          business_id?: string
+          contact_id?: string | null
+          contact_name?: string
+          created_at?: string | null
+          deleted_at?: string | null
+          doc_number?: string
+          id?: string
+          invoice_id?: string | null
+          issue_date?: string
+          ledger?: string
+          line_items?: Json
+          on_account_balance?: number
+          original_doc_number?: string | null
+          reason?: string | null
+          scope?: string
+          settlement?: string
+          status?: string
+          supplier_invoice_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+          vat_amount?: number
+          vat_rate?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_notes_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_notes_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_notes_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_notes_supplier_invoice_id_fkey"
+            columns: ["supplier_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       expenses: {
         Row: {
           account_id: string | null
           amount: number
           business_id: string
           created_at: string | null
+          credit_note_id: string | null
           deleted_at: string | null
           details: string | null
           id: string
+          is_credit_settlement: boolean
           matched_ledger_entry_id: string | null
           matched_supplier_invoice_id: string | null
           paid_to: string | null
@@ -537,9 +646,11 @@ export type Database = {
           amount: number
           business_id: string
           created_at?: string | null
+          credit_note_id?: string | null
           deleted_at?: string | null
           details?: string | null
           id?: string
+          is_credit_settlement?: boolean
           matched_ledger_entry_id?: string | null
           matched_supplier_invoice_id?: string | null
           paid_to?: string | null
@@ -557,9 +668,11 @@ export type Database = {
           amount?: number
           business_id?: string
           created_at?: string | null
+          credit_note_id?: string | null
           deleted_at?: string | null
           details?: string | null
           id?: string
+          is_credit_settlement?: boolean
           matched_ledger_entry_id?: string | null
           matched_supplier_invoice_id?: string | null
           paid_to?: string | null
@@ -585,6 +698,13 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "business_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_credit_note_id_fkey"
+            columns: ["credit_note_id"]
+            isOneToOne: false
+            referencedRelation: "credit_notes"
             referencedColumns: ["id"]
           },
           {
@@ -657,9 +777,11 @@ export type Database = {
           amount: number
           business_id: string
           created_at: string | null
+          credit_note_id: string | null
           deleted_at: string | null
           details: string | null
           id: string
+          is_credit_settlement: boolean
           matched_invoice_id: string | null
           payment_method: string | null
           received_from: string | null
@@ -679,9 +801,11 @@ export type Database = {
           amount: number
           business_id: string
           created_at?: string | null
+          credit_note_id?: string | null
           deleted_at?: string | null
           details?: string | null
           id?: string
+          is_credit_settlement?: boolean
           matched_invoice_id?: string | null
           payment_method?: string | null
           received_from?: string | null
@@ -701,9 +825,11 @@ export type Database = {
           amount?: number
           business_id?: string
           created_at?: string | null
+          credit_note_id?: string | null
           deleted_at?: string | null
           details?: string | null
           id?: string
+          is_credit_settlement?: boolean
           matched_invoice_id?: string | null
           payment_method?: string | null
           received_from?: string | null
@@ -731,6 +857,13 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "business_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "income_credit_note_id_fkey"
+            columns: ["credit_note_id"]
+            isOneToOne: false
+            referencedRelation: "credit_notes"
             referencedColumns: ["id"]
           },
           {
