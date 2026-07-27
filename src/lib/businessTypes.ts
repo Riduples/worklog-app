@@ -31,11 +31,11 @@ export const BUSINESS_TYPES: { id: BusinessType; label: string }[] = [
 // including trade, despite the build doc's example claiming a contractor sees
 // POs. The prototype disagrees with the doc; the prototype wins.
 export const BUSINESS_TYPE_CORE_TOOLS: Record<BusinessType, ToolId[] | null> = {
-  salon: ["income", "expense", "bankstatement", "quote", "invoice", "clients", "stock", "recipe", "booking", "cashup", "staffregister", "payrun", "advances", "leave", "vat201", "emp201", "taxjar", "tax"],
-  retail: ["income", "expense", "bankstatement", "clients", "suppliers", "stock", "cashup", "staffregister", "payrun", "advances", "leave", "vat201", "emp201", "taxjar", "tax"],
-  food: ["income", "expense", "bankstatement", "clients", "suppliers", "stock", "recipe", "cashup", "staffregister", "payrun", "advances", "leave", "vat201", "emp201", "taxjar", "tax"],
-  trade: ["income", "expense", "bankstatement", "quote", "invoice", "statement", "clients", "suppliers", "stock", "recipe", "booking", "timetrack", "mileage", "staffregister", "payrun", "advances", "leave", "vat201", "emp201", "provtax", "ageanalysis", "profitloss", "taxjar", "tax"],
-  cleaning: ["income", "expense", "bankstatement", "quote", "invoice", "clients", "booking", "timetrack", "mileage", "staffregister", "payrun", "advances", "leave", "vat201", "taxjar", "tax"],
+  salon: ["income", "expense", "bankstatement", "quote", "invoice", "clients", "stock", "recipe", "booking", "cashup", "staffregister", "advances", "leave", "payrun", "vat201", "emp201", "taxjar", "tax"],
+  retail: ["income", "expense", "bankstatement", "clients", "suppliers", "stock", "cashup", "staffregister", "advances", "leave", "payrun", "vat201", "emp201", "taxjar", "tax"],
+  food: ["income", "expense", "bankstatement", "clients", "suppliers", "stock", "recipe", "cashup", "staffregister", "advances", "leave", "payrun", "vat201", "emp201", "taxjar", "tax"],
+  trade: ["income", "expense", "bankstatement", "quote", "invoice", "statement", "clients", "suppliers", "stock", "recipe", "booking", "timetrack", "mileage", "staffregister", "advances", "leave", "payrun", "vat201", "emp201", "provtax", "ageanalysis", "profitloss", "taxjar", "tax"],
+  cleaning: ["income", "expense", "bankstatement", "quote", "invoice", "clients", "booking", "timetrack", "mileage", "staffregister", "advances", "leave", "payrun", "vat201", "taxjar", "tax"],
   freelance: ["income", "expense", "bankstatement", "quote", "invoice", "clients", "timetrack", "provtax", "profitloss", "taxjar", "tax"],
   other: null,
 };

@@ -8,6 +8,7 @@ import { useSupplierInvoices } from "@/lib/supabase/hooks/useSupplierInvoices";
 import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 import { useTaxFilings, useMarkFiled } from "@/lib/supabase/hooks/useTaxFilings";
 import { fmt, toLocalIsoDate } from "@/lib/format";
+import { shareReport } from "@/lib/docgen/shareReport";
 
 const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
@@ -86,6 +87,15 @@ export function Vat201View() {
   const vat201Filings = (filings ?? []).filter((f) => f.filing_type === "vat201");
   const alreadyFiled = vat201Filings.some((f) => f.period_label === label);
 
+  const handleShare = () => {
+    const lines = [
+      `Output VAT (on sales): ${fmt(outputVAT)}`,
+      `Input VAT (on purchases): ${fmt(inputVAT)}`,
+      `${vatDue >= 0 ? "VAT payable" : "VAT refund due"}: ${fmt(Math.abs(vatDue))}`,
+    ];
+    void shareReport("VAT201", `${label} · ${business?.vat_period ?? ""}`, lines, business);
+  };
+
   if (!business?.vat_number) {
     return (
       <div style={{ padding: "20px 16px 100px" }}>
@@ -156,6 +166,13 @@ export function Vat201View() {
       <div style={{ background: "#fff7ed", border: "1.5px solid #fed7aa", borderRadius: 12, padding: "12px 14px", fontSize: 12, color: "#92400e", lineHeight: 1.6, marginBottom: 14 }}>
         Submit the actual VAT201 return via SARS eFiling — this is a calculation aid, not a filing. Due by the 25th of the month after the period ends.
       </div>
+
+      <button
+        onClick={handleShare}
+        style={{ width: "100%", marginBottom: 14, background: "#F0F9FF", color: "#0C4A6E", border: "1.5px solid #BAE6FD", borderRadius: 12, padding: 13, fontWeight: 700, fontSize: 13, cursor: "pointer" }}
+      >
+        📤 Share report
+      </button>
 
       {vat201Filings.length > 0 && (
         <>

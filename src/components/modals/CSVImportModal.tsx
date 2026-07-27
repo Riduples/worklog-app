@@ -54,7 +54,9 @@ export function CSVImportModal({ type, onClose }: { type: CsvImportType; onClose
       complete: (results) => {
         const rows: ParsedRow[] = [];
         for (const raw of results.data) {
-          const name = (raw.name ?? "").trim();
+          // Stock templates ship a "description" column now; older files (and
+          // contacts) still use "name". Accept either, name wins as fallback.
+          const name = ((type === "stock" ? raw.description ?? raw.name : raw.name) ?? "").trim();
           if (!name) continue; // skip blank-name rows entirely
           const key = name.toLowerCase();
           const issues: string[] = [];

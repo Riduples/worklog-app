@@ -76,9 +76,9 @@ const NAV_CATEGORIES: { id: string; items: NavItem[] }[] = [
     id: "workers", // Payroll
     items: [
       { href: "/staff", icon: "👤", label: "Staff Register", toolId: "staffregister", lockId: "staffregister" },
-      { href: "/payroll", icon: "💵", label: "Pay Run", toolId: "payrun", lockId: "payrun" },
       { href: "/advances", icon: "💰", label: "Advances", toolId: "advances", lockId: "advances" },
       { href: "/leave", icon: "🏖️", label: "Leave", toolId: "leave", lockId: "leave" },
+      { href: "/payroll", icon: "💵", label: "Pay Run", toolId: "payrun", lockId: "payrun" },
     ],
   },
   {

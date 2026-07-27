@@ -11,7 +11,7 @@ import { fmt, todayStr } from "@/lib/format";
 import { useContacts } from "@/lib/supabase/hooks/useContacts";
 import { useCreateTimeEntry } from "@/lib/supabase/hooks/useTimeEntries";
 
-const BILL_TYPES = ["Billable", "Non-billable", "Admin", "Travel"];
+const BILL_TYPES = ["Billable", "Non-billable"];
 
 export function TimeModal({ onClose }: { onClose: () => void }) {
   const [client, setClient] = useState("");
@@ -55,34 +55,34 @@ export function TimeModal({ onClose }: { onClose: () => void }) {
   return (
     <Modal title="Log time" onClose={onClose}>
       <ContactPicker
-        label="Client (optional)"
+        label="Customer (optional)"
         value={client}
         onChange={(v, id) => {
           setClient(v);
           setClientContactId(id);
         }}
         contacts={contacts ?? []}
-        placeholder="Client name"
+        placeholder="Customer name"
       />
+
+      <Field label="Date">
+        <Input value={entryDate} onChange={setEntryDate} type="date" />
+      </Field>
 
       <Field label="Hours worked">
         <Input value={hours} onChange={setHours} type="number" placeholder="e.g. 2.5" autoFocus />
-      </Field>
-
-      <Field label="Hourly rate">
-        <Input value={rate} onChange={setRate} type="number" placeholder="0.00" />
-      </Field>
-
-      <Field label="Type">
-        <Chips options={BILL_TYPES} selected={billType} onSelect={(v) => v && setBillType(v)} />
       </Field>
 
       <Field label="Description (optional)">
         <Input value={description} onChange={setDescription} placeholder="What was the work?" />
       </Field>
 
-      <Field label="Date">
-        <Input value={entryDate} onChange={setEntryDate} type="date" />
+      <Field label="Labour hourly rate">
+        <Input value={rate} onChange={setRate} type="number" placeholder="0.00" />
+      </Field>
+
+      <Field label="Type">
+        <Chips options={BILL_TYPES} selected={billType} onSelect={(v) => v && setBillType(v)} />
       </Field>
 
       {amountToBill > 0 && (

@@ -60,7 +60,7 @@ export function InvoiceModal({ sourceQuote, onClose }: { sourceQuote?: Quote; on
 
   const handleSave = async () => {
     if (!client.trim()) {
-      setError("Client is required.");
+      setError("Customer is required.");
       return;
     }
     if (!items.some((it) => it.desc || it.labour || it.materials)) {
@@ -115,14 +115,14 @@ export function InvoiceModal({ sourceQuote, onClose }: { sourceQuote?: Quote; on
   return (
     <Modal title={sourceQuote ? `Convert ${sourceQuote.doc_number} to invoice` : "New invoice"} onClose={onClose}>
       <ContactPicker
-        label="Client"
+        label="Customer / Company name"
         value={client}
         onChange={(v, id) => {
           setClient(v);
           setClientContactId(id);
         }}
         contacts={contacts ?? []}
-        placeholder="Client name"
+        placeholder="Customer name — or pick from your customers"
       />
 
       <Field label="Issue date">

@@ -50,7 +50,7 @@ export function StockModal({ item, onClose }: { item?: StockItem; onClose: () =>
 
   return (
     <Modal title={isEdit ? "Edit stock item" : "Add stock item"} onClose={onClose}>
-      <Field label="Name">
+      <Field label="Description">
         <Input value={name} onChange={setName} placeholder="e.g. Cement 50kg" autoFocus />
       </Field>
       <Field label="Quantity on hand">

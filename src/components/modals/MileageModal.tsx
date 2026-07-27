@@ -10,12 +10,12 @@ import { fmt, todayStr } from "@/lib/format";
 import { useTaxRates } from "@/lib/taxRates";
 import { useCreateMileageTrip } from "@/lib/supabase/hooks/useMileage";
 
-const TRIP_TYPES = ["Client visit", "Delivery", "Materials run", "Business errand"];
+const TRIP_TYPES = ["Customer visit", "Supplier visit", "Other"];
 
 export function MileageModal({ onClose }: { onClose: () => void }) {
   const [odoStart, setOdoStart] = useState("");
   const [odoEnd, setOdoEnd] = useState("");
-  const [tripType, setTripType] = useState("Client visit");
+  const [tripType, setTripType] = useState("Customer visit");
   const [purpose, setPurpose] = useState("");
   const [tripDate, setTripDate] = useState(todayStr());
   const [error, setError] = useState("");
@@ -55,24 +55,24 @@ export function MileageModal({ onClose }: { onClose: () => void }) {
 
   return (
     <Modal title="Log trip" onClose={onClose}>
-      <Field label="Odometer start">
-        <Input value={odoStart} onChange={setOdoStart} type="number" placeholder="e.g. 45230" autoFocus />
-      </Field>
-
-      <Field label="Odometer end">
-        <Input value={odoEnd} onChange={setOdoEnd} type="number" placeholder="e.g. 45265" />
-      </Field>
-
       <Field label="Trip type">
         <Chips options={TRIP_TYPES} selected={tripType} onSelect={(v) => v && setTripType(v)} />
+      </Field>
+
+      <Field label="Date">
+        <Input value={tripDate} onChange={setTripDate} type="date" />
       </Field>
 
       <Field label="Purpose (optional)">
         <Input value={purpose} onChange={setPurpose} placeholder="e.g. Site visit in Soweto" />
       </Field>
 
-      <Field label="Date">
-        <Input value={tripDate} onChange={setTripDate} type="date" />
+      <Field label="Odometer start">
+        <Input value={odoStart} onChange={setOdoStart} type="number" placeholder="e.g. 45230" autoFocus />
+      </Field>
+
+      <Field label="Odometer end">
+        <Input value={odoEnd} onChange={setOdoEnd} type="number" placeholder="e.g. 45265" />
       </Field>
 
       {km > 0 && (

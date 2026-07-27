@@ -7,6 +7,7 @@ import { useStaffRegister } from "@/lib/supabase/hooks/useStaffRegister";
 import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 import { useTaxFilings, useMarkFiled } from "@/lib/supabase/hooks/useTaxFilings";
 import { fmt } from "@/lib/format";
+import { shareReport } from "@/lib/docgen/shareReport";
 
 const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
@@ -53,6 +54,16 @@ export function Emp201View() {
   const dueMonth0 = (month0 + 1) % 12;
   const dueYear = month0 === 11 ? year + 1 : year;
   const dueDate = `7 ${MONTH_NAMES[dueMonth0]} ${dueYear}`;
+
+  const handleShare = () => {
+    const lines = [
+      `PAYE (employee tax): ${fmt(paye)}`,
+      `UIF (employee + employer): ${fmt(uifEmployee + uifEmployer)}`,
+    ];
+    if (sdl > 0) lines.push(`SDL (1%): ${fmt(sdl)}`);
+    lines.push(`Total due to SARS: ${fmt(totalDue)}`);
+    void shareReport("EMP201", `${label} · ${employeesPaid} employee${employeesPaid !== 1 ? "s" : ""} paid`, lines, business);
+  };
 
   if ((staff ?? []).length === 0) {
     return (
@@ -142,6 +153,13 @@ export function Emp201View() {
       <div style={{ background: "#fff7ed", border: "1.5px solid #fed7aa", borderRadius: 12, padding: "12px 14px", fontSize: 12, color: "#92400e", lineHeight: 1.6, marginBottom: 14 }}>
         Submit the actual EMP201 via SARS eFiling and declare UIF separately on uFiling — this is a calculation aid, not a filing. Penalty: 10% of PAYE if late.
       </div>
+
+      <button
+        onClick={handleShare}
+        style={{ width: "100%", marginBottom: 14, background: "#F0F9FF", color: "#0C4A6E", border: "1.5px solid #BAE6FD", borderRadius: 12, padding: 13, fontWeight: 700, fontSize: 13, cursor: "pointer" }}
+      >
+        📤 Share report
+      </button>
 
       {monthRuns.length > 0 && (
         <>

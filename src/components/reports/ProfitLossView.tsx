@@ -10,10 +10,12 @@ import { useLedgerEntries } from "@/lib/supabase/hooks/useLedger";
 import { useMileageTrips } from "@/lib/supabase/hooks/useMileage";
 import { useBankAccounts } from "@/lib/supabase/hooks/useBankAccounts";
 import { useAccountTransfers } from "@/lib/supabase/hooks/useAccountTransfers";
-import { inPeriod, type Period } from "@/lib/period";
+import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
+import { inPeriod, PERIOD_LABELS, type Period } from "@/lib/period";
 import { computePnl } from "@/lib/pnl";
 import { accountBalance } from "@/lib/accounts";
 import { fmt } from "@/lib/format";
+import { shareReport } from "@/lib/docgen/shareReport";
 import { BackLink } from "@/components/ui/BackLink";
 import { BankAccountSelector, ALL_ACCOUNTS, type AccountFilter } from "@/components/ui/BankAccountSelector";
 
@@ -28,6 +30,7 @@ export function ProfitLossView() {
   const { data: mileage } = useMileageTrips();
   const { data: accounts } = useBankAccounts();
   const { data: transfers } = useAccountTransfers();
+  const { data: business } = useBusinessProfile();
 
   const within = inPeriod(period);
   const isAll = account === ALL_ACCOUNTS;
@@ -63,6 +66,20 @@ export function ProfitLossView() {
   )
     .sort((a, b) => b[1] - a[1])
     .slice(0, 8);
+
+  const handleShare = () => {
+    const basis = isAll ? "Accrual basis" : `Cash basis · ${selectedAccount?.name ?? "account"}`;
+    const lines = [
+      `Revenue: ${fmt(pnl.revenue)}`,
+      `Costs: ${fmt(pnl.costs)}`,
+      `Net profit: ${fmt(netProfit)}`,
+      `Margin: ${margin.toFixed(1)}%`,
+    ];
+    if (expenseByCategory.length > 0) {
+      lines.push(``, `Top expense categories:`, ...expenseByCategory.map(([cat, amt]) => `  ${cat}: ${fmt(amt)}`));
+    }
+    void shareReport("Profit & Loss", `${PERIOD_LABELS[period]} · ${basis}`, lines, business);
+  };
 
   return (
     <div style={{ padding: "20px 16px 100px" }}>
@@ -137,6 +154,13 @@ export function ProfitLossView() {
           ))}
         </div>
       )}
+
+      <button
+        onClick={handleShare}
+        style={{ width: "100%", marginTop: 16, background: "#F0F9FF", color: "#0C4A6E", border: "1.5px solid #BAE6FD", borderRadius: 12, padding: 13, fontWeight: 700, fontSize: 13, cursor: "pointer" }}
+      >
+        📤 Share report
+      </button>
     </div>
   );
 }

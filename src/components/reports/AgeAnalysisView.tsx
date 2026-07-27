@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { useInvoices } from "@/lib/supabase/hooks/useInvoices";
 import { useSupplierInvoices } from "@/lib/supabase/hooks/useSupplierInvoices";
+import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 import { fmt, todayStr } from "@/lib/format";
 import { balanceInclVat } from "@/lib/balance";
+import { shareReport } from "@/lib/docgen/shareReport";
 import { BackLink } from "@/components/ui/BackLink";
 
 type Bucket = "0–30" | "31–60" | "61–90" | "90+";
@@ -35,6 +37,7 @@ type AgedItem = { id: string; name: string; docNumber: string; date: string; day
 export function AgeAnalysisView() {
   const { data: invoices } = useInvoices();
   const { data: supplierInvoices } = useSupplierInvoices();
+  const { data: business } = useBusinessProfile();
   const [tab, setTab] = useState<"debtors" | "creditors">("debtors");
 
   const debtors: AgedItem[] = (invoices ?? [])
@@ -76,6 +79,14 @@ export function AgeAnalysisView() {
     totals[i.bucket] += i.amount;
   });
   const grandTotal = Object.values(totals).reduce((s, v) => s + v, 0);
+
+  const handleShare = () => {
+    const lines = [
+      ...BUCKETS.map((b) => `${b} days: ${fmt(totals[b])}`),
+      `Total ${isDebtors ? "owed to you" : "you owe"}: ${fmt(grandTotal)}`,
+    ];
+    void shareReport("Age Analysis", `${isDebtors ? "Debtors" : "Creditors"} · as at ${todayStr()}`, lines, business);
+  };
 
   return (
     <div style={{ padding: "20px 16px 100px" }}>
@@ -153,6 +164,13 @@ export function AgeAnalysisView() {
           );
         })
       )}
+
+      <button
+        onClick={handleShare}
+        style={{ width: "100%", marginTop: 8, background: "#F0F9FF", color: "#0C4A6E", border: "1.5px solid #BAE6FD", borderRadius: 12, padding: 13, fontWeight: 700, fontSize: 13, cursor: "pointer" }}
+      >
+        📤 Share report
+      </button>
     </div>
   );
 }

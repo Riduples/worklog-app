@@ -10,10 +10,12 @@ import { useLedgerEntries } from "@/lib/supabase/hooks/useLedger";
 import { useStockItems } from "@/lib/supabase/hooks/useStock";
 import { useBankAccounts } from "@/lib/supabase/hooks/useBankAccounts";
 import { useAccountTransfers } from "@/lib/supabase/hooks/useAccountTransfers";
-import { inPeriod, type Period } from "@/lib/period";
+import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
+import { inPeriod, PERIOD_LABELS, type Period } from "@/lib/period";
 import { fmt } from "@/lib/format";
 import { balanceInclVat } from "@/lib/balance";
 import { accountBalance } from "@/lib/accounts";
+import { shareReport } from "@/lib/docgen/shareReport";
 import { BackLink } from "@/components/ui/BackLink";
 import { BankAccountSelector, ALL_ACCOUNTS, type AccountFilter } from "@/components/ui/BankAccountSelector";
 
@@ -28,6 +30,7 @@ export function CashFlowView() {
   const { data: stock } = useStockItems();
   const { data: accounts } = useBankAccounts();
   const { data: transfers } = useAccountTransfers();
+  const { data: business } = useBusinessProfile();
 
   const within = inPeriod(period);
   const isAll = account === ALL_ACCOUNTS;
@@ -60,6 +63,26 @@ export function CashFlowView() {
 
   const adjustedPosition = netCashFlow + owedToYou - youOwe;
   const stockValue = (stock ?? []).reduce((s, item) => s + Number(item.cost_price || 0) * Number(item.qty || 0), 0);
+
+  const handleShare = () => {
+    const lines = [
+      `Money in: ${fmt(moneyIn)}`,
+      `Money out: ${fmt(moneyOut)}`,
+      `Net cash flow: ${fmt(netCashFlow)}`,
+    ];
+    if (isAll) {
+      lines.push(
+        `Owed to you: ${fmt(owedToYou)}`,
+        `You owe suppliers: ${fmt(youOwe)}`,
+        `Adjusted position: ${fmt(adjustedPosition)}`,
+        `Stock on hand (at cost): ${fmt(stockValue)}`
+      );
+    } else {
+      lines.push(`${selectedAccount?.name ?? "Account"} balance now: ${fmt(acctBalance)}`);
+    }
+    const scope = isAll ? "All accounts" : (selectedAccount?.name ?? "account");
+    void shareReport("Cash Flow", `${PERIOD_LABELS[period]} · ${scope}`, lines, business);
+  };
 
   return (
     <div style={{ padding: "20px 16px 100px" }}>
@@ -115,6 +138,13 @@ export function CashFlowView() {
           </div>
         </div>
       )}
+
+      <button
+        onClick={handleShare}
+        style={{ width: "100%", marginTop: 16, background: "#F0F9FF", color: "#0C4A6E", border: "1.5px solid #BAE6FD", borderRadius: 12, padding: 13, fontWeight: 700, fontSize: 13, cursor: "pointer" }}
+      >
+        📤 Share report
+      </button>
     </div>
   );
 }

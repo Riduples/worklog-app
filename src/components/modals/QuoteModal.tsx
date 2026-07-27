@@ -43,7 +43,7 @@ export function QuoteModal({ onClose }: { onClose: () => void }) {
 
   const handleSave = async () => {
     if (!client.trim()) {
-      setError("Client is required.");
+      setError("Customer is required.");
       return;
     }
     if (!items.some((it) => it.desc || it.labour || it.materials)) {
@@ -77,14 +77,14 @@ export function QuoteModal({ onClose }: { onClose: () => void }) {
   return (
     <Modal title="New quote" onClose={onClose}>
       <ContactPicker
-        label="Client"
+        label="Customer / Company name"
         value={client}
         onChange={(v, id) => {
           setClient(v);
           setClientContactId(id);
         }}
         contacts={contacts ?? []}
-        placeholder="Client name"
+        placeholder="Customer name — or pick from your customers"
       />
 
       <Field label="Issue date">

@@ -53,14 +53,14 @@ export function BookingModal({ onClose }: { onClose: () => void }) {
   return (
     <Modal title="New booking" onClose={onClose}>
       <ContactPicker
-        label="Client"
+        label="Customer"
         value={client}
         onChange={(v, id) => {
           setClient(v);
           setClientContactId(id);
         }}
         contacts={contacts ?? []}
-        placeholder="Client name"
+        placeholder="Customer name"
       />
 
       <Field label="Service / job">
