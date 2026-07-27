@@ -1,4 +1,5 @@
 import { fmt } from "@/lib/format";
+import { salesLineTotal } from "@/lib/lineItems";
 import type { QuoteLineItem } from "@/lib/supabase/hooks/useQuotes";
 
 export function SalesLineItemsEditor({
@@ -12,7 +13,7 @@ export function SalesLineItemsEditor({
     onChange(items.map((it, i) => (i === index ? { ...it, ...changes } : it)));
   };
   const removeItem = (index: number) => onChange(items.filter((_, i) => i !== index));
-  const addItem = () => onChange([...items, { desc: "", qty: 1, labour: 0, materials: 0 }]);
+  const addItem = () => onChange([...items, { desc: "", qty: 1, unit_price: 0 }]);
 
   return (
     <div style={{ marginBottom: 16 }}>
@@ -30,7 +31,7 @@ export function SalesLineItemsEditor({
         Line items
       </label>
       {items.map((item, i) => {
-        const lineTotal = Number(item.labour || 0) + Number(item.materials || 0);
+        const lineTotal = salesLineTotal(item);
         return (
           <div
             key={i}
@@ -57,7 +58,7 @@ export function SalesLineItemsEditor({
                 ✕
               </button>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
               <div>
                 <div style={{ fontSize: 10, color: "#94a3b8", marginBottom: 4 }}>Qty</div>
                 <input
@@ -68,20 +69,11 @@ export function SalesLineItemsEditor({
                 />
               </div>
               <div>
-                <div style={{ fontSize: 10, color: "#94a3b8", marginBottom: 4 }}>Labour</div>
+                <div style={{ fontSize: 10, color: "#94a3b8", marginBottom: 4 }}>Unit price</div>
                 <input
                   type="number"
-                  value={item.labour}
-                  onChange={(e) => updateItem(i, { labour: parseFloat(e.target.value) || 0 })}
-                  style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1.5px solid #e2e8f0", fontSize: 13, boxSizing: "border-box" }}
-                />
-              </div>
-              <div>
-                <div style={{ fontSize: 10, color: "#94a3b8", marginBottom: 4 }}>Materials</div>
-                <input
-                  type="number"
-                  value={item.materials}
-                  onChange={(e) => updateItem(i, { materials: parseFloat(e.target.value) || 0 })}
+                  value={item.unit_price ?? ""}
+                  onChange={(e) => updateItem(i, { unit_price: parseFloat(e.target.value) || 0 })}
                   style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1.5px solid #e2e8f0", fontSize: 13, boxSizing: "border-box" }}
                 />
               </div>

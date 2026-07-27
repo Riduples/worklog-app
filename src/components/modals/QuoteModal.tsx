@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/Input";
 import { SaveBtn } from "@/components/ui/SaveBtn";
 import { ContactPicker } from "@/components/ui/ContactPicker";
 import { SalesLineItemsEditor } from "@/components/ui/SalesLineItemsEditor";
+import { salesLinesSubtotal } from "@/lib/lineItems";
 import { fmt, todayStr } from "@/lib/format";
 import { useTaxRates } from "@/lib/taxRates";
 import { getNextDocNumber } from "@/lib/docNumber";
@@ -29,7 +30,7 @@ export function QuoteModal({ quote, onClose }: { quote?: Quote; onClose: () => v
   const [issueDate, setIssueDate] = useState(quote?.issue_date ?? todayStr());
   const [validUntil, setValidUntil] = useState(quote?.valid_until ?? addDays(todayStr(), 30));
   const [items, setItems] = useState<QuoteLineItem[]>(
-    existingItems && existingItems.length ? existingItems : [{ desc: "", qty: 1, labour: 0, materials: 0 }]
+    existingItems && existingItems.length ? existingItems : [{ desc: "", qty: 1, unit_price: 0 }]
   );
   const [deposit, setDeposit] = useState(String(quote?.deposit_requested ?? 0));
   const [error, setError] = useState("");
@@ -41,7 +42,7 @@ export function QuoteModal({ quote, onClose }: { quote?: Quote; onClose: () => v
   const updateQuote = useUpdateQuote();
   const saving = createQuote.isPending || updateQuote.isPending;
 
-  const subtotal = items.reduce((s, it) => s + Number(it.labour || 0) + Number(it.materials || 0), 0);
+  const subtotal = salesLinesSubtotal(items);
   const isVatRegistered = !!business?.vat_number;
   const vatAmount = isVatRegistered ? subtotal * VAT_RATE : 0;
   const totalInclVat = subtotal + vatAmount;
@@ -52,14 +53,14 @@ export function QuoteModal({ quote, onClose }: { quote?: Quote; onClose: () => v
       setError("Customer is required.");
       return;
     }
-    if (!items.some((it) => it.desc || it.labour || it.materials)) {
+    if (!items.some((it) => it.desc || it.unit_price || it.labour || it.materials)) {
       setError("Add at least one line item.");
       return;
     }
     if (!business) return;
     setError("");
 
-    const lineItems = items.filter((it) => it.desc || it.labour || it.materials);
+    const lineItems = items.filter((it) => it.desc || it.unit_price || it.labour || it.materials);
 
     if (isEdit) {
       // Keep the original doc_number & status — an edit only revises the content.

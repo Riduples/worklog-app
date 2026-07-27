@@ -9,6 +9,7 @@ import { DocumentActions } from "@/components/ui/DocumentActions";
 import { buildInvoiceText, buildCreditNoteText } from "@/lib/docgen/shareText";
 import type { DocForRender } from "@/lib/docgen/buildDocumentHTML";
 import { fmt, todayStr } from "@/lib/format";
+import { salesLineTotal } from "@/lib/lineItems";
 import { useToolAccess } from "@/lib/supabase/hooks/useToolAccess";
 import { useUpdateInvoice, type Invoice } from "@/lib/supabase/hooks/useInvoices";
 import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
@@ -38,7 +39,7 @@ export function InvoiceActionsModal({ invoice, onClose }: { invoice: Invoice; on
   const supabase = createClient();
   const hasVat = !!business?.vat_number;
 
-  const items = (invoice.line_items as Array<{ desc: string; qty: number; labour: number; materials: number }>) ?? [];
+  const items = (invoice.line_items as Array<{ desc: string; qty: number; unit_price?: number; labour?: number; materials?: number }>) ?? [];
   const status = displayStatus(invoice);
   const totalInclVat = Number(invoice.invoice_amount) + Number(invoice.vat_amount ?? 0);
   // Marking an invoice paid zeroes balance_due but leaves vat_amount alone, so
@@ -58,10 +59,10 @@ export function InvoiceActionsModal({ invoice, onClose }: { invoice: Invoice; on
   // add the full VAT snapshot back on. A paid invoice owes nothing.
   const balanceOwing = invoice.status === "paid" ? 0 : (Number(invoice.balance_due) > 0 ? Number(invoice.balance_due) + Number(invoice.vat_amount ?? 0) : 0);
   const isPaid = invoice.status === "paid" || balanceOwing <= 0;
-  // ex-VAT total of the chosen lines (Σ labour+materials mirrors invoice_amount):
+  // ex-VAT total of the chosen lines (salesLineTotal per line mirrors invoice_amount):
   const exVatChosen = scope === "whole"
     ? Number(invoice.invoice_amount)
-    : items.reduce((s, it, i) => s + (selected[i] ? Number(it.labour || 0) + Number(it.materials || 0) : 0), 0);
+    : items.reduce((s, it, i) => s + (selected[i] ? salesLineTotal(it) : 0), 0);
   const creditAmt = hasVat ? round2(exVatChosen * (1 + VAT_RATE)) : round2(exVatChosen);
   const creditVat = creditVatWithin(creditAmt, VAT_RATE, hasVat);
   const alreadyCredited = creditedAgainstInvoice(creditNotes, invoice.id);
@@ -132,7 +133,7 @@ export function InvoiceActionsModal({ invoice, onClose }: { invoice: Invoice; on
             <span>
               {it.desc} {it.qty > 1 ? `×${it.qty}` : ""}
             </span>
-            <span>{fmt(Number(it.labour || 0) + Number(it.materials || 0))}</span>
+            <span>{fmt(salesLineTotal(it))}</span>
           </div>
         ))}
       </div>
@@ -271,7 +272,7 @@ export function InvoiceActionsModal({ invoice, onClose }: { invoice: Invoice; on
                         />
                         {it.desc}
                       </span>
-                      <span>{fmt(Number(it.labour || 0) + Number(it.materials || 0))}</span>
+                      <span>{fmt(salesLineTotal(it))}</span>
                     </label>
                   ))}
                 </div>

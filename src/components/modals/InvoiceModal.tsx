@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/Input";
 import { SaveBtn } from "@/components/ui/SaveBtn";
 import { ContactPicker } from "@/components/ui/ContactPicker";
 import { SalesLineItemsEditor } from "@/components/ui/SalesLineItemsEditor";
+import { salesLinesSubtotal } from "@/lib/lineItems";
 import { fmt, todayStr } from "@/lib/format";
 import { useTaxRates } from "@/lib/taxRates";
 import { getNextDocNumber } from "@/lib/docNumber";
@@ -30,7 +31,7 @@ export function InvoiceModal({ sourceQuote, onClose }: { sourceQuote?: Quote; on
   const [issueDate, setIssueDate] = useState(todayStr());
   const [dueDate, setDueDate] = useState(addDays(todayStr(), 30));
   const [items, setItems] = useState<QuoteLineItem[]>(
-    (sourceQuote?.line_items as QuoteLineItem[]) ?? [{ desc: "", qty: 1, labour: 0, materials: 0 }]
+    (sourceQuote?.line_items as QuoteLineItem[]) ?? [{ desc: "", qty: 1, unit_price: 0 }]
   );
   const [depositReceived, setDepositReceived] = useState(String(sourceQuote?.deposit_requested ?? 0));
   const [recurrence, setRecurrence] = useState<Recurrence>("none");
@@ -43,7 +44,7 @@ export function InvoiceModal({ sourceQuote, onClose }: { sourceQuote?: Quote; on
   const convertQuote = useConvertQuoteToInvoice();
   const saving = createInvoice.isPending || convertQuote.isPending;
 
-  const subtotal = items.reduce((s, it) => s + Number(it.labour || 0) + Number(it.materials || 0), 0);
+  const subtotal = salesLinesSubtotal(items);
   const isVatRegistered = !!business?.vat_number;
   const vatAmount = isVatRegistered ? subtotal * VAT_RATE : 0;
   const depositNum = parseFloat(depositReceived) || 0;
@@ -63,7 +64,7 @@ export function InvoiceModal({ sourceQuote, onClose }: { sourceQuote?: Quote; on
       setError("Customer is required.");
       return;
     }
-    if (!items.some((it) => it.desc || it.labour || it.materials)) {
+    if (!items.some((it) => it.desc || it.unit_price || it.labour || it.materials)) {
       setError("Add at least one line item.");
       return;
     }
@@ -72,7 +73,7 @@ export function InvoiceModal({ sourceQuote, onClose }: { sourceQuote?: Quote; on
 
     const supabase = createClient();
     const docNumber = await getNextDocNumber(supabase, business.id, "INV");
-    const filteredItems = items.filter((it) => it.desc || it.labour || it.materials);
+    const filteredItems = items.filter((it) => it.desc || it.unit_price || it.labour || it.materials);
 
     if (sourceQuote) {
       convertQuote.mutate(

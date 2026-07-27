@@ -9,6 +9,7 @@ import { QuoteModal } from "@/components/modals/QuoteModal";
 import { buildQuoteText } from "@/lib/docgen/shareText";
 import type { DocForRender } from "@/lib/docgen/buildDocumentHTML";
 import { fmt } from "@/lib/format";
+import { salesLineTotal } from "@/lib/lineItems";
 import { useToolAccess } from "@/lib/supabase/hooks/useToolAccess";
 import { useUpdateQuote, type Quote } from "@/lib/supabase/hooks/useQuotes";
 
@@ -24,7 +25,7 @@ export function QuoteActionsModal({ quote, onClose }: { quote: Quote; onClose: (
   const access = useToolAccess("quote");
   const updateQuote = useUpdateQuote();
   const [editing, setEditing] = useState(false);
-  const items = (quote.line_items as Array<{ desc: string; qty: number; labour: number; materials: number }>) ?? [];
+  const items = (quote.line_items as Array<{ desc: string; qty: number; unit_price?: number; labour?: number; materials?: number }>) ?? [];
   const statusColor = STATUS_COLORS[quote.status] ?? STATUS_COLORS.pending;
   const totalInclVat = Number(quote.total_amount) + Number(quote.vat_amount ?? 0);
   // Once a quote has been issued downstream as an invoice it's locked — editing it
@@ -64,7 +65,7 @@ export function QuoteActionsModal({ quote, onClose }: { quote: Quote; onClose: (
             <span>
               {it.desc} {it.qty > 1 ? `×${it.qty}` : ""}
             </span>
-            <span>{fmt(Number(it.labour || 0) + Number(it.materials || 0))}</span>
+            <span>{fmt(salesLineTotal(it))}</span>
           </div>
         ))}
       </div>

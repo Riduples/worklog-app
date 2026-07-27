@@ -6,7 +6,9 @@ import { getCurrentBusinessId } from "@/lib/supabase/currentBusiness";
 import type { Tables, TablesInsert, TablesUpdate } from "@/lib/types/database";
 
 export type Quote = Tables<"quotes">;
-export type QuoteLineItem = { desc: string; qty: number; labour: number; materials: number };
+// New lines carry unit_price (qty × unit_price); historic lines carry the old
+// labour + materials split. Both are read through salesLineTotal (@/lib/lineItems).
+export type QuoteLineItem = { desc: string; qty: number; unit_price?: number; labour?: number; materials?: number };
 
 const QUERY_KEY = ["quotes"];
 

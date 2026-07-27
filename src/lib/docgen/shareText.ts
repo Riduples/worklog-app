@@ -1,20 +1,21 @@
 import { fmt } from "@/lib/format";
 import { balanceInclVat } from "@/lib/balance";
+import { salesLineTotal, type SalesLineItem } from "@/lib/lineItems";
 import type { Quote } from "@/lib/supabase/hooks/useQuotes";
 import type { Invoice } from "@/lib/supabase/hooks/useInvoices";
 import type { CreditNote } from "@/lib/supabase/hooks/useCreditNotes";
 
-type SalesItem = { desc?: string; qty?: number; labour?: number; materials?: number };
+type SalesItem = SalesLineItem;
 
 export function buildQuoteText(q: Quote): string {
   const items = (q.line_items as SalesItem[]) ?? [];
   const lines = items
-    .filter((i) => i.desc || i.labour || i.materials)
+    .filter((i) => i.desc || i.unit_price || i.labour || i.materials)
     .map((i) => {
       const parts: string[] = [];
       if (i.desc) parts.push(i.desc);
       if (i.qty && Number(i.qty) > 1) parts.push(`x${i.qty}`);
-      const lineTotal = Number(i.labour || 0) + Number(i.materials || 0);
+      const lineTotal = salesLineTotal(i);
       if (lineTotal > 0) parts.push(fmt(lineTotal));
       return `  • ${parts.join(" — ")}`;
     })

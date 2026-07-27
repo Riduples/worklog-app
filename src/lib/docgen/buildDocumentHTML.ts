@@ -6,6 +6,7 @@
 import { fmt, todayStr } from "@/lib/format";
 import { esc } from "@/lib/docgen/esc";
 import { balanceInclVat } from "@/lib/balance";
+import { salesLineTotal } from "@/lib/lineItems";
 import type { BusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 
 export type DocKind = "quote" | "invoice" | "purchaseorder" | "payslip" | "creditnote";
@@ -44,9 +45,9 @@ export function buildDocumentHTML(doc: DocForRender, business: BusinessProfile, 
 
   const rows = doc.line_items
     .map((i) => {
-      const lineTotal = isPO
-        ? Number(i.qty || 1) * Number(i.unit_price || 0)
-        : Number(i.labour || 0) + Number(i.materials || 0);
+      // Presence-based: PO + new sales lines carry unit_price (qty × unit_price);
+      // historic sales lines fall back to labour + materials. One helper covers all.
+      const lineTotal = salesLineTotal(i);
       return `
       <tr>
         <td style="padding:10px 8px;border-bottom:1px solid #e5e7eb;font-size:13px;color:#111;">${esc(i.desc || "Item")}</td>
