@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useIncome } from "@/lib/supabase/hooks/useIncome";
 import { useExpenses } from "@/lib/supabase/hooks/useExpenses";
-import { useCashUps, useCreateCashUp } from "@/lib/supabase/hooks/useCashUps";
+import { useCashUps, useCreateCashUp, useUpdateCashUp, type CashUp } from "@/lib/supabase/hooks/useCashUps";
 import { useCurrentMember } from "@/lib/supabase/hooks/useCurrentMember";
 import { Field } from "@/components/ui/Field";
 import { Input } from "@/components/ui/Input";
@@ -19,11 +19,16 @@ export function CashUpView() {
   const { data: cashUps } = useCashUps();
   const { data: currentMember } = useCurrentMember();
   const createCashUp = useCreateCashUp();
+  const updateCashUp = useUpdateCashUp();
 
   const [date, setDate] = useState(todayStr());
   const [counted, setCounted] = useState("");
   const [notes, setNotes] = useState("");
   const [error, setError] = useState("");
+  const [editId, setEditId] = useState<string | null>(null);
+
+  const isEdit = editId !== null;
+  const saving = createCashUp.isPending || updateCashUp.isPending;
 
   const member = currentMember ?? { role: "owner", permissions: {} };
   const mayEdit = canEdit(member, "cashup");
@@ -38,7 +43,24 @@ export function CashUpView() {
   const countedNum = parseFloat(counted || "0");
   const variance = counted !== "" ? countedNum - expected : null;
 
-  const alreadyDone = (cashUps ?? []).find((c) => c.cash_up_date === date);
+  const alreadyDone = !isEdit && (cashUps ?? []).find((c) => c.cash_up_date === date);
+
+  const resetForm = () => {
+    setEditId(null);
+    setDate(todayStr());
+    setCounted("");
+    setNotes("");
+    setError("");
+  };
+
+  const startEdit = (c: CashUp) => {
+    setEditId(c.id);
+    setDate(c.cash_up_date);
+    setCounted(String(c.counted));
+    setNotes(c.notes ?? "");
+    setError("");
+    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   const handleSave = () => {
     if (counted === "") {
@@ -46,24 +68,32 @@ export function CashUpView() {
       return;
     }
     setError("");
-    createCashUp.mutate(
-      {
-        cash_up_date: date,
-        cash_in: cashIn,
-        cash_out: cashOut,
-        expected,
-        counted: countedNum,
-        variance: variance ?? 0,
-        notes: notes.trim() || null,
-      },
-      {
+    const changes = {
+      cash_up_date: date,
+      cash_in: cashIn,
+      cash_out: cashOut,
+      expected,
+      counted: countedNum,
+      variance: variance ?? 0,
+      notes: notes.trim() || null,
+    };
+    if (editId !== null) {
+      updateCashUp.mutate(
+        { id: editId, changes },
+        {
+          onSuccess: resetForm,
+          onError: (e) => setError(e instanceof Error ? e.message : "Couldn't update the cash-up."),
+        }
+      );
+    } else {
+      createCashUp.mutate(changes, {
         onSuccess: () => {
           setCounted("");
           setNotes("");
         },
         onError: (e) => setError(e instanceof Error ? e.message : "Couldn't save the cash-up."),
-      }
-    );
+      });
+    }
   };
 
   const varianceStyle =
@@ -120,7 +150,29 @@ export function CashUpView() {
       {error && <p style={{ color: "#dc2626", fontSize: 13, marginBottom: 12 }}>{error}</p>}
 
       {mayEdit ? (
-        <SaveBtn label={createCashUp.isPending ? "Saving..." : "Save Cash-Up"} icon="🧮" onClick={handleSave} disabled={createCashUp.isPending} />
+        <>
+          {isEdit && (
+            <div style={{ background: "#fffbeb", border: "1.5px solid #fde68a", borderRadius: 10, padding: "10px 14px", marginBottom: 12, fontSize: 12, color: "#92400e" }}>
+              ✏️ Editing the cash-up for {date}. The variance will be recalculated when you save.
+            </div>
+          )}
+          <SaveBtn
+            label={isEdit ? (saving ? "Updating..." : "Update Cash-Up") : saving ? "Saving..." : "Save Cash-Up"}
+            icon={isEdit ? "✏️" : "🧮"}
+            onClick={handleSave}
+            disabled={saving}
+          />
+          {isEdit && (
+            <button
+              type="button"
+              onClick={resetForm}
+              disabled={saving}
+              style={{ border: "none", background: "none", width: "100%", marginTop: 10, fontSize: 13, fontWeight: 600, color: "#64748b", cursor: saving ? "default" : "pointer", padding: "6px" }}
+            >
+              Cancel edit
+            </button>
+          )}
+        </>
       ) : (
         <div style={{ background: "#eff6ff", border: "1.5px solid #bfdbfe", borderRadius: 12, padding: "12px 16px", textAlign: "center", fontSize: 13, color: "#1e40af", fontWeight: 600 }}>
           👁 View only — you don&apos;t have permission to log cash-ups
@@ -133,8 +185,16 @@ export function CashUpView() {
           {(cashUps ?? []).slice(0, 10).map((c) => {
             const v = Number(c.variance);
             const color = Math.abs(v) < 1 ? "#0369A1" : Math.abs(v) <= 20 ? "#92400e" : "#be123c";
+            const editing = editId === c.id;
             return (
-              <div key={c.id} style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 10, padding: "10px 12px", marginBottom: 6 }}>
+              <div
+                key={c.id}
+                onClick={mayEdit ? () => startEdit(c) : undefined}
+                role={mayEdit ? "button" : undefined}
+                tabIndex={mayEdit ? 0 : undefined}
+                onKeyDown={mayEdit ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); startEdit(c); } } : undefined}
+                style={{ background: editing ? "#fffbeb" : "#f8fafc", border: `1px solid ${editing ? "#fde68a" : "#e2e8f0"}`, borderRadius: 10, padding: "10px 12px", marginBottom: 6, cursor: mayEdit ? "pointer" : "default" }}
+              >
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <div>
                     <div style={{ fontSize: 13, fontWeight: 700, color: "#111" }}>{c.cash_up_date}</div>
@@ -142,9 +202,12 @@ export function CashUpView() {
                       Expected {fmt(c.expected)} · Counted {fmt(c.counted)}
                     </div>
                   </div>
-                  <span style={{ fontSize: 13, fontWeight: 800, color }}>
-                    {v === 0 ? "✅ Exact" : `${v > 0 ? "+" : "−"}${fmt(Math.abs(v))}`}
-                  </span>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <span style={{ fontSize: 13, fontWeight: 800, color }}>
+                      {v === 0 ? "✅ Exact" : `${v > 0 ? "+" : "−"}${fmt(Math.abs(v))}`}
+                    </span>
+                    {mayEdit && <span style={{ fontSize: 14 }} aria-hidden>✏️</span>}
+                  </div>
                 </div>
                 {c.notes && <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 4 }}>{c.notes}</div>}
               </div>

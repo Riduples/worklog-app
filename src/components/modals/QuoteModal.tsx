@@ -12,7 +12,7 @@ import { useTaxRates } from "@/lib/taxRates";
 import { getNextDocNumber } from "@/lib/docNumber";
 import { useContacts } from "@/lib/supabase/hooks/useContacts";
 import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
-import { useCreateQuote, type QuoteLineItem } from "@/lib/supabase/hooks/useQuotes";
+import { useCreateQuote, useUpdateQuote, type Quote, type QuoteLineItem } from "@/lib/supabase/hooks/useQuotes";
 import { createClient } from "@/lib/supabase/client";
 
 const addDays = (dateStr: string, days: number) => {
@@ -21,19 +21,25 @@ const addDays = (dateStr: string, days: number) => {
   return d.toISOString().split("T")[0];
 };
 
-export function QuoteModal({ onClose }: { onClose: () => void }) {
-  const [client, setClient] = useState("");
-  const [clientContactId, setClientContactId] = useState<string | null>(null);
-  const [issueDate, setIssueDate] = useState(todayStr());
-  const [validUntil, setValidUntil] = useState(addDays(todayStr(), 30));
-  const [items, setItems] = useState<QuoteLineItem[]>([{ desc: "", qty: 1, labour: 0, materials: 0 }]);
-  const [deposit, setDeposit] = useState("0");
+export function QuoteModal({ quote, onClose }: { quote?: Quote; onClose: () => void }) {
+  const isEdit = !!quote;
+  const existingItems = (quote?.line_items as QuoteLineItem[] | null) ?? null;
+  const [client, setClient] = useState(quote?.client_name ?? "");
+  const [clientContactId, setClientContactId] = useState<string | null>(quote?.client_contact_id ?? null);
+  const [issueDate, setIssueDate] = useState(quote?.issue_date ?? todayStr());
+  const [validUntil, setValidUntil] = useState(quote?.valid_until ?? addDays(todayStr(), 30));
+  const [items, setItems] = useState<QuoteLineItem[]>(
+    existingItems && existingItems.length ? existingItems : [{ desc: "", qty: 1, labour: 0, materials: 0 }]
+  );
+  const [deposit, setDeposit] = useState(String(quote?.deposit_requested ?? 0));
   const [error, setError] = useState("");
 
   const { data: contacts } = useContacts();
   const { data: business } = useBusinessProfile();
   const { VAT_RATE } = useTaxRates();
   const createQuote = useCreateQuote();
+  const updateQuote = useUpdateQuote();
+  const saving = createQuote.isPending || updateQuote.isPending;
 
   const subtotal = items.reduce((s, it) => s + Number(it.labour || 0) + Number(it.materials || 0), 0);
   const isVatRegistered = !!business?.vat_number;
@@ -53,6 +59,30 @@ export function QuoteModal({ onClose }: { onClose: () => void }) {
     if (!business) return;
     setError("");
 
+    const lineItems = items.filter((it) => it.desc || it.labour || it.materials);
+
+    if (isEdit) {
+      // Keep the original doc_number & status — an edit only revises the content.
+      updateQuote.mutate(
+        {
+          id: quote.id,
+          changes: {
+            client_contact_id: clientContactId,
+            client_name: client.trim(),
+            line_items: lineItems,
+            total_amount: subtotal,
+            deposit_requested: depositNum,
+            issue_date: issueDate,
+            valid_until: validUntil,
+            vat_rate: isVatRegistered ? VAT_RATE : null,
+            vat_amount: vatAmount,
+          },
+        },
+        { onSuccess: onClose }
+      );
+      return;
+    }
+
     const supabase = createClient();
     const docNumber = await getNextDocNumber(supabase, business.id, "QTE");
 
@@ -61,7 +91,7 @@ export function QuoteModal({ onClose }: { onClose: () => void }) {
         doc_number: docNumber,
         client_contact_id: clientContactId,
         client_name: client.trim(),
-        line_items: items.filter((it) => it.desc || it.labour || it.materials),
+        line_items: lineItems,
         total_amount: subtotal,
         deposit_requested: depositNum,
         issue_date: issueDate,
@@ -75,7 +105,7 @@ export function QuoteModal({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <Modal title="New quote" onClose={onClose}>
+    <Modal title={isEdit ? "Edit quote" : "New quote"} onClose={onClose}>
       <ContactPicker
         label="Customer / Company name"
         value={client}
@@ -125,7 +155,7 @@ export function QuoteModal({ onClose }: { onClose: () => void }) {
       </div>
 
       {error && <p style={{ color: "#dc2626", fontSize: 13, marginBottom: 12 }}>{error}</p>}
-      <SaveBtn label={createQuote.isPending ? "Saving..." : "Save quote"} onClick={handleSave} disabled={createQuote.isPending} />
+      <SaveBtn label={saving ? "Saving..." : "Save quote"} onClick={handleSave} disabled={saving} />
     </Modal>
   );
 }

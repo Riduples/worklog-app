@@ -15,7 +15,7 @@ export const PO_STATUS_COLORS: Record<string, { bg: string; fg: string }> = {
   cancelled: { bg: "#f1f5f9", fg: "#64748b" },
 };
 
-export function PurchaseOrderActionsModal({ po, onClose }: { po: PurchaseOrder; onClose: () => void }) {
+export function PurchaseOrderActionsModal({ po, onClose, onEdit }: { po: PurchaseOrder; onClose: () => void; onEdit?: () => void }) {
   const updatePO = useUpdatePurchaseOrder();
   const items = (po.line_items as PurchaseLineItem[]) ?? [];
   const color = PO_STATUS_COLORS[po.status] ?? PO_STATUS_COLORS.pending;
@@ -76,6 +76,15 @@ export function PurchaseOrderActionsModal({ po, onClose }: { po: PurchaseOrder; 
           } satisfies DocForRender
         }
       />
+
+      {po.status === "pending" && onEdit && (
+        <button
+          onClick={onEdit}
+          style={{ width: "100%", background: "#F0F9FF", color: "#0C4A6E", border: "1.5px solid #BAE6FD", borderRadius: 12, padding: 13, fontWeight: 700, fontSize: 13, cursor: "pointer", marginTop: 12 }}
+        >
+          ✏️ Edit purchase order
+        </button>
+      )}
 
       {po.status === "pending" && (
         <div style={{ display: "flex", gap: 10, marginTop: 20 }}>

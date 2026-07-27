@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useTimeEntries, useUpdateTimeEntry } from "@/lib/supabase/hooks/useTimeEntries";
+import { useTimeEntries, useUpdateTimeEntry, type TimeEntry } from "@/lib/supabase/hooks/useTimeEntries";
 import { TimeModal } from "@/components/modals/TimeModal";
 import { fmt } from "@/lib/format";
 import { ReadOnlyNotice } from "@/components/ui/ReadOnlyNotice";
@@ -19,7 +19,7 @@ export function TimeView() {
   const access = useToolAccess("timetrack");
   const { data: entries, isLoading } = useTimeEntries();
   const updateEntry = useUpdateTimeEntry();
-  const [showNew, setShowNew] = useState(false);
+  const [modalState, setModalState] = useState<{ open: boolean; entry?: TimeEntry }>({ open: false });
 
   const billableTotal = (entries ?? [])
     .filter((e) => e.bill_type === "Billable")
@@ -40,7 +40,7 @@ export function TimeView() {
         </div>
         {access.canEdit && (
           <button
-            onClick={() => setShowNew(true)}
+            onClick={() => setModalState({ open: true })}
             style={{ background: "#0C4A6E", color: "#fff", border: "none", borderRadius: 12, padding: "10px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
           >
             + New
@@ -92,6 +92,15 @@ export function TimeView() {
             <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: color.bg, color: color.fg, marginRight: 8 }}>
               {e.bill_type}
             </span>
+            {access.canEdit && (
+              <button
+                onClick={() => setModalState({ open: true, entry: e })}
+                style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer", fontSize: 14, padding: 4 }}
+                aria-label="Edit time entry"
+              >
+                ✏️
+              </button>
+            )}
             {access.canDelete && (
               <button
                 onClick={() => handleSoftDelete(e.id)}
@@ -105,7 +114,7 @@ export function TimeView() {
         );
       })}
 
-      {showNew && <TimeModal onClose={() => setShowNew(false)} />}
+      {modalState.open && <TimeModal entry={modalState.entry} onClose={() => setModalState({ open: false })} />}
     </div>
   );
 }

@@ -8,20 +8,23 @@ import { SaveBtn } from "@/components/ui/SaveBtn";
 import { ContactPicker } from "@/components/ui/ContactPicker";
 import { fmt, todayStr } from "@/lib/format";
 import { useContacts } from "@/lib/supabase/hooks/useContacts";
-import { useCreateBooking } from "@/lib/supabase/hooks/useBookings";
+import { useCreateBooking, useUpdateBooking, type Booking } from "@/lib/supabase/hooks/useBookings";
 
-export function BookingModal({ onClose }: { onClose: () => void }) {
-  const [client, setClient] = useState("");
-  const [clientContactId, setClientContactId] = useState<string | null>(null);
-  const [service, setService] = useState("");
-  const [bookingDate, setBookingDate] = useState(todayStr());
-  const [bookingTime, setBookingTime] = useState("09:00");
-  const [totalPrice, setTotalPrice] = useState("0");
-  const [depositPaid, setDepositPaid] = useState("0");
+export function BookingModal({ booking, onClose }: { booking?: Booking; onClose: () => void }) {
+  const isEdit = !!booking;
+  const [client, setClient] = useState(booking?.client_name ?? "");
+  const [clientContactId, setClientContactId] = useState<string | null>(booking?.client_contact_id ?? null);
+  const [service, setService] = useState(booking?.service ?? "");
+  const [bookingDate, setBookingDate] = useState(booking?.booking_date ?? todayStr());
+  const [bookingTime, setBookingTime] = useState(booking ? booking.booking_time ?? "" : "09:00");
+  const [totalPrice, setTotalPrice] = useState(String(booking?.total_price ?? 0));
+  const [depositPaid, setDepositPaid] = useState(String(booking?.deposit_paid ?? 0));
   const [error, setError] = useState("");
 
   const { data: contacts } = useContacts();
   const createBooking = useCreateBooking();
+  const updateBooking = useUpdateBooking();
+  const saving = createBooking.isPending || updateBooking.isPending;
 
   const totalNum = parseFloat(totalPrice) || 0;
   const depositNum = parseFloat(depositPaid) || 0;
@@ -34,24 +37,31 @@ export function BookingModal({ onClose }: { onClose: () => void }) {
     }
     setError("");
 
-    createBooking.mutate(
-      {
-        client_name: client.trim(),
-        client_contact_id: clientContactId,
-        service: service.trim() || null,
-        booking_date: bookingDate,
-        booking_time: bookingTime || null,
-        total_price: totalNum,
-        deposit_paid: depositNum,
-        balance_due: balanceDue,
-        status: "confirmed",
-      },
-      { onSuccess: onClose }
-    );
+    const changes = {
+      client_name: client.trim(),
+      client_contact_id: clientContactId,
+      service: service.trim() || null,
+      booking_date: bookingDate,
+      booking_time: bookingTime || null,
+      total_price: totalNum,
+      deposit_paid: depositNum,
+      balance_due: balanceDue,
+    };
+
+    // Editing updates ONLY this one booking and deliberately never calls
+    // createBooking. That keeps the one-time side-effects of making a *fresh*
+    // booking — spinning up its recurring series and logging the on-site
+    // mileage/expense — from firing a second time and spawning duplicates. The
+    // row's id and status are carried through untouched.
+    if (isEdit) {
+      updateBooking.mutate({ id: booking.id, changes: { ...changes, status: booking.status } }, { onSuccess: onClose });
+    } else {
+      createBooking.mutate({ ...changes, status: "confirmed" }, { onSuccess: onClose });
+    }
   };
 
   return (
-    <Modal title="New booking" onClose={onClose}>
+    <Modal title={isEdit ? "Edit booking" : "New booking"} onClose={onClose}>
       <ContactPicker
         label="Customer"
         value={client}
@@ -90,7 +100,7 @@ export function BookingModal({ onClose }: { onClose: () => void }) {
       )}
 
       {error && <p style={{ color: "#dc2626", fontSize: 13, marginBottom: 12 }}>{error}</p>}
-      <SaveBtn label={createBooking.isPending ? "Saving..." : "Save booking"} onClick={handleSave} disabled={createBooking.isPending} />
+      <SaveBtn label={saving ? "Saving..." : isEdit ? "Save changes" : "Save booking"} onClick={handleSave} disabled={saving} />
     </Modal>
   );
 }

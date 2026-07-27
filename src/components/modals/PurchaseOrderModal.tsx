@@ -12,21 +12,27 @@ import { useTaxRates } from "@/lib/taxRates";
 import { getNextDocNumber } from "@/lib/docNumber";
 import { useContacts } from "@/lib/supabase/hooks/useContacts";
 import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
-import { useCreatePurchaseOrder } from "@/lib/supabase/hooks/usePurchaseOrders";
+import { useCreatePurchaseOrder, useUpdatePurchaseOrder, type PurchaseOrder } from "@/lib/supabase/hooks/usePurchaseOrders";
 import { createClient } from "@/lib/supabase/client";
 
-export function PurchaseOrderModal({ onClose }: { onClose: () => void }) {
-  const [supplier, setSupplier] = useState("");
-  const [supplierContactId, setSupplierContactId] = useState<string | null>(null);
-  const [issueDate, setIssueDate] = useState(todayStr());
-  const [requestedDelivery, setRequestedDelivery] = useState("");
-  const [items, setItems] = useState<PurchaseLineItem[]>([{ desc: "", qty: 1, unit_price: 0 }]);
+export function PurchaseOrderModal({ po, onClose }: { po?: PurchaseOrder; onClose: () => void }) {
+  const isEdit = !!po;
+  const existingItems = po?.line_items as PurchaseLineItem[] | undefined;
+  const [supplier, setSupplier] = useState(po?.supplier_name ?? "");
+  const [supplierContactId, setSupplierContactId] = useState<string | null>(po?.supplier_contact_id ?? null);
+  const [issueDate, setIssueDate] = useState(po?.issue_date ?? todayStr());
+  const [requestedDelivery, setRequestedDelivery] = useState(po?.requested_delivery ?? "");
+  const [items, setItems] = useState<PurchaseLineItem[]>(
+    existingItems && existingItems.length ? existingItems : [{ desc: "", qty: 1, unit_price: 0 }]
+  );
   const [error, setError] = useState("");
 
   const { data: contacts } = useContacts();
   const { data: business } = useBusinessProfile();
   const { VAT_RATE } = useTaxRates();
   const createPO = useCreatePurchaseOrder();
+  const updatePO = useUpdatePurchaseOrder();
+  const saving = createPO.isPending || updatePO.isPending;
 
   const suppliers = (contacts ?? []).filter((c) => c.contact_type === "supplier");
   const subtotal = items.reduce((s, it) => s + Number(it.qty || 0) * Number(it.unit_price || 0), 0);
@@ -45,28 +51,34 @@ export function PurchaseOrderModal({ onClose }: { onClose: () => void }) {
     if (!business) return;
     setError("");
 
+    const changes = {
+      supplier_contact_id: supplierContactId,
+      supplier_name: supplier.trim(),
+      line_items: items.filter((it) => it.desc || it.unit_price),
+      total_amount: subtotal,
+      issue_date: issueDate,
+      requested_delivery: requestedDelivery || null,
+      vat_rate: isVatRegistered ? VAT_RATE : null,
+      vat_amount: vatAmount,
+    };
+
+    if (isEdit) {
+      // Keep the existing doc_number & status — only the contents change.
+      updatePO.mutate({ id: po.id, changes }, { onSuccess: onClose });
+      return;
+    }
+
     const supabase = createClient();
     const docNumber = await getNextDocNumber(supabase, business.id, "PO");
 
     createPO.mutate(
-      {
-        doc_number: docNumber,
-        supplier_contact_id: supplierContactId,
-        supplier_name: supplier.trim(),
-        line_items: items.filter((it) => it.desc || it.unit_price),
-        total_amount: subtotal,
-        issue_date: issueDate,
-        requested_delivery: requestedDelivery || null,
-        status: "pending",
-        vat_rate: isVatRegistered ? VAT_RATE : null,
-        vat_amount: vatAmount,
-      },
+      { ...changes, doc_number: docNumber, status: "pending" },
       { onSuccess: onClose }
     );
   };
 
   return (
-    <Modal title="New purchase order" onClose={onClose}>
+    <Modal title={isEdit ? "Edit purchase order" : "New purchase order"} onClose={onClose}>
       <ContactPicker
         label="Supplier"
         value={supplier}
@@ -106,7 +118,7 @@ export function PurchaseOrderModal({ onClose }: { onClose: () => void }) {
       </div>
 
       {error && <p style={{ color: "#dc2626", fontSize: 13, marginBottom: 12 }}>{error}</p>}
-      <SaveBtn label={createPO.isPending ? "Saving..." : "Save purchase order"} onClick={handleSave} disabled={createPO.isPending} />
+      <SaveBtn label={saving ? "Saving..." : "Save purchase order"} onClick={handleSave} disabled={saving} />
     </Modal>
   );
 }

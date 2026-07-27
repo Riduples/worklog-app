@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useStaffRegister } from "@/lib/supabase/hooks/useStaffRegister";
-import { useWorkerLeave, useCreateWorkerLeave } from "@/lib/supabase/hooks/useWorkerLeave";
+import { useWorkerLeave, useCreateWorkerLeave, useUpdateWorkerLeave } from "@/lib/supabase/hooks/useWorkerLeave";
 import { usePayRuns } from "@/lib/supabase/hooks/usePayRuns";
 import { Field } from "@/components/ui/Field";
 import { Input } from "@/components/ui/Input";
@@ -16,6 +16,7 @@ export function LeaveView() {
   const { data: leaveRecords } = useWorkerLeave();
   const { data: payRuns } = usePayRuns();
   const createLeave = useCreateWorkerLeave();
+  const updateLeave = useUpdateWorkerLeave();
 
   const [staffId, setStaffId] = useState("");
   const [showPicker, setShowPicker] = useState(false);
@@ -23,6 +24,7 @@ export function LeaveView() {
   const [leaveDays, setLeaveDays] = useState("");
   const [startDate, setStartDate] = useState(todayStr());
   const [note, setNote] = useState("");
+  const [editId, setEditId] = useState<string | null>(null);
   const [error, setError] = useState("");
 
   const selectedWorker = (staff ?? []).find((w) => w.id === staffId) ?? null;
@@ -35,15 +37,38 @@ export function LeaveView() {
 
   const history = staffId
     ? [
-        ...(leaveRecords ?? []).filter((l) => l.staff_id === staffId).map((l) => ({ date: l.start_date, leave_type: l.leave_type, days: l.days, note: l.note })),
+        ...(leaveRecords ?? [])
+          .filter((l) => l.staff_id === staffId)
+          .map((l) => ({ id: l.id as string | null, date: l.start_date, leave_type: l.leave_type, days: l.days, note: l.note, editable: true })),
         ...(payRuns ?? [])
           .filter((p) => p.staff_id === staffId && (p.leave_days ?? 0) > 0)
-          .map((p) => ({ date: p.pay_date, leave_type: p.leave_type ?? "Annual", days: p.leave_days ?? 0, note: "from Pay Run" })),
+          .map((p) => ({ id: null as string | null, date: p.pay_date, leave_type: p.leave_type ?? "Annual", days: p.leave_days ?? 0, note: "from Pay Run", editable: false })),
       ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     : [];
 
   const leaveDaysNum = parseFloat(leaveDays || "0");
   const overEntitlement = leaveType === "Annual" && lb && leaveDaysNum > lb.annualBalance;
+
+  const isEdit = editId !== null;
+
+  const startEdit = (item: { id: string | null; date: string; leave_type: string; days: number; note: string | null }) => {
+    if (!item.id) return;
+    setEditId(item.id);
+    setLeaveType(item.leave_type);
+    setLeaveDays(String(item.days));
+    setStartDate(item.date);
+    setNote(item.note ?? "");
+    setShowPicker(false);
+    setError("");
+  };
+
+  const cancelEdit = () => {
+    setEditId(null);
+    setLeaveDays("");
+    setNote("");
+    setStartDate(todayStr());
+    setError("");
+  };
 
   const handleSave = () => {
     if (!staffId || !leaveDays) {
@@ -51,6 +76,21 @@ export function LeaveView() {
       return;
     }
     setError("");
+    if (editId) {
+      updateLeave.mutate(
+        { id: editId, changes: { leave_type: leaveType, days: leaveDaysNum, start_date: startDate, note: note || null } },
+        {
+          onSuccess: () => {
+            setEditId(null);
+            setLeaveDays("");
+            setNote("");
+            setStartDate(todayStr());
+          },
+          onError: (e) => setError(e instanceof Error ? e.message : "Couldn't update leave."),
+        }
+      );
+      return;
+    }
     createLeave.mutate(
       { staff_id: staffId, worker_name: selectedWorker!.full_name, leave_type: leaveType, days: leaveDaysNum, start_date: startDate, note: note || null },
       {
@@ -133,7 +173,7 @@ export function LeaveView() {
         </div>
       )}
 
-      <div style={{ fontSize: 12, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 8 }}>Record leave taken</div>
+      <div style={{ fontSize: 12, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 8 }}>{isEdit ? "Edit leave" : "Record leave taken"}</div>
 
       <Field label="Leave type">
         <select value={leaveType} onChange={(e) => setLeaveType(e.target.value)} style={{ width: "100%", padding: "13px 14px", borderRadius: 12, border: "1.5px solid #e2e8f0", fontSize: 14, background: "#f8fafc", color: "#111" }}>
@@ -173,7 +213,20 @@ export function LeaveView() {
       )}
 
       {error && <p style={{ color: "#dc2626", fontSize: 13, marginBottom: 12 }}>{error}</p>}
-      <SaveBtn label={createLeave.isPending ? "Saving..." : "Record Leave"} icon="🏖️" onClick={handleSave} disabled={createLeave.isPending} />
+      <SaveBtn
+        label={isEdit ? (updateLeave.isPending ? "Updating..." : "Update Leave") : createLeave.isPending ? "Saving..." : "Record Leave"}
+        icon="🏖️"
+        onClick={handleSave}
+        disabled={createLeave.isPending || updateLeave.isPending}
+      />
+      {isEdit && (
+        <button
+          onClick={cancelEdit}
+          style={{ width: "100%", marginTop: 8, padding: "12px", borderRadius: 12, border: "1.5px solid #e2e8f0", background: "#fff", color: "#64748b", fontSize: 14, fontWeight: 700, cursor: "pointer" }}
+        >
+          Cancel edit
+        </button>
+      )}
 
       {history.length > 0 && (
         <div style={{ marginTop: 16 }}>
@@ -186,7 +239,19 @@ export function LeaveView() {
                 </div>
                 {l.note && <div style={{ fontSize: 11, color: "#94a3b8" }}>{l.note}</div>}
               </div>
-              <span style={{ fontSize: 13, fontWeight: 800, color: "#0C4A6E" }}>{l.days}d</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                {l.editable && (
+                  <button
+                    onClick={() => startEdit(l)}
+                    title="Edit leave"
+                    aria-label="Edit leave"
+                    style={{ background: "none", border: "none", cursor: "pointer", fontSize: 15, lineHeight: 1, padding: 2 }}
+                  >
+                    ✏️
+                  </button>
+                )}
+                <span style={{ fontSize: 13, fontWeight: 800, color: "#0C4A6E" }}>{l.days}d</span>
+              </div>
             </div>
           ))}
         </div>

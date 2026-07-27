@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useStaffRegister } from "@/lib/supabase/hooks/useStaffRegister";
-import { useWorkerLoans, useCreateAdvance } from "@/lib/supabase/hooks/useWorkerLoans";
+import { useWorkerLoans, useCreateAdvance, useUpdateAdvance, type WorkerLoan } from "@/lib/supabase/hooks/useWorkerLoans";
 import { Field } from "@/components/ui/Field";
 import { Input } from "@/components/ui/Input";
 import { SaveBtn } from "@/components/ui/SaveBtn";
@@ -14,11 +14,13 @@ export function AdvancesView() {
   const { data: staff } = useStaffRegister();
   const { data: loans } = useWorkerLoans();
   const createAdvance = useCreateAdvance();
+  const updateAdvance = useUpdateAdvance();
 
   const [staffId, setStaffId] = useState("");
   const [showPicker, setShowPicker] = useState(false);
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
+  const [editId, setEditId] = useState<string | null>(null);
   const [error, setError] = useState("");
 
   const selectedWorker = (staff ?? []).find((w) => w.id === staffId) ?? null;
@@ -29,12 +31,44 @@ export function AdvancesView() {
     ? (loans ?? []).filter((l) => l.staff_id === staffId).sort((a, b) => new Date(b.entry_date).getTime() - new Date(a.entry_date).getTime())
     : [];
 
+  const isEdit = editId !== null;
+
+  const startEdit = (l: WorkerLoan) => {
+    setEditId(l.id);
+    setStaffId(l.staff_id ?? "");
+    setAmount(String(l.amount));
+    setNote(l.note ?? "");
+    setShowPicker(false);
+    setError("");
+  };
+
+  const cancelEdit = () => {
+    setEditId(null);
+    setAmount("");
+    setNote("");
+    setError("");
+  };
+
   const handleSave = () => {
     if (!staffId || !amount) {
       setError("Pick an employee and enter an amount.");
       return;
     }
     setError("");
+    if (editId) {
+      updateAdvance.mutate(
+        { id: editId, changes: { amount: parseFloat(amount), note: note || null } },
+        {
+          onSuccess: () => {
+            setEditId(null);
+            setAmount("");
+            setNote("");
+          },
+          onError: (e) => setError(e instanceof Error ? e.message : "Couldn't update the advance."),
+        }
+      );
+      return;
+    }
     createAdvance.mutate(
       { staff_id: staffId, worker_name: selectedWorker!.full_name, amount: parseFloat(amount), note: note || null, entry_date: todayStr() },
       {
@@ -73,7 +107,7 @@ export function AdvancesView() {
         </div>
       )}
 
-      <div style={{ fontSize: 12, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 8 }}>Record new advance</div>
+      <div style={{ fontSize: 12, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 8 }}>{isEdit ? "Edit advance" : "Record new advance"}</div>
       <Field label="Employee">
         <div style={{ position: "relative" }}>
           <Input value={selectedWorker?.full_name ?? ""} onChange={() => {}} placeholder="Select employee" />
@@ -121,7 +155,20 @@ export function AdvancesView() {
       </Field>
 
       {error && <p style={{ color: "#dc2626", fontSize: 13, marginBottom: 12 }}>{error}</p>}
-      <SaveBtn label={createAdvance.isPending ? "Saving..." : "Record Advance"} icon="💰" onClick={handleSave} disabled={createAdvance.isPending} />
+      <SaveBtn
+        label={isEdit ? (updateAdvance.isPending ? "Updating..." : "Update Advance") : createAdvance.isPending ? "Saving..." : "Record Advance"}
+        icon="💰"
+        onClick={handleSave}
+        disabled={createAdvance.isPending || updateAdvance.isPending}
+      />
+      {isEdit && (
+        <button
+          onClick={cancelEdit}
+          style={{ width: "100%", marginTop: 8, padding: "12px", borderRadius: 12, border: "1.5px solid #e2e8f0", background: "#fff", color: "#64748b", fontSize: 14, fontWeight: 700, cursor: "pointer" }}
+        >
+          Cancel edit
+        </button>
+      )}
 
       {workerHistory.length > 0 && (
         <div style={{ marginTop: 16 }}>
@@ -134,10 +181,22 @@ export function AdvancesView() {
                 </div>
                 {l.note && <div style={{ fontSize: 11, color: "#64748b" }}>{l.note}</div>}
               </div>
-              <span style={{ fontSize: 13, fontWeight: 800, color: l.loan_type === "advance" ? "#b45309" : "#0C4A6E" }}>
-                {l.loan_type === "advance" ? "+" : "−"}
-                {fmt(l.amount)}
-              </span>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                {l.loan_type === "advance" && (
+                  <button
+                    onClick={() => startEdit(l)}
+                    title="Edit advance"
+                    aria-label="Edit advance"
+                    style={{ background: "none", border: "none", cursor: "pointer", fontSize: 15, lineHeight: 1, padding: 2 }}
+                  >
+                    ✏️
+                  </button>
+                )}
+                <span style={{ fontSize: 13, fontWeight: 800, color: l.loan_type === "advance" ? "#b45309" : "#0C4A6E" }}>
+                  {l.loan_type === "advance" ? "+" : "−"}
+                  {fmt(l.amount)}
+                </span>
+              </div>
             </div>
           ))}
         </div>

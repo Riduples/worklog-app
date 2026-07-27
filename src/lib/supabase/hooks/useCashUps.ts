@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { getCurrentBusinessId } from "@/lib/supabase/currentBusiness";
-import type { Tables, TablesInsert } from "@/lib/types/database";
+import type { Tables, TablesInsert, TablesUpdate } from "@/lib/types/database";
 
 export type CashUp = Tables<"cash_ups">;
 
@@ -36,6 +36,19 @@ export function useCreateCashUp() {
         .insert({ ...cashUp, user_id: user.id, business_id: businessId })
         .select()
         .single();
+      if (error) throw error;
+      return data as CashUp;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEY }),
+  });
+}
+
+export function useUpdateCashUp() {
+  const supabase = createClient();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, changes }: { id: string; changes: TablesUpdate<"cash_ups"> }) => {
+      const { data, error } = await supabase.from("cash_ups").update(changes).eq("id", id).select().single();
       if (error) throw error;
       return data as CashUp;
     },

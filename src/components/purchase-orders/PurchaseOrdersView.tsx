@@ -14,6 +14,7 @@ export function PurchaseOrdersView() {
   const { data: pos, isLoading } = usePurchaseOrders();
   const [showNew, setShowNew] = useState(false);
   const [selected, setSelected] = useState<PurchaseOrder | null>(null);
+  const [editing, setEditing] = useState<PurchaseOrder | null>(null);
 
   return (
     <div style={{ padding: "20px 16px 100px" }}>
@@ -78,7 +79,17 @@ export function PurchaseOrdersView() {
       })}
 
       {showNew && <PurchaseOrderModal onClose={() => setShowNew(false)} />}
-      {selected && <PurchaseOrderActionsModal po={selected} onClose={() => setSelected(null)} />}
+      {editing && <PurchaseOrderModal po={editing} onClose={() => setEditing(null)} />}
+      {selected && (
+        <PurchaseOrderActionsModal
+          po={selected}
+          onClose={() => setSelected(null)}
+          onEdit={() => {
+            setEditing(selected);
+            setSelected(null);
+          }}
+        />
+      )}
     </div>
   );
 }

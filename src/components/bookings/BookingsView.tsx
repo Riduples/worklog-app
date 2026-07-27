@@ -5,7 +5,7 @@ import { useBookings, useUpdateBooking, type Booking } from "@/lib/supabase/hook
 import { BookingModal } from "@/components/modals/BookingModal";
 import { Modal } from "@/components/ui/Modal";
 import { Row } from "@/components/ui/Row";
-import { fmt } from "@/lib/format";
+import { fmt, todayStr } from "@/lib/format";
 import { ReadOnlyNotice } from "@/components/ui/ReadOnlyNotice";
 import { useToolAccess } from "@/lib/supabase/hooks/useToolAccess";
 import { BackLink } from "@/components/ui/BackLink";
@@ -18,10 +18,23 @@ const STATUS_COLORS: Record<string, { bg: string; fg: string }> = {
   no_show: { bg: "#fee2e2", fg: "#991b1b" },
 };
 
-function BookingActionsModal({ booking, onClose }: { booking: Booking; onClose: () => void }) {
+function BookingActionsModal({
+  booking,
+  canEdit,
+  onEdit,
+  onClose,
+}: {
+  booking: Booking;
+  canEdit: boolean;
+  onEdit: (b: Booking) => void;
+  onClose: () => void;
+}) {
   const updateBooking = useUpdateBooking();
   const color = STATUS_COLORS[booking.status] ?? STATUS_COLORS.confirmed;
   const setStatus = (status: string) => updateBooking.mutate({ id: booking.id, changes: { status } }, { onSuccess: onClose });
+  // A past appointment can only be marked complete/no-show, not rescheduled or
+  // re-priced, so editing is offered on today's and future bookings only.
+  const isPast = booking.booking_date < todayStr();
 
   return (
     <Modal title={booking.client_name} onClose={onClose}>
@@ -35,6 +48,15 @@ function BookingActionsModal({ booking, onClose }: { booking: Booking; onClose: 
       <Row label="Total" value={fmt(booking.total_price)} />
       {booking.deposit_paid ? <Row label="Deposit paid" value={fmt(booking.deposit_paid)} /> : null}
       <Row label="Balance due" value={fmt(booking.balance_due)} bold />
+
+      {canEdit && !isPast && (
+        <button
+          onClick={() => onEdit(booking)}
+          style={{ width: "100%", background: "#F0F9FF", color: "#0369A1", border: "1.5px solid #BAE6FD", borderRadius: 14, padding: 15, fontWeight: 700, cursor: "pointer", marginTop: 16 }}
+        >
+          ✏️ Edit appointment
+        </button>
+      )}
 
       {(booking.status === "confirmed" || booking.status === "pending") && (
         <>
@@ -69,6 +91,7 @@ export function BookingsView() {
   const { data: bookings, isLoading } = useBookings();
   const [showNew, setShowNew] = useState(false);
   const [selected, setSelected] = useState<Booking | null>(null);
+  const [editing, setEditing] = useState<Booking | null>(null);
 
   return (
     <div style={{ padding: "20px 16px 100px" }}>
@@ -134,7 +157,18 @@ export function BookingsView() {
       })}
 
       {showNew && <BookingModal onClose={() => setShowNew(false)} />}
-      {selected && <BookingActionsModal booking={selected} onClose={() => setSelected(null)} />}
+      {editing && <BookingModal booking={editing} onClose={() => setEditing(null)} />}
+      {selected && (
+        <BookingActionsModal
+          booking={selected}
+          canEdit={access.canEdit}
+          onEdit={(b) => {
+            setSelected(null);
+            setEditing(b);
+          }}
+          onClose={() => setSelected(null)}
+        />
+      )}
     </div>
   );
 }

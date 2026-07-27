@@ -8,20 +8,23 @@ import { Chips } from "@/components/ui/Chips";
 import { SaveBtn } from "@/components/ui/SaveBtn";
 import { fmt, todayStr } from "@/lib/format";
 import { useTaxRates } from "@/lib/taxRates";
-import { useCreateMileageTrip } from "@/lib/supabase/hooks/useMileage";
+import { useCreateMileageTrip, useUpdateMileageTrip, type MileageTrip } from "@/lib/supabase/hooks/useMileage";
 
 const TRIP_TYPES = ["Customer visit", "Supplier visit", "Other"];
 
-export function MileageModal({ onClose }: { onClose: () => void }) {
-  const [odoStart, setOdoStart] = useState("");
-  const [odoEnd, setOdoEnd] = useState("");
-  const [tripType, setTripType] = useState("Customer visit");
-  const [purpose, setPurpose] = useState("");
-  const [tripDate, setTripDate] = useState(todayStr());
+export function MileageModal({ trip, onClose }: { trip?: MileageTrip; onClose: () => void }) {
+  const isEdit = !!trip;
+  const [odoStart, setOdoStart] = useState(trip ? String(trip.odometer_start) : "");
+  const [odoEnd, setOdoEnd] = useState(trip ? String(trip.odometer_end) : "");
+  const [tripType, setTripType] = useState(trip?.trip_type ?? "Customer visit");
+  const [purpose, setPurpose] = useState(trip?.purpose ?? "");
+  const [tripDate, setTripDate] = useState(trip?.trip_date ?? todayStr());
   const [error, setError] = useState("");
 
   const { MILEAGE_RATE } = useTaxRates();
   const createTrip = useCreateMileageTrip();
+  const updateTrip = useUpdateMileageTrip();
+  const saving = createTrip.isPending || updateTrip.isPending;
 
   const startNum = parseFloat(odoStart) || 0;
   const endNum = parseFloat(odoEnd) || 0;
@@ -39,22 +42,24 @@ export function MileageModal({ onClose }: { onClose: () => void }) {
     }
     setError("");
 
-    createTrip.mutate(
-      {
-        odometer_start: startNum,
-        odometer_end: endNum,
-        km_travelled: km,
-        trip_type: tripType,
-        purpose: purpose.trim() || null,
-        sars_deduction: deduction,
-        trip_date: tripDate,
-      },
-      { onSuccess: onClose }
-    );
+    const values = {
+      odometer_start: startNum,
+      odometer_end: endNum,
+      km_travelled: km,
+      trip_type: tripType,
+      purpose: purpose.trim() || null,
+      sars_deduction: deduction,
+      trip_date: tripDate,
+    };
+
+    // Editing only ever touches this trip row. Any SARS expense the trip is
+    // linked to keeps what it already claimed — we don't touch or duplicate it.
+    if (isEdit) updateTrip.mutate({ id: trip.id, changes: values }, { onSuccess: onClose });
+    else createTrip.mutate(values, { onSuccess: onClose });
   };
 
   return (
-    <Modal title="Log trip" onClose={onClose}>
+    <Modal title={isEdit ? "Edit trip" : "Log trip"} onClose={onClose}>
       <Field label="Trip type">
         <Chips options={TRIP_TYPES} selected={tripType} onSelect={(v) => v && setTripType(v)} />
       </Field>
@@ -82,7 +87,7 @@ export function MileageModal({ onClose }: { onClose: () => void }) {
       )}
 
       {error && <p style={{ color: "#dc2626", fontSize: 13, marginBottom: 12 }}>{error}</p>}
-      <SaveBtn label={createTrip.isPending ? "Saving..." : "Log trip"} onClick={handleSave} disabled={createTrip.isPending} />
+      <SaveBtn label={saving ? "Saving..." : isEdit ? "Save changes" : "Log trip"} onClick={handleSave} disabled={saving} />
     </Modal>
   );
 }

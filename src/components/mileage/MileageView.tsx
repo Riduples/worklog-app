@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useMileageTrips, useUpdateMileageTrip } from "@/lib/supabase/hooks/useMileage";
+import { useMileageTrips, useUpdateMileageTrip, type MileageTrip } from "@/lib/supabase/hooks/useMileage";
 import { MileageModal } from "@/components/modals/MileageModal";
 import { fmt } from "@/lib/format";
 import { ReadOnlyNotice } from "@/components/ui/ReadOnlyNotice";
@@ -12,7 +12,7 @@ export function MileageView() {
   const access = useToolAccess("mileage");
   const { data: trips, isLoading } = useMileageTrips();
   const updateTrip = useUpdateMileageTrip();
-  const [showNew, setShowNew] = useState(false);
+  const [modalState, setModalState] = useState<{ open: boolean; trip?: MileageTrip }>({ open: false });
 
   const totalKm = (trips ?? []).reduce((s, t) => s + Number(t.km_travelled || 0), 0);
   const totalDeduction = (trips ?? []).reduce((s, t) => s + Number(t.sars_deduction || 0), 0);
@@ -31,7 +31,7 @@ export function MileageView() {
         </div>
         {access.canEdit && (
           <button
-            onClick={() => setShowNew(true)}
+            onClick={() => setModalState({ open: true })}
             style={{ background: "#0C4A6E", color: "#fff", border: "none", borderRadius: 12, padding: "10px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
           >
             + New
@@ -78,6 +78,15 @@ export function MileageView() {
               {t.trip_date} · {Number(t.km_travelled).toFixed(1)} km · {fmt(t.sars_deduction)}
             </div>
           </div>
+          {access.canEdit && (
+            <button
+              onClick={() => setModalState({ open: true, trip: t })}
+              style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer", fontSize: 14, padding: 4 }}
+              aria-label="Edit trip"
+            >
+              ✏️
+            </button>
+          )}
           {access.canDelete && (
             <button
               onClick={() => handleSoftDelete(t.id)}
@@ -90,7 +99,7 @@ export function MileageView() {
         </div>
       ))}
 
-      {showNew && <MileageModal onClose={() => setShowNew(false)} />}
+      {modalState.open && <MileageModal trip={modalState.trip} onClose={() => setModalState({ open: false })} />}
     </div>
   );
 }

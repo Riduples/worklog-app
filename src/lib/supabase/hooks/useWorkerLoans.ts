@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { getCurrentBusinessId } from "@/lib/supabase/currentBusiness";
-import type { Tables, TablesInsert } from "@/lib/types/database";
+import type { Tables, TablesInsert, TablesUpdate } from "@/lib/types/database";
 
 export type WorkerLoan = Tables<"worker_loans">;
 
@@ -40,6 +40,20 @@ export function useCreateAdvance() {
         .insert({ ...loan, loan_type: "advance", user_id: user.id, business_id: businessId })
         .select()
         .single();
+      if (error) throw error;
+      return data as WorkerLoan;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEY }),
+  });
+}
+
+// Advances only — repayment rows come from Pay Run and are never edited here.
+export function useUpdateAdvance() {
+  const supabase = createClient();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, changes }: { id: string; changes: TablesUpdate<"worker_loans"> }) => {
+      const { data, error } = await supabase.from("worker_loans").update(changes).eq("id", id).select().single();
       if (error) throw error;
       return data as WorkerLoan;
     },

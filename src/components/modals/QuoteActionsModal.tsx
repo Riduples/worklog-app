@@ -1,12 +1,15 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Modal } from "@/components/ui/Modal";
 import { Row } from "@/components/ui/Row";
 import { DocumentActions } from "@/components/ui/DocumentActions";
+import { QuoteModal } from "@/components/modals/QuoteModal";
 import { buildQuoteText } from "@/lib/docgen/shareText";
 import type { DocForRender } from "@/lib/docgen/buildDocumentHTML";
 import { fmt } from "@/lib/format";
+import { useToolAccess } from "@/lib/supabase/hooks/useToolAccess";
 import { useUpdateQuote, type Quote } from "@/lib/supabase/hooks/useQuotes";
 
 const STATUS_COLORS: Record<string, { bg: string; fg: string }> = {
@@ -18,10 +21,20 @@ const STATUS_COLORS: Record<string, { bg: string; fg: string }> = {
 
 export function QuoteActionsModal({ quote, onClose }: { quote: Quote; onClose: () => void }) {
   const router = useRouter();
+  const access = useToolAccess("quote");
   const updateQuote = useUpdateQuote();
+  const [editing, setEditing] = useState(false);
   const items = (quote.line_items as Array<{ desc: string; qty: number; labour: number; materials: number }>) ?? [];
   const statusColor = STATUS_COLORS[quote.status] ?? STATUS_COLORS.pending;
   const totalInclVat = Number(quote.total_amount) + Number(quote.vat_amount ?? 0);
+  // Once a quote has been issued downstream as an invoice it's locked — editing it
+  // would desync the two documents, so the edit affordance disappears.
+  const isConverted = quote.status === "converted" || !!quote.converted_to_invoice_id;
+
+  // Editing reuses the quote modal (prefilled); saving there updates in place.
+  if (editing) {
+    return <QuoteModal quote={quote} onClose={onClose} />;
+  }
 
   return (
     <Modal title={quote.doc_number} onClose={onClose}>
@@ -77,6 +90,26 @@ export function QuoteActionsModal({ quote, onClose }: { quote: Quote; onClose: (
           } satisfies DocForRender
         }
       />
+
+      {access.canEdit && !isConverted && (
+        <button
+          onClick={() => setEditing(true)}
+          style={{
+            width: "100%",
+            background: "#F0F9FF",
+            color: "#0C4A6E",
+            border: "1.5px solid #BAE6FD",
+            borderRadius: 12,
+            padding: 13,
+            fontWeight: 700,
+            fontSize: 13,
+            cursor: "pointer",
+            marginTop: 12,
+          }}
+        >
+          ✏️ Edit quote
+        </button>
+      )}
 
       {quote.status === "pending" && (
         <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
