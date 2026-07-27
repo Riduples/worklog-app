@@ -54,6 +54,8 @@ export const CSV_TEMPLATES: Record<CsvImportType, CsvTemplate> = {
       { csvHeader: "phone" },
       { csvHeader: "email" },
       { csvHeader: "payment_terms" },
+      { csvHeader: "bank_name" },
+      { csvHeader: "account_number" },
       { csvHeader: "notes" },
     ],
     sampleRow: {
@@ -61,6 +63,8 @@ export const CSV_TEMPLATES: Record<CsvImportType, CsvTemplate> = {
       phone: "0119876543",
       email: "sales@johns.co.za",
       payment_terms: "30 days",
+      bank_name: "FNB",
+      account_number: "62012345678",
       notes: "Building materials",
     },
   },

@@ -155,6 +155,12 @@ export function ContactsView() {
               {c.contact_type === "client" ? c.payment_behaviour : c.payment_terms}
               {c.phone ? ` · ${c.phone}` : ""}
             </div>
+            {c.contact_type === "supplier" && c.bank_name && (
+              <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 1 }}>
+                🏦 {c.bank_name}
+                {c.account_number ? ` · ${c.account_number}` : ""}
+              </div>
+            )}
           </button>
           <span
             style={{

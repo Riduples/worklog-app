@@ -30,6 +30,8 @@ export function ContactModal({
   const [notes, setNotes] = useState(contact?.notes ?? "");
   const [paymentBehaviour, setPaymentBehaviour] = useState(contact?.payment_behaviour ?? "Good payer");
   const [paymentTerms, setPaymentTerms] = useState(contact?.payment_terms ?? "On delivery");
+  const [bankName, setBankName] = useState(contact?.bank_name ?? "");
+  const [accountNumber, setAccountNumber] = useState(contact?.account_number ?? "");
   const [error, setError] = useState("");
 
   const createContact = useCreateContact();
@@ -51,6 +53,8 @@ export function ContactModal({
       notes: notes.trim() || null,
       payment_behaviour: contactType === "client" ? paymentBehaviour : null,
       payment_terms: contactType === "supplier" ? paymentTerms : null,
+      bank_name: contactType === "supplier" ? bankName.trim() || null : null,
+      account_number: contactType === "supplier" ? accountNumber.trim() || null : null,
     };
 
     if (isEdit) {
@@ -83,9 +87,20 @@ export function ContactModal({
           <Chips options={PAYMENT_BEHAVIOURS} selected={paymentBehaviour ?? ""} onSelect={setPaymentBehaviour} />
         </Field>
       ) : (
-        <Field label="Payment terms">
-          <Chips options={PAYMENT_TERMS} selected={paymentTerms ?? ""} onSelect={setPaymentTerms} />
-        </Field>
+        <>
+          <Field label="Payment terms">
+            <Chips options={PAYMENT_TERMS} selected={paymentTerms ?? ""} onSelect={setPaymentTerms} />
+          </Field>
+          <Field label="Bank & account number (optional)">
+            <div style={{ background: "#fff7ed", border: "1px solid #fed7aa", borderRadius: 8, padding: "7px 10px", marginBottom: 6, fontSize: 11, color: "#92400e", lineHeight: 1.5 }}>
+              🔒 <span style={{ fontWeight: 700 }}>POPIA:</span> Banking details are sensitive personal data — capture them only with the supplier&apos;s knowledge, for paying them.
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              <Input value={bankName ?? ""} onChange={setBankName} placeholder="Bank name" />
+              <Input value={accountNumber ?? ""} onChange={setAccountNumber} placeholder="Account number" />
+            </div>
+          </Field>
+        </>
       )}
       <Field label="Notes">
         <Input value={notes ?? ""} onChange={setNotes} placeholder="Optional" />

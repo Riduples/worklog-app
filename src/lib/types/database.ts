@@ -457,6 +457,8 @@ export type Database = {
       }
       contacts: {
         Row: {
+          account_number: string | null
+          bank_name: string | null
           business_id: string
           contact_type: string
           created_at: string | null
@@ -472,6 +474,8 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          account_number?: string | null
+          bank_name?: string | null
           business_id: string
           contact_type: string
           created_at?: string | null
@@ -487,6 +491,8 @@ export type Database = {
           user_id: string
         }
         Update: {
+          account_number?: string | null
+          bank_name?: string | null
           business_id?: string
           contact_type?: string
           created_at?: string | null
