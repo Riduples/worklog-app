@@ -68,7 +68,7 @@ const GROUPS: Group[] = [
     ],
   },
   {
-    title: "Tax & Reports",
+    title: "Compliance & Financials",
     items: [
       { tool: "tax", href: "/tax", icon: "🧾", label: "Tax & SARS" },
       { tool: "profitloss", href: "/profit-loss", icon: "📈", label: "Profit & Loss" },

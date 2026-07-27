@@ -863,60 +863,68 @@ export const HELP_ARTICLES: HelpArticle[] = [
     "slug": "cost-a-job",
     "category": "Price list & pricing",
     "title": "Work out a price with the Cost Calculator",
-    "summary": "Use the Cost Calculator to add up what a job or dish costs to make, then get a suggested selling price based on your markup.",
+    "summary": "Cost a job or product from its materials and labour, add a markup for a suggested price, and save the result to your price list.",
     "sections": [
       {
         "heading": "What the Cost Calculator does",
         "blocks": [
           {
             "type": "paragraph",
-            "text": "The Cost Calculator helps you price a job, a dish or a product before you sell it. You list what it costs you to make, say how many servings or units you get out of it, and add your markup. Worklog then works out the total cost, the cost per serving, and a suggested price to charge."
+            "text": "The Cost Calculator helps you price a job or product before you sell it. You list the materials and the labour it takes, add your markup, and Worklog works out the total cost and a suggested selling price. You can pull lines straight from your price list, and save the finished costing back to your price list as an item."
           },
           {
             "type": "paragraph",
-            "text": "You will find it under Price List. Open Cost Calculator and you will see a list of the costings you have saved, each showing the cost per serving and the suggested selling price. Tap any one to open and change it."
+            "text": "You will find it under Price List. Open Cost Calculator and you will see the costings you have saved, each showing its cost and suggested price. Tap any one to open and change it."
           }
         ]
       },
       {
-        "heading": "Add a new costing",
+        "heading": "Cost a job",
         "blocks": [
           {
             "type": "steps",
             "items": [
-              "Open the Cost Calculator and tap + New. This opens the New costing box.",
-              "In Dish / item name, type what you are pricing, for example Chicken curry or a job name.",
-              "In Servings / units made, put how many you get out of this batch. Put 1 if it is a single job or a one-off item.",
-              "Under Ingredients / costs, type the name of the first item in the Ingredient box and what it costs you in the Cost box next to it.",
-              "Tap + Add ingredient for each extra cost, and fill in a name and a cost for each one. You can add as many as you need.",
-              "In Markup %, put the percentage you want to add on top of your cost. It starts at 60.",
-              "Check the blue summary box, then tap Save costing."
+              "Open the Cost Calculator and tap + New.",
+              "In What are you costing?, type the job or product name, for example Bathroom re-tile.",
+              "For each cost, choose Material or Labour, type a description, then the quantity (for labour this is hours) and the unit cost (for labour this is the rate per hour).",
+              "Tap + Material or + Labour to add more lines, or use Add from your price list to drop in a saved item.",
+              "In Markup %, set the percentage to add on top of your cost. It starts at 50.",
+              "Check the navy summary, then tap Save costing."
             ]
           },
           {
             "type": "tip",
-            "text": "To remove a cost line you added by mistake, tap the red ✕ next to it."
+            "text": "Add from your price list uses each item's own cost, and puts Labour items on a labour line and everything else on a material line."
           }
         ]
       },
       {
-        "heading": "Reading the suggested price",
+        "heading": "Reading the summary",
         "blocks": [
           {
             "type": "paragraph",
-            "text": "As you type, the blue box near the bottom updates on its own. It shows three things:"
+            "text": "The navy box updates as you type. It shows:"
           },
           {
             "type": "bullets",
             "items": [
-              "Total cost — everything you added up under Ingredients / costs.",
-              "Cost per serving — the total cost divided by your servings or units made.",
-              "Suggested price — the cost per serving plus your markup. The percentage you used is shown in brackets next to it."
+              "Total cost — every material and labour line added up.",
+              "Labour hours — the hours across your labour lines (shown when there are any).",
+              "Suggested price — the total cost plus your markup. You decide what you actually charge."
             ]
-          },
+          }
+        ]
+      },
+      {
+        "heading": "Save it to your price list",
+        "blocks": [
           {
             "type": "paragraph",
-            "text": "The suggested price is a guide to help you set your own price. You decide what you actually charge the customer. Change the Markup % to see the suggested price move up or down."
+            "text": "Tap Save as a price-list item to add the costed job to your Items as a product — its cost becomes the costing's total, and its sell price becomes the suggested price. If the costing has labour hours, those are saved on the item too."
+          },
+          {
+            "type": "tip",
+            "text": "Because the item carries its hours, adding it to a quote line lets the quote auto-suggest its estimated hours — which then feeds Job Profitability in the Time Log."
           }
         ]
       },
@@ -926,23 +934,10 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "steps",
             "items": [
-              "In the list, tap the costing you want to change. It opens as Edit costing with everything you entered before.",
-              "Change the name, servings, costs or markup, then tap Save costing.",
-              "To remove a costing, tap the small ✕ on the right of its row in the list and tap OK when it asks Remove this costing?"
+              "In the list, tap the costing you want to change. It opens as Edit costing.",
+              "Change the name, lines or markup, then tap Update costing.",
+              "To remove a line, tap the red ✕ on that line."
             ]
-          }
-        ]
-      },
-      {
-        "heading": "Good to know",
-        "blocks": [
-          {
-            "type": "tip",
-            "text": "Every costing you save stays in the Cost Calculator list, so you can reuse it and check your pricing later. It is a handy record of what each of your jobs or products actually costs you."
-          },
-          {
-            "type": "warning",
-            "text": "The Cost Calculator works out a price for you, but it does not add the item to your price list or put it on a quote or invoice by itself. When you are ready to charge the customer, use the suggested price to build your quote or invoice."
           }
         ]
       }
@@ -2987,7 +2982,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "steps",
             "items": [
-              "From the Tax & Compliance card, open Tax & SARS, then tap the EMP201 tile.",
+              "From the Compliance & Financials card, open Tax & SARS, then tap the EMP201 tile.",
               "Use the ‹ and › arrows at the top to move to the month you want. The month and year show in the middle.",
               "Read the dark blue card. Along the top it shows the month and how many employees were paid, then the lines: PAYE (employee tax), UIF — employee, UIF — employer, and SDL (only if it applies to you).",
               "Check Total due to SARS at the bottom of the card, and the Due date shown just under it — the 7th of the following month."
@@ -3242,7 +3237,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           },
           {
             "type": "paragraph",
-            "text": "The tools are grouped into categories: Price List, Contacts, Sales, Purchases, Scheduling System, Payroll, Money, and Tax & Compliance. Each category shows how many of its tools are switched on."
+            "text": "The tools are grouped into categories: Price List, Contacts, Sales, Purchases, Scheduling System, Payroll, Money, and Compliance & Financials. Each category shows how many of its tools are switched on."
           },
           {
             "type": "steps",
@@ -3456,7 +3451,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
             "type": "bullets",
             "items": [
               "Provisional Tax is on the Structured plan.",
-              "You will find it under Tax & SARS. There is a link at the top of the screen that reads Tax & Compliance to take you back.",
+              "You will find it under Tax & SARS. There is a link at the top of the screen that reads Compliance & Financials to take you back.",
               "Have any allowable deductions in mind (for example a home office or retirement annuity), and if you are doing Period 2, know what you already paid in Period 1."
             ]
           }
@@ -3766,7 +3761,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "steps",
             "items": [
-              "Open Profit and Loss, under the \"Tax & Compliance\" tools card (or the \"Tax & Reports\" group on desktop).",
+              "Open Profit and Loss, under the \"Compliance & Financials\" tools card (or the \"Compliance & Financials\" group on desktop).",
               "Choose the time you want to look at with the period buttons near the top: Today, This week, This month, This year, or All time. It opens on This month.",
               "Read the big Net Profit number at the top. It shows in blue when you are in profit and red when you are in the red.",
               "Just under that number you will see your margin as a percentage, which is how much of your revenue is left as profit. In brackets it tells you the basis it used, for example accrual basis."
@@ -3898,7 +3893,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "steps",
             "items": [
-              "Go to Cash Flow — under the \"Tax & Compliance\" tools card, or the \"Tax & Reports\" group on desktop (or open /cashflow).",
+              "Go to Cash Flow — under the \"Compliance & Financials\" tools card, or the \"Compliance & Financials\" group on desktop (or open /cashflow).",
               "Find the row of period buttons: Today, This week, This month, This year and All time. Tap the one you want. This month is chosen to start with.",
               "The dark blue NET CASH FLOW card updates straight away, showing your IN, your OUT, and the net figure for that period."
             ]
@@ -4001,7 +3996,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "steps",
             "items": [
-              "Go to Age Analysis, under the \"Tax & Compliance\" tools card (or the \"Tax & Reports\" group on desktop).",
+              "Go to Age Analysis, under the \"Compliance & Financials\" tools card (or the \"Compliance & Financials\" group on desktop).",
               "At the top you will see two buttons: Debtors, with Clients who owe you underneath, and Creditors, with Suppliers you owe underneath. The report opens on Debtors, so you are already looking at who owes you.",
               "Tap Creditors any time to flip over to what you owe your suppliers, and Debtors to flip back."
             ]
@@ -4074,6 +4069,114 @@ export const HELP_ARTICLES: HelpArticle[] = [
       "send-a-customer-statement",
       "match-a-payment-to-an-invoice",
       "record-a-supplier-invoice"
+    ]
+  },
+  {
+    "slug": "credit-notes",
+    "category": "Sales",
+    "title": "Credit an invoice (Credit Notes)",
+    "summary": "The SARS-correct way to reverse part or all of an invoice — the VAT is reversed, the customer's balance updates, and you can send a credit note document.",
+    "sections": [
+      {
+        "heading": "When to use a credit note",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "A credit note is how you reverse an invoice you have already issued — for returned goods, an overcharge, or a cancelled job. You never edit or delete an issued invoice; you raise a credit note against it. That keeps your records SARS-correct: the VAT is reversed and there is a clear paper trail."
+          }
+        ]
+      },
+      {
+        "heading": "Credit a customer invoice",
+        "blocks": [
+          {
+            "type": "steps",
+            "items": [
+              "Open the invoice and tap ↩️ Credit this invoice.",
+              "Choose Whole invoice, or Specific lines and tick the lines to credit.",
+              "Type a reason, for example Goods returned.",
+              "If the invoice is still unpaid, choose how to settle it: Reduce what they owe lowers the balance, or Put on account holds it as credit for next time or a refund. A paid invoice always goes on account.",
+              "Check the total, then tap Create credit note."
+            ]
+          },
+          {
+            "type": "tip",
+            "text": "If you are registered for VAT, the VAT is backed out of the credit automatically. An invoice that is fully credited gets a purple Credited badge."
+          }
+        ]
+      },
+      {
+        "heading": "Send the credit note",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "Each credit note you raise shows on the invoice detail with a 📤 Send credit note button, so you can share the SARS-worded Credit Note document — it references the original invoice — with your customer."
+          }
+        ]
+      },
+      {
+        "heading": "Credit on account, and refunds",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "Credit held on account shows on the customer's Statement, where you can settle it — Applied to invoice, or Refund paid, which records the refund as money out. It also nets your Age Analysis, VAT201 and Profit & Loss automatically, so your reports stay honest."
+          },
+          {
+            "type": "paragraph",
+            "text": "A supplier who credits you works the same way from the supplier invoice — tap ↩️ Supplier credited me — and settles on the supplier Remittance."
+          }
+        ]
+      }
+    ],
+    "related": [
+      "create-and-send-an-invoice",
+      "send-a-customer-statement",
+      "record-a-supplier-invoice",
+      "vat201"
+    ]
+  },
+  {
+    "slug": "job-profitability",
+    "category": "Scheduling",
+    "title": "Track job profitability (hours vs quote)",
+    "summary": "Link time entries to a quote and compare the hours you have logged against the hours you quoted, so you know when a job is running over.",
+    "sections": [
+      {
+        "heading": "How it works",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "Job Profitability compares the hours you actually log against the hours you quoted for a job — an honest hours-vs-hours read. It uses two things: an estimated-hours figure on the quote, and a link from each time entry to that quote."
+          }
+        ]
+      },
+      {
+        "heading": "Set it up",
+        "blocks": [
+          {
+            "type": "steps",
+            "items": [
+              "On the quote, fill in Estimated hours for this job. If you built lines from priced items that carry hours, this is suggested for you.",
+              "In the Time Log, when you record time, pick the quote under Link to a quote.",
+              "As you log, a panel shows the hours projected against the quote versus the hours quoted, and warns when you go over."
+            ]
+          }
+        ]
+      },
+      {
+        "heading": "The Job Profitability view",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "In the Time Tracker, tap the Job Profitability tab. Each job shows the hours logged against the hours quoted with a progress bar and a badge — a red Over when a job has blown its quoted hours, or an OK when it is within them. Jobs that are most over sort to the top."
+          }
+        ]
+      }
+    ],
+    "related": [
+      "time-log",
+      "send-a-quote",
+      "cost-a-job"
     ]
   }
 ];

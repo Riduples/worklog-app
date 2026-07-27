@@ -96,7 +96,7 @@ export function Emp201View() {
     return (
       <div style={{ padding: "20px 16px 100px" }}>
         <Link href="/tax" style={{ fontSize: 12, color: "#64748b" }}>
-          ← Tax &amp; Compliance
+          ← Compliance &amp; Financials
         </Link>
         <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 18px" }}>EMP201</h1>
         <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 12, padding: 20, textAlign: "center", fontSize: 13, color: "#64748b" }}>
@@ -113,7 +113,7 @@ export function Emp201View() {
   return (
     <div style={{ padding: "20px 16px 100px" }}>
       <Link href="/tax" style={{ fontSize: 12, color: "#64748b" }}>
-        ← Tax &amp; Compliance
+        ← Compliance &amp; Financials
       </Link>
       <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 18px" }}>EMP201</h1>
 

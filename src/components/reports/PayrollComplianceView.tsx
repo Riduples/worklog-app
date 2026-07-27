@@ -54,7 +54,7 @@ export function PayrollComplianceView() {
   return (
     <div style={{ padding: "20px 16px 100px" }}>
       <Link href="/tax" style={{ fontSize: 12, color: "#64748b" }}>
-        ← Tax &amp; Compliance
+        ← Compliance &amp; Financials
       </Link>
       <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 4px" }}>Payroll Compliance</h1>
       <p style={{ fontSize: 12, color: "#94a3b8", marginBottom: 18, lineHeight: 1.5 }}>

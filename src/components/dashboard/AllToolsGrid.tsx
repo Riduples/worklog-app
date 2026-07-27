@@ -91,7 +91,7 @@ const NAV_CATEGORIES: { id: string; items: NavItem[] }[] = [
     ],
   },
   {
-    id: "taxcompliance", // Tax & Compliance
+    id: "taxcompliance", // Compliance & Financials
     items: [
       { href: "/tax", icon: "🧾", label: "Tax & SARS", toolId: "tax" },
       { href: "/cashflow", icon: "📊", label: "Cash Flow", toolId: "profit" },

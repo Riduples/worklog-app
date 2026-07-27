@@ -80,7 +80,7 @@ export const TOOL_CATEGORIES: { id: string; label: string; icon: string; desc: s
   // "taxdashboard" is deliberately absent: the /tax hub it described is gated
   // by "tax", so a second id for the same page was a toggle that controlled
   // nothing. Every id below reaches a real screen.
-  { id: "taxcompliance", label: "Tax & Compliance", icon: "💡", desc: "Everything tax, SARS and compliance — your complete financial overview", tools: ["vat201", "emp201", "provtax", "taxjar", "profitloss", "profit", "ageanalysis", "compliance", "tax"] },
+  { id: "taxcompliance", label: "Compliance & Financials", icon: "💡", desc: "Everything tax, SARS and compliance — your complete financial overview", tools: ["vat201", "emp201", "provtax", "taxjar", "profitloss", "profit", "ageanalysis", "compliance", "tax"] },
 ];
 
 export const TOOL_LABELS: Partial<Record<ToolId, { icon: string; label: string; desc?: string }>> = {
