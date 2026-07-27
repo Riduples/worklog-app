@@ -105,15 +105,33 @@ export const INCOME_TAX_PAYMENT_CATEGORIES: string[] = [
 export const isIncomeTaxPayment = (sarsCategory: string | null | undefined): boolean =>
   !!sarsCategory && INCOME_TAX_PAYMENT_CATEGORIES.includes(sarsCategory);
 
-export const ALL_PAYMENT_METHODS = [
+// Payment methods split by direction: how money is *received* is not how it is
+// *paid*. A trades business rarely collects by debit order but pays plenty of
+// things that way; and when receiving a card payment the debit-vs-credit split
+// is the customer's card, not yours, so it collapses to one "Card".
+export const INCOME_PAYMENT_METHODS = [
+  "Cash",
+  "EFT / Bank transfer",
+  "Card",
+  "Voucher / Gift card",
+  "Other",
+];
+
+export const EXPENSE_PAYMENT_METHODS = [
   "Cash",
   "EFT / Bank transfer",
   "Card (debit)",
   "Card (credit)",
-  "Card (cheque)",
   "Debit order",
-  "Voucher / Gift card",
   "Other",
+];
+
+// The union of both directions, deduped and order-preserving. The AI ingest
+// routes (quick-log, parse-statement) classify income AND expenses in one enum,
+// and any historical method string must still validate, so they use this.
+export const ALL_PAYMENT_METHODS = [
+  ...INCOME_PAYMENT_METHODS,
+  ...EXPENSE_PAYMENT_METHODS.filter((m) => !INCOME_PAYMENT_METHODS.includes(m)),
 ];
 
 function getSarsMatchFromList(list: SarsCategory[], text: string) {

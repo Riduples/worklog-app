@@ -4,14 +4,17 @@ import { ALL_PAYMENT_METHODS } from "@/lib/sarsCategories";
 export function PaymentMethodPicker({
   selected,
   onSelect,
+  methods = ALL_PAYMENT_METHODS,
 }: {
   selected: string;
   onSelect: (v: string) => void;
+  /** Which chips to show. Defaults to the union of both directions. */
+  methods?: readonly string[];
 }) {
   return (
     <Field label="Payment method">
       <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-        {ALL_PAYMENT_METHODS.map((m) => (
+        {methods.map((m) => (
           <button
             key={m}
             type="button"

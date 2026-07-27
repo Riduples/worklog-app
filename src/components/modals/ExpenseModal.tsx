@@ -10,7 +10,7 @@ import { PaymentMethodPicker } from "@/components/ui/PaymentMethodPicker";
 import { SarsSuggestionDropdown } from "@/components/ui/SarsSuggestionDropdown";
 import { LedgerEntryMatcher, expenseSettlesEntry } from "@/components/ui/LedgerEntryMatcher";
 import { SupplierInvoiceMatcher, expenseSettlesSupplierInvoice } from "@/components/ui/SupplierInvoiceMatcher";
-import { getSarsMatch, type SarsCategory } from "@/lib/sarsCategories";
+import { getSarsMatch, EXPENSE_PAYMENT_METHODS, type SarsCategory } from "@/lib/sarsCategories";
 import { todayStr } from "@/lib/format";
 import { useCreateExpense } from "@/lib/supabase/hooks/useExpenses";
 import { useContacts } from "@/lib/supabase/hooks/useContacts";
@@ -65,6 +65,11 @@ export function ExpenseModal({ onClose }: { onClose: () => void }) {
   const matchedSi = (supplierInvoices ?? []).find((si) => si.id === matchedSupplierInvoiceId) ?? null;
   const settlesSi = expenseSettlesSupplierInvoice(matchedSi, amountNum);
 
+  // Linked to a bill (a ledger credit or a supplier invoice)? Then that document
+  // is the record — it carries the category and any VAT — so the "what for" step
+  // is skipped, exactly like the income side.
+  const isMatched = !!(matchedLedgerEntryId || matchedSupplierInvoiceId);
+
   const handleSave = () => {
     if (!amountNum || amountNum <= 0) {
       setError("Enter a valid amount.");
@@ -75,8 +80,12 @@ export function ExpenseModal({ onClose }: { onClose: () => void }) {
     createExpense.mutate(
       {
         amount: amountNum,
-        what_for: whatFor.trim() || null,
-        sars_category: sarsCategory?.sars ?? null,
+        // A matched expense is described by the bill it settles, so its own
+        // "what for" / category would duplicate that and stay null. In Profit &
+        // Loss the matched cash is netted out and the bill carries the cost, so
+        // nothing is lost by not categorising the payment itself.
+        what_for: isMatched ? null : whatFor.trim() || null,
+        sars_category: isMatched ? null : sarsCategory?.sars ?? null,
         details: details.trim() || null,
         paid_to: paidTo.trim() || null,
         paid_to_contact_id: paidToContactId,
@@ -119,33 +128,18 @@ export function ExpenseModal({ onClose }: { onClose: () => void }) {
 
   return (
     <Modal title="Log expense" onClose={onClose}>
+      {/* Same capture order as Log income: account, date, amount, who, then
+          whether it settles a bill. Matching leads — a matched expense takes its
+          category from the bill, so "what for" only shows for an unmatched spend. */}
+      {(accounts?.length ?? 0) > 0 && <BankAccountPicker value={accountId} onChange={setAccountId} />}
+
+      <Field label="Date">
+        <Input value={date} onChange={setDate} type="date" />
+      </Field>
+
       <Field label="Amount">
         <Input value={amount} onChange={setAmount} type="number" placeholder="0.00" autoFocus />
       </Field>
-
-      <div style={{ position: "relative" }}>
-        <Field label="What for?">
-          <Input
-            value={whatFor}
-            onChange={(v) => {
-              setWhatFor(v);
-              setShowSarsSuggestions(true);
-              setSarsCategory(null);
-            }}
-            placeholder="e.g. Fuel at Engen, cement"
-          />
-        </Field>
-        {showSarsSuggestions && (
-          <SarsSuggestionDropdown
-            suggestions={getSarsMatch(whatFor)}
-            onPick={(s) => {
-              setSarsCategory(s);
-              setWhatFor(s.label);
-              setShowSarsSuggestions(false);
-            }}
-          />
-        )}
-      </div>
 
       <ContactPicker
         label="Paid to"
@@ -164,6 +158,12 @@ export function ExpenseModal({ onClose }: { onClose: () => void }) {
         onMatch={(id) => {
           setMatchedLedgerEntryId(id);
           if (!id) setMarkPaid(false);
+          // Linking a bill makes it the record — drop any half-started category.
+          if (id) {
+            setWhatFor("");
+            setSarsCategory(null);
+            setShowSarsSuggestions(false);
+          }
         }}
         filterByParty={paidTo}
         onAutoFillParty={setPaidTo}
@@ -178,6 +178,11 @@ export function ExpenseModal({ onClose }: { onClose: () => void }) {
         onMatch={(id) => {
           setMatchedSupplierInvoiceId(id);
           if (!id) setMarkSiPaid(false);
+          if (id) {
+            setWhatFor("");
+            setSarsCategory(null);
+            setShowSarsSuggestions(false);
+          }
         }}
         filterByParty={paidTo}
         onAutoFillParty={setPaidTo}
@@ -186,17 +191,38 @@ export function ExpenseModal({ onClose }: { onClose: () => void }) {
         onMarkPaidChange={setMarkSiPaid}
       />
 
-      <PaymentMethodPicker selected={method} onSelect={setMethod} />
-
-      {(accounts?.length ?? 0) > 0 && <BankAccountPicker value={accountId} onChange={setAccountId} />}
-
-      <Field label="Date">
-        <Input value={date} onChange={setDate} type="date" />
-      </Field>
+      {/* Unmatched spend: no bill to inherit from, so capture what it was for. */}
+      {!isMatched && (
+        <div style={{ position: "relative" }}>
+          <Field label="What for?">
+            <Input
+              value={whatFor}
+              onChange={(v) => {
+                setWhatFor(v);
+                setShowSarsSuggestions(true);
+                setSarsCategory(null);
+              }}
+              placeholder="e.g. Fuel at Engen, cement"
+            />
+          </Field>
+          {showSarsSuggestions && (
+            <SarsSuggestionDropdown
+              suggestions={getSarsMatch(whatFor)}
+              onPick={(s) => {
+                setSarsCategory(s);
+                setWhatFor(s.label);
+                setShowSarsSuggestions(false);
+              }}
+            />
+          )}
+        </div>
+      )}
 
       <Field label="Details (optional)">
         <Input value={details} onChange={setDetails} placeholder="Extra description" />
       </Field>
+
+      <PaymentMethodPicker selected={method} onSelect={setMethod} methods={EXPENSE_PAYMENT_METHODS} />
 
       {error && <p style={{ color: "#dc2626", fontSize: 13, marginBottom: 12 }}>{error}</p>}
       <SaveBtn label={createExpense.isPending ? "Saving..." : "Log expense"} onClick={handleSave} disabled={createExpense.isPending} />
