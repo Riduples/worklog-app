@@ -7,6 +7,7 @@ import { CSVImportModal } from "@/components/modals/CSVImportModal";
 import { ReadOnlyNotice } from "@/components/ui/ReadOnlyNotice";
 import { useToolAccess } from "@/lib/supabase/hooks/useToolAccess";
 import { fmt } from "@/lib/format";
+import { itemTypeMeta } from "@/lib/itemTypes";
 import { BackLink } from "@/components/ui/BackLink";
 
 export function StockView() {
@@ -73,6 +74,7 @@ export function StockView() {
 
       {(items ?? []).map((item) => {
         const lowStock = item.reorder_level != null && item.reorder_level > 0 && item.qty <= item.reorder_level;
+        const meta = itemTypeMeta(item.item_type);
         return (
           <div
             key={item.id}
@@ -92,7 +94,22 @@ export function StockView() {
               onClick={() => setModalState({ open: true, item })}
               style={{ background: "none", border: "none", textAlign: "left", cursor: "pointer", flex: 1, padding: 0 }}
             >
-              <div style={{ fontSize: 14, fontWeight: 700, color: "#111" }}>{item.name}</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                <span style={{ fontSize: 14, fontWeight: 700, color: "#111" }}>{item.name}</span>
+                <span
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 700,
+                    color: meta.color,
+                    background: meta.bg,
+                    borderRadius: 6,
+                    padding: "1px 6px",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {meta.icon} {meta.label}
+                </span>
+              </div>
               <div style={{ fontSize: 11, color: lowStock ? "#be123c" : "#94a3b8" }}>
                 {item.qty} in stock{lowStock ? " · Low stock!" : ""} · {fmt(item.sell_price)} each
                 {item.margin_pct != null ? ` · ${Number(item.margin_pct).toFixed(0)}% margin` : ""}

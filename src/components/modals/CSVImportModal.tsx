@@ -12,6 +12,7 @@ import {
   type CsvImportType,
 } from "@/lib/csvTemplates";
 import { useCsvImport, fetchExistingNames } from "@/lib/supabase/hooks/useCsvImport";
+import { normaliseItemType } from "@/lib/itemTypes";
 import type { TablesInsert } from "@/lib/types/database";
 
 type StockRow = Omit<TablesInsert<"stock_items">, "user_id" | "business_id">;
@@ -69,6 +70,7 @@ export function CSVImportModal({ type, onClose }: { type: CsvImportType; onClose
             const sell = num(raw.sell_price);
             row = {
               name,
+              item_type: normaliseItemType(raw.item_type),
               qty: Math.round(num(raw.qty)),
               cost_price: cost,
               sell_price: sell,

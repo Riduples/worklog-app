@@ -1686,6 +1686,7 @@ export type Database = {
           created_at: string | null
           deleted_at: string | null
           id: string
+          item_type: string
           margin_pct: number | null
           name: string
           qty: number
@@ -1700,6 +1701,7 @@ export type Database = {
           created_at?: string | null
           deleted_at?: string | null
           id?: string
+          item_type?: string
           margin_pct?: number | null
           name: string
           qty?: number
@@ -1714,6 +1716,7 @@ export type Database = {
           created_at?: string | null
           deleted_at?: string | null
           id?: string
+          item_type?: string
           margin_pct?: number | null
           name?: string
           qty?: number

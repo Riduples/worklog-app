@@ -21,12 +21,13 @@ export const CSV_TEMPLATES: Record<CsvImportType, CsvTemplate> = {
     filename: "worklog-stock-template.csv",
     columns: [
       { csvHeader: "description", required: true },
+      { csvHeader: "item_type" },
       { csvHeader: "qty" },
       { csvHeader: "cost_price" },
       { csvHeader: "sell_price" },
       { csvHeader: "reorder_level" },
     ],
-    sampleRow: { description: "Cement 50kg", qty: "20", cost_price: "85", sell_price: "120", reorder_level: "5" },
+    sampleRow: { description: "Cement 50kg", item_type: "material", qty: "20", cost_price: "85", sell_price: "120", reorder_level: "5" },
   },
   client: {
     label: "Clients",

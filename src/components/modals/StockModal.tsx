@@ -6,10 +6,12 @@ import { Field } from "@/components/ui/Field";
 import { Input } from "@/components/ui/Input";
 import { SaveBtn } from "@/components/ui/SaveBtn";
 import { fmt } from "@/lib/format";
+import { ITEM_TYPES, ITEM_TYPE_META, type ItemType } from "@/lib/itemTypes";
 import { useCreateStockItem, useUpdateStockItem, type StockItem } from "@/lib/supabase/hooks/useStock";
 
 export function StockModal({ item, onClose }: { item?: StockItem; onClose: () => void }) {
   const isEdit = !!item;
+  const [itemType, setItemType] = useState<ItemType>((item?.item_type as ItemType) ?? "product");
   const [name, setName] = useState(item?.name ?? "");
   const [qty, setQty] = useState(String(item?.qty ?? 0));
   const [cost, setCost] = useState(String(item?.cost_price ?? 0));
@@ -27,13 +29,14 @@ export function StockModal({ item, onClose }: { item?: StockItem; onClose: () =>
 
   const handleSave = () => {
     if (!name.trim()) {
-      setError("Name is required.");
+      setError("Description is required.");
       return;
     }
     setError("");
 
     const changes = {
       name: name.trim(),
+      item_type: itemType,
       qty: parseInt(qty, 10) || 0,
       cost_price: costNum,
       sell_price: sellNum,
@@ -50,8 +53,40 @@ export function StockModal({ item, onClose }: { item?: StockItem; onClose: () =>
 
   return (
     <Modal title={isEdit ? "Edit stock item" : "Add stock item"} onClose={onClose}>
+      <Field label="Type">
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+          {ITEM_TYPES.map((t) => {
+            const meta = ITEM_TYPE_META[t];
+            const active = itemType === t;
+            return (
+              <button
+                key={t}
+                type="button"
+                onClick={() => setItemType(t)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  padding: "9px 12px",
+                  borderRadius: 20,
+                  border: `1.5px solid ${active ? meta.color : "#e2e8f0"}`,
+                  background: active ? meta.bg : "#fff",
+                  color: active ? meta.color : "#374151",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                <span>{meta.icon}</span>
+                {meta.label}
+              </button>
+            );
+          })}
+        </div>
+        <p style={{ fontSize: 12, color: "#64748b", margin: "6px 0 0" }}>{ITEM_TYPE_META[itemType].hint}</p>
+      </Field>
       <Field label="Description">
-        <Input value={name} onChange={setName} placeholder="e.g. Cement 50kg" autoFocus />
+        <Input value={name} onChange={setName} placeholder={ITEM_TYPE_META[itemType].placeholder} autoFocus />
       </Field>
       <Field label="Quantity on hand">
         <Input value={qty} onChange={setQty} type="number" placeholder="0" />
