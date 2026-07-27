@@ -91,7 +91,7 @@ export function SalesLineItemsEditor({
           onChange={(e) => {
             const s = (stock ?? []).find((it) => it.id === e.target.value);
             if (!s) return;
-            onChange([...items, { desc: s.name, qty: 1, unit_price: Number(s.sell_price || 0) }]);
+            onChange([...items, { desc: s.name, qty: 1, unit_price: Number(s.sell_price || 0), est_hours: Number(s.estimated_hours || 0) }]);
             e.target.value = "";
           }}
           style={{

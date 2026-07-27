@@ -48,6 +48,10 @@ export function QuoteModal({ quote, onClose }: { quote?: Quote; onClose: () => v
   const vatAmount = isVatRegistered ? subtotal * VAT_RATE : 0;
   const totalInclVat = subtotal + vatAmount;
   const depositNum = parseFloat(deposit) || 0;
+  // Auto estimate from any line added off a Labour/costing item that carries hours
+  // (qty × its per-unit hours). Used as the default when the owner hasn't typed one.
+  const autoEstHours = Math.round(items.reduce((s, it) => s + Number(it.qty || 1) * Number(it.est_hours || 0), 0) * 100) / 100;
+  const effectiveEstHours = estHours !== "" ? parseFloat(estHours) || null : autoEstHours > 0 ? autoEstHours : null;
 
   const handleSave = async () => {
     if (!client.trim()) {
@@ -76,7 +80,7 @@ export function QuoteModal({ quote, onClose }: { quote?: Quote; onClose: () => v
             deposit_requested: depositNum,
             issue_date: issueDate,
             valid_until: validUntil,
-            estimated_hours: parseFloat(estHours) || null,
+            estimated_hours: effectiveEstHours,
             vat_rate: isVatRegistered ? VAT_RATE : null,
             vat_amount: vatAmount,
           },
@@ -99,7 +103,7 @@ export function QuoteModal({ quote, onClose }: { quote?: Quote; onClose: () => v
         deposit_requested: depositNum,
         issue_date: issueDate,
         valid_until: validUntil,
-        estimated_hours: parseFloat(estHours) || null,
+        estimated_hours: effectiveEstHours,
         status: "pending",
         vat_rate: isVatRegistered ? VAT_RATE : null,
         vat_amount: vatAmount,
@@ -136,8 +140,12 @@ export function QuoteModal({ quote, onClose }: { quote?: Quote; onClose: () => v
       </Field>
 
       <Field label="Estimated hours for this job (optional)">
-        <Input value={estHours} onChange={setEstHours} type="number" placeholder="e.g. 30" />
-        <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 4 }}>Link time entries to this quote to track hours logged vs quoted.</div>
+        <Input value={estHours} onChange={setEstHours} type="number" placeholder={autoEstHours > 0 ? `Auto: ${autoEstHours}h from your items` : "e.g. 30"} />
+        <div style={{ fontSize: 11, color: autoEstHours > 0 && estHours === "" ? "#0369A1" : "#94a3b8", marginTop: 4 }}>
+          {autoEstHours > 0 && estHours === ""
+            ? `🔁 Auto-estimated at ${autoEstHours}h from the hours on your items — type to override.`
+            : "Link time entries to this quote to track hours logged vs quoted."}
+        </div>
       </Field>
 
       <div style={{ background: "#F0F9FF", borderRadius: 12, padding: "12px 14px", marginBottom: 16, fontSize: 13, color: "#0369A1" }}>

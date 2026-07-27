@@ -69,6 +69,7 @@ export function CostingModal({ costing, onClose }: { costing?: Costing; onClose:
         sell_price: suggestedPrice,
         reorder_level: 0,
         margin_pct: suggestedPrice > 0 ? round2(((suggestedPrice - totalCost) / suggestedPrice) * 100) : 0,
+        estimated_hours: labourHours > 0 ? labourHours : null,
       },
       { onSuccess: () => setSavedToList(true) }
     );

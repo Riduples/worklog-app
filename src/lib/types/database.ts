@@ -1738,6 +1738,7 @@ export type Database = {
           cost_price: number | null
           created_at: string | null
           deleted_at: string | null
+          estimated_hours: number | null
           id: string
           item_type: string
           margin_pct: number | null
@@ -1753,6 +1754,7 @@ export type Database = {
           cost_price?: number | null
           created_at?: string | null
           deleted_at?: string | null
+          estimated_hours?: number | null
           id?: string
           item_type?: string
           margin_pct?: number | null
@@ -1768,6 +1770,7 @@ export type Database = {
           cost_price?: number | null
           created_at?: string | null
           deleted_at?: string | null
+          estimated_hours?: number | null
           id?: string
           item_type?: string
           margin_pct?: number | null

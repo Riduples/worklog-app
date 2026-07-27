@@ -8,7 +8,7 @@ import type { Tables, TablesInsert, TablesUpdate } from "@/lib/types/database";
 export type Quote = Tables<"quotes">;
 // New lines carry unit_price (qty × unit_price); historic lines carry the old
 // labour + materials split. Both are read through salesLineTotal (@/lib/lineItems).
-export type QuoteLineItem = { desc: string; qty: number; unit_price?: number; labour?: number; materials?: number };
+export type QuoteLineItem = { desc: string; qty: number; unit_price?: number; labour?: number; materials?: number; est_hours?: number };
 
 const QUERY_KEY = ["quotes"];
 
