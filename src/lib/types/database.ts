@@ -517,6 +517,59 @@ export type Database = {
           },
         ]
       }
+      costings: {
+        Row: {
+          business_id: string
+          created_at: string | null
+          deleted_at: string | null
+          id: string
+          labour_hours: number
+          lines: Json
+          markup_pct: number
+          name: string
+          suggested_price: number
+          total_cost: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string | null
+          deleted_at?: string | null
+          id?: string
+          labour_hours?: number
+          lines?: Json
+          markup_pct?: number
+          name: string
+          suggested_price?: number
+          total_cost?: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string | null
+          deleted_at?: string | null
+          id?: string
+          labour_hours?: number
+          lines?: Json
+          markup_pct?: number
+          name?: string
+          suggested_price?: number
+          total_cost?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "costings_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       credit_notes: {
         Row: {
           amount: number

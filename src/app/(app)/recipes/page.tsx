@@ -1,7 +1,7 @@
 import { requireBusinessProfile } from "@/lib/auth";
-import { RecipesView } from "@/components/recipes/RecipesView";
+import { CostCalculatorView } from "@/components/recipes/CostCalculatorView";
 
 export default async function RecipesPage() {
   await requireBusinessProfile();
-  return <RecipesView />;
+  return <CostCalculatorView />;
 }
