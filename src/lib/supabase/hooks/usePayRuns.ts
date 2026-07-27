@@ -43,6 +43,7 @@ export type CreatePayRunInput = {
   otherDeductionDesc: string | null;
   leaveDays: number;
   leaveType: string | null;
+  unpaidLeaveAmount: number;
   netPay: number;
   status: "prepared" | "approved";
 };
@@ -73,6 +74,7 @@ export function useCreatePayRun() {
         p_other_deduction_desc: input.otherDeductionDesc ?? "",
         p_leave_days: input.leaveDays,
         p_leave_type: input.leaveType ?? "",
+        p_unpaid_leave_amount: input.unpaidLeaveAmount,
         p_net_pay: input.netPay,
         p_status: input.status,
       });

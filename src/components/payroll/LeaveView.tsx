@@ -23,6 +23,7 @@ export function LeaveView() {
   const [leaveType, setLeaveType] = useState("Annual");
   const [leaveDays, setLeaveDays] = useState("");
   const [startDate, setStartDate] = useState(todayStr());
+  const [endDate, setEndDate] = useState("");
   const [note, setNote] = useState("");
   const [editId, setEditId] = useState<string | null>(null);
   const [error, setError] = useState("");
@@ -39,10 +40,10 @@ export function LeaveView() {
     ? [
         ...(leaveRecords ?? [])
           .filter((l) => l.staff_id === staffId)
-          .map((l) => ({ id: l.id as string | null, date: l.start_date, leave_type: l.leave_type, days: l.days, note: l.note, editable: true })),
+          .map((l) => ({ id: l.id as string | null, date: l.start_date, end_date: l.end_date as string | null, leave_type: l.leave_type, days: l.days, note: l.note, editable: true })),
         ...(payRuns ?? [])
           .filter((p) => p.staff_id === staffId && (p.leave_days ?? 0) > 0)
-          .map((p) => ({ id: null as string | null, date: p.pay_date, leave_type: p.leave_type ?? "Annual", days: p.leave_days ?? 0, note: "from Pay Run", editable: false })),
+          .map((p) => ({ id: null as string | null, date: p.pay_date, end_date: null as string | null, leave_type: p.leave_type ?? "Annual", days: p.leave_days ?? 0, note: "from Pay Run", editable: false })),
       ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     : [];
 
@@ -51,12 +52,13 @@ export function LeaveView() {
 
   const isEdit = editId !== null;
 
-  const startEdit = (item: { id: string | null; date: string; leave_type: string; days: number; note: string | null }) => {
+  const startEdit = (item: { id: string | null; date: string; end_date: string | null; leave_type: string; days: number; note: string | null }) => {
     if (!item.id) return;
     setEditId(item.id);
     setLeaveType(item.leave_type);
     setLeaveDays(String(item.days));
     setStartDate(item.date);
+    setEndDate(item.end_date ?? "");
     setNote(item.note ?? "");
     setShowPicker(false);
     setError("");
@@ -67,6 +69,7 @@ export function LeaveView() {
     setLeaveDays("");
     setNote("");
     setStartDate(todayStr());
+    setEndDate("");
     setError("");
   };
 
@@ -78,13 +81,14 @@ export function LeaveView() {
     setError("");
     if (editId) {
       updateLeave.mutate(
-        { id: editId, changes: { leave_type: leaveType, days: leaveDaysNum, start_date: startDate, note: note || null } },
+        { id: editId, changes: { leave_type: leaveType, days: leaveDaysNum, start_date: startDate, end_date: endDate || null, note: note || null } },
         {
           onSuccess: () => {
             setEditId(null);
             setLeaveDays("");
             setNote("");
             setStartDate(todayStr());
+            setEndDate("");
           },
           onError: (e) => setError(e instanceof Error ? e.message : "Couldn't update leave."),
         }
@@ -92,12 +96,13 @@ export function LeaveView() {
       return;
     }
     createLeave.mutate(
-      { staff_id: staffId, worker_name: selectedWorker!.full_name, leave_type: leaveType, days: leaveDaysNum, start_date: startDate, note: note || null },
+      { staff_id: staffId, worker_name: selectedWorker!.full_name, leave_type: leaveType, days: leaveDaysNum, start_date: startDate, end_date: endDate || null, note: note || null },
       {
         onSuccess: () => {
           setLeaveDays("");
           setNote("");
           setStartDate(todayStr());
+          setEndDate("");
         },
         onError: (e) => setError(e instanceof Error ? e.message : "Couldn't record leave."),
       }
@@ -181,20 +186,27 @@ export function LeaveView() {
           <option value="Sick">Sick leave — BCEA (30 days per 3-yr cycle)</option>
           <option value="Family">Family responsibility — BCEA (3 days/year)</option>
           <option value="Unpaid">Unpaid leave</option>
-          <option value="Public Holiday">Public holiday</option>
           <option value="Maternity">Maternity leave (4 months — UIF claim)</option>
           <option value="Parental">Parental leave (10 days)</option>
         </select>
       </Field>
 
+      <Field label="Days taken">
+        <Input type="number" value={leaveDays} onChange={setLeaveDays} placeholder="e.g. 3" />
+      </Field>
+
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-        <Field label="Days taken">
-          <Input type="number" value={leaveDays} onChange={setLeaveDays} placeholder="e.g. 3" />
-        </Field>
         <Field label="Start date">
           <Input type="date" value={startDate} onChange={setStartDate} />
         </Field>
+        <Field label="End date">
+          <Input type="date" value={endDate} onChange={setEndDate} />
+        </Field>
       </div>
+
+      {endDate && endDate < startDate && (
+        <p style={{ color: "#dc2626", fontSize: 12, marginTop: -2, marginBottom: 10 }}>End date is before the start date — check the dates.</p>
+      )}
 
       <Field label="Note (optional)">
         <Input value={note} onChange={setNote} placeholder="e.g. Medical certificate provided" />
@@ -235,7 +247,7 @@ export function LeaveView() {
             <div key={i} style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 10, padding: "9px 12px", marginBottom: 6, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <div>
                 <div style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>
-                  {l.date} · {l.leave_type} leave
+                  {l.end_date ? `${l.date} → ${l.end_date}` : l.date} · {l.leave_type} leave
                 </div>
                 {l.note && <div style={{ fontSize: 11, color: "#94a3b8" }}>{l.note}</div>}
               </div>

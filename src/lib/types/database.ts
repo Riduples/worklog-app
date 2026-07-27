@@ -1186,6 +1186,7 @@ export type Database = {
           uif_employer: number | null
           uif_total: number | null
           units_worked: number | null
+          unpaid_leave_amount: number
           updated_at: string | null
           user_id: string
           worker_name: string
@@ -1217,6 +1218,7 @@ export type Database = {
           uif_employer?: number | null
           uif_total?: number | null
           units_worked?: number | null
+          unpaid_leave_amount?: number
           updated_at?: string | null
           user_id: string
           worker_name: string
@@ -1248,6 +1250,7 @@ export type Database = {
           uif_employer?: number | null
           uif_total?: number | null
           units_worked?: number | null
+          unpaid_leave_amount?: number
           updated_at?: string | null
           user_id?: string
           worker_name?: string
@@ -2036,6 +2039,7 @@ export type Database = {
           business_id: string
           created_at: string | null
           days: number
+          end_date: string | null
           id: string
           leave_type: string
           note: string | null
@@ -2048,6 +2052,7 @@ export type Database = {
           business_id: string
           created_at?: string | null
           days: number
+          end_date?: string | null
           id?: string
           leave_type: string
           note?: string | null
@@ -2060,6 +2065,7 @@ export type Database = {
           business_id?: string
           created_at?: string | null
           days?: number
+          end_date?: string | null
           id?: string
           leave_type?: string
           note?: string | null
@@ -2273,6 +2279,7 @@ export type Database = {
           p_uif_employee: number
           p_uif_employer: number
           p_units_worked: number
+          p_unpaid_leave_amount: number
           p_worker_name: string
         }
         Returns: {
@@ -2302,6 +2309,7 @@ export type Database = {
           uif_employer: number | null
           uif_total: number | null
           units_worked: number | null
+          unpaid_leave_amount: number
           updated_at: string | null
           user_id: string
           worker_name: string

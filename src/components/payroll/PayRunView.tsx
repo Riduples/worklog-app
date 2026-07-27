@@ -179,7 +179,13 @@ export function PayRunView() {
   const loanDeductionAmt = parseFloat(loanDeduction || "0");
   const otherDeductionsAmt = parseFloat(otherDeductions || "0");
   const leaveDaysAmt = parseFloat(leaveDays || "0");
-  const netPay = grossWages - uifCalc.employee - paye - loanDeductionAmt - otherDeductionsAmt;
+  // Only "Unpaid" leave reduces pay; paid leave (annual/sick/family) is recorded
+  // for balances only and doesn't touch the wage. baseRate is per-hour for hourly
+  // staff, so scale by their hours/day to get a day's pay; it is already per-day
+  // for daily/monthly workers.
+  const dailyRateForLeave = selectedWorker?.pay_type === "Hourly" ? baseRate * (selectedWorker.hours_per_day ?? 8) : baseRate;
+  const unpaidLeaveAmt = leaveType === "Unpaid" ? leaveDaysAmt * dailyRateForLeave : 0;
+  const netPay = grossWages - uifCalc.employee - paye - loanDeductionAmt - otherDeductionsAmt - unpaidLeaveAmt;
 
   const leaveEntries = [
     ...(leaveRecords ?? []).filter((l) => l.staff_id === staffId).map((l) => ({ leave_type: l.leave_type, days: l.days, date: l.start_date })),
@@ -243,6 +249,7 @@ export function PayRunView() {
         otherDeductionDesc: otherDeductionsAmt > 0 ? otherDeductionDesc : null,
         leaveDays: leaveDaysAmt,
         leaveType: leaveDaysAmt > 0 ? leaveType : null,
+        unpaidLeaveAmount: unpaidLeaveAmt,
         netPay,
         status,
       },
@@ -266,7 +273,8 @@ export function PayRunView() {
           { desc: `Basic pay — ${units} ${unitLabel} × ${fmt(baseRate)}`, labour: grossBase, materials: 0, qty: 1 },
           overtimeAmt > 0 ? { desc: `Overtime — ${overtimeUnits} hrs × ${overtimeRate}x rate`, labour: overtimeAmt, materials: 0, qty: 1 } : null,
           allowancesAmt > 0 ? { desc: allowanceDesc, labour: allowancesAmt, materials: 0, qty: 1 } : null,
-          leaveDaysAmt > 0 ? { desc: `${leaveType} leave — ${leaveDaysAmt} day${leaveDaysAmt !== 1 ? "s" : ""}`, labour: 0, materials: 0, qty: leaveDaysAmt } : null,
+          leaveDaysAmt > 0 && leaveType !== "Unpaid" ? { desc: `${leaveType} leave — ${leaveDaysAmt} day${leaveDaysAmt !== 1 ? "s" : ""} (noted)`, labour: 0, materials: 0, qty: leaveDaysAmt } : null,
+          unpaidLeaveAmt > 0 ? { desc: `Unpaid leave — ${leaveDaysAmt} day${leaveDaysAmt !== 1 ? "s" : ""}`, labour: -unpaidLeaveAmt, materials: 0, qty: leaveDaysAmt } : null,
           { desc: "UIF deduction (employee 1%)", labour: -uifCalc.employee, materials: 0, qty: 1 },
           paye > 0 ? { desc: "PAYE income tax", labour: -paye, materials: 0, qty: 1 } : null,
           loanDeductionAmt > 0 ? { desc: "Loan / advance repayment", labour: -loanDeductionAmt, materials: 0, qty: 1 } : null,
@@ -384,22 +392,27 @@ export function PayRunView() {
         )}
 
         <button onClick={() => setShowOT((p) => !p)} style={{ width: "100%", background: showOT ? "#F0F9FF" : "#f8fafc", border: `1.5px solid ${showOT ? "#BAE6FD" : "#e2e8f0"}`, borderRadius: 10, padding: "10px 14px", marginBottom: 8, display: "flex", justifyContent: "space-between", cursor: "pointer" }}>
-          <span style={{ fontSize: 13, fontWeight: 600, color: "#64748b" }}>+ Add overtime</span>
+          <span style={{ fontSize: 13, fontWeight: 600, color: "#64748b" }}>+ Add overtime / public holiday</span>
           <span style={{ color: "#94a3b8" }}>{showOT ? "▲" : "▼"}</span>
         </button>
         {showOT && (
           <div style={{ background: "#f8fafc", borderRadius: 10, padding: 12, marginBottom: 8 }}>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-              <Field label={`OT ${unitLabel}`}>
+              <Field label={`OT / extra ${unitLabel}`}>
                 <Input type="number" value={overtimeUnits} onChange={setOvertimeUnits} placeholder="0" />
               </Field>
-              <Field label="OT rate">
+              <Field label="Rate">
                 <select value={overtimeRate} onChange={(e) => setOvertimeRate(e.target.value)} style={{ width: "100%", padding: "13px 12px", borderRadius: 10, border: "1.5px solid #e2e8f0", fontSize: 13, background: "#fff" }}>
-                  <option value="1.5">1.5× (Standard OT)</option>
-                  <option value="2">2× (Sunday / PH)</option>
+                  <option value="1.5">1.5× — Standard overtime</option>
+                  <option value="2">2× — Public holiday / Sunday worked</option>
                 </select>
               </Field>
             </div>
+            {overtimeRate === "2" && (
+              <div style={{ fontSize: 11, color: "#0369A1", marginTop: 8, lineHeight: 1.5 }}>
+                BCEA: work on a public holiday or Sunday is paid at double the normal rate.
+              </div>
+            )}
           </div>
         )}
 
@@ -525,13 +538,22 @@ export function PayRunView() {
                   <option value="Sick">Sick leave</option>
                   <option value="Family">Family responsibility</option>
                   <option value="Unpaid">Unpaid leave</option>
-                  <option value="Public Holiday">Public holiday</option>
                 </select>
               </Field>
               <Field label="Days">
                 <Input type="number" value={leaveDays} onChange={setLeaveDays} placeholder="0" />
               </Field>
             </div>
+            <div style={{ fontSize: 11, color: leaveType === "Unpaid" ? "#b45309" : "#94a3b8", marginTop: 8, lineHeight: 1.5 }}>
+              {leaveType === "Unpaid"
+                ? "Unpaid leave reduces the wage — the days are deducted at the daily rate."
+                : "Paid leave doesn't change the wage — this just records it against their balance."}
+            </div>
+            {unpaidLeaveAmt > 0 && (
+              <div style={{ background: "#fff1f2", border: "1px solid #fecdd3", borderRadius: 8, padding: "8px 10px", marginTop: 8, fontSize: 12, color: "#be123c", fontWeight: 600 }}>
+                −{fmt(unpaidLeaveAmt)} = {leaveDaysAmt} day{leaveDaysAmt !== 1 ? "s" : ""} × {fmt(dailyRateForLeave)} daily rate
+              </div>
+            )}
           </div>
         )}
 
@@ -577,7 +599,8 @@ export function PayRunView() {
           {paye > 0 && <Row label="PAYE" value={`−${fmt(paye)}`} />}
           {loanDeductionAmt > 0 && <Row label="Loan repayment" value={`−${fmt(loanDeductionAmt)}`} />}
           {otherDeductionsAmt > 0 && <Row label={otherDeductionDesc} value={`−${fmt(otherDeductionsAmt)}`} />}
-          {leaveDaysAmt > 0 && <Row label={`${leaveType} leave (${leaveDaysAmt}d)`} value="noted" />}
+          {leaveDaysAmt > 0 && leaveType !== "Unpaid" && <Row label={`${leaveType} leave (${leaveDaysAmt}d)`} value="noted" />}
+          {unpaidLeaveAmt > 0 && <Row label={`Unpaid leave (${leaveDaysAmt}d)`} value={`−${fmt(unpaidLeaveAmt)}`} />}
         </div>
         <div style={{ borderTop: "1px solid rgba(255,255,255,0.2)", marginTop: 10, paddingTop: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <span style={{ fontSize: 15, color: "#38BDF8", fontWeight: 700 }}>NET PAY (take-home)</span>
