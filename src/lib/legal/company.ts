@@ -16,13 +16,23 @@ export const COMPANY = {
   infoOfficer: "Adriaan du Plessis",
   supportEmail: "hello@worklogsolutions.co.za",
   // ECTA s43 requires a phone number and web address in the supplier disclosure.
-  supportPhone: "[SUPPORT PHONE NUMBER]",
+  supportPhone: "+27 73 005 5112",
+  // WhatsApp is the support/onboarding channel. Digits only (country code, no +
+  // or spaces) — the format wa.me/ expects. whatsappUrl() below builds the link.
+  whatsappNumber: "27730055112",
   websiteUrl: "https://worklog.co.za",
   // The province whose High Court has jurisdiction (governing-law clause).
   governingProvince: "Western Cape",
   // Shown as the effective / last-updated date on both documents.
   effectiveDate: "23 July 2026",
 } as const;
+
+// Builds a wa.me link to the support number, optionally pre-filling a message.
+// Use for every "WhatsApp us" button so the number lives in one place.
+export function whatsappUrl(prefill?: string): string {
+  const base = `https://wa.me/${COMPANY.whatsappNumber}`;
+  return prefill ? `${base}?text=${encodeURIComponent(prefill)}` : base;
+}
 
 // Bumped whenever the Terms or Privacy Policy materially change. Stamped into
 // each new user's account metadata at signup so there is a record of which

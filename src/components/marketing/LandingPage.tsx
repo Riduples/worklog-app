@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { whatsappUrl } from "@/lib/legal/company";
 
 // Public marketing home for worklog.co.za. Server component — static content,
 // so no client JS. Brand + inline-style approach mirrors /pricing so the two
@@ -272,7 +273,7 @@ export function LandingPage() {
           <div style={{ display: "flex", flexWrap: "wrap", gap: 40 }}>
             <FooterCol title="Product" links={[["Features", "/#features"], ["Pricing", "/pricing"], ["Help Centre", "/help"], ["Log in", "/login"], ["Start free", "/signup"]]} />
             <FooterCol title="Legal" links={[["Terms of Service", "/terms"], ["Privacy Policy", "/privacy"]]} />
-            <FooterCol title="Contact" links={[["hello@worklogsolutions.co.za", "mailto:hello@worklogsolutions.co.za"]]} />
+            <FooterCol title="Contact" links={[["Chat on WhatsApp", whatsappUrl("Hi Worklog, I'd like to know more")], ["hello@worklogsolutions.co.za", "mailto:hello@worklogsolutions.co.za"]]} />
           </div>
         </div>
         <div style={{ maxWidth: 1040, margin: "22px auto 0", paddingTop: 18, borderTop: "1px solid rgba(255,255,255,0.08)", fontSize: 11.5, color: "#64748b" }}>

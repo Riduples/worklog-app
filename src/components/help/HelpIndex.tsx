@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { HelpArticle } from "@/lib/help/types";
 import { HELP_CATEGORIES } from "@/lib/help/types";
+import { whatsappUrl } from "@/lib/legal/company";
 
 // The /help landing: a browsable index of every guide, grouped by category.
 // Server component. Brand-matched to the marketing site.
@@ -71,9 +72,13 @@ export function HelpIndex({ articles }: { articles: HelpArticle[] }) {
         )}
 
         <div style={{ textAlign: "center", marginTop: 32, fontSize: 12.5, color: MUTED, lineHeight: 1.7 }}>
-          Can&apos;t find what you need? Open the in-app help assistant, or email{" "}
+          Can&apos;t find what you need? Open the in-app help assistant, chat to us on{" "}
+          <a href={whatsappUrl("Hi Worklog, I need a hand with")} target="_blank" rel="noopener noreferrer" style={{ color: "#16a34a", fontWeight: 700 }}>WhatsApp</a>, or email{" "}
           <a href="mailto:hello@worklogsolutions.co.za" style={{ color: NAVY, fontWeight: 700 }}>hello@worklogsolutions.co.za</a>.
-          <div style={{ marginTop: 12 }}>
+          <div style={{ marginTop: 14, display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
+            <a href={whatsappUrl("Hi Worklog, I need a hand with")} target="_blank" rel="noopener noreferrer" style={{ display: "inline-block", background: "#25D366", color: "#fff", fontWeight: 800, fontSize: 14, padding: "11px 24px", borderRadius: 11, textDecoration: "none" }}>
+              💬 Chat on WhatsApp
+            </a>
             <Link href="/signup" style={{ display: "inline-block", background: ORANGE, color: "#fff", fontWeight: 800, fontSize: 14, padding: "11px 24px", borderRadius: 11, textDecoration: "none" }}>
               Start free →
             </Link>
