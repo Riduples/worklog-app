@@ -33,6 +33,7 @@ export function QuoteModal({ quote, onClose }: { quote?: Quote; onClose: () => v
     existingItems && existingItems.length ? existingItems : [{ desc: "", qty: 1, unit_price: 0 }]
   );
   const [deposit, setDeposit] = useState(String(quote?.deposit_requested ?? 0));
+  const [estHours, setEstHours] = useState(quote?.estimated_hours != null ? String(quote.estimated_hours) : "");
   const [error, setError] = useState("");
 
   const { data: contacts } = useContacts();
@@ -75,6 +76,7 @@ export function QuoteModal({ quote, onClose }: { quote?: Quote; onClose: () => v
             deposit_requested: depositNum,
             issue_date: issueDate,
             valid_until: validUntil,
+            estimated_hours: parseFloat(estHours) || null,
             vat_rate: isVatRegistered ? VAT_RATE : null,
             vat_amount: vatAmount,
           },
@@ -97,6 +99,7 @@ export function QuoteModal({ quote, onClose }: { quote?: Quote; onClose: () => v
         deposit_requested: depositNum,
         issue_date: issueDate,
         valid_until: validUntil,
+        estimated_hours: parseFloat(estHours) || null,
         status: "pending",
         vat_rate: isVatRegistered ? VAT_RATE : null,
         vat_amount: vatAmount,
@@ -130,6 +133,11 @@ export function QuoteModal({ quote, onClose }: { quote?: Quote; onClose: () => v
 
       <Field label="Deposit requested">
         <Input value={deposit} onChange={setDeposit} type="number" placeholder="0.00" />
+      </Field>
+
+      <Field label="Estimated hours for this job (optional)">
+        <Input value={estHours} onChange={setEstHours} type="number" placeholder="e.g. 30" />
+        <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 4 }}>Link time entries to this quote to track hours logged vs quoted.</div>
       </Field>
 
       <div style={{ background: "#F0F9FF", borderRadius: 12, padding: "12px 14px", marginBottom: 16, fontSize: 13, color: "#0369A1" }}>

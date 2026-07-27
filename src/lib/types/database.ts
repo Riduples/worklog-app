@@ -1426,6 +1426,7 @@ export type Database = {
           deleted_at: string | null
           deposit_requested: number | null
           doc_number: string
+          estimated_hours: number | null
           id: string
           issue_date: string
           line_items: Json
@@ -1446,6 +1447,7 @@ export type Database = {
           deleted_at?: string | null
           deposit_requested?: number | null
           doc_number: string
+          estimated_hours?: number | null
           id?: string
           issue_date: string
           line_items?: Json
@@ -1466,6 +1468,7 @@ export type Database = {
           deleted_at?: string | null
           deposit_requested?: number | null
           doc_number?: string
+          estimated_hours?: number | null
           id?: string
           issue_date?: string
           line_items?: Json
@@ -2000,6 +2003,7 @@ export type Database = {
           hourly_rate: number | null
           hours_worked: number
           id: string
+          quote_id: string | null
           updated_at: string | null
           user_id: string
         }
@@ -2016,6 +2020,7 @@ export type Database = {
           hourly_rate?: number | null
           hours_worked: number
           id?: string
+          quote_id?: string | null
           updated_at?: string | null
           user_id: string
         }
@@ -2032,6 +2037,7 @@ export type Database = {
           hourly_rate?: number | null
           hours_worked?: number
           id?: string
+          quote_id?: string | null
           updated_at?: string | null
           user_id?: string
         }
@@ -2048,6 +2054,13 @@ export type Database = {
             columns: ["client_contact_id"]
             isOneToOne: false
             referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_entries_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
             referencedColumns: ["id"]
           },
         ]

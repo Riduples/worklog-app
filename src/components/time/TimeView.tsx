@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { useTimeEntries, useUpdateTimeEntry, type TimeEntry } from "@/lib/supabase/hooks/useTimeEntries";
+import { useQuotes } from "@/lib/supabase/hooks/useQuotes";
 import { TimeModal } from "@/components/modals/TimeModal";
+import { JobProfitabilityView } from "@/components/time/JobProfitabilityView";
 import { fmt } from "@/lib/format";
 import { ReadOnlyNotice } from "@/components/ui/ReadOnlyNotice";
 import { useToolAccess } from "@/lib/supabase/hooks/useToolAccess";
@@ -18,8 +20,10 @@ const TYPE_COLORS: Record<string, { bg: string; fg: string }> = {
 export function TimeView() {
   const access = useToolAccess("timetrack");
   const { data: entries, isLoading } = useTimeEntries();
+  const { data: quotes } = useQuotes();
   const updateEntry = useUpdateTimeEntry();
   const [modalState, setModalState] = useState<{ open: boolean; entry?: TimeEntry }>({ open: false });
+  const [view, setView] = useState<"log" | "profitability">("log");
 
   const billableTotal = (entries ?? [])
     .filter((e) => e.bill_type === "Billable")
@@ -59,6 +63,33 @@ export function TimeView() {
         </div>
       )}
 
+      {(entries ?? []).length > 0 && (
+        <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+          {(["log", "profitability"] as const).map((v) => (
+            <button
+              key={v}
+              onClick={() => setView(v)}
+              style={{
+                padding: "8px 14px",
+                borderRadius: 20,
+                border: `1.5px solid ${view === v ? "#0C4A6E" : "#e2e8f0"}`,
+                background: view === v ? "#0C4A6E" : "#fff",
+                color: view === v ? "#fff" : "#374151",
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: "pointer",
+              }}
+            >
+              {v === "log" ? "Time log" : "📊 Job Profitability"}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {view === "profitability" ? (
+        <JobProfitabilityView entries={entries ?? []} quotes={quotes ?? []} />
+      ) : (
+        <>
       {isLoading && <p style={{ color: "#94a3b8", fontSize: 13 }}>Loading...</p>}
       {!isLoading && (entries ?? []).length === 0 && (
         <p style={{ color: "#94a3b8", fontSize: 13, textAlign: "center", marginTop: 40 }}>No time entries yet.</p>
@@ -113,6 +144,8 @@ export function TimeView() {
           </div>
         );
       })}
+        </>
+      )}
 
       {modalState.open && <TimeModal entry={modalState.entry} onClose={() => setModalState({ open: false })} />}
     </div>
