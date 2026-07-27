@@ -187,24 +187,36 @@ export const HELP_ARTICLES: HelpArticle[] = [
       {
         "heading": "What the Business Hub is",
         "blocks": [
-          { "type": "paragraph", "text": "The Business Hub is where you set your business up once and change it whenever you need to. Tap the \"Business Hub\" button at the top right of your home screen to open it. Only the business owner sees this button." },
-          { "type": "paragraph", "text": "It is a page of cards. Each card opens one part of your setup, so the things you do not touch every day are gathered in one place instead of being mixed in with your daily tools." }
+          {
+            "type": "paragraph",
+            "text": "The Business Hub is where you set your business up once and change it whenever you need to. Tap the \"Business Hub\" button at the top right of your home screen to open it. Only the business owner sees this button."
+          },
+          {
+            "type": "paragraph",
+            "text": "It is a page of cards. Each card opens one part of your setup, so the things you do not touch every day are gathered in one place instead of being mixed in with your daily tools."
+          }
         ]
       },
       {
         "heading": "The three cards",
         "blocks": [
-          { "type": "bullets", "items": [
-            "Business details — your logo, contact details, how customers pay you (the bank details that print on your documents), and your VAT & SARS tax details. Opens the Business details screen.",
-            "Bank accounts — the accounts you track your money against, with balances and a view per account. Opens the Bank accounts screen.",
-            "Team & permissions — invite people to your business and set what each person is allowed to see and do. Opens the Team screen."
-          ] }
+          {
+            "type": "bullets",
+            "items": [
+              "Business details — your logo, contact details, how customers pay you (the bank details that print on your documents), and your VAT & SARS tax details. Opens the Business details screen.",
+              "Bank accounts — the accounts you track your money against, with balances and a view per account. Opens the Bank accounts screen.",
+              "Team & permissions — invite people to your business and set what each person is allowed to see and do. Opens the Team screen."
+            ]
+          }
         ]
       },
       {
         "heading": "Moved here from somewhere else?",
         "blocks": [
-          { "type": "tip", "text": "If you used Worklog before, a few things now live here. The old gear icon at the top of the home screen is now the \"Business Hub\" button, and Bank accounts and Team are no longer in the tools list — you reach them from the Business Hub instead." }
+          {
+            "type": "tip",
+            "text": "If you used Worklog before, a few things now live here. The old gear icon at the top of the home screen is now the \"Business Hub\" button, and Bank accounts and Team are no longer in the tools list — you reach them from the Business Hub instead."
+          }
         ]
       }
     ],
@@ -255,6 +267,27 @@ export const HELP_ARTICLES: HelpArticle[] = [
         ]
       },
       {
+        "heading": "Save a supplier's bank details",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "When a contact is a supplier, you get one extra optional field: Bank & account number. It only appears for suppliers (the people you pay), so you will not see it on clients. Fill in the Bank name and Account number if you would like them handy for the next time you pay that supplier."
+          },
+          {
+            "type": "warning",
+            "text": "Banking details are sensitive personal data under POPIA. Only capture them with the supplier's knowledge, and only so you can pay them. Worklog shows this reminder right on the field when you fill it in."
+          },
+          {
+            "type": "paragraph",
+            "text": "Once saved, the bank and account number show on that supplier's row in your Contacts list, next to a small bank icon, so you can see them at a glance without opening the contact."
+          },
+          {
+            "type": "tip",
+            "text": "Bank details are optional. Leave them blank if you would rather not keep them, and you can add or remove them later by opening the supplier and tapping Save contact."
+          }
+        ]
+      },
+      {
         "heading": "Change or remove a contact",
         "blocks": [
           {
@@ -296,6 +329,10 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "tip",
             "text": "If a payment behaviour or payment term in your file is spelled differently to Worklog's options, the preview shows a small warning and simply leaves that field blank. You can fix it later by opening the contact."
+          },
+          {
+            "type": "tip",
+            "text": "The supplier template has bank_name and account_number columns, so you can bring bank details in with the import too. The client template does not have them, since bank details are only kept on suppliers."
           }
         ]
       }
@@ -774,13 +811,37 @@ export const HELP_ARTICLES: HelpArticle[] = [
             "type": "steps",
             "items": [
               "On the Stock screen, tap the + Add button at the top right.",
-              "In Name, type what the item is, for example Cement 50kg.",
+              "At the top of the form, tap the Type that fits the item — Service, Product, Labour, Material or Package.",
+              "In Description, type what the item is, for example Cement 50kg.",
               "In Quantity on hand, type how many you have right now.",
               "In Cost price (what you pay), type what one unit costs you.",
               "In Sell price (what you charge), type the price you sell one for.",
               "In Reorder level (alert threshold), type the number at which you want a low-stock warning. Leave it at 0 if you do not want a warning.",
               "When you are happy, tap Save item. Once you have typed a sell price, a Margin box appears above the button so you can see your profit before you save."
             ]
+          }
+        ]
+      },
+      {
+        "heading": "Pick the item Type",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "Every item has a Type. At the top of the add or edit form you'll find five buttons — Service, Product, Labour, Material and Package. Tap the one that fits and it lights up in its own colour. Your choice changes the little hint under the buttons and the example in the Description box, so it's easier to write the item down the right way."
+          },
+          {
+            "type": "bullets",
+            "items": [
+              "🛎️ Service — something you do, like a haircut, groom, consultation or repair.",
+              "📦 Product — something you sell, like shampoo, parts or other goods.",
+              "⚒️ Labour — your time, like an hourly rate, day rate or call-out fee.",
+              "🧱 Material — raw materials you buy and use on jobs, like copper pipe or cement.",
+              "📋 Package — a bundle of services or products sold together, like a starter package or monthly retainer."
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "Back on the Stock screen, each item shows a small coloured badge with its type next to the name, so you can tell your services from your materials at a glance. Whatever the type, every item still carries a quantity, so you can count products on the shelf and still list the services you offer."
           }
         ]
       },
@@ -820,6 +881,19 @@ export const HELP_ARTICLES: HelpArticle[] = [
         ]
       },
       {
+        "heading": "Drop an item onto a quote or invoice",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "Your Stock list isn't only for keeping count — you can drop any saved item straight onto a quote or an invoice. While you're adding the lines, open the Add from your items… list and choose one. Worklog fills in the description and the sell price for you, so there's no retyping. You can still change the quantity or the price on that line afterwards."
+          },
+          {
+            "type": "tip",
+            "text": "Building your quotes and invoices from your Stock list keeps your prices the same everywhere and saves you typing the same items over and over."
+          }
+        ]
+      },
+      {
         "heading": "Import a lot of items at once",
         "blocks": [
           {
@@ -830,7 +904,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
             "type": "steps",
             "items": [
               "On the Stock screen, tap the ⬆ Import button at the top right.",
-              "Tap Download template CSV and fill it in on your computer or phone. The columns are name, qty, cost_price, sell_price and reorder_level, and only name is required.",
+              "Tap Download template CSV and fill it in on your computer or phone. The columns are description, item_type, qty, cost_price, sell_price and reorder_level, and only the description (the item's name) is required. Put service, product, labour, material or package in item_type to set each item's type — leave it blank and it comes in as a Product.",
               "Tap Choose CSV file and pick your saved file.",
               "Check the preview. It shows how many items will import and how many are duplicates that will be skipped.",
               "Tap the Import button to bring them in, then tap Done."
@@ -989,7 +1063,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
               "Tap + New in the top corner. The New invoice screen opens.",
               "In the Client box, pick a customer from your list or type a new name.",
               "Check the Issue date and Due date. Worklog fills the issue date as today and sets the due date 30 days later. Tap either one to change it.",
-              "Under Line items, fill in each line: a Description, the Qty, and the amount split into Labour and Materials. Each line shows its Line total.",
+              "Under Line items, fill in each line: a Description, the Qty, and the Unit price. Each line shows its Line total.",
               "Tap + Add line item for another line. Tap the ✕ next to a line to remove it.",
               "If the customer already paid a deposit, type it into Deposit already received.",
               "Check the summary box. It shows the Subtotal, the VAT if you are VAT-registered, any deposit taken off, and the Balance due at the bottom.",
@@ -999,6 +1073,19 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "tip",
             "text": "On the Trade and Structured plans you can set Repeat this invoice (weekly, monthly and so on). This invoice goes out now, and Worklog then creates the next one automatically on the date it shows. On Solo this option is locked."
+          }
+        ]
+      },
+      {
+        "heading": "Fill a line from your saved items",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "If you keep a price list under Stock, you don't have to retype the things you sell often. Underneath the line items you'll see an Add from your items box (it only appears once you have saved items). Pick an item and Worklog drops in a new line with its name and sell price already filled in — you just set the Qty."
+          },
+          {
+            "type": "tip",
+            "text": "See Manage your stock and price list to add the materials and services you invoice most often, so they are ready to pick here."
           }
         ]
       },
@@ -1043,13 +1130,24 @@ export const HELP_ARTICLES: HelpArticle[] = [
             "text": "If you are importing your bank statement, you can instead tie a payment straight to the invoice. See Get paid: match a payment to an invoice."
           }
         ]
+      },
+      {
+        "heading": "Reversing an invoice",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "Once you have issued an invoice, don't just delete it if something changes — a returned item, a cancelled job, or an overcharge. Open the invoice and tap Credit this invoice to raise a Credit Note against it, so your books and your VAT stay straight. See Credit notes for the full how-to."
+          }
+        ]
       }
     ],
     "related": [
       "send-a-quote",
       "match-a-payment-to-an-invoice",
       "send-a-customer-statement",
-      "vat201"
+      "vat201",
+      "credit-notes",
+      "manage-your-stock"
     ]
   },
   {
@@ -1090,11 +1188,41 @@ export const HELP_ARTICLES: HelpArticle[] = [
               "Fill in the Client. Type the customer's name straight into the box. If you have saved contacts, you can tap the 👤 List button next to it, search, and pick one instead.",
               "Check the Issue date. It fills in with today's date, but you can tap it to change it.",
               "Check the Valid until date. Worklog fills this in for you (30 days ahead). Tap it to change it if you want the quote to stay open for longer or shorter.",
-              "Under Line items, fill in the first line: a Description, the Qty (quantity), the Labour amount and the Materials amount. The Line total works itself out as you type.",
+              "Under Line items, fill in the first line: a Description, the Qty (quantity) and the Unit price. The Line total works itself out as you type.",
               "Tap + Add line item for each extra thing you want on the quote. Tap the ✕ next to a line to remove it.",
               "If you want money up front, type the amount in Deposit requested. Leave it as 0 if you don't.",
               "Check the totals in the blue box at the bottom, then tap Save quote."
             ]
+          }
+        ]
+      },
+      {
+        "heading": "Fill a line from your saved items",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "If you keep a price list under Stock, you don't have to retype the things you quote often. Underneath the line items you'll see an Add from your items box (it only appears once you have saved items). Pick an item and Worklog drops in a new line with its name and sell price already filled in — you just set the Qty."
+          },
+          {
+            "type": "tip",
+            "text": "See Manage your stock and price list to add the materials and services you sell most often, so they are ready to pick here."
+          }
+        ]
+      },
+      {
+        "heading": "Estimate the hours for the job",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "Under the line items there is an optional Estimated hours for this job field. Type the number of hours you think the job will take. It doesn't change the price — it is there so Worklog can later tell you whether the job is running over the time you quoted."
+          },
+          {
+            "type": "tip",
+            "text": "If you add lines from your saved items and those items carry hours, Worklog suggests a figure for you (it shows Auto: 30h from your items, for example). Accept it or type your own to override it."
+          },
+          {
+            "type": "paragraph",
+            "text": "Once the quote is saved, link your time entries to it and Worklog compares the hours you have logged against the hours you quoted. See Track job profitability (hours vs quote)."
           }
         ]
       },
@@ -1182,7 +1310,9 @@ export const HELP_ARTICLES: HelpArticle[] = [
       "create-and-send-an-invoice",
       "add-customers-and-suppliers",
       "cost-a-job",
-      "send-a-customer-statement"
+      "send-a-customer-statement",
+      "job-profitability",
+      "manage-your-stock"
     ]
   },
   {
@@ -2570,6 +2700,28 @@ export const HELP_ARTICLES: HelpArticle[] = [
         ]
       },
       {
+        "heading": "Details for SARS / UIF filing",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "For employees there is a second panel, \"For SARS / UIF filing\", below More details. You only need what is inside it when you file with SARS or UIF, not to run a pay run — but a submission like the EMP201, EMP501 or a UI-19 will ask for it. Open the panel and confirm exactly what your submission needs with your accountant. (Contractors self-file, so they do not have this panel.)"
+          },
+          {
+            "type": "bullets",
+            "items": [
+              "Employee number — assigned automatically the moment you save a new employee. It never changes, so you can use it as their permanent reference. Contractors do not get one.",
+              "Date of birth — filled in for you from the SA ID number you entered under More details. Add the ID above and the date appears here on its own; it always stays in step with that ID, so it can't go out of sync.",
+              "Residential address — street, suburb, city and code.",
+              "Bank & account number — the bank name and account number you use to pay them and to file."
+            ]
+          },
+          {
+            "type": "warning",
+            "text": "Banking details are sensitive personal data. Capture them only with the employee's knowledge, and use them for payment and filing purposes only."
+          }
+        ]
+      },
+      {
         "heading": "Editing someone later (like a raise)",
         "blocks": [
           {
@@ -2605,6 +2757,55 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "tip",
             "text": "Contractors are treated differently on purpose: no UIF, no PAYE and no leave. You can still pay a contractor through Pay Run — it simply leaves off UIF and PAYE. Or, if you would rather not run them through payroll, log what you pay them as an expense under \"Subcontractor / contract labour\"."
+          }
+        ]
+      },
+      {
+        "heading": "The green \"Qualifies for ETI\" flag",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "When you open an employee who is between 18 and 29 and earns under R7,500 a month, Worklog shows a green \"Qualifies for ETI\" flag on their profile with an estimated rand amount per month. ETI, the Employment Tax Incentive, lets you reduce the PAYE you owe SARS for younger, lower-earning staff."
+          },
+          {
+            "type": "paragraph",
+            "text": "The amount shown is an estimate to claim on your EMP201 — it works off the person's pay type, rate and how long they have been with you. It is a prompt so you don't miss the saving, not a final figure, so confirm the exact amount with your accountant before you claim it."
+          },
+          {
+            "type": "tip",
+            "text": "The flag needs the person's age, which it reads from their SA ID. If you haven't captured an ID yet, the profile tells you to add it (in Edit) to check ETI. Contractors never qualify, and the flag falls away once someone has left."
+          }
+        ]
+      },
+      {
+        "heading": "When someone leaves",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "You do not delete a person when they stop working for you — you mark them as left. That keeps their pay history, payslips and leave record intact, and lets you still run one last pay run for their final money."
+          },
+          {
+            "type": "steps",
+            "items": [
+              "Open the Staff Register and tap the person.",
+              "Near the bottom of their profile, tap \"Mark as left / terminate\".",
+              "Set the Last day of employment.",
+              "Pick a Reason for leaving: Resignation, Dismissal, Retrenchment, Contract ended, Retirement, Death or Other. This is what the UI-19 to the Department of Labour needs.",
+              "Say whether Notice was worked, Yes or No.",
+              "Read the Final pay checklist, then tap \"Confirm — mark as left\"."
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "The Final pay checklist is a guide to what you still owe. It shows the accrued annual leave days and a suggested leave payout (BCEA section 40 requires leave to be paid out for anyone employed longer than 4 months), a rough notice-pay figure if notice was not worked, and a reminder to run a final Pay Run, submit a UI-19, and issue a Certificate of Service."
+          },
+          {
+            "type": "warning",
+            "text": "Worklog records the exit but does not work out the legal final amount for you. Treat the checklist figures as a guide and confirm the final pay with your accountant."
+          },
+          {
+            "type": "paragraph",
+            "text": "Once you confirm, the person dims and drops to the bottom of the Staff Register with a \"Left\" tag. They are never removed, so you can still run that last Pay Run, and their profile keeps a reminder to submit the UI-19 and issue the Certificate of Service."
           }
         ]
       }
@@ -2663,6 +2864,26 @@ export const HELP_ARTICLES: HelpArticle[] = [
         ]
       },
       {
+        "heading": "What Worklog pulls in for you",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "When you tap a worker's name, Worklog pulls their standing setup onto this run so you do not have to retype it. Everything it fills in stays editable — changing it here only affects this one pay run, never their saved setup."
+          },
+          {
+            "type": "bullets",
+            "items": [
+              "Monthly allowance: if you set a recurring allowance on their staff record (say a travel allowance), it is added to the earnings automatically with its description. A note shows it was pulled from their setup, so you know you can edit or clear it for this run only.",
+              "Advance repayment: if they have an outstanding advance with an agreed amount to repay each run, that amount is pre-filled into the loan deduction. It is never more than the balance still owed, so the final repayment is capped to clear the advance exactly."
+            ]
+          },
+          {
+            "type": "tip",
+            "text": "Switching to a different worker resets these to that person's own setup, so you never carry one person's allowance or deduction across to another."
+          }
+        ]
+      },
+      {
         "heading": "Step 2 — Set the period",
         "blocks": [
           {
@@ -2682,10 +2903,14 @@ export const HELP_ARTICLES: HelpArticle[] = [
             "type": "steps",
             "items": [
               "Fill in Hours worked or Days worked (the label matches the worker's pay type). Worklog suggests a number for the period — you can keep it or change it.",
-              "If they did overtime, tap + Add overtime, enter the overtime hours or days, and pick the rate: 1.5× (Standard OT) or 2× (Sunday / PH).",
-              "For extra pay like travel or a meal, tap + Add allowance and enter the amount and a short description.",
+              "If they did overtime, tap + Add overtime / public holiday, enter the overtime hours or days, and pick the rate: 1.5× — Standard overtime, or 2× — Public holiday / Sunday worked.",
+              "If the worker has a monthly allowance on their staff record, it is already filled in here — adjust or clear it for this run if you need to. For a one-off extra like travel or a meal, tap + Add allowance and enter the amount and a short description.",
               "Check the Gross wages figure in the dark blue box, then tap Next → Deductions."
             ]
+          },
+          {
+            "type": "tip",
+            "text": "Pick 2× — Public holiday / Sunday worked when the day was a public holiday or a Sunday. Under the BCEA, work on a public holiday or Sunday is paid at double the normal rate."
           }
         ]
       },
@@ -2699,8 +2924,8 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "steps",
             "items": [
-              "If the worker has an outstanding advance, an Outstanding advance box appears. Enter how much to take off this pay run, or tap Deduct all, or None this time.",
-              "If they took leave this period, tap Leave taken this period? and pick the leave type and number of days. If leave was already recorded in the Leave tool this month, Worklog flags it so you can include it.",
+              "If the worker has an outstanding advance, an Outstanding advance box appears showing what is still owed. If you agreed a set repayment each pay run, that amount is already filled in for you (never more than the balance) — keep it, change it, tap Deduct all, or None this time.",
+              "If they took leave this period, tap Leave taken this period? and pick the leave type and number of days. Paid leave (annual, sick, family) does not change the wage — it is only recorded against their balance. Unpaid leave does reduce the pay: the days come off at the daily rate. If leave was already recorded in the Leave tool this month, Worklog flags it so you can include it.",
               "For anything else (uniform, tools, a fine), tap − Other deduction and enter the amount and a description.",
               "Tap Next → Summary."
             ]
@@ -2722,6 +2947,10 @@ export const HELP_ARTICLES: HelpArticle[] = [
               "Tap Share Payslip (or Save & Share Payslip). A Payslip ready card appears — use the share options there to save or print the payslip PDF, or send it through your phone's share sheet, usually to WhatsApp.",
               "When you are finished, tap Done — start a new pay run to pay the next person."
             ]
+          },
+          {
+            "type": "tip",
+            "text": "Once you save, the payslip is given its own sequential number that starts with PS- (like PS-0001) and carries onto the PDF, so every payslip is uniquely numbered for your records."
           },
           {
             "type": "tip",
@@ -2798,9 +3027,10 @@ export const HELP_ARTICLES: HelpArticle[] = [
             "type": "steps",
             "items": [
               "Pick the employee first, so you can see their balances.",
-              "Under Record leave taken, choose the Leave type. Your options are Annual, Sick, Family responsibility, Unpaid, Public holiday, Maternity and Parental.",
+              "Under Record leave taken, choose the Leave type. Your options are Annual, Sick, Family responsibility, Unpaid, Maternity and Parental.",
               "In Days taken, enter the number of days, for example 3.",
               "Set the Start date. It fills in with today's date, so change it if the leave started on another day.",
+              "If the leave runs over more than one day, set the End date next to it too.",
               "Add a Note if you like, for example that a medical certificate was provided. This is optional.",
               "Tap Record Leave."
             ]
@@ -2808,6 +3038,36 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "paragraph",
             "text": "After you save, the leave shows up under Leave history for that employee, newest first, and their balances update straight away."
+          }
+        ]
+      },
+      {
+        "heading": "The leave period and history",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "Leave has a Start date and an End date sitting side by side. The start date fills in with today; add an end date whenever the leave runs over more than a single day, such as a week off. For a single day you can leave the end date empty."
+          },
+          {
+            "type": "warning",
+            "text": "If the end date is before the start date, a red note reminds you to check the dates. Fix it before you save."
+          },
+          {
+            "type": "paragraph",
+            "text": "In Leave history, an entry with an end date shows the full stretch as start → end, for example 2026-07-01 → 2026-07-05, so you can see at a glance how long each period of leave was. Single-day leave just shows the one date."
+          }
+        ]
+      },
+      {
+        "heading": "Public holidays are not leave",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "Public holiday is not a leave type, and that is on purpose. A public holiday is a paid day off that every employee gets by law, not leave taken from a balance, so there is nothing to record on the Leave screen for it."
+          },
+          {
+            "type": "tip",
+            "text": "If an employee actually works on a public holiday, that is a pay matter rather than a leave one. Handle it in the Pay Run, where you can pay the higher rate the day earns."
           }
         ]
       },
@@ -2877,6 +3137,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
               "Under Record new advance, tap the 👤 Pick button next to the Employee box.",
               "Choose the worker from the list. If they already owe you money, their outstanding amount shows next to their name.",
               "In Amount (R), type how much cash you gave them.",
+              "In Repay per pay run (R), you can set an amount to take back automatically each payday, for example 200. Leave it blank to deduct by hand each time. When you fill in both an amount and a repay figure, a line shows roughly how many pay runs it will take to clear.",
               "In Reason (optional), you can note why, for example transport, groceries or an emergency. You can leave this blank.",
               "Tap Record Advance."
             ]
@@ -2893,6 +3154,23 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "paragraph",
             "text": "Once you have picked an employee, their history appears lower down the screen. It lists each advance you gave (shown with a plus) and each repayment taken off their wages (shown with a minus), newest first, with the date and any note. The Outstanding advances card at the top always shows the up-to-date balance."
+          }
+        ]
+      },
+      {
+        "heading": "Set up a repayment plan",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "Instead of remembering to deduct an advance by hand every payday, you can give it a repayment plan. In Repay per pay run (R), enter how much to take back each pay run, say 200 on a 1000 advance. As you type, Worklog shows about how many pay runs it will take to repay, so you can pick an amount that suits the worker."
+          },
+          {
+            "type": "paragraph",
+            "text": "Next time you run that worker's pay, the Deductions step already has the repay amount filled in for you, never more than they still owe, so you can just confirm it. If a payday is tight you can still change the figure or skip it that round."
+          },
+          {
+            "type": "paragraph",
+            "text": "On the Outstanding advances card, any worker with a plan shows their repay amount per pay run and roughly how many runs are left, so you can see at a glance how everyone is tracking."
           }
         ]
       },
@@ -2991,6 +3269,19 @@ export const HELP_ARTICLES: HelpArticle[] = [
         ]
       },
       {
+        "heading": "ETI comes off your PAYE",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "The Employment Tax Incentive (ETI) is a break for hiring younger workers, and it lowers the PAYE you actually hand over. If any of your staff qualify for the month, Worklog works out the ETI from their pay runs and shows a Less: ETI claimed line on the dark blue card, subtracting it from the total so your Total due to SARS is what is really left to pay."
+          },
+          {
+            "type": "tip",
+            "text": "ETI can only ever reduce your PAYE down to zero, never below it — Worklog caps the claim at the PAYE for the month. If your ETI works out higher than your PAYE, the extra is carried over and your accountant handles it; the EMP201 total will simply show no PAYE left to pay."
+          }
+        ]
+      },
+      {
         "heading": "Check the detail",
         "blocks": [
           {
@@ -3029,6 +3320,39 @@ export const HELP_ARTICLES: HelpArticle[] = [
         ]
       },
       {
+        "heading": "The SDL nudge",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "SDL (the Skills Development Levy) only kicks in once your payroll gets big enough. If your wages for the month, spread across a full year, work past the SDL registration threshold and you have not switched SDL on yet, Worklog shows a yellow nudge on this screen so it does not catch you by surprise."
+          },
+          {
+            "type": "tip",
+            "text": "The nudge is a heads-up, not an instruction. Check with your accountant whether you now need to register for SDL, and once you know, switch SDL on in Business Details — from then on it is added to your EMP201 total automatically."
+          }
+        ]
+      },
+      {
+        "heading": "Related returns: EMP501 and COIDA",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "At the bottom of the screen, under Related returns, Worklog reminds you of two more payroll returns that hang off your EMP201s so they do not slip through."
+          },
+          {
+            "type": "bullets",
+            "items": [
+              "EMP501 reconciliation — a twice-yearly reconciliation of your EMP201s: the interim is due 31 October and the annual is due 31 May. This is where you tie these monthly totals back to your staff's IRP5/IT3(a) certificates on SARS eFiling.",
+              "COIDA (annual Return of Earnings) — Worklog shows the total gross wages you have paid this calendar year, which is the earnings figure you report on your annual COIDA Return of Earnings."
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "For the full picture of every payroll statutory item in one place, open Payroll Compliance."
+          }
+        ]
+      },
+      {
         "heading": "Good to know",
         "blocks": [
           {
@@ -3045,6 +3369,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
     "related": [
       "run-a-pay-run",
       "add-staff",
+      "payroll-compliance",
       "vat201",
       "compliance-dashboard"
     ]
@@ -4177,6 +4502,98 @@ export const HELP_ARTICLES: HelpArticle[] = [
       "time-log",
       "send-a-quote",
       "cost-a-job"
+    ]
+  },
+  {
+    "slug": "payroll-compliance",
+    "category": "Tax & SARS",
+    "title": "See your payroll tax in one place (Payroll Compliance)",
+    "summary": "A single read-only view of your payroll statutory items — what you owe SARS this month, plus reminders for EMP501, UIF, COIDA and the SDL nudge.",
+    "sections": [
+      {
+        "heading": "What Payroll Compliance is for",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "Payroll brings a handful of statutory jobs with it — a return to SARS every month, a couple of reconciliations a year, a UIF declaration, and an annual COIDA return. They normally live scattered across different screens. Payroll Compliance gathers them into one place so you can see, at a glance, what is due and what you owe."
+          },
+          {
+            "type": "paragraph",
+            "text": "It is a read-only summary. Worklog surfaces the figures and the reminders; it does not file anything for you. The actual filing still happens on the SARS and Labour portals."
+          },
+          {
+            "type": "warning",
+            "text": "The amounts here are estimates worked out from your pay runs. Confirm the figures and deadlines with your accountant before you file or pay."
+          }
+        ]
+      },
+      {
+        "heading": "Payable to SARS this month",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "The dark blue card at the top adds up what you owe SARS for the current month from your pay runs. It shows PAYE, then a Less: ETI claimed line if any of your staff qualify for the Employment Tax Incentive, then UIF (employee plus employer) and SDL where it applies. The Total payable at the bottom is PAYE (after ETI) plus UIF plus SDL."
+          },
+          {
+            "type": "bullets",
+            "items": [
+              "PAYE — the employee tax off this month's pay runs.",
+              "Less: ETI claimed — the Employment Tax Incentive for qualifying younger staff, capped so it can only reduce PAYE down to zero, never below.",
+              "UIF — the employee and employer shares together.",
+              "SDL — the skills levy, shown only if it applies to you."
+            ]
+          },
+          {
+            "type": "tip",
+            "text": "Tap Open EMP201 on the card to jump into the full monthly EMP201, where you can pick a different month, see the detail per worker, share the report and mark the return as filed."
+          }
+        ]
+      },
+      {
+        "heading": "Returns and declarations",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "Below the card, the Returns & declarations list is your reminder of every payroll return and when it is due:"
+          },
+          {
+            "type": "bullets",
+            "items": [
+              "EMP201 — monthly. PAYE, UIF and SDL, due by the 7th of the next month. Tap Open to work on it.",
+              "EMP501 — reconciliation. Reconciles your EMP201s and issues the IRP5s; the interim is due 31 October and the annual 31 May, done on e@syFile.",
+              "UIF declaration — monthly, on uFiling. Plus a UI-19 whenever someone joins or leaves your business.",
+              "COIDA — Return of Earnings. Filed once a year on CompEasy; Worklog shows the earnings to report, which is your total gross wages for the calendar year so far."
+            ]
+          }
+        ]
+      },
+      {
+        "heading": "The SDL nudge",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "SDL (the Skills Development Levy) only becomes payable once your payroll is big enough. If your wages for the month, spread across a full year, work past the SDL registration threshold and you have not switched SDL on yet, a yellow nudge appears here."
+          },
+          {
+            "type": "tip",
+            "text": "It is a heads-up, not an instruction. Check with your accountant whether you now need to register, then switch SDL on in Business Details so it is added to your EMP201 from that point on."
+          }
+        ]
+      },
+      {
+        "heading": "If you have no payroll yet",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "Until you have staff or pay runs, the page shows a short prompt instead of the figures. Add employees in the Staff Register and do a Pay Run, and Payroll Compliance then starts tracking what you owe SARS and Labour."
+          }
+        ]
+      }
+    ],
+    "related": [
+      "emp201",
+      "run-a-pay-run",
+      "add-staff"
     ]
   }
 ];
