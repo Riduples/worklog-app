@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PLAN_ORDER, TIERS, PLAN_FEATURES } from "@/lib/tiers";
+import { whatsappUrl } from "@/lib/legal/company";
 
 export const metadata: Metadata = {
   title: "Pricing — Worklog",
@@ -153,7 +154,17 @@ export default function PricingPage() {
         >
           Start free →
         </Link>
-        <div style={{ marginTop: 22, fontSize: 12, color: "rgba(255,255,255,0.5)" }}>
+        <div style={{ marginTop: 18 }}>
+          <a
+            href={whatsappUrl("Hi Worklog, I'd like to know more about the plans")}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ display: "inline-block", background: "#25D366", color: "#fff", fontWeight: 800, fontSize: 14, padding: "11px 24px", borderRadius: 12, textDecoration: "none" }}
+          >
+            💬 Chat on WhatsApp
+          </a>
+        </div>
+        <div style={{ marginTop: 18, fontSize: 12, color: "rgba(255,255,255,0.5)" }}>
           Already have an account?{" "}
           <Link href="/login" style={{ color: "#7DD3FC", textDecoration: "none", fontWeight: 700 }}>Log in</Link>
         </div>

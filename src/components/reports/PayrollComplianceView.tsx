@@ -106,7 +106,11 @@ export function PayrollComplianceView() {
 
           {sdlNudge && (
             <div style={{ background: "#fff7ed", border: "1.5px solid #fed7aa", borderRadius: 12, padding: "12px 14px", marginBottom: 12, fontSize: 12, color: "#92400e", lineHeight: 1.5 }}>
-              ⚠️ <strong>SDL may now apply.</strong> Your payroll annualises above {fmt(SDL_ANNUAL_THRESHOLD)} but SDL isn&apos;t registered. Check with your accountant, then switch SDL on in Business Details.
+              ⚠️ <strong>SDL may now apply.</strong> Your payroll annualises above {fmt(SDL_ANNUAL_THRESHOLD)} but SDL isn&apos;t registered. Check with your accountant, then switch SDL on in{" "}
+              <Link href="/business" style={{ color: "#92400e", fontWeight: 700 }}>
+                Business Details
+              </Link>
+              .
             </div>
           )}
 

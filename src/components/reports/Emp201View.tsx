@@ -158,7 +158,7 @@ export function Emp201View() {
       {!business?.paye_ref && (
         <div style={{ background: "#fffbeb", border: "1.5px solid #fde68a", borderRadius: 10, padding: "10px 14px", marginBottom: 14, fontSize: 12, color: "#92400e" }}>
           ⚠️ No PAYE reference number set. Add it in{" "}
-          <Link href="/tax" style={{ color: "#92400e", fontWeight: 700 }}>
+          <Link href="/business" style={{ color: "#92400e", fontWeight: 700 }}>
             Business Details
           </Link>{" "}
           — SARS requires it on every EMP201 submission.
@@ -168,7 +168,7 @@ export function Emp201View() {
       {sdlNudge && (
         <div style={{ background: "#fffbeb", border: "1.5px solid #fde68a", borderRadius: 10, padding: "10px 14px", marginBottom: 14, fontSize: 12, color: "#92400e" }}>
           ⚠️ SDL may now apply — your payroll annualises above {fmt(SDL_ANNUAL_THRESHOLD)}. Check with your accountant, then switch SDL on in{" "}
-          <Link href="/tax" style={{ color: "#92400e", fontWeight: 700 }}>
+          <Link href="/business" style={{ color: "#92400e", fontWeight: 700 }}>
             Business Details
           </Link>
           .
