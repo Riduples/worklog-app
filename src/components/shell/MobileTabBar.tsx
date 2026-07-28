@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useWriteAccess } from "@/lib/writeAccess";
 import { useToolGate } from "@/lib/useToolGate";
+import { useLogModal } from "@/components/providers/LogModalProvider";
 import { QuickLogModal } from "@/components/modals/QuickLogModal";
 import { AllToolsGrid } from "@/components/dashboard/AllToolsGrid";
 
@@ -16,6 +17,7 @@ export function MobileTabBar() {
   const router = useRouter();
   const { isReadOnly } = useWriteAccess();
   const { gate } = useToolGate();
+  const { openLog } = useLogModal();
   const [quickOpen, setQuickOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
 
@@ -91,6 +93,38 @@ export function MobileTabBar() {
                 ×
               </button>
             </div>
+            {/* The structured capture forms — the mobile home now leads with Quick
+                Log, so Money In/Out live here (and in the desktop sidebar). */}
+            {(gate("income") || gate("expense")) && (
+              <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
+                {gate("income") && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMoreOpen(false);
+                      openLog("income");
+                    }}
+                    style={{ flex: 1, background: "#0C4A6E", color: "#fff", border: "none", borderRadius: 14, padding: "14px 12px", cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}
+                  >
+                    <div style={{ fontSize: 22, marginBottom: 4 }}>💰</div>
+                    <div style={{ fontSize: 14, fontWeight: 800 }}>Log income</div>
+                  </button>
+                )}
+                {gate("expense") && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMoreOpen(false);
+                      openLog("expense");
+                    }}
+                    style={{ flex: 1, background: "#fff", color: "#0C4A6E", border: "2px solid #BAE6FD", borderRadius: 14, padding: "14px 12px", cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}
+                  >
+                    <div style={{ fontSize: 22, marginBottom: 4 }}>💸</div>
+                    <div style={{ fontSize: 14, fontWeight: 800 }}>Log expense</div>
+                  </button>
+                )}
+              </div>
+            )}
             <AllToolsGrid
               onLockedClick={(t) => {
                 setMoreOpen(false);

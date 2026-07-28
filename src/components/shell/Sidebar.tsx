@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useToolGate } from "@/lib/useToolGate";
+import { useLogModal } from "@/components/providers/LogModalProvider";
 import type { ToolId } from "@/lib/permissions";
 
 // Desktop navigation.
@@ -92,6 +93,7 @@ const linkBase: React.CSSProperties = {
 export function Sidebar() {
   const pathname = usePathname();
   const { gate, tierLocked, isOwner } = useToolGate();
+  const { openLog } = useLogModal();
 
   // Onboarding has no business yet, so a nav full of that business's tools would
   // be answering a question the owner hasn't been asked. Checkout is a single
@@ -116,6 +118,21 @@ export function Sidebar() {
     </Link>
   );
 
+  // The one and only way into the structured Income/Expense forms now that the
+  // dashboard's big Money In/Out buttons are gone — a button, not a link, because
+  // there's no page to point at: it opens the modal via the shared LogModalProvider.
+  const logNavButton = (kind: "income" | "expense", icon: string, label: string) => (
+    <button
+      key={`log-${kind}`}
+      type="button"
+      onClick={() => openLog(kind)}
+      style={{ ...linkBase, width: "100%", background: "transparent", border: "none", cursor: "pointer", fontFamily: "inherit", textAlign: "left", color: "#E0F2FE", fontWeight: 500 }}
+    >
+      <span style={{ fontSize: 14 }}>{icon}</span>
+      <span>{label}</span>
+    </button>
+  );
+
   return (
     <nav className="app-sidebar" style={{ background: "#0C4A6E", padding: "16px 10px 28px" }} aria-label="Main">
       <Link href="/dashboard" style={{ display: "block", padding: "0 9px 16px" }}>
@@ -133,10 +150,13 @@ export function Sidebar() {
 
       {GROUPS.map((group) => {
         const visible = group.items.filter((i) => gate(i.tool));
+        // Log income / Log expense sit at the top of the Money group as actions.
+        const isMoney = group.title === "Money";
+        const showLogs = isMoney && (gate("income") || gate("expense"));
         // A group whose every tool is hidden by permission or business type
         // renders its heading over nothing — the same empty-heading trap the
         // dashboard guards against for Payroll and Reports.
-        if (visible.length === 0) return null;
+        if (visible.length === 0 && !showLogs) return null;
         return (
           <div key={group.title}>
             <div
@@ -151,6 +171,8 @@ export function Sidebar() {
             >
               {group.title}
             </div>
+            {isMoney && gate("income") && logNavButton("income", "💰", "Log income")}
+            {isMoney && gate("expense") && logNavButton("expense", "💸", "Log expense")}
             {visible.map((item) =>
               tierLocked(item.tool) ? (
                 // Locked tools stay visible — the upsell is the point — and hand

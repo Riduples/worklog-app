@@ -12,8 +12,6 @@ import { useStockItems } from "@/lib/supabase/hooks/useStock";
 import { useBookings } from "@/lib/supabase/hooks/useBookings";
 import { useBankAccounts } from "@/lib/supabase/hooks/useBankAccounts";
 import { useAccountTransfers } from "@/lib/supabase/hooks/useAccountTransfers";
-import { IncomeModal } from "@/components/modals/IncomeModal";
-import { ExpenseModal } from "@/components/modals/ExpenseModal";
 import { QuickLogModal } from "@/components/modals/QuickLogModal";
 import { UpgradeModal } from "@/components/modals/UpgradeModal";
 import { HelpAssistantModal } from "@/components/modals/HelpAssistantModal";
@@ -33,15 +31,6 @@ import { useToolGate } from "@/lib/useToolGate";
 import { type ToolId } from "@/lib/permissions";
 import type { Tables } from "@/lib/types/database";
 
-const sectionHead: React.CSSProperties = {
-  fontSize: 11,
-  fontWeight: 800,
-  color: "#64748b",
-  textTransform: "uppercase",
-  letterSpacing: 0.6,
-  margin: "0 2px 9px",
-};
-
 export function DashboardView({ businessName }: { businessName: string }) {
   const { data: income } = useIncome();
   const { data: expenses } = useExpenses();
@@ -52,7 +41,7 @@ export function DashboardView({ businessName }: { businessName: string }) {
   const { data: bookings } = useBookings();
   const { data: accounts } = useBankAccounts();
   const { data: transfers } = useAccountTransfers();
-  const [modal, setModal] = useState<"income" | "expense" | "quicklog" | "help" | null>(null);
+  const [modal, setModal] = useState<"quicklog" | "help" | null>(null);
   const [period, setPeriod] = useState<"month" | "year" | "all">("year");
   const [account, setAccount] = useState<AccountFilter>(ALL_ACCOUNTS);
   const [toolsOpen, setToolsOpen] = useState(false);
@@ -266,76 +255,51 @@ export function DashboardView({ businessName }: { businessName: string }) {
           )}
         </div>
 
-        {/* ── NEEDS YOU TODAY + LOG SOMETHING (two columns on desktop) ── */}
-        <div className="dash-cols">
-          <div>
-            {needs.length > 0 ? (
-              <div style={{ background: "#fff", border: "1px solid #eef0f3", borderRadius: 16, boxShadow: "0 1px 4px rgba(0,0,0,0.05)", overflow: "hidden" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 11, fontWeight: 800, color: "#92400e", textTransform: "uppercase", letterSpacing: 0.5, padding: "11px 14px 8px" }}>
-                  ⚡ Needs you today
-                </div>
-                {needs.map((n, idx) => (
-                  <Link
-                    key={n.key}
-                    href={n.href}
-                    style={{ display: "flex", alignItems: "center", gap: 11, padding: "10px 14px", borderTop: idx === 0 ? "none" : "1px solid #f3f5f8", textDecoration: "none" }}
-                  >
-                    <div style={{ width: 30, height: 30, borderRadius: 9, background: n.bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, flexShrink: 0 }}>
-                      {n.icon}
-                    </div>
-                    <div style={{ minWidth: 0, flex: 1 }}>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: "#111" }}>{n.title}</div>
-                      <div style={{ fontSize: 11, color: "#94a3b8" }}>{n.sub}</div>
-                    </div>
-                    <div style={{ color: "#cbd5e1", fontSize: 18 }}>›</div>
-                  </Link>
-                ))}
+        {/* ── QUICK LOG + NEEDS YOU TODAY ── one money-first column under the hero.
+            Quick Log leads; the structured Income/Expense forms moved to the
+            sidebar (desktop) and the "More" sheet (mobile). */}
+        <div className="dash-primary">
+          {(gate("income") || gate("expense")) && (
+            <button
+              onClick={() => (isReadOnly ? router.push("/billing/checkout") : setModal("quicklog"))}
+              className="dash-quicklog"
+              style={{ background: "#F59E0B", borderRadius: 18, padding: "16px", border: "none", color: "#fff", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 12, boxShadow: "0 4px 16px rgba(245,158,11,0.28)" }}
+            >
+              <span style={{ fontSize: 24 }}>✨</span>
+              <div>
+                <div style={{ fontSize: 15, fontWeight: 800 }}>Just tell me</div>
+                <div style={{ fontSize: 12, color: "rgba(255,255,255,0.85)", marginTop: 1 }}>Type, talk or snap — Worklog logs it</div>
               </div>
-            ) : (
-              <div style={{ background: "#F0FDF4", border: "1px solid #bbf7d0", borderRadius: 16, padding: "16px", fontSize: 13, fontWeight: 700, color: "#166534", textAlign: "center" }}>
-                ✅ Nothing needs you right now
-              </div>
-            )}
-          </div>
+            </button>
+          )}
 
-          <div>
-            <div style={sectionHead}>Log something</div>
-            <div className="money-grid" style={{ marginBottom: 10 }}>
-              {gate("income") && (
-                <button
-                  onClick={() => setModal("income")}
-                  style={{ background: "#0C4A6E", borderRadius: 18, padding: "20px 16px", border: "none", color: "#fff", cursor: "pointer", textAlign: "left", boxShadow: "0 4px 16px rgba(12,74,110,0.22)" }}
+          {needs.length > 0 ? (
+            <div style={{ background: "#fff", border: "1px solid #eef0f3", borderRadius: 16, boxShadow: "0 1px 4px rgba(0,0,0,0.05)", overflow: "hidden" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 11, fontWeight: 800, color: "#92400e", textTransform: "uppercase", letterSpacing: 0.5, padding: "11px 14px 8px" }}>
+                ⚡ Needs you today
+              </div>
+              {needs.map((n, idx) => (
+                <Link
+                  key={n.key}
+                  href={n.href}
+                  style={{ display: "flex", alignItems: "center", gap: 11, padding: "10px 14px", borderTop: idx === 0 ? "none" : "1px solid #f3f5f8", textDecoration: "none" }}
                 >
-                  <div style={{ fontSize: 28, marginBottom: 8 }}>💰</div>
-                  <div style={{ fontSize: 16, fontWeight: 800 }}>Money In</div>
-                  <div style={{ fontSize: 12, color: "#E0F2FE", marginTop: 2 }}>Log income</div>
-                </button>
-              )}
-              {gate("expense") && (
-                <button
-                  onClick={() => setModal("expense")}
-                  style={{ background: "#fff", borderRadius: 18, padding: "20px 16px", border: "2px solid #BAE6FD", color: "#0C4A6E", cursor: "pointer", textAlign: "left" }}
-                >
-                  <div style={{ fontSize: 28, marginBottom: 8 }}>💸</div>
-                  <div style={{ fontSize: 16, fontWeight: 800 }}>Money Out</div>
-                  <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>Log expense</div>
-                </button>
-              )}
+                  <div style={{ width: 30, height: 30, borderRadius: 9, background: n.bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, flexShrink: 0 }}>
+                    {n.icon}
+                  </div>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "#111" }}>{n.title}</div>
+                    <div style={{ fontSize: 11, color: "#94a3b8" }}>{n.sub}</div>
+                  </div>
+                  <div style={{ color: "#cbd5e1", fontSize: 18 }}>›</div>
+                </Link>
+              ))}
             </div>
-            {(gate("income") || gate("expense")) && (
-              <button
-                onClick={() => (isReadOnly ? router.push("/billing/checkout") : setModal("quicklog"))}
-                className="dash-quicklog"
-                style={{ background: "#F59E0B", borderRadius: 18, padding: "16px", border: "none", color: "#fff", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 12, boxShadow: "0 4px 16px rgba(245,158,11,0.28)" }}
-              >
-                <span style={{ fontSize: 24 }}>✨</span>
-                <div>
-                  <div style={{ fontSize: 15, fontWeight: 800 }}>Just tell me</div>
-                  <div style={{ fontSize: 12, color: "rgba(255,255,255,0.85)", marginTop: 1 }}>Type, talk or snap — Worklog logs it</div>
-                </div>
-              </button>
-            )}
-          </div>
+          ) : (
+            <div style={{ background: "#F0FDF4", border: "1px solid #bbf7d0", borderRadius: 16, padding: "16px", fontSize: 13, fontWeight: 700, color: "#166534", textAlign: "center" }}>
+              ✅ Nothing needs you right now
+            </div>
+          )}
         </div>
 
         {/* ── ALL MY TOOLS (collapsed on mobile, hidden on desktop — the sidebar is the tool list) ── */}
@@ -397,8 +361,6 @@ export function DashboardView({ businessName }: { businessName: string }) {
         )}
       </div>
 
-      {modal === "income" && <IncomeModal onClose={() => setModal(null)} />}
-      {modal === "expense" && <ExpenseModal onClose={() => setModal(null)} />}
       {modal === "quicklog" && <QuickLogModal onClose={() => setModal(null)} />}
       {modal === "help" && <HelpAssistantModal onClose={() => setModal(null)} />}
       {upgradeFeature && business && (

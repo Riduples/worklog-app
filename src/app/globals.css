@@ -97,23 +97,9 @@ body {
   margin-bottom: 14px;
 }
 
-/* Money In / Money Out: the two primary actions, deliberately bigger. */
-.money-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
 @media (min-width: 1024px) {
   .tool-grid {
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  }
-
-  /* Capped rather than stretched: these two are the things you came to do, and
-     a pair of 600px-wide buttons reads as a mistake, not as emphasis. */
-  .money-grid {
-    grid-template-columns: repeat(2, minmax(0, 260px));
   }
 }
 
@@ -258,11 +244,11 @@ body {
   margin-bottom: 14px;
   box-shadow: 0 8px 24px -12px rgba(12, 74, 110, 0.5);
 }
-/* "Needs you today" and "Log something" — stacked on a phone, side by side once
-   there's room. */
-.dash-cols {
-  display: grid;
-  grid-template-columns: 1fr;
+/* Quick Log then "Needs you today" — the money-first column, stacked straight
+   down under the hero on every screen. */
+.dash-primary {
+  display: flex;
+  flex-direction: column;
   gap: 14px;
 }
 
@@ -289,17 +275,13 @@ body {
     color: #0c4a6e;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
   }
-  .dash-quicklog {
-    max-width: 380px;
-  }
   /* Sized to its numbers, not stretched across the content column. */
   .dash-hero {
     max-width: 760px;
   }
-  .dash-cols {
-    grid-template-columns: 1fr 1fr;
-    align-items: start;
-    max-width: 900px;
+  /* Quick Log + "Needs you today" sit directly under the hero, same width. */
+  .dash-primary {
+    max-width: 760px;
   }
   /* The full tool grid is redundant on desktop — the sidebar already is the
      tool list, so the money-first content gets the width instead. */
