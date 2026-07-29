@@ -150,7 +150,7 @@ export function Sidebar() {
 
       {GROUPS.map((group) => {
         const visible = group.items.filter((i) => gate(i.tool));
-        // Log income / Log expense sit at the top of the Money group as actions.
+        // Log income / Log expense sit under the Money tools, at the foot of the group.
         const isMoney = group.title === "Money";
         const showLogs = isMoney && (gate("income") || gate("expense"));
         // A group whose every tool is hidden by permission or business type
@@ -171,8 +171,6 @@ export function Sidebar() {
             >
               {group.title}
             </div>
-            {isMoney && gate("income") && logNavButton("income", "💰", "Log income")}
-            {isMoney && gate("expense") && logNavButton("expense", "💸", "Log expense")}
             {visible.map((item) =>
               tierLocked(item.tool) ? (
                 // Locked tools stay visible — the upsell is the point — and hand
@@ -191,6 +189,8 @@ export function Sidebar() {
                 navLink(item.href, item.icon, item.label, isActive(item.href))
               )
             )}
+            {isMoney && gate("income") && logNavButton("income", "💰", "Log income")}
+            {isMoney && gate("expense") && logNavButton("expense", "💸", "Log expense")}
           </div>
         );
       })}
