@@ -134,6 +134,29 @@ export const ALL_PAYMENT_METHODS = [
   ...EXPENSE_PAYMENT_METHODS.filter((m) => !INCOME_PAYMENT_METHODS.includes(m)),
 ];
 
+// Once an entry is tagged to a specific account, the methods narrow to what that
+// account can physically do (its "bank setup"): a cash box can't do an EFT, a
+// credit-card account can't pay cash. We FILTER the direction list (INCOME/
+// EXPENSE) rather than replace it, so the income-vs-expense split is preserved
+// and only the labels that don't fit the account drop out. "Other" is always
+// kept as an escape hatch; an untagged or unknown account narrows nothing.
+// account_type values come from AccountsView: bank | savings | credit | cash | other.
+const ACCOUNT_ALLOWED_METHODS: Record<string, readonly string[]> = {
+  cash: ["Cash", "Voucher / Gift card"],
+  credit: ["Card (debit)", "Card (credit)", "Card", "Debit order"],
+  savings: ["EFT / Bank transfer", "Debit order", "Cash"],
+  bank: ["EFT / Bank transfer", "Card (debit)", "Card (credit)", "Card", "Debit order", "Cash"],
+};
+
+export function narrowMethodsForAccount(
+  methods: readonly string[],
+  accountType: string | null | undefined
+): string[] {
+  const allowed = accountType ? ACCOUNT_ALLOWED_METHODS[accountType] : undefined;
+  if (!allowed) return [...methods];
+  return methods.filter((m) => m === "Other" || allowed.includes(m));
+}
+
 function getSarsMatchFromList(list: SarsCategory[], text: string) {
   if (!text || text.length < 2) return [];
   const lower = text.toLowerCase();
