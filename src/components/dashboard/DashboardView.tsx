@@ -45,6 +45,7 @@ export function DashboardView({ businessName }: { businessName: string }) {
   const [period, setPeriod] = useState<"month" | "year" | "all">("year");
   const [account, setAccount] = useState<AccountFilter>(ALL_ACCOUNTS);
   const [toolsOpen, setToolsOpen] = useState(false);
+  const [recentOpen, setRecentOpen] = useState(false);
   // requirePlanAccess() bounces someone off a page their plan doesn't include
   // and lands them here with ?upgrade=<tool>. Without this they'd arrive at the
   // dashboard with no idea why, which is worse than the hole it closes.
@@ -330,33 +331,47 @@ export function DashboardView({ businessName }: { businessName: string }) {
         )}
 
         {recentTx.length > 0 && (
-          <div style={{ marginTop: 24 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 1, marginBottom: 12 }}>Recent</div>
-            {recentTx.map((r) => (
-              <div
-                key={r.id}
-                style={{ background: "#fff", borderRadius: 13, padding: "12px 14px", marginBottom: 8, display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 10, background: r.txType === "income" ? "#BAE6FD" : "#fee2e2", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17 }}>
-                    {r.txType === "income" ? "💰" : "💸"}
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: "#111" }}>
-                      {r.what_for || (r.txType === "income" ? "Income" : "Expense")}
+          <div style={{ marginTop: 16 }}>
+            <button
+              onClick={() => setRecentOpen((o) => !o)}
+              style={{ width: "100%", background: "#fff", border: "1.5px solid #e2e8f0", borderRadius: 14, padding: "13px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}
+            >
+              <span>
+                <span style={{ display: "block", fontSize: 13, fontWeight: 800, color: "#0C4A6E" }}>Recent</span>
+                <span style={{ display: "block", fontSize: 11, color: "#94a3b8", marginTop: 2 }}>Your latest income &amp; expenses</span>
+              </span>
+              <span style={{ fontSize: 22, color: "#0C4A6E", transform: recentOpen ? "rotate(90deg)" : "none", transition: "transform 0.15s" }}>▸</span>
+            </button>
+
+            {recentOpen && (
+              <div style={{ marginTop: 12 }}>
+                {recentTx.map((r) => (
+                  <div
+                    key={r.id}
+                    style={{ background: "#fff", borderRadius: 13, padding: "12px 14px", marginBottom: 8, display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      <div style={{ width: 36, height: 36, borderRadius: 10, background: r.txType === "income" ? "#BAE6FD" : "#fee2e2", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17 }}>
+                        {r.txType === "income" ? "💰" : "💸"}
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: "#111" }}>
+                          {r.what_for || (r.txType === "income" ? "Income" : "Expense")}
+                        </div>
+                        <div style={{ fontSize: 11, color: "#94a3b8" }}>
+                          {r.transaction_date} · {r.payment_method || ""}
+                          {showAccountTag && accountName(r.account_id) ? ` · ${accountName(r.account_id)}` : ""}
+                        </div>
+                      </div>
                     </div>
-                    <div style={{ fontSize: 11, color: "#94a3b8" }}>
-                      {r.transaction_date} · {r.payment_method || ""}
-                      {showAccountTag && accountName(r.account_id) ? ` · ${accountName(r.account_id)}` : ""}
+                    <div style={{ fontWeight: 800, fontSize: 15, color: r.txType === "income" ? "#0C4A6E" : "#dc2626" }}>
+                      {r.txType === "income" ? "+" : "-"}
+                      {fmt(r.amount)}
                     </div>
                   </div>
-                </div>
-                <div style={{ fontWeight: 800, fontSize: 15, color: r.txType === "income" ? "#0C4A6E" : "#dc2626" }}>
-                  {r.txType === "income" ? "+" : "-"}
-                  {fmt(r.amount)}
-                </div>
+                ))}
               </div>
-            ))}
+            )}
           </div>
         )}
       </div>
