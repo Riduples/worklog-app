@@ -10,7 +10,7 @@ import { PaymentMethodPicker } from "@/components/ui/PaymentMethodPicker";
 import { SarsSuggestionDropdown } from "@/components/ui/SarsSuggestionDropdown";
 import { LedgerEntryMatcher, expenseSettlesEntry } from "@/components/ui/LedgerEntryMatcher";
 import { SupplierInvoiceMatcher, expenseSettlesSupplierInvoice } from "@/components/ui/SupplierInvoiceMatcher";
-import { getSarsMatch, EXPENSE_PAYMENT_METHODS, type SarsCategory } from "@/lib/sarsCategories";
+import { getSarsMatch, EXPENSE_PAYMENT_METHODS, narrowMethodsForAccount, type SarsCategory } from "@/lib/sarsCategories";
 import { todayStr } from "@/lib/format";
 import { useCreateExpense } from "@/lib/supabase/hooks/useExpenses";
 import { useContacts } from "@/lib/supabase/hooks/useContacts";
@@ -70,6 +70,14 @@ export function ExpenseModal({ onClose }: { onClose: () => void }) {
   // is skipped, exactly like the income side.
   const isMatched = !!(matchedLedgerEntryId || matchedSupplierInvoiceId);
 
+  // Tagging the entry to an account narrows the payment methods to what that
+  // account can do; the chosen method is kept if it still fits, otherwise the
+  // display falls back to the first option — derived, not stored, so switching
+  // accounts never cascades or silently loses a still-valid choice.
+  const selectedAccount = (accounts ?? []).find((a) => a.id === accountId) ?? null;
+  const paymentMethods = narrowMethodsForAccount(EXPENSE_PAYMENT_METHODS, selectedAccount?.account_type ?? null);
+  const effectiveMethod = paymentMethods.includes(method) ? method : (paymentMethods[0] ?? "");
+
   const handleSave = () => {
     if (!amountNum || amountNum <= 0) {
       setError("Enter a valid amount.");
@@ -89,7 +97,7 @@ export function ExpenseModal({ onClose }: { onClose: () => void }) {
         details: details.trim() || null,
         paid_to: paidTo.trim() || null,
         paid_to_contact_id: paidToContactId,
-        payment_method: method || null,
+        payment_method: effectiveMethod || null,
         transaction_date: date,
         matched_ledger_entry_id: matchedLedgerEntryId,
         matched_supplier_invoice_id: matchedSupplierInvoiceId,
@@ -222,7 +230,15 @@ export function ExpenseModal({ onClose }: { onClose: () => void }) {
         <Input value={details} onChange={setDetails} placeholder="Extra description" />
       </Field>
 
-      <PaymentMethodPicker selected={method} onSelect={setMethod} methods={EXPENSE_PAYMENT_METHODS} />
+      {/* No bill matched and no account tagged — the entry has nothing to
+          reconcile against. A non-blocking nudge to give it a home. */}
+      {!isMatched && !accountId && amountNum > 0 && (accounts?.length ?? 0) > 0 && (
+        <div style={{ background: "#fffbeb", border: "1.5px solid #fde68a", borderRadius: 10, padding: "10px 14px", marginBottom: 12, fontSize: 12, color: "#92400e", lineHeight: 1.5 }}>
+          ⚠️ This isn&apos;t linked to a bill or a bank account — tag the account it was paid from so it reconciles against your statement later.
+        </div>
+      )}
+
+      <PaymentMethodPicker selected={effectiveMethod} onSelect={setMethod} methods={paymentMethods} />
 
       {error && <p style={{ color: "#dc2626", fontSize: 13, marginBottom: 12 }}>{error}</p>}
       <SaveBtn label={createExpense.isPending ? "Saving..." : "Log expense"} onClick={handleSave} disabled={createExpense.isPending} />

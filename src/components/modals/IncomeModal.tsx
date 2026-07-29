@@ -9,7 +9,7 @@ import { ContactPicker } from "@/components/ui/ContactPicker";
 import { PaymentMethodPicker } from "@/components/ui/PaymentMethodPicker";
 import { SarsSuggestionDropdown } from "@/components/ui/SarsSuggestionDropdown";
 import { InvoiceMatcher, paymentSettlesInvoice } from "@/components/ui/InvoiceMatcher";
-import { getSarsIncomeMatch, INCOME_PAYMENT_METHODS, type SarsCategory } from "@/lib/sarsCategories";
+import { getSarsIncomeMatch, INCOME_PAYMENT_METHODS, narrowMethodsForAccount, type SarsCategory } from "@/lib/sarsCategories";
 import { fmt, todayStr } from "@/lib/format";
 import { useTaxRates } from "@/lib/taxRates";
 import { useCreateIncome } from "@/lib/supabase/hooks/useIncome";
@@ -67,6 +67,14 @@ export function IncomeModal({ onClose }: { onClose: () => void }) {
   const matchedInvoice = (invoices ?? []).find((i) => i.id === matchedInvoiceId) ?? null;
   const settlesInvoice = paymentSettlesInvoice(matchedInvoice, amountNum);
 
+  // Tagging the entry to an account narrows the payment methods to what that
+  // account can do; the chosen method is kept if it still fits, otherwise the
+  // display falls back to the first option — derived, not stored, so switching
+  // accounts never cascades or silently loses a still-valid choice.
+  const selectedAccount = (accounts ?? []).find((a) => a.id === accountId) ?? null;
+  const paymentMethods = narrowMethodsForAccount(INCOME_PAYMENT_METHODS, selectedAccount?.account_type ?? null);
+  const effectiveMethod = paymentMethods.includes(method) ? method : (paymentMethods[0] ?? "");
+
   const handleSave = () => {
     if (!amountNum || amountNum <= 0) {
       setError("Enter a valid amount.");
@@ -87,7 +95,7 @@ export function IncomeModal({ onClose }: { onClose: () => void }) {
         details: details.trim() || null,
         received_from: receivedFrom.trim() || null,
         received_from_contact_id: receivedFromContactId,
-        payment_method: method || null,
+        payment_method: effectiveMethod || null,
         transaction_date: date,
         tax_jar_amount: taxJar,
         vat_rate: isVatRegistered ? VAT_RATE : null,
@@ -233,7 +241,15 @@ export function IncomeModal({ onClose }: { onClose: () => void }) {
         <Input value={details} onChange={setDetails} placeholder="Extra description" />
       </Field>
 
-      <PaymentMethodPicker selected={method} onSelect={setMethod} methods={INCOME_PAYMENT_METHODS} />
+      {/* No invoice matched and no account tagged — the entry has nothing to
+          reconcile against. A non-blocking nudge to give it a home. */}
+      {!matchedInvoiceId && !accountId && amountNum > 0 && (accounts?.length ?? 0) > 0 && (
+        <div style={{ background: "#fffbeb", border: "1.5px solid #fde68a", borderRadius: 10, padding: "10px 14px", marginBottom: 12, fontSize: 12, color: "#92400e", lineHeight: 1.5 }}>
+          ⚠️ This isn&apos;t linked to an invoice or a bank account — tag the account it came into so it reconciles against your statement later.
+        </div>
+      )}
+
+      <PaymentMethodPicker selected={effectiveMethod} onSelect={setMethod} methods={paymentMethods} />
 
       {error && <p style={{ color: "#dc2626", fontSize: 13, marginBottom: 12 }}>{error}</p>}
       <SaveBtn label={createIncome.isPending ? "Saving..." : "Log income"} onClick={handleSave} disabled={createIncome.isPending} />
