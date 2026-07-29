@@ -8,19 +8,13 @@ import { SaveBtn } from "@/components/ui/SaveBtn";
 import { ContactPicker } from "@/components/ui/ContactPicker";
 import { SalesLineItemsEditor } from "@/components/ui/SalesLineItemsEditor";
 import { salesLinesSubtotal } from "@/lib/lineItems";
-import { fmt, todayStr } from "@/lib/format";
+import { fmt, todayStr, addDays } from "@/lib/format";
 import { useTaxRates } from "@/lib/taxRates";
 import { getNextDocNumber } from "@/lib/docNumber";
 import { useContacts } from "@/lib/supabase/hooks/useContacts";
 import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 import { useCreateQuote, useUpdateQuote, type Quote, type QuoteLineItem } from "@/lib/supabase/hooks/useQuotes";
 import { createClient } from "@/lib/supabase/client";
-
-const addDays = (dateStr: string, days: number) => {
-  const d = new Date(dateStr);
-  d.setDate(d.getDate() + days);
-  return d.toISOString().split("T")[0];
-};
 
 export function QuoteModal({ quote, onClose }: { quote?: Quote; onClose: () => void }) {
   const isEdit = !!quote;

@@ -28,6 +28,14 @@ export function toLocalIsoDate(d: Date): string {
 
 export const todayStr = () => toLocalIsoDate(new Date());
 
+// Add (or subtract) whole days to a YYYY-MM-DD string, staying on the owner's
+// calendar day — built on toLocalIsoDate, not toISOString, for the same UTC
+// off-by-one reason documented above.
+export function addDays(dateStr: string, days: number): string {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return toLocalIsoDate(new Date(y, m - 1, d + days));
+}
+
 export const greeting = () => {
   const h = new Date().getHours();
   if (h < 12) return "Good morning";

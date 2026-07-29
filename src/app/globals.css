@@ -206,16 +206,6 @@ body {
   letter-spacing: 0.3px;
   margin-top: 5px;
 }
-.dash-icon-btn {
-  background: rgba(255, 255, 255, 0.12);
-  border: none;
-  border-radius: 10px;
-  width: 34px;
-  height: 34px;
-  font-size: 15px;
-  cursor: pointer;
-  color: #fff;
-}
 /* The header's word buttons — Help and Log out. Help was a 34px "?" square,
    which only works if you already know what "?" means; the word doesn't ask. */
 .dash-text-btn {
@@ -269,7 +259,6 @@ body {
   }
   /* These buttons lose the navy they were sitting on, so they need their own —
      white-on-sky at 12% opacity would be all but invisible. */
-  .dash-icon-btn,
   .dash-text-btn {
     background: #fff;
     color: #0c4a6e;

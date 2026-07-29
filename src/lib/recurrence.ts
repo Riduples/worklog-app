@@ -8,6 +8,8 @@
 // month-end retainer onto the wrong date and disagree with the generator, so
 // addMonths clamps to match Postgres.
 
+import { addDays, toLocalIsoDate } from "@/lib/format";
+
 export type Recurrence = "none" | "weekly" | "monthly" | "quarterly" | "annual";
 
 // `every` is the noun form, so copy can read "every month" rather than the
@@ -28,9 +30,6 @@ export const RECURRENCE_LABEL: Record<Recurrence, string> = {
   annual: "Annually",
 };
 
-const toIso = (d: Date) =>
-  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-
 function addMonths(dateStr: string, months: number): string {
   const [y, m, d] = dateStr.split("-").map(Number);
   const targetMonthIndex = m - 1 + months;
@@ -38,12 +37,7 @@ function addMonths(dateStr: string, months: number): string {
   const targetMonth = ((targetMonthIndex % 12) + 12) % 12;
   // Day 0 of the following month == last day of the target month.
   const lastDayOfTarget = new Date(targetYear, targetMonth + 1, 0).getDate();
-  return toIso(new Date(targetYear, targetMonth, Math.min(d, lastDayOfTarget)));
-}
-
-function addDays(dateStr: string, days: number): string {
-  const [y, m, d] = dateStr.split("-").map(Number);
-  return toIso(new Date(y, m - 1, d + days));
+  return toLocalIsoDate(new Date(targetYear, targetMonth, Math.min(d, lastDayOfTarget)));
 }
 
 // Returns null for "none" — a once-off invoice has no next run.

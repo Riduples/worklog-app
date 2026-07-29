@@ -9,8 +9,7 @@ import { fmt } from "@/lib/format";
 import { itemTypeMeta } from "@/lib/itemTypes";
 import { useStockItems, useCreateStockItem } from "@/lib/supabase/hooks/useStock";
 import { useCreateCosting, useUpdateCosting, type Costing, type CostingLine } from "@/lib/supabase/hooks/useCostings";
-
-const round2 = (n: number) => Math.round(n * 100) / 100;
+import { round2 } from "@/lib/creditNotes";
 
 export function CostingModal({ costing, onClose }: { costing?: Costing; onClose: () => void }) {
   const isEdit = !!costing;

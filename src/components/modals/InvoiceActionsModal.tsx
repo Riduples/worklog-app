@@ -10,6 +10,7 @@ import { buildInvoiceText, buildCreditNoteText } from "@/lib/docgen/shareText";
 import type { DocForRender } from "@/lib/docgen/buildDocumentHTML";
 import { fmt, todayStr } from "@/lib/format";
 import { salesLineTotal } from "@/lib/lineItems";
+import { balanceInclVat } from "@/lib/balance";
 import { useToolAccess } from "@/lib/supabase/hooks/useToolAccess";
 import { useUpdateInvoice, type Invoice } from "@/lib/supabase/hooks/useInvoices";
 import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
@@ -42,11 +43,6 @@ export function InvoiceActionsModal({ invoice, onClose }: { invoice: Invoice; on
   const items = (invoice.line_items as Array<{ desc: string; qty: number; unit_price?: number; labour?: number; materials?: number }>) ?? [];
   const status = displayStatus(invoice);
   const totalInclVat = Number(invoice.invoice_amount) + Number(invoice.vat_amount ?? 0);
-  // Marking an invoice paid zeroes balance_due but leaves vat_amount alone, so
-  // adding the two would show a paid VAT invoice as still owing the VAT.
-  // Nothing is outstanding once balance_due is zero.
-  const balanceDue = Number(invoice.balance_due);
-  const balanceInclVat = balanceDue > 0 ? balanceDue + Number(invoice.vat_amount ?? 0) : 0;
 
   // ── Credit-this-invoice state + math ──
   const [showCredit, setShowCredit] = useState(false);
@@ -55,9 +51,10 @@ export function InvoiceActionsModal({ invoice, onClose }: { invoice: Invoice; on
   const [reason, setReason] = useState("");
   const [chosenSettlement, setChosenSettlement] = useState<"reduce" | "account">("reduce");
 
-  // Balance owing is VAT-inclusive: balance_due is ex-VAT while any is owing, so
-  // add the full VAT snapshot back on. A paid invoice owes nothing.
-  const balanceOwing = invoice.status === "paid" ? 0 : (Number(invoice.balance_due) > 0 ? Number(invoice.balance_due) + Number(invoice.vat_amount ?? 0) : 0);
+  // VAT-inclusive balance still owing — via the shared helper, which adds the VAT
+  // snapshot back only while balance_due is above zero (a paid doc, zeroed, owes
+  // nothing). See @/lib/balance.
+  const balanceOwing = balanceInclVat(invoice.balance_due, invoice.vat_amount);
   const isPaid = invoice.status === "paid" || balanceOwing <= 0;
   // ex-VAT total of the chosen lines (salesLineTotal per line mirrors invoice_amount):
   const exVatChosen = scope === "whole"
@@ -140,7 +137,7 @@ export function InvoiceActionsModal({ invoice, onClose }: { invoice: Invoice; on
 
       <Row label="Total" value={fmt(totalInclVat)} />
       {invoice.deposit_received ? <Row label="Deposit received" value={fmt(invoice.deposit_received)} /> : null}
-      <Row label="Balance due" value={fmt(balanceInclVat)} bold />
+      <Row label="Balance due" value={fmt(balanceOwing)} bold />
 
       <DocumentActions
         kind="invoice"
