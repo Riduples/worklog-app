@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ToolTile } from "@/components/dashboard/ToolTile";
 import { useToolGate } from "@/lib/useToolGate";
 import { TOOL_CATEGORIES, type ToolId } from "@/lib/permissions";
+import { useLogModal } from "@/components/providers/LogModalProvider";
 
 // The full, permission- and business-type-gated tool list. Shared by the
 // dashboard's "All my tools" and the mobile tab bar's "More" sheet so the two can
@@ -24,7 +25,8 @@ const CAT = Object.fromEntries(TOOL_CATEGORIES.map((c) => [c.id, c])) as Record<
 >;
 
 type NavItem = {
-  href: string;
+  href?: string; // a navigable tool; omitted for an action item (see logKind)
+  logKind?: "income" | "expense"; // an action item that opens the log modal, not a route
   icon: string;
   label: string;
   // How the item earns its place in the list:
@@ -88,6 +90,8 @@ const NAV_CATEGORIES: { id: string; items: NavItem[] }[] = [
       { href: "/bank-statement", icon: "🏦", label: "Import Statement", toolId: "bankstatement" },
       { href: "/cash-up", icon: "🧮", label: "Daily Cash-Up", toolId: "cashup" },
       { href: "/ledger", icon: "📒", label: "Ledgers", toolId: "ledger" },
+      { logKind: "income", icon: "💰", label: "Log income", toolId: "income" },
+      { logKind: "expense", icon: "💸", label: "Log expense", toolId: "expense" },
     ],
   },
   {
@@ -101,12 +105,24 @@ const NAV_CATEGORIES: { id: string; items: NavItem[] }[] = [
   },
 ];
 
-export function AllToolsGrid({ onLockedClick }: { onLockedClick: (tool: ToolId) => void }) {
+export function AllToolsGrid({
+  onLockedClick,
+  onOpenModal,
+}: {
+  onLockedClick: (tool: ToolId) => void;
+  onOpenModal?: () => void; // called just before a log modal opens, so a host overlay (mobile "More") can close first
+}) {
   const { isOwner, gate, tierLocked } = useToolGate();
+  const { openLog } = useLogModal();
   const [open, setOpen] = useState<Record<string, boolean>>({});
 
   const isVisible = (it: NavItem) =>
     it.ownerOnly ? isOwner : it.anyOf ? it.anyOf.some(gate) : it.toolId ? gate(it.toolId) : true;
+
+  const handleLog = (kind: "income" | "expense") => {
+    onOpenModal?.();
+    openLog(kind);
+  };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -137,8 +153,9 @@ export function AllToolsGrid({ onLockedClick }: { onLockedClick: (tool: ToolId) 
                 <div className="tool-grid" style={{ marginBottom: 0 }}>
                   {shown.map((it) => (
                     <ToolTile
-                      key={it.href + it.label}
+                      key={(it.href ?? it.logKind ?? "") + it.label}
                       href={it.href}
+                      onClick={it.logKind ? () => handleLog(it.logKind as "income" | "expense") : undefined}
                       icon={it.icon}
                       label={it.label}
                       locked={it.lockId ? tierLocked(it.lockId) : undefined}

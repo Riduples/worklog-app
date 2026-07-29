@@ -17,12 +17,14 @@ const tileStyle: React.CSSProperties = {
 
 export function ToolTile({
   href,
+  onClick,
   icon,
   label,
   locked,
   onLockedClick,
 }: {
-  href: string;
+  href?: string;
+  onClick?: () => void;
   icon: string;
   label: string;
   locked?: boolean;
@@ -35,8 +37,16 @@ export function ToolTile({
       </button>
     );
   }
+  // An action tile (e.g. Log income / Log expense opens a modal) has no route.
+  if (onClick) {
+    return (
+      <button onClick={onClick} style={tileStyle}>
+        {icon} {label}
+      </button>
+    );
+  }
   return (
-    <Link href={href} style={tileStyle}>
+    <Link href={href ?? "#"} style={tileStyle}>
       {icon} {label}
     </Link>
   );
