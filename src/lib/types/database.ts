@@ -2100,6 +2100,7 @@ export type Database = {
         Row: {
           amount_to_bill: number | null
           bill_type: string
+          booking_id: string | null
           business_id: string
           client_contact_id: string | null
           client_name: string | null
@@ -2110,6 +2111,8 @@ export type Database = {
           hourly_rate: number | null
           hours_worked: number
           id: string
+          ot_hours: number
+          ot_multiplier: number
           quote_id: string | null
           updated_at: string | null
           user_id: string
@@ -2117,6 +2120,7 @@ export type Database = {
         Insert: {
           amount_to_bill?: number | null
           bill_type?: string
+          booking_id?: string | null
           business_id: string
           client_contact_id?: string | null
           client_name?: string | null
@@ -2127,6 +2131,8 @@ export type Database = {
           hourly_rate?: number | null
           hours_worked: number
           id?: string
+          ot_hours?: number
+          ot_multiplier?: number
           quote_id?: string | null
           updated_at?: string | null
           user_id: string
@@ -2134,6 +2140,7 @@ export type Database = {
         Update: {
           amount_to_bill?: number | null
           bill_type?: string
+          booking_id?: string | null
           business_id?: string
           client_contact_id?: string | null
           client_name?: string | null
@@ -2144,11 +2151,20 @@ export type Database = {
           hourly_rate?: number | null
           hours_worked?: number
           id?: string
+          ot_hours?: number
+          ot_multiplier?: number
           quote_id?: string | null
           updated_at?: string | null
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "time_entries_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "time_entries_business_id_fkey"
             columns: ["business_id"]
