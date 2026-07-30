@@ -306,6 +306,20 @@ export function SupplierInvoiceActionsModal({ si, onClose }: { si: SupplierInvoi
           ✅ Mark Paid
         </button>
       )}
+
+      {si.status === "paid" && (
+        <button
+          onClick={() =>
+            updateSI.mutate(
+              { id: si.id, changes: { status: "unpaid", paid_date: null, paid_amount: 0, balance_due: Number(si.invoice_amount) } },
+              { onSuccess: onClose }
+            )
+          }
+          style={{ width: "100%", background: "#fff", color: "#0C4A6E", border: "1.5px solid #cbd5e1", borderRadius: 14, padding: 16, fontWeight: 700, cursor: "pointer", marginTop: 12 }}
+        >
+          ↩️ Mark unpaid
+        </button>
+      )}
     </Modal>
   );
 }

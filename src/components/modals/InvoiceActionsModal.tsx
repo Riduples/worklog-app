@@ -371,6 +371,23 @@ export function InvoiceActionsModal({ invoice, onClose }: { invoice: Invoice; on
           ✅ Mark Paid
         </button>
       )}
+
+      {invoice.status === "paid" && access.canEdit && (
+        <button
+          onClick={() =>
+            updateInvoice.mutate(
+              {
+                id: invoice.id,
+                changes: { status: "unpaid", paid_date: null, balance_due: Number(invoice.invoice_amount) - Number(invoice.deposit_received ?? 0) },
+              },
+              { onSuccess: onClose }
+            )
+          }
+          style={{ width: "100%", background: "#fff", color: "#0C4A6E", border: "1.5px solid #cbd5e1", borderRadius: 14, padding: 16, fontWeight: 700, cursor: "pointer", marginTop: 12 }}
+        >
+          ↩️ Mark unpaid
+        </button>
+      )}
     </Modal>
   );
 }
