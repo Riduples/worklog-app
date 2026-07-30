@@ -19,6 +19,7 @@ export function CostingModal({ costing, onClose }: { costing?: Costing; onClose:
     return existing && existing.length ? existing : [{ kind: "material", desc: "", qty: 1, unit_cost: 0 }];
   });
   const [markup, setMarkup] = useState(String(costing?.markup_pct ?? 50));
+  const [notes, setNotes] = useState(costing?.notes ?? "");
   const [error, setError] = useState("");
   const [savedToList, setSavedToList] = useState(false);
 
@@ -50,6 +51,7 @@ export function CostingModal({ costing, onClose }: { costing?: Costing; onClose:
       markup_pct: markupNum,
       suggested_price: suggestedPrice,
       labour_hours: labourHours,
+      notes: notes.trim() || null,
     };
     if (isEdit) {
       updateCosting.mutate({ id: costing.id, changes: payload }, { onSuccess: onClose });
@@ -166,6 +168,10 @@ export function CostingModal({ costing, onClose }: { costing?: Costing; onClose:
 
       <Field label="Markup %">
         <Input value={markup} onChange={setMarkup} type="number" placeholder="50" />
+      </Field>
+
+      <Field label="Notes / scope (optional)">
+        <Input value={notes} onChange={setNotes} placeholder="What's included, assumptions, exclusions…" />
       </Field>
 
       <div style={{ background: "#0C4A6E", borderRadius: 14, padding: "14px 18px", marginBottom: 16 }}>

@@ -536,6 +536,7 @@ export type Database = {
           lines: Json
           markup_pct: number
           name: string
+          notes: string | null
           suggested_price: number
           total_cost: number
           updated_at: string | null
@@ -550,6 +551,7 @@ export type Database = {
           lines?: Json
           markup_pct?: number
           name: string
+          notes?: string | null
           suggested_price?: number
           total_cost?: number
           updated_at?: string | null
@@ -564,6 +566,7 @@ export type Database = {
           lines?: Json
           markup_pct?: number
           name?: string
+          notes?: string | null
           suggested_price?: number
           total_cost?: number
           updated_at?: string | null

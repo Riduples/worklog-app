@@ -3,6 +3,8 @@ import { itemTypeMeta } from "@/lib/itemTypes";
 import { salesLineTotal } from "@/lib/lineItems";
 import type { QuoteLineItem } from "@/lib/supabase/hooks/useQuotes";
 import { useStockItems } from "@/lib/supabase/hooks/useStock";
+import { useCostings, type CostingLine } from "@/lib/supabase/hooks/useCostings";
+import { round2 } from "@/lib/creditNotes";
 
 export function SalesLineItemsEditor({
   items,
@@ -12,6 +14,7 @@ export function SalesLineItemsEditor({
   onChange: (items: QuoteLineItem[]) => void;
 }) {
   const { data: stock } = useStockItems();
+  const { data: costings } = useCostings();
   const updateItem = (index: number, changes: Partial<QuoteLineItem>) => {
     onChange(items.map((it, i) => (i === index ? { ...it, ...changes } : it)));
   };
@@ -110,6 +113,35 @@ export function SalesLineItemsEditor({
           {(stock ?? []).map((s) => (
             <option key={s.id} value={s.id}>
               {itemTypeMeta(s.item_type).icon} {s.name} — {fmt(s.sell_price)}
+            </option>
+          ))}
+        </select>
+      )}
+      {(costings ?? []).length > 0 && (
+        <select
+          value=""
+          onChange={(e) => {
+            const c = (costings ?? []).find((x) => x.id === e.target.value);
+            if (!c) return;
+            // A costing's lines are COSTS; mark each up by the costing's markup so
+            // the quote/invoice reflects the sell price (their sum = suggested_price).
+            // A labour line's qty is hours, which carries onto est_hours.
+            const m = 1 + Number(c.markup_pct || 0) / 100;
+            const costingLines: QuoteLineItem[] = ((c.lines as CostingLine[]) ?? []).map((ln) => ({
+              desc: ln.desc || (ln.kind === "labour" ? "Labour" : "Material"),
+              qty: Number(ln.qty || 0),
+              unit_price: round2(Number(ln.unit_cost || 0) * m),
+              est_hours: ln.kind === "labour" ? Number(ln.qty || 0) : undefined,
+            }));
+            onChange([...items, ...costingLines]);
+            e.target.value = "";
+          }}
+          style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1.5px solid #e2e8f0", fontSize: 14, color: "#334155", background: "#fff", marginBottom: 10, boxSizing: "border-box" }}
+        >
+          <option value="">Load from a saved costing…</option>
+          {(costings ?? []).map((c) => (
+            <option key={c.id} value={c.id}>
+              🧮 {c.name} — {fmt(c.suggested_price)}
             </option>
           ))}
         </select>
