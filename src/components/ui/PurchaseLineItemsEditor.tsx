@@ -1,4 +1,6 @@
 import { fmt } from "@/lib/format";
+import { itemTypeMeta } from "@/lib/itemTypes";
+import { useStockItems } from "@/lib/supabase/hooks/useStock";
 
 export type PurchaseLineItem = { desc: string; qty: number; unit_price: number };
 
@@ -9,6 +11,7 @@ export function PurchaseLineItemsEditor({
   items: PurchaseLineItem[];
   onChange: (items: PurchaseLineItem[]) => void;
 }) {
+  const { data: stock } = useStockItems();
   const updateItem = (index: number, changes: Partial<PurchaseLineItem>) => {
     onChange(items.map((it, i) => (i === index ? { ...it, ...changes } : it)));
   };
@@ -82,6 +85,26 @@ export function PurchaseLineItemsEditor({
           </div>
         );
       })}
+      {(stock ?? []).length > 0 && (
+        <select
+          value=""
+          onChange={(e) => {
+            const s = (stock ?? []).find((it) => it.id === e.target.value);
+            if (!s) return;
+            // Purchases are what you PAY, so a picked item seeds its cost price.
+            onChange([...items, { desc: s.name, qty: 1, unit_price: Number(s.cost_price || 0) }]);
+            e.target.value = "";
+          }}
+          style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1.5px solid #e2e8f0", fontSize: 14, color: "#334155", background: "#fff", marginBottom: 10, boxSizing: "border-box" }}
+        >
+          <option value="">Add from your items…</option>
+          {(stock ?? []).map((s) => (
+            <option key={s.id} value={s.id}>
+              {itemTypeMeta(s.item_type).icon} {s.name} — {fmt(s.cost_price)}
+            </option>
+          ))}
+        </select>
+      )}
       <button
         type="button"
         onClick={addItem}
