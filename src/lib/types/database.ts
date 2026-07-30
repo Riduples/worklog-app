@@ -231,6 +231,7 @@ export type Database = {
       }
       bookings: {
         Row: {
+          appt_type: string
           balance_due: number | null
           booking_date: string
           booking_time: string | null
@@ -240,7 +241,16 @@ export type Database = {
           created_at: string | null
           deleted_at: string | null
           deposit_paid: number | null
+          distance_km: number | null
+          duration_min: number | null
           id: string
+          is_onsite: boolean
+          linked_quote_id: string | null
+          location: string | null
+          notes: string | null
+          purpose: string | null
+          recurrence: string
+          reminder: boolean
           service: string | null
           status: string
           total_price: number | null
@@ -248,6 +258,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          appt_type?: string
           balance_due?: number | null
           booking_date: string
           booking_time?: string | null
@@ -257,7 +268,16 @@ export type Database = {
           created_at?: string | null
           deleted_at?: string | null
           deposit_paid?: number | null
+          distance_km?: number | null
+          duration_min?: number | null
           id?: string
+          is_onsite?: boolean
+          linked_quote_id?: string | null
+          location?: string | null
+          notes?: string | null
+          purpose?: string | null
+          recurrence?: string
+          reminder?: boolean
           service?: string | null
           status?: string
           total_price?: number | null
@@ -265,6 +285,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          appt_type?: string
           balance_due?: number | null
           booking_date?: string
           booking_time?: string | null
@@ -274,7 +295,16 @@ export type Database = {
           created_at?: string | null
           deleted_at?: string | null
           deposit_paid?: number | null
+          distance_km?: number | null
+          duration_min?: number | null
           id?: string
+          is_onsite?: boolean
+          linked_quote_id?: string | null
+          location?: string | null
+          notes?: string | null
+          purpose?: string | null
+          recurrence?: string
+          reminder?: boolean
           service?: string | null
           status?: string
           total_price?: number | null

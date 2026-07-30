@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useBookings, useUpdateBooking, type Booking } from "@/lib/supabase/hooks/useBookings";
+import { useContacts } from "@/lib/supabase/hooks/useContacts";
 import { BookingModal } from "@/components/modals/BookingModal";
 import { Modal } from "@/components/ui/Modal";
 import { Row } from "@/components/ui/Row";
@@ -18,6 +19,25 @@ const STATUS_COLORS: Record<string, { bg: string; fg: string }> = {
   no_show: { bg: "#fee2e2", fg: "#991b1b" },
 };
 
+// Normalise a stored phone to the wa.me digits-only form. SA numbers are typed
+// every which way ("073 005 5112", "+27 73…", "2773…"); wa.me wants pure digits
+// with the country code, so strip separators and turn a local leading 0 into 27.
+function waNumber(phone: string | null | undefined): string | null {
+  if (!phone) return null;
+  let d = phone.replace(/\D/g, "");
+  if (!d) return null;
+  if (d.startsWith("0")) d = "27" + d.slice(1);
+  else if (d.length === 9) d = "27" + d; // 0 dropped entirely
+  return d;
+}
+
+function fmtDuration(min: number | null | undefined): string | null {
+  if (!min) return null;
+  if (min < 60) return `${min} min`;
+  const h = min / 60;
+  return Number.isInteger(h) ? `${h} hour${h > 1 ? "s" : ""}` : `${h} hours`;
+}
+
 function BookingActionsModal({
   booking,
   canEdit,
@@ -30,24 +50,62 @@ function BookingActionsModal({
   onClose: () => void;
 }) {
   const updateBooking = useUpdateBooking();
+  const { data: contacts } = useContacts();
   const color = STATUS_COLORS[booking.status] ?? STATUS_COLORS.confirmed;
   const setStatus = (status: string) => updateBooking.mutate({ id: booking.id, changes: { status } }, { onSuccess: onClose });
   // A past appointment can only be marked complete/no-show, not rescheduled or
   // re-priced, so editing is offered on today's and future bookings only.
   const isPast = booking.booking_date < todayStr();
+  const isUpcoming = !isPast && (booking.status === "confirmed" || booking.status === "pending");
+
+  // The customer's number lives on their contact record, not the booking. Only
+  // build a reminder link if we can resolve one.
+  const contact = booking.client_contact_id ? (contacts ?? []).find((c) => c.id === booking.client_contact_id) : null;
+  const waNum = waNumber(contact?.phone);
+  const firstName = booking.client_name.split(" ")[0] || booking.client_name;
+  const whenText = `${booking.booking_date}${booking.booking_time ? ` at ${booking.booking_time}` : ""}`;
+  const reminderMsg = `Hi ${firstName}, a friendly reminder about your ${booking.service ? booking.service + " " : ""}appointment on ${whenText}. Please let me know if anything changes. Thank you!`;
+  const reminderLink = waNum ? `https://wa.me/${waNum}?text=${encodeURIComponent(reminderMsg)}` : null;
+  const duration = fmtDuration(booking.duration_min);
 
   return (
     <Modal title={booking.client_name} onClose={onClose}>
-      <div style={{ marginBottom: 16 }}>
+      <div style={{ marginBottom: 16, display: "flex", gap: 8, alignItems: "center" }}>
         <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20, background: color.bg, color: color.fg, textTransform: "uppercase" }}>
           {booking.status.replace("_", " ")}
         </span>
+        {booking.appt_type === "supplier" && (
+          <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20, background: "#fef3c7", color: "#92400e" }}>
+            Supplier
+          </span>
+        )}
       </div>
       <Row label="Service" value={booking.service ?? "—"} />
+      {booking.purpose ? <Row label="Purpose" value={booking.purpose} /> : null}
       <Row label="Date" value={`${booking.booking_date}${booking.booking_time ? ` · ${booking.booking_time}` : ""}`} />
+      {duration ? <Row label="Duration" value={duration} /> : null}
+      {booking.location ? <Row label="Location" value={booking.location} /> : null}
+      {booking.is_onsite && booking.distance_km ? <Row label="Distance (each way)" value={`${booking.distance_km} km`} /> : null}
       <Row label="Total" value={fmt(booking.total_price)} />
       {booking.deposit_paid ? <Row label="Deposit paid" value={fmt(booking.deposit_paid)} /> : null}
       <Row label="Balance due" value={fmt(booking.balance_due)} bold />
+      {booking.notes ? <Row label="Notes" value={booking.notes} /> : null}
+
+      {isUpcoming && reminderLink && (
+        <a
+          href={reminderLink}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ display: "block", textAlign: "center", width: "100%", background: "#25D366", color: "#fff", border: "none", borderRadius: 14, padding: 15, fontWeight: 700, cursor: "pointer", marginTop: 16, textDecoration: "none", boxSizing: "border-box" }}
+        >
+          📲 Send WhatsApp reminder
+        </a>
+      )}
+      {isUpcoming && !reminderLink && booking.reminder && (
+        <p style={{ fontSize: 12, color: "#94a3b8", marginTop: 14, textAlign: "center" }}>
+          Add this customer&apos;s phone number to their contact to send a reminder.
+        </p>
+      )}
 
       {canEdit && !isPast && (
         <button
