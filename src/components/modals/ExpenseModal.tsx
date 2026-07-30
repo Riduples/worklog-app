@@ -34,6 +34,7 @@ export function ExpenseModal({ onClose }: { onClose: () => void }) {
   const [matchedSupplierInvoiceId, setMatchedSupplierInvoiceId] = useState<string | null>(null);
   const [markSiPaid, setMarkSiPaid] = useState(false);
   const [accountId, setAccountId] = useState<string | null>(null);
+  const [isPersonal, setIsPersonal] = useState(false);
   const [error, setError] = useState("");
 
   const { data: contacts } = useContacts();
@@ -93,16 +94,19 @@ export function ExpenseModal({ onClose }: { onClose: () => void }) {
         // Loss the matched cash is netted out and the bill carries the cost, so
         // nothing is lost by not categorising the payment itself.
         what_for: isMatched ? null : whatFor.trim() || null,
-        sars_category: isMatched ? null : sarsCategory?.sars ?? null,
+        sars_category: isPersonal || isMatched ? null : sarsCategory?.sars ?? null,
         details: details.trim() || null,
         paid_to: paidTo.trim() || null,
         paid_to_contact_id: paidToContactId,
         payment_method: effectiveMethod || null,
         transaction_date: date,
-        matched_ledger_entry_id: matchedLedgerEntryId,
-        matched_supplier_invoice_id: matchedSupplierInvoiceId,
+        // Owner's drawing — not a business expense, so it's not categorised and
+        // P&L excludes it (see pnl.ts); any matcher link is dropped.
+        matched_ledger_entry_id: isPersonal ? null : matchedLedgerEntryId,
+        matched_supplier_invoice_id: isPersonal ? null : matchedSupplierInvoiceId,
         account_id: accountId,
         source: "manual",
+        is_personal: isPersonal,
       },
       {
         onSuccess: async () => {
@@ -149,6 +153,14 @@ export function ExpenseModal({ onClose }: { onClose: () => void }) {
         <Input value={amount} onChange={setAmount} type="number" placeholder="0.00" autoFocus />
       </Field>
 
+      <button
+        type="button"
+        onClick={() => setIsPersonal((p) => !p)}
+        style={{ width: "100%", textAlign: "left", padding: "11px 14px", borderRadius: 12, border: `1.5px solid ${isPersonal ? "#0C4A6E" : "#e2e8f0"}`, background: isPersonal ? "#F0F9FF" : "#fff", cursor: "pointer", fontFamily: "inherit", fontSize: 12.5, fontWeight: 600, color: isPersonal ? "#0C4A6E" : "#64748b", marginBottom: 12, lineHeight: 1.5 }}
+      >
+        {isPersonal ? "✓ " : ""}This is my own money coming out (owner&apos;s drawing) — not a business expense
+      </button>
+
       <ContactPicker
         label="Paid to"
         value={paidTo}
@@ -160,6 +172,7 @@ export function ExpenseModal({ onClose }: { onClose: () => void }) {
         placeholder="Name (optional)"
       />
 
+      {!isPersonal && (<>
       <LedgerEntryMatcher
         entries={supplierEntries}
         matchedId={matchedLedgerEntryId}
@@ -198,9 +211,11 @@ export function ExpenseModal({ onClose }: { onClose: () => void }) {
         markPaid={markSiPaid}
         onMarkPaidChange={setMarkSiPaid}
       />
+      </>)}
 
-      {/* Unmatched spend: no bill to inherit from, so capture what it was for. */}
-      {!isMatched && (
+      {/* Unmatched spend: no bill to inherit from, so capture what it was for.
+          Hidden for personal money (owner's drawing — not a business expense). */}
+      {!isMatched && !isPersonal && (
         <div style={{ position: "relative" }}>
           <Field label="What for?">
             <Input
@@ -232,7 +247,7 @@ export function ExpenseModal({ onClose }: { onClose: () => void }) {
 
       {/* No bill matched and no account tagged — the entry has nothing to
           reconcile against. A non-blocking nudge to give it a home. */}
-      {!isMatched && !accountId && amountNum > 0 && (accounts?.length ?? 0) > 0 && (
+      {!isMatched && !isPersonal && !accountId && amountNum > 0 && (accounts?.length ?? 0) > 0 && (
         <div style={{ background: "#fffbeb", border: "1.5px solid #fde68a", borderRadius: 10, padding: "10px 14px", marginBottom: 12, fontSize: 12, color: "#92400e", lineHeight: 1.5 }}>
           ⚠️ This isn&apos;t linked to a bill or a bank account — tag the account it was paid from so it reconciles against your statement later.
         </div>

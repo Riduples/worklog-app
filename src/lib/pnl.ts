@@ -69,17 +69,17 @@ export function computePnl(inputs: PnlInputs, within: (dateStr: string) => boole
     .filter((i) => within(i.issue_date))
     .reduce((s, i) => s + Number(i.invoice_amount), 0);
   const cashIncome = (income ?? [])
-    .filter((r) => within(r.transaction_date) && !r.is_credit_settlement)
+    .filter((r) => within(r.transaction_date) && !r.is_credit_settlement && !r.is_personal)
     .reduce((s, r) => s + incomeNet(r), 0);
   const incomeLinkedToInvoice = (income ?? [])
-    .filter((r) => within(r.transaction_date) && r.matched_invoice_id && !r.is_credit_settlement)
+    .filter((r) => within(r.transaction_date) && r.matched_invoice_id && !r.is_credit_settlement && !r.is_personal)
     .reduce((s, r) => s + incomeNet(r), 0);
   const cashIncomeNotInvoiced = cashIncome - incomeLinkedToInvoice;
   const revenue = invoicesIssued + cashIncomeNotInvoiced;
 
   // ── costs ──
   const cashExpense = (expenses ?? [])
-    .filter((r) => within(r.transaction_date) && !r.is_credit_settlement)
+    .filter((r) => within(r.transaction_date) && !r.is_credit_settlement && !r.is_personal)
     .reduce((s, r) => s + Number(r.amount), 0);
 
   // Cash basis: plain money-in/money-out for one account, no accrual netting.
@@ -107,7 +107,7 @@ export function computePnl(inputs: PnlInputs, within: (dateStr: string) => boole
   // matcher columns, so match on OR and subtract it a single time; summing two
   // per-column totals would double-subtract it and understate costs.
   const expenseSettlingAccrual = (expenses ?? [])
-    .filter((r) => within(r.transaction_date) && !r.is_credit_settlement && (r.matched_ledger_entry_id || r.matched_supplier_invoice_id))
+    .filter((r) => within(r.transaction_date) && !r.is_credit_settlement && !r.is_personal && (r.matched_ledger_entry_id || r.matched_supplier_invoice_id))
     .reduce((s, r) => s + Number(r.amount), 0);
   const cashExpensesNotMatched = cashExpense - expenseSettlingAccrual;
 

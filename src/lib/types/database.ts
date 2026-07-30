@@ -700,6 +700,7 @@ export type Database = {
           details: string | null
           id: string
           is_credit_settlement: boolean
+          is_personal: boolean
           matched_ledger_entry_id: string | null
           matched_supplier_invoice_id: string | null
           paid_to: string | null
@@ -722,6 +723,7 @@ export type Database = {
           details?: string | null
           id?: string
           is_credit_settlement?: boolean
+          is_personal?: boolean
           matched_ledger_entry_id?: string | null
           matched_supplier_invoice_id?: string | null
           paid_to?: string | null
@@ -744,6 +746,7 @@ export type Database = {
           details?: string | null
           id?: string
           is_credit_settlement?: boolean
+          is_personal?: boolean
           matched_ledger_entry_id?: string | null
           matched_supplier_invoice_id?: string | null
           paid_to?: string | null
@@ -853,6 +856,7 @@ export type Database = {
           details: string | null
           id: string
           is_credit_settlement: boolean
+          is_personal: boolean
           matched_invoice_id: string | null
           payment_method: string | null
           received_from: string | null
@@ -877,6 +881,7 @@ export type Database = {
           details?: string | null
           id?: string
           is_credit_settlement?: boolean
+          is_personal?: boolean
           matched_invoice_id?: string | null
           payment_method?: string | null
           received_from?: string | null
@@ -901,6 +906,7 @@ export type Database = {
           details?: string | null
           id?: string
           is_credit_settlement?: boolean
+          is_personal?: boolean
           matched_invoice_id?: string | null
           payment_method?: string | null
           received_from?: string | null

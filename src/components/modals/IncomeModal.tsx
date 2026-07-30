@@ -32,6 +32,7 @@ export function IncomeModal({ onClose }: { onClose: () => void }) {
   const [matchedInvoiceId, setMatchedInvoiceId] = useState<string | null>(null);
   const [markPaid, setMarkPaid] = useState(false);
   const [accountId, setAccountId] = useState<string | null>(null);
+  const [isPersonal, setIsPersonal] = useState(false);
   const [error, setError] = useState("");
 
   const { data: contacts } = useContacts();
@@ -91,18 +92,21 @@ export function IncomeModal({ onClose }: { onClose: () => void }) {
         // Jar tracker); VAT201 and Profit & Loss already exclude matched rows, so
         // nothing is double-counted.
         what_for: matchedInvoiceId ? null : whatFor.trim() || null,
-        sars_category: matchedInvoiceId ? null : sarsCategory?.sars ?? null,
+        sars_category: isPersonal || matchedInvoiceId ? null : sarsCategory?.sars ?? null,
         details: details.trim() || null,
         received_from: receivedFrom.trim() || null,
         received_from_contact_id: receivedFromContactId,
         payment_method: effectiveMethod || null,
         transaction_date: date,
-        tax_jar_amount: taxJar,
-        vat_rate: isVatRegistered ? VAT_RATE : null,
-        vat_amount: vatAmount,
-        matched_invoice_id: matchedInvoiceId,
+        // Personal money is the owner's own contribution — not income, so it's
+        // never taxed or VAT'd, and P&L excludes it (see pnl.ts).
+        tax_jar_amount: isPersonal ? 0 : taxJar,
+        vat_rate: isPersonal ? null : isVatRegistered ? VAT_RATE : null,
+        vat_amount: isPersonal ? 0 : vatAmount,
+        matched_invoice_id: isPersonal ? null : matchedInvoiceId,
         account_id: accountId,
         source: "manual",
+        is_personal: isPersonal,
       },
       {
         onSuccess: async () => {
@@ -137,6 +141,14 @@ export function IncomeModal({ onClose }: { onClose: () => void }) {
         <Input value={amount} onChange={setAmount} type="number" placeholder="0.00" autoFocus />
       </Field>
 
+      <button
+        type="button"
+        onClick={() => setIsPersonal((p) => !p)}
+        style={{ width: "100%", textAlign: "left", padding: "11px 14px", borderRadius: 12, border: `1.5px solid ${isPersonal ? "#0C4A6E" : "#e2e8f0"}`, background: isPersonal ? "#F0F9FF" : "#fff", cursor: "pointer", fontFamily: "inherit", fontSize: 12.5, fontWeight: 600, color: isPersonal ? "#0C4A6E" : "#64748b", marginBottom: 12, lineHeight: 1.5 }}
+      >
+        {isPersonal ? "✓ " : ""}This is my own money going in (owner&apos;s contribution) — keep it out of income &amp; tax
+      </button>
+
       <ContactPicker
         label="Received from"
         value={receivedFrom}
@@ -148,6 +160,7 @@ export function IncomeModal({ onClose }: { onClose: () => void }) {
         placeholder="Name (optional)"
       />
 
+      {!isPersonal && (
       <InvoiceMatcher
         invoices={invoices ?? []}
         matchedId={matchedInvoiceId}
@@ -172,10 +185,11 @@ export function IncomeModal({ onClose }: { onClose: () => void }) {
         markPaid={markPaid}
         onMarkPaidChange={setMarkPaid}
       />
+      )}
 
       {/* Cash-sale path: no invoice to inherit from, so capture the category and
-          show the VAT the amount contains. */}
-      {!matchedInvoiceId && (
+          show the VAT the amount contains. Hidden for personal money (not a sale). */}
+      {!matchedInvoiceId && !isPersonal && (
         <>
           <div style={{ position: "relative" }}>
             <Field label="What for?">
@@ -231,7 +245,7 @@ export function IncomeModal({ onClose }: { onClose: () => void }) {
 
       {/* Matched path: the invoice already carries the income and its VAT. Say so
           plainly — this is the reassurance that the money isn't taxed twice. */}
-      {matchedInvoiceId && isVatRegistered && (
+      {matchedInvoiceId && !isPersonal && isVatRegistered && (
         <div style={{ background: "#F0F9FF", border: "1.5px solid #BAE6FD", borderRadius: 12, padding: "12px 14px", marginBottom: 16, fontSize: 12, color: "#0C4A6E", lineHeight: 1.6 }}>
           {`✅ The VAT and income for this sale live on ${matchedInvoice?.doc_number ?? "the linked invoice"}. This payment is only recorded as settling it — the VAT is never counted twice.`}
         </div>
@@ -243,7 +257,7 @@ export function IncomeModal({ onClose }: { onClose: () => void }) {
 
       {/* No invoice matched and no account tagged — the entry has nothing to
           reconcile against. A non-blocking nudge to give it a home. */}
-      {!matchedInvoiceId && !accountId && amountNum > 0 && (accounts?.length ?? 0) > 0 && (
+      {!matchedInvoiceId && !isPersonal && !accountId && amountNum > 0 && (accounts?.length ?? 0) > 0 && (
         <div style={{ background: "#fffbeb", border: "1.5px solid #fde68a", borderRadius: 10, padding: "10px 14px", marginBottom: 12, fontSize: 12, color: "#92400e", lineHeight: 1.5 }}>
           ⚠️ This isn&apos;t linked to an invoice or a bank account — tag the account it came into so it reconciles against your statement later.
         </div>
