@@ -8,9 +8,21 @@ import { Chips } from "@/components/ui/Chips";
 import { SaveBtn } from "@/components/ui/SaveBtn";
 import { fmt, todayStr } from "@/lib/format";
 import { useTaxRates } from "@/lib/taxRates";
+import { useBookings } from "@/lib/supabase/hooks/useBookings";
 import { useCreateMileageTrip, useUpdateMileageTrip, type MileageTrip } from "@/lib/supabase/hooks/useMileage";
 
 const TRIP_TYPES = ["Customer visit", "Supplier visit", "Other"];
+
+const selectStyle: React.CSSProperties = {
+  width: "100%",
+  padding: "13px 14px",
+  borderRadius: 12,
+  border: "1.5px solid #e2e8f0",
+  fontSize: 15,
+  background: "#fff",
+  boxSizing: "border-box",
+  fontFamily: "inherit",
+};
 
 export function MileageModal({ trip, onClose }: { trip?: MileageTrip; onClose: () => void }) {
   const isEdit = !!trip;
@@ -19,9 +31,11 @@ export function MileageModal({ trip, onClose }: { trip?: MileageTrip; onClose: (
   const [tripType, setTripType] = useState(trip?.trip_type ?? "Customer visit");
   const [purpose, setPurpose] = useState(trip?.purpose ?? "");
   const [tripDate, setTripDate] = useState(trip?.trip_date ?? todayStr());
+  const [bookingId, setBookingId] = useState<string>(trip?.booking_id ?? "");
   const [error, setError] = useState("");
 
   const { MILEAGE_RATE } = useTaxRates();
+  const { data: bookings } = useBookings();
   const createTrip = useCreateMileageTrip();
   const updateTrip = useUpdateMileageTrip();
   const saving = createTrip.isPending || updateTrip.isPending;
@@ -30,6 +44,19 @@ export function MileageModal({ trip, onClose }: { trip?: MileageTrip; onClose: (
   const endNum = parseFloat(odoEnd) || 0;
   const km = Math.max(0, endNum - startNum);
   const deduction = km * MILEAGE_RATE;
+
+  // Diary appointments to log a drive against (a cancelled one is not a real trip).
+  const openBookings = (bookings ?? []).filter((b) => b.status !== "cancelled");
+
+  const applyBooking = (id: string) => {
+    setBookingId(id);
+    const b = (bookings ?? []).find((x) => x.id === id);
+    if (!b) return;
+    // Auto-fill date, purpose and trip type from the appointment, mirroring v126.
+    setTripDate(b.booking_date ?? todayStr());
+    setTripType(b.appt_type === "supplier" ? "Supplier visit" : "Customer visit");
+    setPurpose(b.purpose || b.service || `${b.appt_type === "supplier" ? "Supplier" : "Customer"} visit — ${b.client_name}`);
+  };
 
   const handleSave = () => {
     if (!odoStart || !odoEnd) {
@@ -50,6 +77,7 @@ export function MileageModal({ trip, onClose }: { trip?: MileageTrip; onClose: (
       purpose: purpose.trim() || null,
       sars_deduction: deduction,
       trip_date: tripDate,
+      booking_id: bookingId || null,
     };
 
     // Editing only ever touches this trip row. Any SARS expense the trip is
@@ -60,6 +88,21 @@ export function MileageModal({ trip, onClose }: { trip?: MileageTrip; onClose: (
 
   return (
     <Modal title={isEdit ? "Edit trip" : "Log trip"} onClose={onClose}>
+      {openBookings.length > 0 && (
+        <Field label="Diary appointment (auto-fills the details)">
+          <select value={bookingId} onChange={(e) => applyBooking(e.target.value)} style={selectStyle}>
+            <option value="">— Not from the diary —</option>
+            {openBookings.map((b) => (
+              <option key={b.id} value={b.id}>
+                {b.booking_date}
+                {b.booking_time ? ` · ${b.booking_time}` : ""} · {b.client_name}
+                {b.service ? ` · ${b.service}` : ""}
+              </option>
+            ))}
+          </select>
+        </Field>
+      )}
+
       <Field label="Trip type">
         <Chips options={TRIP_TYPES} selected={tripType} onSelect={(v) => v && setTripType(v)} />
       </Field>

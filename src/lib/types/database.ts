@@ -1211,6 +1211,7 @@ export type Database = {
       }
       mileage_trips: {
         Row: {
+          booking_id: string | null
           business_id: string
           created_at: string | null
           deleted_at: string | null
@@ -1226,6 +1227,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          booking_id?: string | null
           business_id: string
           created_at?: string | null
           deleted_at?: string | null
@@ -1241,6 +1243,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          booking_id?: string | null
           business_id?: string
           created_at?: string | null
           deleted_at?: string | null
@@ -1256,6 +1259,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "mileage_trips_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "mileage_trips_business_id_fkey"
             columns: ["business_id"]

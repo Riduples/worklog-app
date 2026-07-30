@@ -131,11 +131,12 @@ export function BookingModal({ booking, onClose }: { booking?: Booking; onClose:
     createBooking.mutate(
       { ...changes, status: "confirmed" },
       {
-        onSuccess: async () => {
+        onSuccess: async (created) => {
           // On-site visit → log the round trip's SARS-rate mileage deduction. We do
           // NOT also create a cash expense: the per-km deduction IS the travel claim,
           // and booking both would double-count. Best-effort — a failure never loses
-          // the booking. Stored as odometer 0→tripKm since we only know the distance.
+          // the booking. Stored as odometer 0→tripKm since we only know the distance,
+          // and linked back to this booking for traceability.
           if (isOnsite && roundTripKm > 0) {
             await createMileage
               .mutateAsync({
@@ -146,6 +147,7 @@ export function BookingModal({ booking, onClose }: { booking?: Booking; onClose:
                 purpose: `On-site: ${service.trim() || purpose.trim() || client.trim()}`,
                 sars_deduction: Math.round(roundTripKm * MILEAGE_RATE * 100) / 100,
                 trip_date: bookingDate,
+                booking_id: created.id,
               })
               .catch(() => {});
           }
