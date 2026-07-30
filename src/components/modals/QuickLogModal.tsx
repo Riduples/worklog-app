@@ -721,7 +721,7 @@ export function QuickLogModal({ onClose }: { onClose: () => void }) {
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/*"
+            accept="image/*,application/pdf"
             style={{ display: "none" }}
             onChange={(e) => handleImage(e.target.files?.[0])}
           />
@@ -755,12 +755,19 @@ export function QuickLogModal({ onClose }: { onClose: () => void }) {
 
           {imagePreview && (
             <div style={{ marginBottom: 14, position: "relative" }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={imagePreview}
-                alt="Receipt"
-                style={{ width: "100%", borderRadius: 12, maxHeight: 200, objectFit: "cover" }}
-              />
+              {imageData?.mediaType === "application/pdf" ? (
+                <div style={{ width: "100%", borderRadius: 12, background: "#F0F9FF", border: "1.5px solid #BAE6FD", padding: "22px 16px", textAlign: "center", color: "#0369A1" }}>
+                  <div style={{ fontSize: 30, marginBottom: 4 }}>📄</div>
+                  <div style={{ fontSize: 13, fontWeight: 700 }}>PDF uploaded</div>
+                </div>
+              ) : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={imagePreview}
+                  alt="Receipt"
+                  style={{ width: "100%", borderRadius: 12, maxHeight: 200, objectFit: "cover" }}
+                />
+              )}
               <button
                 onClick={() => {
                   setImageData(null);

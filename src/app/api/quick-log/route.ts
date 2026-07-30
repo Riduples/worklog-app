@@ -194,9 +194,16 @@ export async function POST(request: Request) {
   const contactNames = (contactsResult.data ?? []).map((c) => c.name);
   const stockNames = (stockResult.data ?? []).map((s) => s.name);
 
-  const userContent: Anthropic.MessageParam["content"] = image
+  // A photo goes in as an image block; a PDF (invoice/statement) as a document
+  // block — Claude reads both. The image branch keeps its narrow media-type cast.
+  const attachment: Anthropic.ContentBlockParam | null = !image
+    ? null
+    : image.mediaType === "application/pdf"
+      ? { type: "document", source: { type: "base64", media_type: "application/pdf", data: image.base64 } }
+      : { type: "image", source: { type: "base64", media_type: image.mediaType as "image/jpeg" | "image/png" | "image/gif" | "image/webp", data: image.base64 } };
+  const userContent: Anthropic.MessageParam["content"] = attachment
     ? [
-        { type: "image", source: { type: "base64", media_type: image.mediaType as "image/jpeg" | "image/png" | "image/gif" | "image/webp", data: image.base64 } },
+        attachment,
         {
           type: "text",
           text: text ? `Additional context: ${text}` : "Extract the transaction from this receipt, invoice or document.",
