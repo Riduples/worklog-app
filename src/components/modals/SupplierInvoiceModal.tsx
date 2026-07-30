@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/Input";
 import { SaveBtn } from "@/components/ui/SaveBtn";
 import { ContactPicker } from "@/components/ui/ContactPicker";
 import { PurchaseLineItemsEditor, type PurchaseLineItem } from "@/components/ui/PurchaseLineItemsEditor";
-import { fmt, todayStr } from "@/lib/format";
+import { fmt, todayStr, addDays } from "@/lib/format";
 import { useTaxRates } from "@/lib/taxRates";
 import { useContacts } from "@/lib/supabase/hooks/useContacts";
 import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
@@ -22,6 +22,7 @@ export function SupplierInvoiceModal({ onClose }: { onClose: () => void }) {
   const [dueDate, setDueDate] = useState("");
   const [items, setItems] = useState<PurchaseLineItem[]>([{ desc: "", qty: 1, unit_price: 0 }]);
   const [paidAmount, setPaidAmount] = useState("0");
+  const [amountOverride, setAmountOverride] = useState("");
   const [linkedPoId, setLinkedPoId] = useState<string | null>(null);
   const [showPoPicker, setShowPoPicker] = useState(false);
   const [error, setError] = useState("");
@@ -37,10 +38,22 @@ export function SupplierInvoiceModal({ onClose }: { onClose: () => void }) {
   const linkedPo = openPos.find((po) => po.id === linkedPoId);
 
   const subtotal = items.reduce((s, it) => s + Number(it.qty || 0) * Number(it.unit_price || 0), 0);
+  // The invoice total is the line sum, unless the user overrides it to match the
+  // actual document — a lump-sum bill, or lines that don't foot exactly.
+  const effectiveSubtotal = amountOverride.trim() !== "" ? parseFloat(amountOverride) || 0 : subtotal;
   const isVatRegistered = !!business?.vat_number;
-  const vatAmount = isVatRegistered ? subtotal * VAT_RATE : 0;
+  const vatAmount = isVatRegistered ? effectiveSubtotal * VAT_RATE : 0;
   const paidNum = parseFloat(paidAmount) || 0;
-  const balanceDue = subtotal - paidNum;
+  const balanceDue = effectiveSubtotal - paidNum;
+
+  // Auto-fill the due date from the picked supplier's payment terms (e.g. "30 days"
+  // → issue date + 30; "On delivery"/"Cash only" → the invoice date itself).
+  const applySupplierTerms = (contactId: string | null) => {
+    const c = contactId ? suppliers.find((s) => s.id === contactId) : null;
+    if (!c?.payment_terms) return;
+    const m = c.payment_terms.match(/(\d+)/);
+    setDueDate(addDays(issueDate, m ? parseInt(m[1], 10) : 0));
+  };
 
   const loadFromPo = (poId: string) => {
     const po = openPos.find((p) => p.id === poId);
@@ -48,6 +61,7 @@ export function SupplierInvoiceModal({ onClose }: { onClose: () => void }) {
     setLinkedPoId(po.id);
     setSupplier(po.supplier_name);
     setSupplierContactId(po.supplier_contact_id);
+    applySupplierTerms(po.supplier_contact_id);
     setItems((po.line_items as PurchaseLineItem[]) ?? []);
     setShowPoPicker(false);
   };
@@ -65,7 +79,7 @@ export function SupplierInvoiceModal({ onClose }: { onClose: () => void }) {
         supplier_name: supplier.trim(),
         supplier_ref_number: refNumber.trim() || null,
         line_items: items.filter((it) => it.desc || it.unit_price),
-        invoice_amount: subtotal,
+        invoice_amount: effectiveSubtotal,
         paid_amount: paidNum,
         balance_due: balanceDue,
         issue_date: issueDate,
@@ -158,6 +172,7 @@ export function SupplierInvoiceModal({ onClose }: { onClose: () => void }) {
         onChange={(v, id) => {
           setSupplier(v);
           setSupplierContactId(id);
+          applySupplierTerms(id);
         }}
         contacts={suppliers}
         placeholder="Supplier name"
@@ -177,6 +192,10 @@ export function SupplierInvoiceModal({ onClose }: { onClose: () => void }) {
 
       <PurchaseLineItemsEditor items={items} onChange={setItems} />
 
+      <Field label="Total on the invoice (optional)">
+        <Input value={amountOverride} onChange={setAmountOverride} type="number" placeholder={subtotal ? subtotal.toFixed(2) : "auto from the lines above"} />
+      </Field>
+
       <Field label="Already paid">
         <Input value={paidAmount} onChange={setPaidAmount} type="number" placeholder="0.00" />
       </Field>
@@ -184,7 +203,7 @@ export function SupplierInvoiceModal({ onClose }: { onClose: () => void }) {
       <div style={{ background: "#fff7ed", borderRadius: 12, padding: "12px 14px", marginBottom: 16, fontSize: 13, color: "#92400e" }}>
         <div style={{ display: "flex", justifyContent: "space-between" }}>
           <span>Subtotal{isVatRegistered ? " (excl. VAT)" : ""}</span>
-          <span>{fmt(subtotal)}</span>
+          <span>{fmt(effectiveSubtotal)}</span>
         </div>
         {isVatRegistered && (
           <div style={{ display: "flex", justifyContent: "space-between" }}>
