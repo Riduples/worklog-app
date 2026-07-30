@@ -619,6 +619,23 @@ export function BankStatementView() {
         </div>
       </div>
 
+      {transactions.length > 1 && (
+        <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+          <button
+            onClick={() => setSelected(Object.fromEntries(transactions.map((_, i) => [i, true])))}
+            style={{ flex: 1, background: "#F0F9FF", border: "1.5px solid #BAE6FD", borderRadius: 10, padding: "8px 12px", fontSize: 12, fontWeight: 700, color: "#0369A1", cursor: "pointer" }}
+          >
+            Select all
+          </button>
+          <button
+            onClick={() => setSelected({})}
+            style={{ flex: 1, background: "#f8fafc", border: "1.5px solid #e2e8f0", borderRadius: 10, padding: "8px 12px", fontSize: 12, fontWeight: 700, color: "#64748b", cursor: "pointer" }}
+          >
+            Select none
+          </button>
+        </div>
+      )}
+
       {((invoices?.length ?? 0) > 0 || supplierEntries.length > 0 || (supplierInvoices ?? []).some((si) => si.status !== "paid")) && (
         <div style={{ background: "#F0F9FF", border: "1px solid #BAE6FD", borderRadius: 12, padding: "10px 14px", marginBottom: 12, fontSize: 12, color: "#0369A1", lineHeight: 1.5 }}>
           💡 Was a payment settling an invoice or bill you already logged? Link it below so the same money isn&apos;t counted twice in Profit &amp; Loss.
