@@ -15,7 +15,6 @@ function OfflineSyncRunner() {
 
 export function QueryProvider({ children }: { children: React.ReactNode }) {
   const [client] = useState(() => {
-    let qc: QueryClient;
     // A write that fails while the business is read-only is, all but certainly,
     // the RLS block. Surface the friendly nudge instead of leaving a raw error —
     // the catch-all for inline delete/status actions that don't use a gated SaveBtn.
@@ -25,7 +24,7 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
         if (isReadOnlySubscription(sub ?? null)) fireReadOnlyToast();
       },
     });
-    qc = new QueryClient({ mutationCache });
+    const qc = new QueryClient({ mutationCache });
     return qc;
   });
   return (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useWriteAccess } from "@/lib/writeAccess";
@@ -20,11 +20,15 @@ export function MobileTabBar() {
   const [moreOpen, setMoreOpen] = useState(false);
 
   // Any navigation dismisses the overlays — otherwise the More sheet would sit over
-  // whatever page a tool link just opened.
-  useEffect(() => {
+  // whatever page a tool link just opened. Adjusting state during render (React's
+  // documented pattern) instead of an effect: usePathname() updates on every
+  // navigation, and same-value setState is a bailout, so no wasted renders.
+  const [prevPath, setPrevPath] = useState(pathname);
+  if (pathname !== prevPath) {
+    setPrevPath(pathname);
     setMoreOpen(false);
     setQuickOpen(false);
-  }, [pathname]);
+  }
 
   // No bottom bar where there's no app to navigate: onboarding and the checkout flow.
   if (pathname === "/onboarding" || pathname.startsWith("/billing")) return null;

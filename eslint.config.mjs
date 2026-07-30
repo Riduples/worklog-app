@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Static/vendored assets served as-is — not source. Notably the minified
+    // pdf.js worker (public/pdf.worker.min.mjs), which trips no-this-alias.
+    "public/**",
   ]),
 ]);
 

@@ -23,6 +23,7 @@ export function RevenueAdminView() {
   // MRR = sum of each active subscription's plan price (VAT-inclusive ZAR).
   const mrr = active.reduce((sum, b) => sum + (isPlan(b.sub_tier) ? PLAN_PRICE_ZAR[b.sub_tier] : 0), 0);
 
+  // eslint-disable-next-line react-hooks/purity -- intentional wall-clock read to compute the "expiring soon" window for display; re-evaluated each render
   const now = Date.now();
   const expiringSoon = trialing
     .filter((b) => b.current_period_end && new Date(b.current_period_end).getTime() - now <= 7 * DAY_MS && new Date(b.current_period_end).getTime() >= now)

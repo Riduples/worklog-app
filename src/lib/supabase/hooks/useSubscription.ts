@@ -68,6 +68,7 @@ export function isReadOnlySubscription(sub: Subscription | null | undefined): bo
 
 export function useTrialState(): TrialState {
   const { data: sub, isLoading } = useSubscription();
+  // eslint-disable-next-line react-hooks/purity -- intentional wall-clock read to derive the display-only trial/grace countdown; re-evaluated each render, no stored snapshot wanted
   const now = Date.now();
   const end = sub?.current_period_end ? new Date(sub.current_period_end).getTime() : null;
   const isReadOnly = isReadOnlySubscription(sub);

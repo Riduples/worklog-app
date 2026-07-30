@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useIncome } from "@/lib/supabase/hooks/useIncome";
@@ -61,10 +61,13 @@ export function DashboardView({ businessName }: { businessName: string }) {
   // the modal. When we're already on the dashboard that's a same-route query
   // change — no remount, so the useState initializer above never re-runs. Sync on
   // the param so those upsell links actually open the modal instead of silently
-  // updating the URL and doing nothing.
-  useEffect(() => {
+  // updating the URL and doing nothing. Adjust state during render on param change
+  // rather than in an effect.
+  const [prevUpgradeParam, setPrevUpgradeParam] = useState(upgradeParam);
+  if (upgradeParam !== prevUpgradeParam) {
+    setPrevUpgradeParam(upgradeParam);
     if (upgradeParam) setUpgradeFeature(upgradeParam as ToolId | "team");
-  }, [upgradeParam]);
+  }
 
   // Shared with the desktop sidebar, which has to reach exactly the same verdict
   // about every tool — see useToolGate.

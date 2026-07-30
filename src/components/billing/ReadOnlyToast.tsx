@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { subscribeReadOnlyToast } from "@/lib/readOnlyToast";
 
@@ -11,17 +11,16 @@ import { subscribeReadOnlyToast } from "@/lib/readOnlyToast";
  * Log) never fire their mutation, so this only surfaces for the long tail.
  */
 export function ReadOnlyToast() {
-  const [nonce, setNonce] = useState(0);
   const [show, setShow] = useState(false);
+  const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => subscribeReadOnlyToast(() => setNonce((n) => n + 1)), []);
-
-  useEffect(() => {
-    if (nonce === 0) return;
+  useEffect(() => subscribeReadOnlyToast(() => {
     setShow(true);
-    const t = setTimeout(() => setShow(false), 5000);
-    return () => clearTimeout(t);
-  }, [nonce]);
+    if (hideTimer.current) clearTimeout(hideTimer.current);
+    hideTimer.current = setTimeout(() => setShow(false), 5000);
+  }), []);
+
+  useEffect(() => () => { if (hideTimer.current) clearTimeout(hideTimer.current); }, []);
 
   if (!show) return null;
 

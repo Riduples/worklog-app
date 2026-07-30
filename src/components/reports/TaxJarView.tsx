@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { useIncome } from "@/lib/supabase/hooks/useIncome";
 import { useExpenses } from "@/lib/supabase/hooks/useExpenses";
-import { useBankAccounts } from "@/lib/supabase/hooks/useBankAccounts";
 import { isIncomeTaxPayment } from "@/lib/sarsCategories";
 import { useTaxRates, incomeNet } from "@/lib/taxRates";
 import { fmt } from "@/lib/format";
@@ -21,7 +20,6 @@ import { BankAccountSelector, ALL_ACCOUNTS, type AccountFilter } from "@/compone
 export function TaxJarView() {
   const { data: income } = useIncome();
   const { data: expenses } = useExpenses();
-  const { data: accounts } = useBankAccounts();
   const { TAX_JAR_RATE } = useTaxRates();
   const [account, setAccount] = useState<AccountFilter>(ALL_ACCOUNTS);
 

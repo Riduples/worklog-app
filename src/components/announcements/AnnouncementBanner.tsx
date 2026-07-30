@@ -59,6 +59,7 @@ export function AnnouncementBanner() {
   useEffect(() => {
     try {
       const raw = typeof window !== "undefined" ? localStorage.getItem(DISMISS_KEY) : null;
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- hydration-safe localStorage read: must populate after mount so SSR and first client render agree
       setDismissed(raw ? (JSON.parse(raw) as string[]) : []);
     } catch {
       setDismissed([]);
