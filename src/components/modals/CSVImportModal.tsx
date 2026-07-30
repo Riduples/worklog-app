@@ -91,11 +91,14 @@ export function CSVImportModal({ type, onClose }: { type: CsvImportType; onClose
               name,
               phone: (raw.phone ?? "").trim() || null,
               email: (raw.email ?? "").trim() || null,
+              address: (raw.address ?? "").trim() || null,
               notes: (raw.notes ?? "").trim() || null,
               payment_behaviour: type === "client" && PAYMENT_BEHAVIOURS.includes(behaviour) ? behaviour : null,
               payment_terms: type === "supplier" && PAYMENT_TERMS.includes(terms) ? terms : null,
               bank_name: type === "supplier" ? (raw.bank_name ?? "").trim() || null : null,
               account_number: type === "supplier" ? (raw.account_number ?? "").trim() || null : null,
+              custom_label: type === "client" ? (raw.custom_label ?? "").trim() || null : null,
+              custom_value: type === "client" ? (raw.custom_value ?? "").trim() || null : null,
             };
           }
           rows.push({ row, name, issues, duplicate });

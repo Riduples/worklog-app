@@ -15,6 +15,7 @@ export type DocForRender = {
   doc_number: string;
   issue_date: string;
   recipient_name: string;
+  recipient_address?: string | null;
   line_items: Array<{ desc?: string; qty?: number; labour?: number; materials?: number; unit_price?: number }>;
   subtotal: number;
   vat_rate: number | null;
@@ -184,6 +185,7 @@ export function buildDocumentHTML(doc: DocForRender, business: BusinessProfile, 
       <div class="meta-label">${esc(recipientLabel)}</div>
       <div class="meta-value">
         <strong>${esc(doc.recipient_name)}</strong>
+        ${doc.recipient_address ? `<br/>${esc(doc.recipient_address)}` : ""}
       </div>
       ${isInvoice && doc.due_date ? `<div class="vat-note" style="margin-top:8px;"><strong>Due date:</strong> ${esc(doc.due_date)}</div>` : ""}
       ${isPO && doc.requested_delivery ? `<div class="vat-note" style="margin-top:8px;"><strong>Requested delivery:</strong> ${esc(doc.requested_delivery)}</div>` : ""}

@@ -13,6 +13,7 @@ import { salesLineTotal } from "@/lib/lineItems";
 import { balanceInclVat } from "@/lib/balance";
 import { useToolAccess } from "@/lib/supabase/hooks/useToolAccess";
 import { useUpdateInvoice, type Invoice } from "@/lib/supabase/hooks/useInvoices";
+import { useContacts } from "@/lib/supabase/hooks/useContacts";
 import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 import { useTaxRates } from "@/lib/taxRates";
 import { useCreditNotes, useCreateCreditNote } from "@/lib/supabase/hooks/useCreditNotes";
@@ -39,6 +40,8 @@ export function InvoiceActionsModal({ invoice, onClose }: { invoice: Invoice; on
   const createCreditNote = useCreateCreditNote();
   const supabase = createClient();
   const hasVat = !!business?.vat_number;
+  const { data: contacts } = useContacts();
+  const addrOf = (id: string | null | undefined) => (contacts ?? []).find((c) => c.id === id)?.address ?? null;
 
   const items = (invoice.line_items as Array<{ desc: string; qty: number; unit_price?: number; labour?: number; materials?: number }>) ?? [];
   const status = displayStatus(invoice);
@@ -148,6 +151,7 @@ export function InvoiceActionsModal({ invoice, onClose }: { invoice: Invoice; on
             doc_number: invoice.doc_number,
             issue_date: invoice.issue_date,
             recipient_name: invoice.client_name,
+            recipient_address: addrOf(invoice.client_contact_id),
             line_items: items,
             subtotal: Number(invoice.invoice_amount),
             vat_rate: invoice.vat_rate,
@@ -173,6 +177,7 @@ export function InvoiceActionsModal({ invoice, onClose }: { invoice: Invoice; on
                 doc_number: cn.doc_number,
                 issue_date: cn.issue_date,
                 recipient_name: cn.contact_name,
+                recipient_address: addrOf(cn.contact_id),
                 line_items: (cn.line_items as DocForRender["line_items"]) ?? [],
                 subtotal: Number(cn.amount) - Number(cn.vat_amount ?? 0),
                 vat_rate: cn.vat_rate,

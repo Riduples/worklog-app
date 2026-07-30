@@ -458,10 +458,13 @@ export type Database = {
       contacts: {
         Row: {
           account_number: string | null
+          address: string | null
           bank_name: string | null
           business_id: string
           contact_type: string
           created_at: string | null
+          custom_label: string | null
+          custom_value: string | null
           deleted_at: string | null
           email: string | null
           id: string
@@ -475,10 +478,13 @@ export type Database = {
         }
         Insert: {
           account_number?: string | null
+          address?: string | null
           bank_name?: string | null
           business_id: string
           contact_type: string
           created_at?: string | null
+          custom_label?: string | null
+          custom_value?: string | null
           deleted_at?: string | null
           email?: string | null
           id?: string
@@ -492,10 +498,13 @@ export type Database = {
         }
         Update: {
           account_number?: string | null
+          address?: string | null
           bank_name?: string | null
           business_id?: string
           contact_type?: string
           created_at?: string | null
+          custom_label?: string | null
+          custom_value?: string | null
           deleted_at?: string | null
           email?: string | null
           id?: string

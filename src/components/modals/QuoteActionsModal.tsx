@@ -12,6 +12,7 @@ import { fmt } from "@/lib/format";
 import { salesLineTotal } from "@/lib/lineItems";
 import { useToolAccess } from "@/lib/supabase/hooks/useToolAccess";
 import { useUpdateQuote, type Quote } from "@/lib/supabase/hooks/useQuotes";
+import { useContacts } from "@/lib/supabase/hooks/useContacts";
 
 const STATUS_COLORS: Record<string, { bg: string; fg: string }> = {
   pending: { bg: "#fff7ed", fg: "#b45309" },
@@ -24,6 +25,8 @@ export function QuoteActionsModal({ quote, onClose }: { quote: Quote; onClose: (
   const router = useRouter();
   const access = useToolAccess("quote");
   const updateQuote = useUpdateQuote();
+  const { data: contacts } = useContacts();
+  const clientAddress = (contacts ?? []).find((c) => c.id === quote.client_contact_id)?.address ?? null;
   const [editing, setEditing] = useState(false);
   const items = (quote.line_items as Array<{ desc: string; qty: number; unit_price?: number; labour?: number; materials?: number }>) ?? [];
   const statusColor = STATUS_COLORS[quote.status] ?? STATUS_COLORS.pending;
@@ -82,6 +85,7 @@ export function QuoteActionsModal({ quote, onClose }: { quote: Quote; onClose: (
             doc_number: quote.doc_number,
             issue_date: quote.issue_date,
             recipient_name: quote.client_name,
+            recipient_address: clientAddress,
             line_items: items,
             subtotal: Number(quote.total_amount),
             vat_rate: quote.vat_rate,

@@ -28,6 +28,9 @@ export function ContactModal({
   const [phone, setPhone] = useState(contact?.phone ?? "");
   const [email, setEmail] = useState(contact?.email ?? "");
   const [notes, setNotes] = useState(contact?.notes ?? "");
+  const [address, setAddress] = useState(contact?.address ?? "");
+  const [customLabel, setCustomLabel] = useState(contact?.custom_label ?? "");
+  const [customValue, setCustomValue] = useState(contact?.custom_value ?? "");
   const [paymentBehaviour, setPaymentBehaviour] = useState(contact?.payment_behaviour ?? "Good payer");
   const [paymentTerms, setPaymentTerms] = useState(contact?.payment_terms ?? "On delivery");
   const [bankName, setBankName] = useState(contact?.bank_name ?? "");
@@ -50,6 +53,9 @@ export function ContactModal({
       name: name.trim(),
       phone: phone.trim() || null,
       email: email.trim() || null,
+      address: address.trim() || null,
+      custom_label: contactType === "client" ? customLabel.trim() || null : null,
+      custom_value: contactType === "client" ? customValue.trim() || null : null,
       notes: notes.trim() || null,
       payment_behaviour: contactType === "client" ? paymentBehaviour : null,
       payment_terms: contactType === "supplier" ? paymentTerms : null,
@@ -82,10 +88,21 @@ export function ContactModal({
       <Field label="Email">
         <Input value={email ?? ""} onChange={setEmail} placeholder="name@example.com" type="email" />
       </Field>
+      <Field label="Address (optional)">
+        <Input value={address ?? ""} onChange={setAddress} placeholder="Street, suburb, city" />
+      </Field>
       {contactType === "client" ? (
-        <Field label="Payment behaviour">
-          <Chips options={PAYMENT_BEHAVIOURS} selected={paymentBehaviour ?? ""} onSelect={setPaymentBehaviour} />
-        </Field>
+        <>
+          <Field label="Payment behaviour">
+            <Chips options={PAYMENT_BEHAVIOURS} selected={paymentBehaviour ?? ""} onSelect={setPaymentBehaviour} />
+          </Field>
+          <Field label="Custom field (optional)">
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              <Input value={customLabel ?? ""} onChange={setCustomLabel} placeholder="Label — e.g. Vehicle" />
+              <Input value={customValue ?? ""} onChange={setCustomValue} placeholder="Value — e.g. Corsa bakkie" />
+            </div>
+          </Field>
+        </>
       ) : (
         <>
           <Field label="Payment terms">

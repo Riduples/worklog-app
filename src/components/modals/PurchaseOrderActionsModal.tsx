@@ -6,6 +6,7 @@ import { DocumentActions } from "@/components/ui/DocumentActions";
 import type { DocForRender } from "@/lib/docgen/buildDocumentHTML";
 import { fmt } from "@/lib/format";
 import { useUpdatePurchaseOrder, type PurchaseOrder } from "@/lib/supabase/hooks/usePurchaseOrders";
+import { useContacts } from "@/lib/supabase/hooks/useContacts";
 import type { PurchaseLineItem } from "@/components/ui/PurchaseLineItemsEditor";
 
 export const PO_STATUS_COLORS: Record<string, { bg: string; fg: string }> = {
@@ -17,6 +18,8 @@ export const PO_STATUS_COLORS: Record<string, { bg: string; fg: string }> = {
 
 export function PurchaseOrderActionsModal({ po, onClose, onEdit }: { po: PurchaseOrder; onClose: () => void; onEdit?: () => void }) {
   const updatePO = useUpdatePurchaseOrder();
+  const { data: contacts } = useContacts();
+  const supplierAddress = (contacts ?? []).find((c) => c.id === po.supplier_contact_id)?.address ?? null;
   const items = (po.line_items as PurchaseLineItem[]) ?? [];
   const color = PO_STATUS_COLORS[po.status] ?? PO_STATUS_COLORS.pending;
   const totalInclVat = Number(po.total_amount) + Number(po.vat_amount ?? 0);
@@ -67,6 +70,7 @@ export function PurchaseOrderActionsModal({ po, onClose, onEdit }: { po: Purchas
             doc_number: po.doc_number,
             issue_date: po.issue_date,
             recipient_name: po.supplier_name,
+            recipient_address: supplierAddress,
             line_items: items,
             subtotal: Number(po.total_amount),
             vat_rate: po.vat_rate,
