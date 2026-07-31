@@ -27,6 +27,7 @@ export type DocForRender = {
   requested_delivery?: string | null;
   reference_doc_number?: string | null;
   reason?: string | null;
+  terms?: string | null;
 };
 
 
@@ -120,6 +121,18 @@ export function buildDocumentHTML(doc: DocForRender, business: BusinessProfile, 
   </div>`
       : "";
 
+  // Owner's own Terms & Conditions — only on the documents that go to a customer
+  // (quote + invoice), never a PO/payslip/credit note. white-space:pre-wrap keeps
+  // the line breaks the owner typed; esc() neutralises any HTML in the text.
+  const termsHTML =
+    (isInvoice || kind === "quote") && doc.terms && doc.terms.trim()
+      ? `
+  <div style="margin-top:24px;padding-top:16px;border-top:1px solid #e5e7eb;">
+    <div style="font-size:11px;font-weight:700;color:#0C4A6E;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Terms &amp; Conditions</div>
+    <div style="font-size:11px;color:#64748b;line-height:1.6;white-space:pre-wrap;">${esc(doc.terms)}</div>
+  </div>`
+      : "";
+
   return `
 <!DOCTYPE html>
 <html>
@@ -210,7 +223,7 @@ export function buildDocumentHTML(doc: DocForRender, business: BusinessProfile, 
       ${totalsRows}
     </div>
   </div>
-${bankingHTML}
+${bankingHTML}${termsHTML}
   <div class="footer">
     ${
       isCreditNote

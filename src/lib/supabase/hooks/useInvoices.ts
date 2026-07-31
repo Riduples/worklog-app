@@ -77,6 +77,7 @@ export function useConvertQuoteToInvoice() {
       vatAmount: number;
       issueDate: string;
       dueDate: string | null;
+      terms: string | null;
     }) => {
       const { data, error } = await supabase.rpc("convert_quote_to_invoice", {
         p_quote_id: params.quoteId,
@@ -91,6 +92,9 @@ export function useConvertQuoteToInvoice() {
         p_vat_amount: params.vatAmount,
         p_issue_date: params.issueDate,
         p_due_date: params.dueDate as string,
+        // Same as the NUMERIC/DATE params above: the RPC accepts NULL (p_terms
+        // DEFAULT NULL) but the generated arg type is string|undefined.
+        p_terms: params.terms as string,
       });
       if (error) throw error;
       return data as Invoice;

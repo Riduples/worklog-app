@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Modal } from "@/components/ui/Modal";
 import { Field } from "@/components/ui/Field";
 import { Input } from "@/components/ui/Input";
+import { Textarea } from "@/components/ui/Textarea";
 import { Chips } from "@/components/ui/Chips";
 import { SaveBtn } from "@/components/ui/SaveBtn";
 import { BUSINESS_TYPES, coreToolsFor, type BusinessType } from "@/lib/businessTypes";
@@ -26,6 +27,8 @@ export function BusinessDetailsModal({ business, onClose }: { business: Business
   const [bankAccount, setBankAccount] = useState(business.bank_account ?? "");
   const [bankBranch, setBankBranch] = useState(business.bank_branch ?? "");
   const [bankRef, setBankRef] = useState(business.bank_ref ?? "");
+  const [defaultQuoteTerms, setDefaultQuoteTerms] = useState(business.default_quote_terms ?? "");
+  const [defaultInvoiceTerms, setDefaultInvoiceTerms] = useState(business.default_invoice_terms ?? "");
   const [vatNumber, setVatNumber] = useState(business.vat_number ?? "");
   const [vatPeriod, setVatPeriod] = useState(business.vat_period ?? "Bi-monthly");
   const [payeRef, setPayeRef] = useState(business.paye_ref ?? "");
@@ -106,6 +109,8 @@ export function BusinessDetailsModal({ business, onClose }: { business: Business
           bank_account: bankAccount.trim() || null,
           bank_branch: bankBranch.trim() || null,
           bank_ref: bankRef.trim() || null,
+          default_quote_terms: defaultQuoteTerms.trim() || null,
+          default_invoice_terms: defaultInvoiceTerms.trim() || null,
           vat_number: vatNumber.trim() || null,
           vat_period: vatPeriod,
           paye_ref: payeRef.trim() || null,
@@ -268,6 +273,31 @@ export function BusinessDetailsModal({ business, onClose }: { business: Business
             ? `Customers will be asked to use "${bankRef.trim()} / INV-2026-0001" so you can match the payment.`
             : "Leave blank and the document number alone is used as the reference."}
         </p>
+      </Field>
+
+      <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 0.6, margin: "18px 0 10px" }}>
+        Terms on your documents
+      </div>
+      <div style={{ background: "#F0F9FF", border: "1.5px solid #BAE6FD", borderRadius: 12, padding: "10px 14px", marginBottom: 14, fontSize: 12, color: "#0369A1", lineHeight: 1.5 }}>
+        Your standard terms &amp; conditions. They fill in automatically on every new quote and invoice — you can still tweak
+        the wording on any one document before you send it.
+      </div>
+
+      <Field label="Default quote terms">
+        <Textarea
+          value={defaultQuoteTerms}
+          onChange={setDefaultQuoteTerms}
+          placeholder="e.g. Quote valid 30 days. 50% deposit to start, balance on completion. Prices exclude materials unless stated."
+          rows={4}
+        />
+      </Field>
+      <Field label="Default invoice terms">
+        <Textarea
+          value={defaultInvoiceTerms}
+          onChange={setDefaultInvoiceTerms}
+          placeholder="e.g. Payment due within 30 days. 2% monthly interest on overdue accounts. Goods remain our property until paid in full."
+          rows={4}
+        />
       </Field>
 
       <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 0.6, margin: "18px 0 10px" }}>

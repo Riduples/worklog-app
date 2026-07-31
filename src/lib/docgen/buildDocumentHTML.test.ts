@@ -112,6 +112,38 @@ describe("letterhead", () => {
   });
 });
 
+describe("terms & conditions", () => {
+  const withTerms = (kind: DocKind, terms: string | null) =>
+    buildDocumentHTML({ ...doc, terms }, business(), kind);
+
+  it("prints the owner's terms on an invoice", () => {
+    const html = withTerms("invoice", "Payment due within 30 days.");
+    expect(html).toContain("Terms &amp; Conditions");
+    expect(html).toContain("Payment due within 30 days.");
+  });
+
+  it("prints them on a quote too", () => {
+    expect(withTerms("quote", "Quote valid 30 days.")).toContain("Quote valid 30 days.");
+  });
+
+  it("stays off a purchase order, payslip and credit note", () => {
+    expect(withTerms("purchaseorder", "Some terms")).not.toContain("Terms &amp; Conditions");
+    expect(withTerms("payslip", "Some terms")).not.toContain("Terms &amp; Conditions");
+    expect(withTerms("creditnote", "Some terms")).not.toContain("Terms &amp; Conditions");
+  });
+
+  it("renders no block when there are no terms (null or blank)", () => {
+    expect(withTerms("invoice", null)).not.toContain("Terms &amp; Conditions");
+    expect(withTerms("invoice", "   ")).not.toContain("Terms &amp; Conditions");
+  });
+
+  it("escapes hostile terms text", () => {
+    const html = withTerms("invoice", "<script>alert(1)</script>");
+    expect(html).not.toContain("<script>alert(1)</script>");
+    expect(html).toContain("&lt;script&gt;");
+  });
+});
+
 describe("escaping", () => {
   // openDocumentForPrinting() hands this markup to win.document.write(), which
   // executes scripts. A member with edit rights on Contacts could otherwise

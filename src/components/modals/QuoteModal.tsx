@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { Field } from "@/components/ui/Field";
 import { Input } from "@/components/ui/Input";
+import { Textarea } from "@/components/ui/Textarea";
 import { SaveBtn } from "@/components/ui/SaveBtn";
 import { ContactPicker } from "@/components/ui/ContactPicker";
 import { SalesLineItemsEditor } from "@/components/ui/SalesLineItemsEditor";
@@ -28,6 +29,10 @@ export function QuoteModal({ quote, onClose }: { quote?: Quote; onClose: () => v
   );
   const [deposit, setDeposit] = useState(String(quote?.deposit_requested ?? 0));
   const [estHours, setEstHours] = useState(quote?.estimated_hours != null ? String(quote.estimated_hours) : "");
+  const [terms, setTerms] = useState(quote?.terms ?? "");
+  // On an existing quote the terms are already loaded; on a new one we seed them
+  // from the business default once the profile arrives (below).
+  const [termsSeeded, setTermsSeeded] = useState(isEdit);
   const [error, setError] = useState("");
 
   const { data: contacts } = useContacts();
@@ -36,6 +41,14 @@ export function QuoteModal({ quote, onClose }: { quote?: Quote; onClose: () => v
   const createQuote = useCreateQuote();
   const updateQuote = useUpdateQuote();
   const saving = createQuote.isPending || updateQuote.isPending;
+
+  // Seed the terms from the owner's default quote terms once, when the profile
+  // loads — new quote only, and only before the owner has touched the field.
+  // Render-time adjust-on-change (not an effect) so it can't cascade renders.
+  if (!termsSeeded && business) {
+    setTermsSeeded(true);
+    if (!isEdit && business.default_quote_terms) setTerms(business.default_quote_terms);
+  }
 
   const subtotal = salesLinesSubtotal(items);
   const isVatRegistered = !!business?.vat_number;
@@ -77,6 +90,7 @@ export function QuoteModal({ quote, onClose }: { quote?: Quote; onClose: () => v
             estimated_hours: effectiveEstHours,
             vat_rate: isVatRegistered ? VAT_RATE : null,
             vat_amount: vatAmount,
+            terms: terms.trim() || null,
           },
         },
         { onSuccess: onClose }
@@ -101,6 +115,7 @@ export function QuoteModal({ quote, onClose }: { quote?: Quote; onClose: () => v
         status: "pending",
         vat_rate: isVatRegistered ? VAT_RATE : null,
         vat_amount: vatAmount,
+        terms: terms.trim() || null,
       },
       { onSuccess: onClose }
     );
@@ -139,6 +154,13 @@ export function QuoteModal({ quote, onClose }: { quote?: Quote; onClose: () => v
           {autoEstHours > 0 && estHours === ""
             ? `🔁 Auto-estimated at ${autoEstHours}h from the hours on your items — type to override.`
             : "Link time entries to this quote to track hours logged vs quoted."}
+        </div>
+      </Field>
+
+      <Field label="Terms & conditions (optional)">
+        <Textarea value={terms} onChange={setTerms} placeholder="e.g. Quote valid 30 days. 50% deposit to start, balance on completion. Prices exclude…" rows={4} />
+        <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 4 }}>
+          Prints at the foot of the quote. Set a default in Business details so it fills in automatically.
         </div>
       </Field>
 

@@ -92,6 +92,7 @@ export function QuoteActionsModal({ quote, onClose }: { quote: Quote; onClose: (
             vat_amount: Number(quote.vat_amount ?? 0),
             deposit: Number(quote.deposit_requested ?? 0),
             valid_until: quote.valid_until,
+            terms: quote.terms,
           } satisfies DocForRender
         }
       />

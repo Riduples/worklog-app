@@ -159,6 +159,7 @@ export function InvoiceActionsModal({ invoice, onClose }: { invoice: Invoice; on
             deposit: Number(invoice.deposit_received ?? 0),
             balance_due: invoice.balance_due,
             due_date: invoice.due_date,
+            terms: invoice.terms,
           } satisfies DocForRender
         }
       />

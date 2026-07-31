@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { Field } from "@/components/ui/Field";
 import { Input } from "@/components/ui/Input";
+import { Textarea } from "@/components/ui/Textarea";
 import { SaveBtn } from "@/components/ui/SaveBtn";
 import { ContactPicker } from "@/components/ui/ContactPicker";
 import { SalesLineItemsEditor } from "@/components/ui/SalesLineItemsEditor";
@@ -30,6 +31,8 @@ export function InvoiceModal({ sourceQuote, onClose }: { sourceQuote?: Quote; on
   const [depositReceived, setDepositReceived] = useState(String(sourceQuote?.deposit_requested ?? 0));
   const [recurrence, setRecurrence] = useState<Recurrence>("none");
   const [srcQuote, setSrcQuote] = useState<Quote | null>(sourceQuote ?? null);
+  const [terms, setTerms] = useState("");
+  const [termsSeeded, setTermsSeeded] = useState(false);
   const [error, setError] = useState("");
 
   const { data: contacts } = useContacts();
@@ -39,6 +42,15 @@ export function InvoiceModal({ sourceQuote, onClose }: { sourceQuote?: Quote; on
   const createInvoice = useCreateInvoice();
   const convertQuote = useConvertQuoteToInvoice();
   const saving = createInvoice.isPending || convertQuote.isPending;
+
+  // Seed the terms from the owner's default INVOICE terms once the profile loads
+  // (an invoice, whether blank or converted from a quote, gets the invoice terms —
+  // its own default, not the quote's). Render-time seed, not an effect, and only
+  // before the owner has edited the field.
+  if (!termsSeeded && business) {
+    setTermsSeeded(true);
+    if (business.default_invoice_terms) setTerms(business.default_invoice_terms);
+  }
 
   const subtotal = salesLinesSubtotal(items);
   const isVatRegistered = !!business?.vat_number;
@@ -97,6 +109,7 @@ export function InvoiceModal({ sourceQuote, onClose }: { sourceQuote?: Quote; on
           vatAmount,
           issueDate,
           dueDate: dueDate || null,
+          terms: terms.trim() || null,
         },
         { onSuccess: onClose }
       );
@@ -115,6 +128,7 @@ export function InvoiceModal({ sourceQuote, onClose }: { sourceQuote?: Quote; on
           status: "unpaid",
           vat_rate: isVatRegistered ? VAT_RATE : null,
           vat_amount: vatAmount,
+          terms: terms.trim() || null,
           recurrence: canRecur ? recurrence : "none",
           next_run_date: canRecur ? nextRunDate : null,
         },
@@ -206,6 +220,13 @@ export function InvoiceModal({ sourceQuote, onClose }: { sourceQuote?: Quote; on
 
       <Field label="Deposit already received">
         <Input value={depositReceived} onChange={setDepositReceived} type="number" placeholder="0.00" />
+      </Field>
+
+      <Field label="Terms & conditions (optional)">
+        <Textarea value={terms} onChange={setTerms} placeholder="e.g. Payment due within 30 days. 2% monthly interest on overdue accounts. Goods remain our property until paid in full." rows={4} />
+        <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 4 }}>
+          Prints at the foot of the invoice. Set a default in Business details so it fills in automatically.
+        </div>
       </Field>
 
       <div style={{ background: "#F0F9FF", borderRadius: 12, padding: "12px 14px", marginBottom: 16, fontSize: 13, color: "#0369A1" }}>

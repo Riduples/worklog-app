@@ -375,6 +375,8 @@ export type Database = {
           bank_ref: string | null
           business_type: string | null
           created_at: string | null
+          default_invoice_terms: string | null
+          default_quote_terms: string | null
           email: string | null
           id: string
           logo_url: string | null
@@ -397,6 +399,8 @@ export type Database = {
           bank_ref?: string | null
           business_type?: string | null
           created_at?: string | null
+          default_invoice_terms?: string | null
+          default_quote_terms?: string | null
           email?: string | null
           id?: string
           logo_url?: string | null
@@ -419,6 +423,8 @@ export type Database = {
           bank_ref?: string | null
           business_type?: string | null
           created_at?: string | null
+          default_invoice_terms?: string | null
+          default_quote_terms?: string | null
           email?: string | null
           id?: string
           logo_url?: string | null
@@ -1057,6 +1063,7 @@ export type Database = {
           recurrence: string
           recurrence_parent_id: string | null
           status: string
+          terms: string | null
           updated_at: string | null
           user_id: string
           vat_amount: number | null
@@ -1082,6 +1089,7 @@ export type Database = {
           recurrence?: string
           recurrence_parent_id?: string | null
           status?: string
+          terms?: string | null
           updated_at?: string | null
           user_id: string
           vat_amount?: number | null
@@ -1107,6 +1115,7 @@ export type Database = {
           recurrence?: string
           recurrence_parent_id?: string | null
           status?: string
+          terms?: string | null
           updated_at?: string | null
           user_id?: string
           vat_amount?: number | null
@@ -1542,6 +1551,7 @@ export type Database = {
           issue_date: string
           line_items: Json
           status: string
+          terms: string | null
           total_amount: number
           updated_at: string | null
           user_id: string
@@ -1563,6 +1573,7 @@ export type Database = {
           issue_date: string
           line_items?: Json
           status?: string
+          terms?: string | null
           total_amount?: number
           updated_at?: string | null
           user_id: string
@@ -1584,6 +1595,7 @@ export type Database = {
           issue_date?: string
           line_items?: Json
           status?: string
+          terms?: string | null
           total_amount?: number
           updated_at?: string | null
           user_id?: string
@@ -2386,6 +2398,7 @@ export type Database = {
           p_issue_date: string
           p_line_items: Json
           p_quote_id: string
+          p_terms?: string
           p_vat_amount: number
           p_vat_rate: number
         }
@@ -2409,6 +2422,7 @@ export type Database = {
           recurrence: string
           recurrence_parent_id: string | null
           status: string
+          terms: string | null
           updated_at: string | null
           user_id: string
           vat_amount: number | null
