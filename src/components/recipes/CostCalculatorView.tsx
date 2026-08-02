@@ -15,8 +15,21 @@ export function CostCalculatorView() {
   const { data: costings, isLoading } = useCostings();
   const [modalState, setModalState] = useState<{ open: boolean; costing?: Costing }>({ open: false });
   const [search, setSearch] = useState("");
+  const [sort, setSort] = useState<"az" | "recent">("az");
 
-  const filtered = (costings ?? []).filter((c) => !search || c.name.toLowerCase().includes(search.toLowerCase()));
+  const filtered = (costings ?? [])
+    .filter((c) => !search || c.name.toLowerCase().includes(search.toLowerCase()))
+    .sort((a, b) =>
+      sort === "recent"
+        ? (b.updated_at ?? b.created_at ?? "").localeCompare(a.updated_at ?? a.created_at ?? "")
+        : a.name.localeCompare(b.name)
+    );
+
+  const fmtDate = (iso?: string | null) => {
+    if (!iso) return "";
+    const d = new Date(iso);
+    return isNaN(d.getTime()) ? "" : d.toLocaleDateString("en-ZA", { day: "numeric", month: "short" });
+  };
 
   return (
     <div style={{ padding: "20px 16px 100px" }}>
@@ -67,10 +80,33 @@ export function CostCalculatorView() {
       )}
 
       {!isLoading && filtered.length > 0 && (
-        <p style={{ fontSize: 11, color: "#94a3b8", margin: "0 0 8px 2px" }}>
-          {filtered.length}
-          {filtered.length !== (costings ?? []).length ? ` of ${(costings ?? []).length}` : ""} costing{(costings ?? []).length === 1 ? "" : "s"}
-        </p>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", margin: "0 0 10px 2px" }}>
+          <span style={{ fontSize: 11, color: "#94a3b8" }}>
+            {filtered.length}
+            {filtered.length !== (costings ?? []).length ? ` of ${(costings ?? []).length}` : ""} costing{(costings ?? []).length === 1 ? "" : "s"}
+          </span>
+          <div style={{ display: "flex", gap: 4, background: "#f1f5f9", borderRadius: 10, padding: 3 }}>
+            {(["az", "recent"] as const).map((s) => (
+              <button
+                key={s}
+                onClick={() => setSort(s)}
+                style={{
+                  padding: "5px 12px",
+                  borderRadius: 8,
+                  border: "none",
+                  background: sort === s ? "#fff" : "transparent",
+                  color: sort === s ? "#0C4A6E" : "#64748b",
+                  fontSize: 12,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  boxShadow: sort === s ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
+                }}
+              >
+                {s === "az" ? "A–Z" : "Recent"}
+              </button>
+            ))}
+          </div>
+        </div>
       )}
 
       {filtered.map((c) => (
@@ -97,6 +133,7 @@ export function CostCalculatorView() {
             <div style={{ fontSize: 11, color: "#94a3b8" }}>
               Cost {fmt(c.total_cost)}
               {Number(c.labour_hours) > 0 ? ` · ${Number(c.labour_hours).toFixed(1)}h labour` : ""}
+              {fmtDate(c.updated_at ?? c.created_at) ? ` · updated ${fmtDate(c.updated_at ?? c.created_at)}` : ""}
             </div>
           </div>
           <div style={{ textAlign: "right" }}>
