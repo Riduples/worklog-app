@@ -8,7 +8,10 @@ import { ReadOnlyNotice } from "@/components/ui/ReadOnlyNotice";
 import { useToolAccess } from "@/lib/supabase/hooks/useToolAccess";
 import { BackLink } from "@/components/ui/BackLink";
 
-export function ContactsView() {
+// One screen, three entry points: /customers and /suppliers lock it to a
+// single side via `only`; the legacy /contacts renders the combined view with
+// its own client/supplier tabs.
+export function ContactsView({ only }: { only?: "client" | "supplier" } = {}) {
   const { data: contacts, isLoading } = useContacts();
   const updateContact = useUpdateContact();
   // Contacts is one table but two tools: RLS picks clients/suppliers per row
@@ -24,23 +27,28 @@ export function ContactsView() {
     open: false,
   });
 
-  const importType = typeFilter === "supplier" ? "supplier" : "client";
+  // When locked to one side, that side drives everything; otherwise the tabs do.
+  const activeType: "all" | "client" | "supplier" = only ?? typeFilter;
+  const noun = only === "client" ? "customers" : only === "supplier" ? "suppliers" : "contacts";
+  const title = only === "client" ? "Customers" : only === "supplier" ? "Suppliers" : "Contacts";
 
-  // "Can I add anything here?" — the add button targets the filtered type, so
-  // follow that; on the "all" tab either right is enough to justify showing it.
-  const addAccess = typeFilter === "supplier" ? supplierAccess : clientAccess;
-  const canAddAny = typeFilter === "all" ? clientAccess.canEdit || supplierAccess.canEdit : addAccess.canEdit;
+  const importType = activeType === "supplier" ? "supplier" : "client";
+
+  // "Can I add anything here?" — the add button targets the active type, so
+  // follow that; on the combined "all" tab either right is enough to show it.
+  const addAccess = activeType === "supplier" ? supplierAccess : clientAccess;
+  const canAddAny = activeType === "all" ? clientAccess.canEdit || supplierAccess.canEdit : addAccess.canEdit;
   const canDeleteContact = (c: Contact) => (c.contact_type === "supplier" ? supplierAccess : clientAccess).canDelete;
   const accessLoading = clientAccess.loading || supplierAccess.loading;
 
   const filtered = (contacts ?? []).filter((c) => {
-    if (typeFilter !== "all" && c.contact_type !== typeFilter) return false;
+    if (activeType !== "all" && c.contact_type !== activeType) return false;
     if (search && !c.name.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   });
 
   const handleSoftDelete = (id: string) => {
-    if (!confirm("Remove this contact? It stays on any existing quotes/invoices.")) return;
+    if (!confirm(`Remove this ${only === "supplier" ? "supplier" : only === "client" ? "customer" : "contact"}? It stays on any existing quotes/invoices.`)) return;
     updateContact.mutate({ id, changes: { deleted_at: new Date().toISOString() } });
   };
 
@@ -49,7 +57,7 @@ export function ContactsView() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
         <div>
           <BackLink />
-          <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 0" }}>Contacts</h1>
+          <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 0" }}>{title}</h1>
         </div>
         {canAddAny && (
         <div style={{ display: "flex", gap: 8 }}>
@@ -69,7 +77,7 @@ export function ContactsView() {
             ⬆ Import
           </button>
           <button
-            onClick={() => setModalState({ open: true })}
+            onClick={() => setModalState({ open: true, defaultType: only })}
             style={{
               background: "#0C4A6E",
               color: "#fff",
@@ -87,12 +95,12 @@ export function ContactsView() {
         )}
       </div>
 
-      {!accessLoading && !canAddAny && <ReadOnlyNotice level={clientAccess.level} what="contacts" />}
+      {!accessLoading && !canAddAny && <ReadOnlyNotice level={addAccess.level} what={noun} />}
 
       <input
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        placeholder="Search contacts..."
+        placeholder={`Search ${noun}...`}
         style={{
           width: "100%",
           padding: "12px 14px",
@@ -105,31 +113,33 @@ export function ContactsView() {
         }}
       />
 
-      <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-        {(["all", "client", "supplier"] as const).map((t) => (
-          <button
-            key={t}
-            onClick={() => setTypeFilter(t)}
-            style={{
-              padding: "8px 14px",
-              borderRadius: 20,
-              border: `1.5px solid ${typeFilter === t ? "#0C4A6E" : "#e2e8f0"}`,
-              background: typeFilter === t ? "#0C4A6E" : "#fff",
-              color: typeFilter === t ? "#fff" : "#374151",
-              fontSize: 12,
-              fontWeight: 700,
-              cursor: "pointer",
-              textTransform: "capitalize",
-            }}
-          >
-            {t === "all" ? "All" : t === "client" ? "Clients" : "Suppliers"}
-          </button>
-        ))}
-      </div>
+      {!only && (
+        <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+          {(["all", "client", "supplier"] as const).map((t) => (
+            <button
+              key={t}
+              onClick={() => setTypeFilter(t)}
+              style={{
+                padding: "8px 14px",
+                borderRadius: 20,
+                border: `1.5px solid ${typeFilter === t ? "#0C4A6E" : "#e2e8f0"}`,
+                background: typeFilter === t ? "#0C4A6E" : "#fff",
+                color: typeFilter === t ? "#fff" : "#374151",
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: "pointer",
+                textTransform: "capitalize",
+              }}
+            >
+              {t === "all" ? "All" : t === "client" ? "Customers" : "Suppliers"}
+            </button>
+          ))}
+        </div>
+      )}
 
       {isLoading && <p style={{ color: "#94a3b8", fontSize: 13 }}>Loading...</p>}
       {!isLoading && filtered.length === 0 && (
-        <p style={{ color: "#94a3b8", fontSize: 13, textAlign: "center", marginTop: 40 }}>No contacts yet.</p>
+        <p style={{ color: "#94a3b8", fontSize: 13, textAlign: "center", marginTop: 40 }}>No {noun} yet.</p>
       )}
 
       {filtered.map((c) => (
@@ -162,19 +172,21 @@ export function ContactsView() {
               </div>
             )}
           </button>
-          <span
-            style={{
-              fontSize: 10,
-              fontWeight: 700,
-              padding: "3px 8px",
-              borderRadius: 20,
-              marginRight: 8,
-              background: c.contact_type === "client" ? "#F0F9FF" : "#fff7ed",
-              color: c.contact_type === "client" ? "#0369A1" : "#92400e",
-            }}
-          >
-            {c.contact_type === "client" ? "Client" : "Supplier"}
-          </span>
+          {!only && (
+            <span
+              style={{
+                fontSize: 10,
+                fontWeight: 700,
+                padding: "3px 8px",
+                borderRadius: 20,
+                marginRight: 8,
+                background: c.contact_type === "client" ? "#F0F9FF" : "#fff7ed",
+                color: c.contact_type === "client" ? "#0369A1" : "#92400e",
+              }}
+            >
+              {c.contact_type === "client" ? "Customer" : "Supplier"}
+            </span>
+          )}
           {canDeleteContact(c) && (
           <button
             onClick={() => handleSoftDelete(c.id)}

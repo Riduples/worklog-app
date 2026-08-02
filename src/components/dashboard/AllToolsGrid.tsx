@@ -48,7 +48,10 @@ const NAV_CATEGORIES: { id: string; items: NavItem[] }[] = [
   },
   {
     id: "contacts", // Contacts
-    items: [{ href: "/contacts", icon: "👥", label: "Contacts", anyOf: ["clients", "suppliers"] }],
+    items: [
+      { href: "/customers", icon: "👤", label: "Customers", toolId: "clients" },
+      { href: "/suppliers", icon: "🏪", label: "Suppliers", toolId: "suppliers" },
+    ],
   },
   {
     id: "invoicing", // Sales

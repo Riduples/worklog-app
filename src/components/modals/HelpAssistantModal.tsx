@@ -10,8 +10,8 @@ import { TOOL_LABELS, type ToolId } from "@/lib/permissions";
 const TOOL_HREF: Partial<Record<ToolId, string>> = {
   stock: "/stock",
   recipe: "/recipes",
-  clients: "/contacts",
-  suppliers: "/contacts",
+  clients: "/customers",
+  suppliers: "/suppliers",
   quote: "/quotes",
   invoice: "/invoices",
   statement: "/statement",
