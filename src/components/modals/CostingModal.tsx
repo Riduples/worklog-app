@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { SaveBtn } from "@/components/ui/SaveBtn";
 import { fmt } from "@/lib/format";
-import { useCreateStockItem } from "@/lib/supabase/hooks/useStock";
+import { itemTypeMeta } from "@/lib/itemTypes";
+import { useStockItems, useCreateStockItem } from "@/lib/supabase/hooks/useStock";
 import { useCreateCosting, useUpdateCosting, type Costing, type CostingLine, type CostingLineKind } from "@/lib/supabase/hooks/useCostings";
 import { round2 } from "@/lib/creditNotes";
 
@@ -70,6 +71,7 @@ export function CostingModal({ costing, onClose }: { costing?: Costing; onClose:
   const [error, setError] = useState("");
   const [savedToList, setSavedToList] = useState(false);
 
+  const { data: stock } = useStockItems();
   const createCosting = useCreateCosting();
   const updateCosting = useUpdateCosting();
   const createStockItem = useCreateStockItem();
@@ -143,6 +145,27 @@ export function CostingModal({ costing, onClose }: { costing?: Costing; onClose:
           <Input value={unitLabel} onChange={setUnitLabel} placeholder="job" />
         </Field>
       </div>
+
+      {(stock ?? []).length > 0 && (
+        <select
+          value=""
+          onChange={(e) => {
+            const s = (stock ?? []).find((it) => it.id === e.target.value);
+            if (!s) return;
+            const kind: CostingLineKind = s.item_type === "labour" ? "labour" : s.item_type === "product" ? "product" : "material";
+            setLines([...lines, { kind, desc: s.name, qty: 1, unit_cost: Number(s.cost_price || 0) }]);
+            e.target.value = "";
+          }}
+          style={{ width: "100%", padding: "12px 14px", borderRadius: 10, border: "1.5px solid #e2e8f0", fontSize: 14, color: "#334155", background: "#fff", marginBottom: 4, boxSizing: "border-box" }}
+        >
+          <option value="">Add from your price list…</option>
+          {(stock ?? []).map((s) => (
+            <option key={s.id} value={s.id}>
+              {itemTypeMeta(s.item_type).icon} {s.name} — {fmt(s.cost_price)} cost
+            </option>
+          ))}
+        </select>
+      )}
 
       {SECTIONS.map((section) => {
         const rows = lines.map((l, i) => ({ l, i })).filter(({ l }) => l.kind === section.kind);
