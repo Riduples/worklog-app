@@ -254,7 +254,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
               "Tap the + Add button in the top right.",
               "The Type is already set to match the list you opened — Customer or Supplier.",
               "In the Name field, type the person's full name or business name. This is the only field you must fill in.",
-              "Add their Phone and Email if you have them (both are optional).",
+              "Add their Phone, Email and Address if you have them (all optional).",
               "For a customer, pick a Payment behaviour: Good payer, Slow payer or Problem payer. For a supplier, pick the Payment terms instead: On delivery, 7 days, 30 days, 60 days, Cash only or Pre-payment.",
               "Type anything else worth remembering in the Notes field (optional).",
               "Tap Save Customer (or Save Supplier)."
@@ -263,6 +263,10 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "tip",
             "text": "The payment behaviour and payment terms are just for your own reference, so you know at a glance who pays on time and what each supplier expects."
+          },
+          {
+            "type": "paragraph",
+            "text": "Customers have one extra box: a Custom field for anything unique to your business. Type a Label (like Pet name, Vehicle or Account) and its Value (like Biscuit), and it is saved with that customer. Leave it blank if you do not need it."
           }
         ]
       },
@@ -271,7 +275,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
         "blocks": [
           {
             "type": "paragraph",
-            "text": "When a contact is a supplier, you get one extra optional field: Bank & account number. It only appears for suppliers (the people you pay), so you will not see it on customers. Fill in the Bank name and Account number if you would like them handy for the next time you pay that supplier."
+            "text": "When a contact is a supplier, you get an extra Banking details section with two boxes: Bank and Account number. It only appears for suppliers (the people you pay), so you will not see it on customers. Fill them in if you would like them handy for the next time you pay that supplier."
           },
           {
             "type": "warning",
@@ -310,7 +314,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
         "blocks": [
           {
             "type": "paragraph",
-            "text": "If you already have a list of customers or suppliers in a spreadsheet, you can bring them all in together instead of typing them one by one."
+            "text": "If you already have a list of customers or suppliers in a spreadsheet, you can bring them all in together instead of typing them one by one. Start it from the ⬆ Import button at the top of the list, or from the Import customers from CSV (or Import suppliers from CSV) banner at the top of the Add form."
           },
           {
             "type": "steps",
