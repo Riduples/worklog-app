@@ -30,7 +30,7 @@ const GROUPS: Group[] = [
       { tool: "quote", href: "/quotes", icon: "📋", label: "Quotes" },
       { tool: "invoice", href: "/invoices", icon: "📤", label: "Invoices" },
       { tool: "statement", href: "/statement", icon: "📃", label: "Statements" },
-      { tool: "stock", href: "/stock", icon: "📦", label: "Stock" },
+      { tool: "stock", href: "/stock", icon: "📦", label: "Items" },
       { tool: "recipe", href: "/recipes", icon: "🍳", label: "Cost Calculator" },
     ],
   },

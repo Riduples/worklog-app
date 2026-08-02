@@ -42,7 +42,7 @@ const NAV_CATEGORIES: { id: string; items: NavItem[] }[] = [
   {
     id: "stock", // Price List
     items: [
-      { href: "/stock", icon: "📦", label: "Stock", toolId: "stock" },
+      { href: "/stock", icon: "📦", label: "Items", toolId: "stock" },
       { href: "/recipes", icon: "🍳", label: "Cost Calculator", toolId: "recipe" },
     ],
   },
