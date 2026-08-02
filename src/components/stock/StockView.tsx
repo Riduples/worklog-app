@@ -128,7 +128,16 @@ export function StockView() {
         );
       })}
 
-      {modalState.open && <StockModal item={modalState.item} onClose={() => setModalState({ open: false })} />}
+      {modalState.open && (
+        <StockModal
+          item={modalState.item}
+          onClose={() => setModalState({ open: false })}
+          onImport={() => {
+            setModalState({ open: false });
+            setImportOpen(true);
+          }}
+        />
+      )}
       {importOpen && <CSVImportModal type="stock" onClose={() => setImportOpen(false)} />}
     </div>
   );

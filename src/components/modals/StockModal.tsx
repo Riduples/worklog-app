@@ -9,9 +9,9 @@ import { fmt } from "@/lib/format";
 import { ITEM_TYPES, ITEM_TYPE_META, type ItemType } from "@/lib/itemTypes";
 import { useCreateStockItem, useUpdateStockItem, type StockItem } from "@/lib/supabase/hooks/useStock";
 
-export function StockModal({ item, onClose }: { item?: StockItem; onClose: () => void }) {
+export function StockModal({ item, onClose, onImport }: { item?: StockItem; onClose: () => void; onImport?: () => void }) {
   const isEdit = !!item;
-  const [itemType, setItemType] = useState<ItemType>((item?.item_type as ItemType) ?? "product");
+  const [itemType, setItemType] = useState<ItemType>((item?.item_type as ItemType) ?? "service");
   const [name, setName] = useState(item?.name ?? "");
   const [qty, setQty] = useState(String(item?.qty ?? 0));
   const [cost, setCost] = useState(String(item?.cost_price ?? 0));
@@ -23,6 +23,7 @@ export function StockModal({ item, onClose }: { item?: StockItem; onClose: () =>
   const updateStockItem = useUpdateStockItem();
   const saving = createStockItem.isPending || updateStockItem.isPending;
 
+  const meta = ITEM_TYPE_META[itemType];
   const costNum = parseFloat(cost) || 0;
   const sellNum = parseFloat(sell) || 0;
   const marginPct = sellNum > 0 ? ((sellNum - costNum) / sellNum) * 100 : 0;
@@ -37,10 +38,10 @@ export function StockModal({ item, onClose }: { item?: StockItem; onClose: () =>
     const changes = {
       name: name.trim(),
       item_type: itemType,
-      qty: parseInt(qty, 10) || 0,
+      qty: meta.showStock ? parseInt(qty, 10) || 0 : 0,
       cost_price: costNum,
       sell_price: sellNum,
-      reorder_level: parseInt(reorder, 10) || 0,
+      reorder_level: meta.showStock ? parseInt(reorder, 10) || 0 : 0,
       margin_pct: marginPct,
     };
 
@@ -53,10 +54,46 @@ export function StockModal({ item, onClose }: { item?: StockItem; onClose: () =>
 
   return (
     <Modal title={isEdit ? "Edit stock item" : "Add stock item"} onClose={onClose}>
-      <Field label="Type">
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+      {!isEdit && onImport && (
+        <button
+          type="button"
+          onClick={onImport}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 8,
+            width: "100%",
+            background: "#F0F9FF",
+            border: "1.5px solid #BAE6FD",
+            borderRadius: 14,
+            padding: "14px 16px",
+            marginBottom: 22,
+            cursor: "pointer",
+          }}
+        >
+          <span style={{ fontSize: 15, fontWeight: 700, color: "#0369A1" }}>📁 Import items from CSV</span>
+          <span style={{ fontSize: 13, color: "#64748b" }}>bulk upload</span>
+        </button>
+      )}
+
+      <div style={{ marginBottom: 16 }}>
+        <label
+          style={{
+            display: "block",
+            fontSize: 12,
+            fontWeight: 700,
+            color: "#64748b",
+            textTransform: "uppercase",
+            letterSpacing: 0.6,
+            marginBottom: 8,
+          }}
+        >
+          Type — what kind of item is this?
+        </label>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
           {ITEM_TYPES.map((t) => {
-            const meta = ITEM_TYPE_META[t];
+            const m = ITEM_TYPE_META[t];
             const active = itemType === t;
             return (
               <button
@@ -66,40 +103,50 @@ export function StockModal({ item, onClose }: { item?: StockItem; onClose: () =>
                 style={{
                   display: "flex",
                   alignItems: "center",
+                  justifyContent: "center",
                   gap: 6,
-                  padding: "9px 12px",
-                  borderRadius: 20,
-                  border: `1.5px solid ${active ? meta.color : "#e2e8f0"}`,
-                  background: active ? meta.bg : "#fff",
-                  color: active ? meta.color : "#374151",
-                  fontSize: 13,
-                  fontWeight: 600,
+                  padding: "13px 10px",
+                  borderRadius: 12,
+                  border: active ? "1.5px solid #0C4A6E" : "1.5px solid #e2e8f0",
+                  background: active ? "#0C4A6E" : "#fff",
+                  color: active ? "#fff" : "#1e293b",
+                  fontSize: 14,
+                  fontWeight: 700,
                   cursor: "pointer",
                 }}
               >
-                <span>{meta.icon}</span>
-                {meta.label}
+                <span>{m.icon}</span>
+                {m.label}
               </button>
             );
           })}
         </div>
-        <p style={{ fontSize: 12, color: "#64748b", margin: "6px 0 0" }}>{ITEM_TYPE_META[itemType].hint}</p>
-      </Field>
+        <p style={{ fontSize: 13, color: "#64748b", margin: "10px 0 0" }}>{meta.hint}</p>
+      </div>
+
       <Field label="Description">
-        <Input value={name} onChange={setName} placeholder={ITEM_TYPE_META[itemType].placeholder} autoFocus />
+        <Input value={name} onChange={setName} placeholder={meta.placeholder} autoFocus />
       </Field>
-      <Field label="Quantity on hand">
-        <Input value={qty} onChange={setQty} type="number" placeholder="0" />
-      </Field>
-      <Field label="Cost price (what you pay)">
-        <Input value={cost} onChange={setCost} type="number" placeholder="0.00" />
-      </Field>
-      <Field label="Sell price (what you charge)">
-        <Input value={sell} onChange={setSell} type="number" placeholder="0.00" />
-      </Field>
-      <Field label="Reorder level (alert threshold)">
-        <Input value={reorder} onChange={setReorder} type="number" placeholder="0" />
-      </Field>
+
+      {meta.showStock && (
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <Field label="Qty in stock">
+            <Input value={qty} onChange={setQty} type="number" placeholder="0" />
+          </Field>
+          <Field label="Reorder below">
+            <Input value={reorder} onChange={setReorder} type="number" placeholder="0" />
+          </Field>
+        </div>
+      )}
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        <Field label={meta.costLabel}>
+          <Input value={cost} onChange={setCost} type="number" placeholder="0.00" />
+        </Field>
+        <Field label={meta.sellLabel}>
+          <Input value={sell} onChange={setSell} type="number" placeholder="0.00" />
+        </Field>
+      </div>
 
       {sellNum > 0 && (
         <div style={{ background: "#F0F9FF", borderRadius: 12, padding: "12px 14px", marginBottom: 16, fontSize: 13, color: "#0369A1" }}>
@@ -108,7 +155,7 @@ export function StockModal({ item, onClose }: { item?: StockItem; onClose: () =>
       )}
 
       {error && <p style={{ color: "#dc2626", fontSize: 13, marginBottom: 12 }}>{error}</p>}
-      <SaveBtn label={saving ? "Saving..." : "Save item"} onClick={handleSave} disabled={saving} />
+      <SaveBtn label={saving ? "Saving..." : isEdit ? "Save changes" : meta.addLabel} icon={meta.icon} onClick={handleSave} disabled={saving} />
     </Modal>
   );
 }
