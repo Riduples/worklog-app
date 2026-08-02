@@ -68,7 +68,7 @@ export const ACCESS_LEVEL_MAP = Object.fromEntries(ACCESS_LEVELS.map((l) => [l.i
 >;
 
 export const TOOL_CATEGORIES: { id: string; label: string; icon: string; desc: string; tools: ToolId[] }[] = [
-  { id: "stock", label: "Price List", icon: "📋", desc: "Saved items, materials & labour rates · Cost Calculator", tools: ["stock", "recipe"] },
+  { id: "stock", label: "Price List", icon: "📋", desc: "Your saved prices for what you sell, plus a calculator to price a job", tools: ["stock", "recipe"] },
   { id: "contacts", label: "Contacts", icon: "👥", desc: "Saved customers & suppliers for quick access", tools: ["clients", "suppliers"] },
   { id: "invoicing", label: "Sales", icon: "📤", desc: "Quotes & invoices you send to customers", tools: ["quote", "invoice", "statement"] },
   { id: "purchases", label: "Purchases", icon: "📥", desc: "Purchase orders & supplier invoices you receive", tools: ["purchaseorder", "supplierinvoice", "remittance"] },
@@ -98,8 +98,8 @@ export const TOOL_LABELS: Partial<Record<ToolId, { icon: string; label: string; 
   remittance: { icon: "🧾", label: "Remittance Advice", desc: "A note telling a supplier exactly which of their invoices you're paying — mainly for businesses with supplier accounts" },
   clients: { icon: "👤", label: "Customers", desc: "People or businesses that buy from you" },
   suppliers: { icon: "🏪", label: "Suppliers", desc: "Businesses or people you buy from" },
-  stock: { icon: "📋", label: "Items", desc: "Saved materials & labour rates for line items" },
-  recipe: { icon: "🧮", label: "Cost Calculator", desc: "Cost any job, project or product and set a price" },
+  stock: { icon: "📋", label: "Items", desc: "Save what you sell and its prices — services, products, materials & labour" },
+  recipe: { icon: "🧮", label: "Cost Calculator", desc: "Add up what a job costs you, then set your price" },
   booking: { icon: "📓", label: "Diary", desc: "Appointments with clients & suppliers" },
   staffregister: { icon: "👤", label: "Staff Register", desc: "Add & manage employees — ID, rate, schedule" },
   payrun: { icon: "💵", label: "Pay Run", desc: "Calculate wages, deductions & generate payslips" },

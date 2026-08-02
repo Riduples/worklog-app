@@ -31,7 +31,7 @@ export type HelpArticle = {
 // under its own name at the end.
 export const HELP_CATEGORIES: { name: string; icon: string; blurb: string }[] = [
   { name: "Getting started", icon: "🚀", blurb: "Set up your business and find your way around." },
-  { name: "Price list & pricing", icon: "🏷️", blurb: "Items, materials and job costing." },
+  { name: "Price list & pricing", icon: "🏷️", blurb: "Your price list, and working out what to charge." },
   { name: "Sales", icon: "📤", blurb: "Quotes, invoices, statements and getting paid." },
   { name: "Purchases", icon: "📥", blurb: "Purchase orders, supplier bills and remittances." },
   { name: "Money", icon: "🏦", blurb: "Bank statements, cash-up, accounts and ledgers." },

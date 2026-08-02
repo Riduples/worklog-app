@@ -788,36 +788,34 @@ export const HELP_ARTICLES: HelpArticle[] = [
   {
     "slug": "manage-your-stock",
     "category": "Price list & pricing",
-    "title": "Manage your stock and price list",
-    "summary": "Add the materials and items you buy and sell, set your cost and sell prices, and keep an eye on what is running low.",
+    "title": "Manage your price list (Items)",
+    "summary": "Save the things you sell and use — services, products, materials and labour — with their cost and sell prices, and keep an eye on what is running low.",
     "sections": [
       {
-        "heading": "What Stock is for",
+        "heading": "What the Items list is for",
         "blocks": [
           {
             "type": "paragraph",
-            "text": "Stock is your list of the things you buy and sell, like cement, hair products, or cooldrinks. For each item you keep the cost price (what you pay), the sell price (what you charge), and how many you have on hand. Worklog works out your profit margin for you and warns you when an item is running low."
+            "text": "Items is your price list — the things you sell and use, like a haircut, cement, or an hour of plumbing. For each one you keep the cost price (what you pay) and the sell price (what you charge), and Worklog works out your profit margin for you. For products and materials you can also track how many you have on hand, and Worklog warns you when one is running low. You'll find Items under Price List."
           }
         ]
       },
       {
-        "heading": "Add a stock item",
+        "heading": "Add an item",
         "blocks": [
           {
             "type": "paragraph",
-            "text": "Open Stock and tap Add to create your first item."
+            "text": "Open Items and tap Add to create your first one."
           },
           {
             "type": "steps",
             "items": [
-              "On the Stock screen, tap the + Add button at the top right.",
-              "At the top of the form, tap the Type that fits the item — Service, Product, Labour, Material or Package.",
+              "On the Items screen, tap the + Add button at the top right.",
+              "At the top of the form, tap the Type that fits — Service, Product, Labour, Material or Package.",
               "In Description, type what the item is, for example Cement 50kg.",
-              "In Quantity on hand, type how many you have right now.",
-              "In Cost price (what you pay), type what one unit costs you.",
-              "In Sell price (what you charge), type the price you sell one for.",
-              "In Reorder level (alert threshold), type the number at which you want a low-stock warning. Leave it at 0 if you do not want a warning.",
-              "When you are happy, tap Save item. Once you have typed a sell price, a Margin box appears above the button so you can see your profit before you save."
+              "For a Product or Material, fill in Qty in stock (how many you have right now) and Reorder below (the number at which you want a low-stock warning — leave it 0 for no warning). Services, Labour and Packages don't track a quantity, so these boxes don't appear for them.",
+              "Type the two prices. For most types these are Cost price (what you pay) and Sell price (what you charge). For Labour they read Your Cost Rate (R/hr) and What you charge (R/hr).",
+              "When you are happy, tap the blue button at the bottom — it names the type, like Add Product. Once you have typed a sell price, a Margin box appears above the button so you can see your profit before you save."
             ]
           }
         ]
@@ -827,7 +825,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
         "blocks": [
           {
             "type": "paragraph",
-            "text": "Every item has a Type. At the top of the add or edit form you'll find five buttons — Service, Product, Labour, Material and Package. Tap the one that fits and it lights up in its own colour. Your choice changes the little hint under the buttons and the example in the Description box, so it's easier to write the item down the right way."
+            "text": "Every item has a Type. At the top of the add or edit form you'll find five buttons — Service, Product, Labour, Material and Package. Tap the one that fits and it turns navy blue to show it's selected. Your choice changes the little hint under the buttons, the example in the Description box, and which boxes you fill in, so it's easier to write the item down the right way."
           },
           {
             "type": "bullets",
@@ -836,12 +834,12 @@ export const HELP_ARTICLES: HelpArticle[] = [
               "📦 Product — something you sell, like shampoo, parts or other goods.",
               "⚒️ Labour — your time, like an hourly rate, day rate or call-out fee.",
               "🧱 Material — raw materials you buy and use on jobs, like copper pipe or cement.",
-              "📋 Package — a bundle of services or products sold together, like a starter package or monthly retainer."
+              "📋 Package — a bundled offering, like a full service package or a monthly retainer."
             ]
           },
           {
             "type": "paragraph",
-            "text": "Back on the Stock screen, each item shows a small coloured badge with its type next to the name, so you can tell your services from your materials at a glance. Whatever the type, every item still carries a quantity, so you can count products on the shelf and still list the services you offer."
+            "text": "Back on the Items screen, each item shows a small coloured badge with its type next to the name, so you can tell your services from your materials at a glance. Products and Materials also keep a quantity so you can count what's on the shelf; Services, Labour and Packages are just a price, with no quantity to track."
           }
         ]
       },
@@ -860,14 +858,14 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "steps",
             "items": [
-              "On the Stock screen, tap the item you want to change.",
-              "Change any of the fields, then tap Save item.",
-              "To delete an item instead, tap the ✕ on the right of its row and confirm Remove this stock item?"
+              "On the Items screen, tap the item you want to change.",
+              "Change any of the fields, then tap Save changes.",
+              "To delete an item instead, tap the ✕ on the right of its row and confirm Remove this item?"
             ]
           },
           {
             "type": "tip",
-            "text": "Update Quantity on hand whenever you buy more or sell some, so your stock count stays right and your low-stock warnings are accurate."
+            "text": "For products and materials, update Qty in stock whenever you buy more or sell some, so your stock count stays right and your low-stock warnings are accurate."
           }
         ]
       },
@@ -885,11 +883,11 @@ export const HELP_ARTICLES: HelpArticle[] = [
         "blocks": [
           {
             "type": "paragraph",
-            "text": "Your Stock list isn't only for keeping count — you can drop any saved item straight onto a quote or an invoice. While you're adding the lines, open the Add from your items… list and choose one. Worklog fills in the description and the sell price for you, so there's no retyping. You can still change the quantity or the price on that line afterwards."
+            "text": "Your Items list isn't only for keeping count — you can drop any saved item straight onto a quote or an invoice. While you're adding the lines, open the Add from your items… list and choose one. Worklog fills in the description and the sell price for you, so there's no retyping. You can still change the quantity or the price on that line afterwards."
           },
           {
             "type": "tip",
-            "text": "Building your quotes and invoices from your Stock list keeps your prices the same everywhere and saves you typing the same items over and over."
+            "text": "Building your quotes and invoices from your Items list keeps your prices the same everywhere and saves you typing the same items over and over."
           }
         ]
       },
@@ -898,12 +896,12 @@ export const HELP_ARTICLES: HelpArticle[] = [
         "blocks": [
           {
             "type": "paragraph",
-            "text": "If you already have a list of stock somewhere, you can bring it in with a CSV file instead of typing each item."
+            "text": "If you already have your items in a list somewhere, you can bring them in with a CSV file instead of typing each one."
           },
           {
             "type": "steps",
             "items": [
-              "On the Stock screen, tap the ⬆ Import button at the top right.",
+              "On the Items screen, tap the ⬆ Import button at the top right.",
               "Tap Download template CSV and fill it in on your computer or phone. The columns are description, item_type, qty, cost_price, sell_price and reorder_level, and only the description (the item's name) is required. Put service, product, labour, material or package in item_type to set each item's type — leave it blank and it comes in as a Product.",
               "Tap Choose CSV file and pick your saved file.",
               "Check the preview. It shows how many items will import and how many are duplicates that will be skipped.",
@@ -921,7 +919,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
         "blocks": [
           {
             "type": "paragraph",
-            "text": "Depending on the access your business owner gave you, you may see your stock list without the Add, Import or edit buttons. If so, Worklog shows a note saying you have view-only access. Ask the owner of the business to give you more access if you need to make changes."
+            "text": "Depending on the access your business owner gave you, you may see your Items list without the Add, Import or edit buttons. If so, Worklog shows a note saying you have view-only access. Ask the owner of the business to give you more access if you need to make changes."
           }
         ]
       }
@@ -944,7 +942,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
         "blocks": [
           {
             "type": "paragraph",
-            "text": "The Cost Calculator helps you price a job or product before you sell it. You list the materials and the labour it takes, add your markup, and Worklog works out the total cost and a suggested selling price. You can pull lines straight from your price list, and save the finished costing back to your price list as an item."
+            "text": "The Cost Calculator helps you price a job or product before you sell it. You list the materials, products and labour it takes, add your markup, and Worklog works out the total cost and a suggested selling price. You can pull lines straight from your price list, and save the finished costing back to your price list as an item."
           },
           {
             "type": "paragraph",
@@ -959,16 +957,17 @@ export const HELP_ARTICLES: HelpArticle[] = [
             "type": "steps",
             "items": [
               "Open the Cost Calculator and tap + New.",
-              "In What are you costing?, type the job or product name, for example Bathroom re-tile.",
-              "For each cost, choose Material or Labour, type a description, then the quantity (for labour this is hours) and the unit cost (for labour this is the rate per hour).",
-              "Tap + Material or + Labour to add more lines, or use Add from your price list to drop in a saved item.",
-              "In Markup %, set the percentage to add on top of your cost. It starts at 50.",
-              "Check the navy summary, then tap Save costing."
+              "In Job / product name, type what you're costing, for example Bathroom re-tile. There's an optional Notes / job description box under it for scope or conditions.",
+              "If you're costing a batch — like 10 portions of a dish — set Number of units / portions and a Unit label (for example portion). Leave it at 1 for a one-off job.",
+              "Fill in the three sections. Materials / ingredients and Products each take a Description and its R cost. Labour takes a Description, the Hours and the Rate (R/hr), and shows the line total for you.",
+              "Tap + Add material, + Add product or + Add labour line for more rows, or use Add from your price list to drop in a saved item.",
+              "In Markup % (profit on top of total cost), set the percentage to add on top of your cost. It starts at 30.",
+              "Check the navy summary, then tap Save Costing."
             ]
           },
           {
             "type": "tip",
-            "text": "Add from your price list uses each item's own cost, and puts Labour items on a labour line and everything else on a material line."
+            "text": "Add from your price list uses each item's own cost, and puts it on the matching section — Labour items on a labour line, products on a product line, everything else on a material line."
           }
         ]
       },
@@ -982,9 +981,10 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "bullets",
             "items": [
-              "Total cost — every material and labour line added up.",
+              "Total cost — every material, product and labour line added up.",
               "Labour hours — the hours across your labour lines (shown when there are any).",
-              "Suggested price — the total cost plus your markup. You decide what you actually charge."
+              "Suggested price — the total cost plus your markup. You decide what you actually charge.",
+              "Per unit — when you're costing more than one unit or portion, the suggested price per unit (shown when units is above 1)."
             ]
           }
         ]
@@ -994,7 +994,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
         "blocks": [
           {
             "type": "paragraph",
-            "text": "Tap Save as a price-list item to add the costed job to your Items as a product — its cost becomes the costing's total, and its sell price becomes the suggested price. If the costing has labour hours, those are saved on the item too."
+            "text": "Tap Save as a price-list item to add the costed job to your Items as a product — its cost becomes the total cost and its sell price becomes the suggested price. If you costed more than one unit or portion, it saves the per-unit amounts instead. If the costing has labour hours, those are saved on the item too."
           },
           {
             "type": "tip",
@@ -1085,7 +1085,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           },
           {
             "type": "tip",
-            "text": "See Manage your stock and price list to add the materials and services you invoice most often, so they are ready to pick here."
+            "text": "See Manage your price list (Items) to add the materials and services you invoice most often, so they are ready to pick here."
           }
         ]
       },
@@ -1205,7 +1205,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           },
           {
             "type": "tip",
-            "text": "See Manage your stock and price list to add the materials and services you sell most often, so they are ready to pick here."
+            "text": "See Manage your price list (Items) to add the materials and services you sell most often, so they are ready to pick here."
           }
         ]
       },

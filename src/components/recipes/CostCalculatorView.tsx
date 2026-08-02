@@ -32,7 +32,7 @@ export function CostCalculatorView() {
         )}
       </div>
       <p style={{ fontSize: 12, color: "#94a3b8", marginBottom: 16, lineHeight: 1.5 }}>
-        Cost a job or product from your materials and labour, add a markup to see a suggested price, and save it to your price list.
+        Cost a job or product from your materials, products and labour, add a markup to see a suggested price, and save it to your price list.
       </p>
 
       {!access.loading && !access.canEdit && <ReadOnlyNotice level={access.level} what="costings" />}

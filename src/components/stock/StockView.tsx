@@ -18,7 +18,7 @@ export function StockView() {
   const [importOpen, setImportOpen] = useState(false);
 
   const handleSoftDelete = (id: string) => {
-    if (!confirm("Remove this stock item?")) return;
+    if (!confirm("Remove this item?")) return;
     updateStockItem.mutate({ id, changes: { deleted_at: new Date().toISOString() } });
   };
 
