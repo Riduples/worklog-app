@@ -257,7 +257,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
               "Add their Phone and Email if you have them (both are optional).",
               "For a customer, pick a Payment behaviour: Good payer, Slow payer or Problem payer. For a supplier, pick the Payment terms instead: On delivery, 7 days, 30 days, 60 days, Cash only or Pre-payment.",
               "Type anything else worth remembering in the Notes field (optional).",
-              "Tap Save contact."
+              "Tap Save Customer (or Save Supplier)."
             ]
           },
           {
@@ -283,7 +283,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           },
           {
             "type": "tip",
-            "text": "Bank details are optional. Leave them blank if you would rather not keep them, and you can add or remove them later by opening the supplier and tapping Save contact."
+            "text": "Bank details are optional. Leave them blank if you would rather not keep them, and you can add or remove them later by opening the supplier and tapping Save Supplier."
           }
         ]
       },
@@ -295,7 +295,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
             "items": [
               "Open Customers or Suppliers and find the person in the list.",
               "Tap their name to open the contact.",
-              "Change any of the details, then tap Save contact.",
+              "Change any of the details, then tap Save Customer or Save Supplier.",
               "To remove them, tap the ✕ on the right of their row and confirm."
             ]
           },
