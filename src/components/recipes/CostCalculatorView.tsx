@@ -14,6 +14,9 @@ export function CostCalculatorView() {
   const access = useToolAccess("recipe");
   const { data: costings, isLoading } = useCostings();
   const [modalState, setModalState] = useState<{ open: boolean; costing?: Costing }>({ open: false });
+  const [search, setSearch] = useState("");
+
+  const filtered = (costings ?? []).filter((c) => !search || c.name.toLowerCase().includes(search.toLowerCase()));
 
   return (
     <div style={{ padding: "20px 16px 100px" }}>
@@ -37,12 +40,40 @@ export function CostCalculatorView() {
 
       {!access.loading && !access.canEdit && <ReadOnlyNotice level={access.level} what="costings" />}
 
+      {!isLoading && (costings ?? []).length > 0 && (
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search costings..."
+          style={{
+            width: "100%",
+            padding: "12px 14px",
+            borderRadius: 12,
+            border: "1.5px solid #e2e8f0",
+            fontSize: 14,
+            boxSizing: "border-box",
+            marginBottom: 12,
+            background: "#fff",
+          }}
+        />
+      )}
+
       {isLoading && <p style={{ color: "#94a3b8", fontSize: 13 }}>Loading...</p>}
       {!isLoading && (costings ?? []).length === 0 && (
         <p style={{ color: "#94a3b8", fontSize: 13, textAlign: "center", marginTop: 40 }}>No costings yet. Tap “+ New” to cost your first job.</p>
       )}
+      {!isLoading && (costings ?? []).length > 0 && filtered.length === 0 && (
+        <p style={{ color: "#94a3b8", fontSize: 13, textAlign: "center", marginTop: 40 }}>No costings match your search.</p>
+      )}
 
-      {(costings ?? []).map((c) => (
+      {!isLoading && filtered.length > 0 && (
+        <p style={{ fontSize: 11, color: "#94a3b8", margin: "0 0 8px 2px" }}>
+          {filtered.length}
+          {filtered.length !== (costings ?? []).length ? ` of ${(costings ?? []).length}` : ""} costing{(costings ?? []).length === 1 ? "" : "s"}
+        </p>
+      )}
+
+      {filtered.map((c) => (
         <button
           key={c.id}
           onClick={() => setModalState({ open: true, costing: c })}

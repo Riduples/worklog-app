@@ -7,7 +7,7 @@ import { CSVImportModal } from "@/components/modals/CSVImportModal";
 import { ReadOnlyNotice } from "@/components/ui/ReadOnlyNotice";
 import { useToolAccess } from "@/lib/supabase/hooks/useToolAccess";
 import { fmt } from "@/lib/format";
-import { itemTypeMeta } from "@/lib/itemTypes";
+import { ITEM_TYPES, ITEM_TYPE_META, itemTypeMeta, type ItemType } from "@/lib/itemTypes";
 import { BackLink } from "@/components/ui/BackLink";
 
 export function StockView() {
@@ -16,6 +16,17 @@ export function StockView() {
   const access = useToolAccess("stock");
   const [modalState, setModalState] = useState<{ open: boolean; item?: StockItem }>({ open: false });
   const [importOpen, setImportOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState<ItemType | "all">("all");
+
+  // Only offer filter pills for types the business actually has, in the
+  // canonical order — a filter that would show nothing is just clutter.
+  const presentTypes = ITEM_TYPES.filter((t) => (items ?? []).some((i) => i.item_type === t));
+  const filtered = (items ?? []).filter((i) => {
+    if (typeFilter !== "all" && i.item_type !== typeFilter) return false;
+    if (search && !i.name.toLowerCase().includes(search.toLowerCase())) return false;
+    return true;
+  });
 
   const handleSoftDelete = (id: string) => {
     if (!confirm("Remove this item?")) return;
@@ -67,12 +78,69 @@ export function StockView() {
 
       {!access.loading && !access.canEdit && <ReadOnlyNotice level={access.level} what="stock items" />}
 
+      {!isLoading && (items ?? []).length > 0 && (
+        <>
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search items..."
+            style={{
+              width: "100%",
+              padding: "12px 14px",
+              borderRadius: 12,
+              border: "1.5px solid #e2e8f0",
+              fontSize: 14,
+              boxSizing: "border-box",
+              marginBottom: 12,
+              background: "#fff",
+            }}
+          />
+
+          {presentTypes.length > 1 && (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
+              {(["all", ...presentTypes] as const).map((t) => {
+                const active = typeFilter === t;
+                const label = t === "all" ? "All" : `${ITEM_TYPE_META[t].icon} ${ITEM_TYPE_META[t].label}`;
+                return (
+                  <button
+                    key={t}
+                    onClick={() => setTypeFilter(t)}
+                    style={{
+                      padding: "8px 14px",
+                      borderRadius: 20,
+                      border: `1.5px solid ${active ? "#0C4A6E" : "#e2e8f0"}`,
+                      background: active ? "#0C4A6E" : "#fff",
+                      color: active ? "#fff" : "#374151",
+                      fontSize: 12,
+                      fontWeight: 700,
+                      cursor: "pointer",
+                    }}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </>
+      )}
+
       {isLoading && <p style={{ color: "#94a3b8", fontSize: 13 }}>Loading...</p>}
       {!isLoading && (items ?? []).length === 0 && (
         <p style={{ color: "#94a3b8", fontSize: 13, textAlign: "center", marginTop: 40 }}>No items yet.</p>
       )}
+      {!isLoading && (items ?? []).length > 0 && filtered.length === 0 && (
+        <p style={{ color: "#94a3b8", fontSize: 13, textAlign: "center", marginTop: 40 }}>No items match your search.</p>
+      )}
 
-      {(items ?? []).map((item) => {
+      {!isLoading && filtered.length > 0 && (
+        <p style={{ fontSize: 11, color: "#94a3b8", margin: "0 0 8px 2px" }}>
+          {filtered.length}
+          {filtered.length !== (items ?? []).length ? ` of ${(items ?? []).length}` : ""} item{(items ?? []).length === 1 ? "" : "s"}
+        </p>
+      )}
+
+      {filtered.map((item) => {
         const lowStock = item.reorder_level != null && item.reorder_level > 0 && item.qty <= item.reorder_level;
         const meta = itemTypeMeta(item.item_type);
         return (
