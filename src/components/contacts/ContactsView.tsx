@@ -22,6 +22,7 @@ export function ContactsView({ only }: { only?: "client" | "supplier" } = {}) {
   const supplierAccess = useToolAccess("suppliers");
   const [typeFilter, setTypeFilter] = useState<"all" | "client" | "supplier">("all");
   const [search, setSearch] = useState("");
+  const [sort, setSort] = useState<"az" | "recent">("az");
   const [importOpen, setImportOpen] = useState(false);
   const [modalState, setModalState] = useState<{ open: boolean; contact?: Contact; defaultType?: "client" | "supplier" }>({
     open: false,
@@ -41,11 +42,17 @@ export function ContactsView({ only }: { only?: "client" | "supplier" } = {}) {
   const canDeleteContact = (c: Contact) => (c.contact_type === "supplier" ? supplierAccess : clientAccess).canDelete;
   const accessLoading = clientAccess.loading || supplierAccess.loading;
 
-  const filtered = (contacts ?? []).filter((c) => {
-    if (activeType !== "all" && c.contact_type !== activeType) return false;
-    if (search && !c.name.toLowerCase().includes(search.toLowerCase())) return false;
-    return true;
-  });
+  const filtered = (contacts ?? [])
+    .filter((c) => {
+      if (activeType !== "all" && c.contact_type !== activeType) return false;
+      if (search && !c.name.toLowerCase().includes(search.toLowerCase())) return false;
+      return true;
+    })
+    .sort((a, b) =>
+      sort === "recent"
+        ? (b.updated_at ?? b.created_at ?? "").localeCompare(a.updated_at ?? a.created_at ?? "")
+        : a.name.localeCompare(b.name)
+    );
 
   const handleSoftDelete = (id: string) => {
     if (!confirm(`Remove this ${only === "supplier" ? "supplier" : only === "client" ? "customer" : "contact"}? It stays on any existing quotes/invoices.`)) return;
@@ -140,6 +147,35 @@ export function ContactsView({ only }: { only?: "client" | "supplier" } = {}) {
       {isLoading && <p style={{ color: "#94a3b8", fontSize: 13 }}>Loading...</p>}
       {!isLoading && filtered.length === 0 && (
         <p style={{ color: "#94a3b8", fontSize: 13, textAlign: "center", marginTop: 40 }}>No {noun} yet.</p>
+      )}
+
+      {!isLoading && filtered.length > 0 && (
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", margin: "0 0 10px 2px" }}>
+          <span style={{ fontSize: 11, color: "#94a3b8" }}>
+            {filtered.length} {filtered.length === 1 ? noun.replace(/s$/, "") : noun}
+          </span>
+          <div style={{ display: "flex", gap: 4, background: "#f1f5f9", borderRadius: 10, padding: 3 }}>
+            {(["az", "recent"] as const).map((s) => (
+              <button
+                key={s}
+                onClick={() => setSort(s)}
+                style={{
+                  padding: "5px 12px",
+                  borderRadius: 8,
+                  border: "none",
+                  background: sort === s ? "#fff" : "transparent",
+                  color: sort === s ? "#0C4A6E" : "#64748b",
+                  fontSize: 12,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  boxShadow: sort === s ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
+                }}
+              >
+                {s === "az" ? "A–Z" : "Recent"}
+              </button>
+            ))}
+          </div>
+        </div>
       )}
 
       {filtered.map((c) => (

@@ -229,33 +229,33 @@ export const HELP_ARTICLES: HelpArticle[] = [
     "slug": "add-customers-and-suppliers",
     "category": "Getting started",
     "title": "Add customers and suppliers",
-    "summary": "Keep everyone you deal with in one Contacts list. Add customers and suppliers one at a time, or bring a whole spreadsheet in at once with a CSV file.",
+    "summary": "Keep everyone you deal with under Contacts, split into a Customers list and a Suppliers list. Add them one at a time, or bring a whole spreadsheet in at once with a CSV file.",
     "sections": [
       {
-        "heading": "One list for everyone you deal with",
+        "heading": "Customers and Suppliers",
         "blocks": [
           {
             "type": "paragraph",
-            "text": "Worklog keeps your customers and suppliers together in one place called Contacts. Each contact is marked as either a client (someone you sell to) or a supplier (someone you buy from). Adding them once means their name, phone number and payment notes are ready whenever you make a quote, invoice or purchase order."
+            "text": "Worklog keeps the people you deal with under Contacts, split into two lists: Customers (the people you sell to) and Suppliers (the people you buy from). Adding someone once means their name, phone number and payment notes are ready whenever you make a quote, invoice or purchase order."
           },
           {
             "type": "paragraph",
-            "text": "To open it, go to Contacts. At the top you will see a Search contacts box. Just below it are three filter buttons: All, Clients and Suppliers. Tap a button to show just that group, or type a name in the search box to find someone."
+            "text": "Open Customers or Suppliers from the menu. Each list has a Search box at the top and a sort toggle — A–Z to browse by name, or Recent to bring the ones you added or changed most recently to the top — so a new contact is easy to find again."
           }
         ]
       },
       {
-        "heading": "Add a contact",
+        "heading": "Add a customer or supplier",
         "blocks": [
           {
             "type": "steps",
             "items": [
-              "Open Contacts.",
+              "Open Customers (for someone you sell to) or Suppliers (for someone you buy from).",
               "Tap the + Add button in the top right.",
-              "Under Type, choose client or supplier.",
+              "The Type is already set to match the list you opened — Customer or Supplier.",
               "In the Name field, type the person's full name or business name. This is the only field you must fill in.",
               "Add their Phone and Email if you have them (both are optional).",
-              "If it is a client, pick a Payment behaviour: Good payer, Slow payer or Problem payer. If it is a supplier, pick the Payment terms instead: On delivery, 7 days, 30 days, 60 days, Cash only or Pre-payment.",
+              "For a customer, pick a Payment behaviour: Good payer, Slow payer or Problem payer. For a supplier, pick the Payment terms instead: On delivery, 7 days, 30 days, 60 days, Cash only or Pre-payment.",
               "Type anything else worth remembering in the Notes field (optional).",
               "Tap Save contact."
             ]
@@ -271,7 +271,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
         "blocks": [
           {
             "type": "paragraph",
-            "text": "When a contact is a supplier, you get one extra optional field: Bank & account number. It only appears for suppliers (the people you pay), so you will not see it on clients. Fill in the Bank name and Account number if you would like them handy for the next time you pay that supplier."
+            "text": "When a contact is a supplier, you get one extra optional field: Bank & account number. It only appears for suppliers (the people you pay), so you will not see it on customers. Fill in the Bank name and Account number if you would like them handy for the next time you pay that supplier."
           },
           {
             "type": "warning",
@@ -279,7 +279,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           },
           {
             "type": "paragraph",
-            "text": "Once saved, the bank and account number show on that supplier's row in your Contacts list, next to a small bank icon, so you can see them at a glance without opening the contact."
+            "text": "Once saved, the bank and account number show on that supplier's row in your Suppliers list, next to a small bank icon, so you can see them at a glance without opening the contact."
           },
           {
             "type": "tip",
@@ -293,7 +293,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "steps",
             "items": [
-              "Open Contacts and find the person in the list.",
+              "Open Customers or Suppliers and find the person in the list.",
               "Tap their name to open the contact.",
               "Change any of the details, then tap Save contact.",
               "To remove them, tap the ✕ on the right of their row and confirm."
@@ -315,7 +315,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "steps",
             "items": [
-              "Open Contacts and tap the ⬆ Import button in the top right.",
+              "Open Customers or Suppliers and tap the ⬆ Import button in the top right.",
               "Tap Download template CSV and fill in your contacts using that file as a guide. Only the name column is required.",
               "Tap Choose CSV file and pick your file.",
               "Check the preview. It shows a Will import number and a Duplicates skipped number (anyone whose name already exists is skipped).",
@@ -324,7 +324,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           },
           {
             "type": "warning",
-            "text": "Import brings in the type you are currently viewing. If you are on the Suppliers filter it imports suppliers; on All or Clients it imports clients. Tap the right filter button before you start so your contacts land in the correct group."
+            "text": "Import adds to the list you are on: importing from Suppliers brings the rows in as suppliers, and importing from Customers brings them in as customers. Open the right list before you start so your contacts land in the correct place."
           },
           {
             "type": "tip",
@@ -1048,7 +1048,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
             "type": "bullets",
             "items": [
               "If you charge VAT, set your VAT number first in Tax & SARS under Business tax details. Once it is set, invoices work out and show the VAT on their own.",
-              "Adding your customer under Contacts first makes them easy to pick, but you can also just type a new name."
+              "Adding your customer under Customers first makes them easy to pick, but you can also just type a new name."
             ]
           }
         ]
@@ -1171,7 +1171,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "bullets",
             "items": [
-              "It helps to have the customer saved under Contacts, but you can also just type their name.",
+              "It helps to have the customer saved under Customers, but you can also just type their name.",
               "If you are VAT registered and you have entered your VAT number under Tax & SARS, your quotes will show VAT automatically. If you have not, no VAT is added."
             ]
           }
@@ -1551,7 +1551,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "bullets",
             "items": [
-              "It helps to have your supplier saved under Contacts first, so you can pick them from a list. If they are not saved yet, you can just type the supplier name.",
+              "It helps to have your supplier saved under Suppliers first, so you can pick them from a list. If they are not saved yet, you can just type the supplier name.",
               "If you are VAT-registered, make sure your VAT number is set in Tax & SARS under Business tax details. Once it is set, your PO works out and shows the VAT for you."
             ]
           }
@@ -1667,7 +1667,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "bullets",
             "items": [
-              "It helps to have your supplier saved under Contacts, but you can also just type the name.",
+              "It helps to have your supplier saved under Suppliers, but you can also just type the name.",
               "If you already made a purchase order for this order, you can link the bill to it and pull the supplier and items across automatically. This only shows if you have a purchase order on the go.",
               "Input VAT only shows if you have entered your VAT number under Tax and SARS. If you have not, the bill is captured without VAT."
             ]
@@ -2354,7 +2354,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
         "blocks": [
           {
             "type": "tip",
-            "text": "You can type a customer's name straight into a booking, so you do not have to set them up first. But if you add your regular customers under Contacts, you can pick them from a list instead of typing the name each time."
+            "text": "You can type a customer's name straight into a booking, so you do not have to set them up first. But if you add your regular customers under Customers, you can pick them from a list instead of typing the name each time."
           }
         ]
       },
@@ -2456,7 +2456,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "bullets",
             "items": [
-              "You do not need to add the client to your Contacts first. You can start typing to pick an existing contact, or just type any name. You can also leave it blank.",
+              "You do not need to add the client to your Customers first. You can start typing to pick an existing contact, or just type any name. You can also leave it blank.",
               "Have your hourly rate handy if you want Worklog to work out the amount you can bill."
             ]
           }

@@ -69,7 +69,7 @@ export const ACCESS_LEVEL_MAP = Object.fromEntries(ACCESS_LEVELS.map((l) => [l.i
 
 export const TOOL_CATEGORIES: { id: string; label: string; icon: string; desc: string; tools: ToolId[] }[] = [
   { id: "stock", label: "Price List", icon: "📋", desc: "Your saved prices for what you sell, plus a calculator to price a job", tools: ["stock", "recipe"] },
-  { id: "contacts", label: "Contacts", icon: "👥", desc: "Saved customers & suppliers for quick access", tools: ["clients", "suppliers"] },
+  { id: "contacts", label: "Contacts", icon: "👥", desc: "Your customers and suppliers, saved for quick reuse on quotes, invoices & orders", tools: ["clients", "suppliers"] },
   { id: "invoicing", label: "Sales", icon: "📤", desc: "Quotes & invoices you send to customers", tools: ["quote", "invoice", "statement"] },
   { id: "purchases", label: "Purchases", icon: "📥", desc: "Purchase orders & supplier invoices you receive", tools: ["purchaseorder", "supplierinvoice", "remittance"] },
   { id: "bookings", label: "Scheduling System", icon: "📅", desc: "Diary, appointments, time & travel — manage how you spend your day", tools: ["booking", "timetrack", "mileage"] },
