@@ -174,7 +174,7 @@ export function RemittanceView() {
               onClick={() => setShowPicker((p) => !p)}
               style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "#b45309", border: "none", borderRadius: 8, padding: "5px 10px", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
             >
-              {showPicker ? "✕" : "🏪 List"}
+              {showPicker ? "✕" : "🏬 List"}
             </button>
           )}
         </div>

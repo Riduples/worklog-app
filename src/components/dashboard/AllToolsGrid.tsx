@@ -50,7 +50,7 @@ const NAV_CATEGORIES: { id: string; items: NavItem[] }[] = [
     id: "contacts", // Contacts
     items: [
       { href: "/customers", icon: "👤", label: "Customers", toolId: "clients" },
-      { href: "/suppliers", icon: "🏪", label: "Suppliers", toolId: "suppliers" },
+      { href: "/suppliers", icon: "🏬", label: "Suppliers", toolId: "suppliers" },
     ],
   },
   {

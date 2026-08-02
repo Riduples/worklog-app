@@ -1804,7 +1804,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
             "type": "steps",
             "items": [
               "Open Remittance from the Purchases section.",
-              "Under Select supplier, start typing the supplier's name, or tap the 🏪 List button to pick from your suppliers. Suppliers you still owe show how much next to their name.",
+              "Under Select supplier, start typing the supplier's name, or tap the 🏬 List button to pick from your suppliers. Suppliers you still owe show how much next to their name.",
               "Under Select invoices you are paying, tap each invoice you want to settle. The box turns orange and shows a ticked ☑ mark. Tap it again to remove it.",
               "Check the dark blue summary bar, which shows how many invoices you have selected and the total.",
               "Leave Payment amount blank to pay the full selected total, or type an amount if you are paying a different figure.",

@@ -148,7 +148,7 @@ export function Sidebar() {
           tools the dashboard grid carried that the sidebar didn't, which
           matters now the grid is hidden on desktop. */}
       {gate("clients") && navLink("/customers", "👤", "Customers", isActive("/customers"))}
-      {gate("suppliers") && navLink("/suppliers", "🏪", "Suppliers", isActive("/suppliers"))}
+      {gate("suppliers") && navLink("/suppliers", "🏬", "Suppliers", isActive("/suppliers"))}
 
       {GROUPS.map((group) => {
         const visible = group.items.filter((i) => gate(i.tool));

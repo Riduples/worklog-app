@@ -97,7 +97,7 @@ export const TOOL_LABELS: Partial<Record<ToolId, { icon: string; label: string; 
   supplierinvoice: { icon: "📥", label: "Supplier Invoice", desc: "Record an invoice you received from a supplier" },
   remittance: { icon: "🧾", label: "Remittance Advice", desc: "A note telling a supplier exactly which of their invoices you're paying — mainly for businesses with supplier accounts" },
   clients: { icon: "👤", label: "Customers", desc: "People or businesses that buy from you" },
-  suppliers: { icon: "🏪", label: "Suppliers", desc: "Businesses or people you buy from" },
+  suppliers: { icon: "🏬", label: "Suppliers", desc: "Businesses or people you buy from" },
   stock: { icon: "📋", label: "Items", desc: "Save what you sell and its prices — services, products, materials & labour" },
   recipe: { icon: "🧮", label: "Cost Calculator", desc: "Add up what a job costs you, then set your price" },
   booking: { icon: "📓", label: "Diary", desc: "Appointments with clients & suppliers" },
