@@ -6,8 +6,10 @@ import { getCurrentBusinessId } from "@/lib/supabase/currentBusiness";
 import type { Tables, TablesInsert, TablesUpdate } from "@/lib/types/database";
 
 export type Costing = Tables<"costings">;
-// A costing line: a material (qty × unit cost) or labour (qty = hours × rate).
-export type CostingLine = { kind: "material" | "labour"; desc: string; qty: number; unit_cost: number };
+// A costing line. Materials and products are a flat cost (qty defaults to 1, so
+// unit_cost is the line cost); labour's qty is hours, unit_cost the rate/hour.
+export type CostingLineKind = "material" | "product" | "labour";
+export type CostingLine = { kind: CostingLineKind; desc: string; qty: number; unit_cost: number };
 
 const QUERY_KEY = ["costings"];
 

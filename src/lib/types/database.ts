@@ -575,6 +575,8 @@ export type Database = {
           notes: string | null
           suggested_price: number
           total_cost: number
+          unit_label: string
+          units: number
           updated_at: string | null
           user_id: string
         }
@@ -590,6 +592,8 @@ export type Database = {
           notes?: string | null
           suggested_price?: number
           total_cost?: number
+          unit_label?: string
+          units?: number
           updated_at?: string | null
           user_id: string
         }
@@ -605,6 +609,8 @@ export type Database = {
           notes?: string | null
           suggested_price?: number
           total_cost?: number
+          unit_label?: string
+          units?: number
           updated_at?: string | null
           user_id?: string
         }
