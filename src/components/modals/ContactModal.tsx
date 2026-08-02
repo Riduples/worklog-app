@@ -187,7 +187,7 @@ export function ContactModal({
             <Chips options={PAYMENT_TERMS} selected={paymentTerms ?? ""} onSelect={setPaymentTerms} />
           </Field>
           <div style={{ background: "#fff7ed", border: "1.5px solid #fed7aa", borderRadius: 12, padding: "12px 14px", marginBottom: 12, fontSize: 12.5, color: "#92400e", lineHeight: 1.5 }}>
-            🔒 <strong>Banking details (optional):</strong> Handy for paying this supplier. Keep them secure and only store them with the supplier&apos;s agreement.
+            🔒 <strong>Banking details (optional):</strong> Handy for paying this supplier. Banking details are sensitive personal data under POPIA — keep them secure and only store them with the supplier&apos;s agreement.
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             <Field label="Bank">
