@@ -240,7 +240,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           },
           {
             "type": "paragraph",
-            "text": "Open Customers or Suppliers from the menu. Each list has a Search box at the top and a sort toggle with three choices: A–Z to browse by name, Recent to bring the ones you added or changed most recently to the top, and Payment to rank them by how they pay — for customers the worst payers (Problem, then Slow) come first so you can chase them, and for suppliers it groups them by payment term."
+            "text": "Open Customers or Suppliers from the menu. Each list has a Search box at the top and a sort toggle with three choices: A–Z to browse by name, Recent to bring the ones you added or changed most recently to the top, and a payment sort — Payment behaviour on Customers (worst payers first — Problem, then Slow — so you can chase them) and Payment terms on Suppliers (grouped by term)."
           }
         ]
       },

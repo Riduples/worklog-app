@@ -32,6 +32,7 @@ export function ContactsView({ only }: { only?: "client" | "supplier" } = {}) {
   const activeType: "all" | "client" | "supplier" = only ?? typeFilter;
   const noun = only === "client" ? "customers" : only === "supplier" ? "suppliers" : "contacts";
   const title = only === "client" ? "Customers" : only === "supplier" ? "Suppliers" : "Contacts";
+  const paymentSortLabel = only === "supplier" ? "Payment terms" : only === "client" ? "Payment behaviour" : "Payment";
 
   const importType = activeType === "supplier" ? "supplier" : "client";
 
@@ -184,7 +185,7 @@ export function ContactsView({ only }: { only?: "client" | "supplier" } = {}) {
                   boxShadow: sort === s ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
                 }}
               >
-                {s === "az" ? "A–Z" : s === "recent" ? "Recent" : "Payment"}
+                {s === "az" ? "A–Z" : s === "recent" ? "Recent" : paymentSortLabel}
               </button>
             ))}
           </div>
