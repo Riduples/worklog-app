@@ -24,9 +24,7 @@ export function QuoteModal({ quote, onClose }: { quote?: Quote; onClose: () => v
   const [clientContactId, setClientContactId] = useState<string | null>(quote?.client_contact_id ?? null);
   const [issueDate, setIssueDate] = useState(quote?.issue_date ?? todayStr());
   const [validUntil, setValidUntil] = useState(quote?.valid_until ?? addDays(todayStr(), 30));
-  const [items, setItems] = useState<QuoteLineItem[]>(
-    existingItems && existingItems.length ? existingItems : [{ desc: "", qty: 1, unit_price: 0 }]
-  );
+  const [items, setItems] = useState<QuoteLineItem[]>(existingItems && existingItems.length ? existingItems : []);
   const [deposit, setDeposit] = useState(String(quote?.deposit_requested ?? 0));
   const [estHours, setEstHours] = useState(quote?.estimated_hours != null ? String(quote.estimated_hours) : "");
   const [terms, setTerms] = useState(quote?.terms ?? "");

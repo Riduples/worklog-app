@@ -25,9 +25,7 @@ export function InvoiceModal({ sourceQuote, onClose }: { sourceQuote?: Quote; on
   const [clientContactId, setClientContactId] = useState<string | null>(sourceQuote?.client_contact_id ?? null);
   const [issueDate, setIssueDate] = useState(todayStr());
   const [dueDate, setDueDate] = useState(addDays(todayStr(), 30));
-  const [items, setItems] = useState<QuoteLineItem[]>(
-    (sourceQuote?.line_items as QuoteLineItem[]) ?? [{ desc: "", qty: 1, unit_price: 0 }]
-  );
+  const [items, setItems] = useState<QuoteLineItem[]>((sourceQuote?.line_items as QuoteLineItem[]) ?? []);
   const [depositReceived, setDepositReceived] = useState(String(sourceQuote?.deposit_requested ?? 0));
   const [recurrence, setRecurrence] = useState<Recurrence>("none");
   const [srcQuote, setSrcQuote] = useState<Quote | null>(sourceQuote ?? null);
@@ -77,7 +75,7 @@ export function InvoiceModal({ sourceQuote, onClose }: { sourceQuote?: Quote; on
     setSrcQuote(q);
     setClient(q?.client_name ?? "");
     setClientContactId(q?.client_contact_id ?? null);
-    setItems((q?.line_items as QuoteLineItem[] | undefined) ?? [{ desc: "", qty: 1, unit_price: 0 }]);
+    setItems((q?.line_items as QuoteLineItem[] | undefined) ?? []);
     setDepositReceived(String(q?.deposit_requested ?? 0));
   };
 

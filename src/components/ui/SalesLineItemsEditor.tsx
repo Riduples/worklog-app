@@ -96,6 +96,25 @@ export function SalesLineItemsEditor({
         </select>
       )}
 
+      <button
+        type="button"
+        onClick={addItem}
+        style={{
+          width: "100%",
+          padding: "10px",
+          borderRadius: 10,
+          border: "1.5px dashed #BAE6FD",
+          background: "#F0F9FF",
+          color: "#0369A1",
+          fontSize: 13,
+          fontWeight: 700,
+          cursor: "pointer",
+          marginBottom: 10,
+        }}
+      >
+        + Add line item
+      </button>
+
       {items.map((item, i) => {
         const lineTotal = salesLineTotal(item);
         return (
@@ -148,23 +167,6 @@ export function SalesLineItemsEditor({
           </div>
         );
       })}
-      <button
-        type="button"
-        onClick={addItem}
-        style={{
-          width: "100%",
-          padding: "10px",
-          borderRadius: 10,
-          border: "1.5px dashed #BAE6FD",
-          background: "#F0F9FF",
-          color: "#0369A1",
-          fontSize: 13,
-          fontWeight: 700,
-          cursor: "pointer",
-        }}
-      >
-        + Add line item
-      </button>
     </div>
   );
 }

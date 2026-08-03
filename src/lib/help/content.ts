@@ -1068,7 +1068,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
               "Tap + New in the top corner. The New invoice screen opens.",
               "In the Client box, pick a customer from your list or type a new name.",
               "Check the Issue date and Due date. Worklog fills the issue date as today and sets the due date 30 days later. Tap either one to change it.",
-              "Under Line items, fill in each line: a Description, the Qty, and the Unit price. Each line shows its Line total.",
+              "Under Line items, tap + Add line item to add a blank line (or pick one from Add from your items), then fill in the Description, the Qty, and the Unit price. Each line shows its Line total.",
               "Tap + Add line item for another line. Tap the ✕ next to a line to remove it.",
               "If the customer already paid a deposit, type it into Deposit already received.",
               "Check the summary box. It shows the Subtotal, the VAT if you are VAT-registered, any deposit taken off, and the Balance due at the bottom.",
@@ -1193,8 +1193,8 @@ export const HELP_ARTICLES: HelpArticle[] = [
               "Fill in the Client. Type the customer's name straight into the box. If you have saved contacts, you can tap the 👤 List button next to it, search, and pick one instead.",
               "Check the Issue date. It fills in with today's date, but you can tap it to change it.",
               "Check the Valid until date. Worklog fills this in for you (30 days ahead). Tap it to change it if you want the quote to stay open for longer or shorter.",
-              "Under Line items, fill in the first line: a Description, the Qty (quantity) and the Unit price. The Line total works itself out as you type.",
-              "Tap + Add line item for each extra thing you want on the quote. Tap the ✕ next to a line to remove it.",
+              "Under Line items, tap + Add line item to add a blank line (or pick one from Add from your items), then fill in the Description, the Qty (quantity) and the Unit price. The Line total works itself out as you type.",
+              "Add a line for each thing you want on the quote. Tap the ✕ next to a line to remove it.",
               "If you want money up front, type the amount in Deposit to request. Leave it as 0 if you don't.",
               "Check the totals in the blue box at the bottom, then tap Save quote."
             ]
@@ -1573,8 +1573,8 @@ export const HELP_ARTICLES: HelpArticle[] = [
               "Fill in the Supplier. To pick a saved supplier, tap the 👤 List button next to the box, search and choose from the list. If the supplier is not saved, just type their name in the box.",
               "Check the Issue date. It fills in with today's date, but you can change it.",
               "If you have a delivery date in mind, set Requested delivery (optional). You can leave this blank.",
-              "Under Line items, type a Description for the first item, then fill in the Qty and the Unit price. The Line total works out for you.",
-              "Tap + Add line item for each extra item you need. Use the red ✕ on a line to remove it.",
+              "Under Line items, tap + Add line item to add a blank line (or pick one from Add from your items), then type a Description and fill in the Qty and the Unit price. The Line total works out for you.",
+              "Add a line for each item you need. Use the red ✕ on a line to remove it.",
               "Check the orange totals box. It shows the Subtotal and, if you are VAT-registered, the VAT and the PO total.",
               "Tap Save purchase order."
             ]

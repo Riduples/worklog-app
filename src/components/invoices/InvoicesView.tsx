@@ -12,12 +12,20 @@ import { RECURRENCE_LABEL, type Recurrence } from "@/lib/recurrence";
 import { fmt } from "@/lib/format";
 import { BackLink } from "@/components/ui/BackLink";
 
+// Filter pills follow this order; only statuses actually in use get a pill.
+const STATUS_ORDER = ["unpaid", "partial", "overdue", "paid", "credited"];
+
+const invoiceNo = (inv: Invoice) => parseInt((inv.doc_number ?? "").replace(/\D/g, ""), 10) || 0;
+
 export function InvoicesView() {
   const { data: invoices, isLoading } = useInvoices();
   const { data: quotes } = useQuotes();
   const access = useToolAccess("invoice");
   const [showNew, setShowNew] = useState(false);
   const [selected, setSelected] = useState<Invoice | null>(null);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [sort, setSort] = useState<"az" | "number" | "recent">("recent");
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -25,6 +33,23 @@ export function InvoicesView() {
   const sourceQuote = fromQuoteId ? (quotes ?? []).find((q) => q.id === fromQuoteId) : undefined;
 
   const closeConversion = () => router.replace("/invoices");
+
+  const presentStatuses = STATUS_ORDER.filter((s) => (invoices ?? []).some((inv) => displayStatus(inv).label === s));
+
+  const filtered = (invoices ?? [])
+    .filter((inv) => {
+      if (statusFilter !== "all" && displayStatus(inv).label !== statusFilter) return false;
+      if (search) {
+        const s = search.toLowerCase();
+        if (!inv.client_name.toLowerCase().includes(s) && !(inv.doc_number ?? "").toLowerCase().includes(s)) return false;
+      }
+      return true;
+    })
+    .sort((a, b) => {
+      if (sort === "az") return a.client_name.localeCompare(b.client_name);
+      if (sort === "number") return invoiceNo(a) - invoiceNo(b);
+      return (b.created_at ?? b.issue_date ?? "").localeCompare(a.created_at ?? a.issue_date ?? "");
+    });
 
   return (
     <div style={{ padding: "20px 16px 100px" }}>
@@ -45,12 +70,92 @@ export function InvoicesView() {
 
       {!access.loading && !access.canEdit && <ReadOnlyNotice level={access.level} what="invoices" />}
 
+      {!isLoading && (invoices ?? []).length > 0 && (
+        <>
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search invoices..."
+            style={{
+              width: "100%",
+              padding: "12px 14px",
+              borderRadius: 12,
+              border: "1.5px solid #e2e8f0",
+              fontSize: 14,
+              boxSizing: "border-box",
+              marginBottom: 12,
+              background: "#fff",
+            }}
+          />
+
+          {presentStatuses.length > 1 && (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
+              {["all", ...presentStatuses].map((s) => {
+                const active = statusFilter === s;
+                return (
+                  <button
+                    key={s}
+                    onClick={() => setStatusFilter(s)}
+                    style={{
+                      padding: "8px 14px",
+                      borderRadius: 20,
+                      border: `1.5px solid ${active ? "#0C4A6E" : "#e2e8f0"}`,
+                      background: active ? "#0C4A6E" : "#fff",
+                      color: active ? "#fff" : "#374151",
+                      fontSize: 12,
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      textTransform: "capitalize",
+                    }}
+                  >
+                    {s === "all" ? "All" : s}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </>
+      )}
+
       {isLoading && <p style={{ color: "#94a3b8", fontSize: 13 }}>Loading...</p>}
       {!isLoading && (invoices ?? []).length === 0 && (
         <p style={{ color: "#94a3b8", fontSize: 13, textAlign: "center", marginTop: 40 }}>No invoices yet.</p>
       )}
+      {!isLoading && (invoices ?? []).length > 0 && filtered.length === 0 && (
+        <p style={{ color: "#94a3b8", fontSize: 13, textAlign: "center", marginTop: 40 }}>No invoices match your search.</p>
+      )}
 
-      {(invoices ?? []).map((inv) => {
+      {!isLoading && filtered.length > 0 && (
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, margin: "0 0 10px 2px" }}>
+          <span style={{ fontSize: 11, color: "#94a3b8" }}>
+            {filtered.length}
+            {filtered.length !== (invoices ?? []).length ? ` of ${(invoices ?? []).length}` : ""} invoice{(invoices ?? []).length === 1 ? "" : "s"}
+          </span>
+          <div style={{ display: "flex", gap: 4, background: "#f1f5f9", borderRadius: 10, padding: 3 }}>
+            {(["az", "number", "recent"] as const).map((s) => (
+              <button
+                key={s}
+                onClick={() => setSort(s)}
+                style={{
+                  padding: "5px 12px",
+                  borderRadius: 8,
+                  border: "none",
+                  background: sort === s ? "#fff" : "transparent",
+                  color: sort === s ? "#0C4A6E" : "#64748b",
+                  fontSize: 12,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  boxShadow: sort === s ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
+                }}
+              >
+                {s === "az" ? "A–Z" : s === "number" ? "Number" : "Recent"}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {filtered.map((inv) => {
         const status = displayStatus(inv);
         const totalInclVat = Number(inv.invoice_amount) + Number(inv.vat_amount ?? 0);
         return (
