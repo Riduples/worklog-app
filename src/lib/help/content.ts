@@ -1086,7 +1086,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
         "blocks": [
           {
             "type": "paragraph",
-            "text": "If you keep a price list under Stock, you don't have to retype the things you sell often. Underneath the line items you'll see an Add from your items box (it only appears once you have saved items). Pick an item and Worklog drops in a new line with its name and sell price already filled in — you just set the Qty."
+            "text": "If you keep a price list under Items, you don't have to retype the things you sell often. At the top of the Line items section you'll see an Add from your items box (it only appears once you have saved items). Pick an item and Worklog drops in a new line with its name and sell price already filled in — you just set the Qty."
           },
           {
             "type": "tip",
@@ -1195,7 +1195,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
               "Check the Valid until date. Worklog fills this in for you (30 days ahead). Tap it to change it if you want the quote to stay open for longer or shorter.",
               "Under Line items, fill in the first line: a Description, the Qty (quantity) and the Unit price. The Line total works itself out as you type.",
               "Tap + Add line item for each extra thing you want on the quote. Tap the ✕ next to a line to remove it.",
-              "If you want money up front, type the amount in Deposit requested. Leave it as 0 if you don't.",
+              "If you want money up front, type the amount in Deposit to request. Leave it as 0 if you don't.",
               "Check the totals in the blue box at the bottom, then tap Save quote."
             ]
           }
@@ -1206,7 +1206,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
         "blocks": [
           {
             "type": "paragraph",
-            "text": "If you keep a price list under Stock, you don't have to retype the things you quote often. Underneath the line items you'll see an Add from your items box (it only appears once you have saved items). Pick an item and Worklog drops in a new line with its name and sell price already filled in — you just set the Qty."
+            "text": "If you keep a price list under Items, you don't have to retype the things you quote often. At the top of the Line items section you'll see an Add from your items box (it only appears once you have saved items). Pick an item and Worklog drops in a new line with its name and sell price already filled in — you just set the Qty."
           },
           {
             "type": "tip",

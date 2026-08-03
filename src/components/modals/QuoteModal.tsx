@@ -138,17 +138,17 @@ export function QuoteModal({ quote, onClose }: { quote?: Quote; onClose: () => v
         <Input value={issueDate} onChange={setIssueDate} type="date" />
       </Field>
 
-      <Field label="Valid until">
+      <Field label="Valid until date">
         <Input value={validUntil} onChange={setValidUntil} type="date" />
       </Field>
 
       <SalesLineItemsEditor items={items} onChange={setItems} />
 
-      <Field label="Deposit requested">
+      <Field label="Deposit to request (R) - Optional">
         <Input value={deposit} onChange={setDeposit} type="number" placeholder="0.00" />
       </Field>
 
-      <Field label="Estimated hours for this job (optional)">
+      <Field label="Estimated hours for this job - optional">
         <Input value={estHours} onChange={setEstHours} type="number" placeholder={autoEstHours > 0 ? `Auto: ${autoEstHours}h from your items` : "e.g. 30"} />
         <div style={{ fontSize: 11, color: autoEstHours > 0 && estHours === "" ? "#0369A1" : "#94a3b8", marginTop: 4 }}>
           {autoEstHours > 0 && estHours === ""
@@ -157,7 +157,7 @@ export function QuoteModal({ quote, onClose }: { quote?: Quote; onClose: () => v
         </div>
       </Field>
 
-      <Field label="Terms & conditions (optional)">
+      <Field label="Terms & conditions - optional">
         <Textarea value={terms} onChange={setTerms} placeholder="e.g. Quote valid 30 days. 50% deposit to start, balance on completion. Prices exclude…" rows={4} />
         <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 4 }}>
           Prints at the foot of the quote. Set a default in Business details so it fills in automatically.
