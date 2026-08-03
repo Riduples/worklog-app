@@ -138,7 +138,7 @@ export function InvoiceModal({ sourceQuote, onClose }: { sourceQuote?: Quote; on
   return (
     <Modal title={srcQuote ? `Convert ${srcQuote.doc_number} to invoice` : "New invoice"} onClose={onClose}>
       {!sourceQuote && convertibleQuotes.length > 0 && (
-        <Field label="Start from a quote (optional)">
+        <Field label="Start from a quote - optional">
           <select
             value={srcQuote?.id ?? ""}
             onChange={(e) => pickQuote(e.target.value)}
@@ -162,7 +162,7 @@ export function InvoiceModal({ sourceQuote, onClose }: { sourceQuote?: Quote; on
           setClientContactId(id);
         }}
         contacts={contacts ?? []}
-        placeholder="Customer name — or pick from your customers"
+        placeholder="Type a name or pick from your customers"
       />
 
       <Field label="Issue date">
@@ -216,11 +216,11 @@ export function InvoiceModal({ sourceQuote, onClose }: { sourceQuote?: Quote; on
 
       <SalesLineItemsEditor items={items} onChange={setItems} />
 
-      <Field label="Deposit already received">
+      <Field label="Deposit already received (R)">
         <Input value={depositReceived} onChange={setDepositReceived} type="number" placeholder="0.00" />
       </Field>
 
-      <Field label="Terms & conditions (optional)">
+      <Field label="Terms & conditions - optional">
         <Textarea value={terms} onChange={setTerms} placeholder="e.g. Payment due within 30 days. 2% monthly interest on overdue accounts. Goods remain our property until paid in full." rows={4} />
         <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 4 }}>
           Prints at the foot of the invoice. Set a default in Business details so it fills in automatically.

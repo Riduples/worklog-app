@@ -129,7 +129,7 @@ export function QuoteModal({ quote, onClose }: { quote?: Quote; onClose: () => v
           setClientContactId(id);
         }}
         contacts={contacts ?? []}
-        placeholder="Customer name — or pick from your customers"
+        placeholder="Type a name or pick from your customers"
       />
 
       <Field label="Issue date">
