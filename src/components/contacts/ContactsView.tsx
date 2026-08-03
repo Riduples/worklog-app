@@ -22,7 +22,7 @@ export function ContactsView({ only }: { only?: "client" | "supplier" } = {}) {
   const supplierAccess = useToolAccess("suppliers");
   const [typeFilter, setTypeFilter] = useState<"all" | "client" | "supplier">("all");
   const [search, setSearch] = useState("");
-  const [sort, setSort] = useState<"az" | "recent">("az");
+  const [sort, setSort] = useState<"az" | "recent" | "payment">("az");
   const [importOpen, setImportOpen] = useState(false);
   const [modalState, setModalState] = useState<{ open: boolean; contact?: Contact; defaultType?: "client" | "supplier" }>({
     open: false,
@@ -42,17 +42,30 @@ export function ContactsView({ only }: { only?: "client" | "supplier" } = {}) {
   const canDeleteContact = (c: Contact) => (c.contact_type === "supplier" ? supplierAccess : clientAccess).canDelete;
   const accessLoading = clientAccess.loading || supplierAccess.loading;
 
+  // "Payment" sort ranks by how a contact pays: for customers, worst payers
+  // first (Problem → Slow → Good) so the ones to chase are up top; for
+  // suppliers, by payment term in the order the form lists them. Unknown/blank
+  // sinks to the bottom, and same-rank contacts fall back to A–Z.
+  const BEHAVIOUR_ORDER = ["Problem payer", "Slow payer", "Good payer"];
+  const TERMS_ORDER = ["On delivery", "7 days", "30 days", "60 days", "Cash only", "Pre-payment"];
+  const paymentRank = (c: Contact) => {
+    const order = c.contact_type === "client" ? BEHAVIOUR_ORDER : TERMS_ORDER;
+    const value = c.contact_type === "client" ? c.payment_behaviour : c.payment_terms;
+    const i = order.indexOf(value ?? "");
+    return i === -1 ? order.length : i;
+  };
+
   const filtered = (contacts ?? [])
     .filter((c) => {
       if (activeType !== "all" && c.contact_type !== activeType) return false;
       if (search && !c.name.toLowerCase().includes(search.toLowerCase())) return false;
       return true;
     })
-    .sort((a, b) =>
-      sort === "recent"
-        ? (b.updated_at ?? b.created_at ?? "").localeCompare(a.updated_at ?? a.created_at ?? "")
-        : a.name.localeCompare(b.name)
-    );
+    .sort((a, b) => {
+      if (sort === "recent") return (b.updated_at ?? b.created_at ?? "").localeCompare(a.updated_at ?? a.created_at ?? "");
+      if (sort === "payment") return paymentRank(a) - paymentRank(b) || a.name.localeCompare(b.name);
+      return a.name.localeCompare(b.name);
+    });
 
   const handleSoftDelete = (id: string) => {
     if (!confirm(`Remove this ${only === "supplier" ? "supplier" : only === "client" ? "customer" : "contact"}? It stays on any existing quotes/invoices.`)) return;
@@ -150,12 +163,12 @@ export function ContactsView({ only }: { only?: "client" | "supplier" } = {}) {
       )}
 
       {!isLoading && filtered.length > 0 && (
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", margin: "0 0 10px 2px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, margin: "0 0 10px 2px" }}>
           <span style={{ fontSize: 11, color: "#94a3b8" }}>
             {filtered.length} {filtered.length === 1 ? noun.replace(/s$/, "") : noun}
           </span>
           <div style={{ display: "flex", gap: 4, background: "#f1f5f9", borderRadius: 10, padding: 3 }}>
-            {(["az", "recent"] as const).map((s) => (
+            {(["az", "recent", "payment"] as const).map((s) => (
               <button
                 key={s}
                 onClick={() => setSort(s)}
@@ -171,7 +184,7 @@ export function ContactsView({ only }: { only?: "client" | "supplier" } = {}) {
                   boxShadow: sort === s ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
                 }}
               >
-                {s === "az" ? "A–Z" : "Recent"}
+                {s === "az" ? "A–Z" : s === "recent" ? "Recent" : "Payment"}
               </button>
             ))}
           </div>
