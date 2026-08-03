@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useInvoices } from "@/lib/supabase/hooks/useInvoices";
 import { useSupplierInvoices } from "@/lib/supabase/hooks/useSupplierInvoices";
 import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
@@ -36,12 +35,12 @@ function bucketOf(days: number): Bucket {
 
 type AgedItem = { id: string; name: string; docNumber: string; date: string; days: number; bucket: Bucket; amount: number };
 
-export function AgeAnalysisView() {
+export function AgeAnalysisView({ side }: { side: "debtors" | "creditors" }) {
   const { data: invoices } = useInvoices();
   const { data: supplierInvoices } = useSupplierInvoices();
   const { data: business } = useBusinessProfile();
   const { data: credits } = useCreditNotes();
-  const [tab, setTab] = useState<"debtors" | "creditors">("debtors");
+  const isDebtors = side === "debtors";
 
   const debtors: AgedItem[] = (invoices ?? [])
     .filter((r) => r.status !== "paid" && r.status !== "credited")
@@ -75,7 +74,6 @@ export function AgeAnalysisView() {
     })
     .sort((a, b) => b.days - a.days);
 
-  const isDebtors = tab === "debtors";
   const items = isDebtors ? debtors : creditors;
   const totals: Record<Bucket, number> = { "0–30": 0, "31–60": 0, "61–90": 0, "90+": 0 };
   items.forEach((i) => {
@@ -102,26 +100,15 @@ export function AgeAnalysisView() {
 
   return (
     <div style={{ padding: "20px 16px 100px" }}>
-      <BackLink />
-      <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 18px" }}>Age Analysis</h1>
-
-      <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
-        {(
-          [
-            ["debtors", "💚 Debtors", "Clients who owe you"],
-            ["creditors", "❤️ Creditors", "Suppliers you owe"],
-          ] as const
-        ).map(([v, l, s]) => (
-          <button
-            key={v}
-            onClick={() => setTab(v)}
-            style={{ flex: 1, padding: "10px 8px", border: `2px solid ${tab === v ? "#0C4A6E" : "#e2e8f0"}`, borderRadius: 12, background: tab === v ? "#0C4A6E" : "#fff", color: tab === v ? "#fff" : "#64748b", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
-          >
-            <div>{l}</div>
-            <div style={{ fontSize: 10, fontWeight: 400, marginTop: 2, opacity: 0.8 }}>{s}</div>
-          </button>
-        ))}
-      </div>
+      <BackLink label={isDebtors ? "Invoices" : "Supplier Invoices"} href={isDebtors ? "/invoices" : "/supplier-invoices"} />
+      <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 2px" }}>
+        {isDebtors ? "Age Analysis — Customers" : "Age Analysis — Suppliers"}
+      </h1>
+      <p style={{ fontSize: 12, color: "#94a3b8", margin: "0 0 18px", lineHeight: 1.5 }}>
+        {isDebtors
+          ? "What your customers still owe you, grouped by how overdue each invoice is."
+          : "What you still owe your suppliers, grouped by how overdue each bill is."}
+      </p>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 6, marginBottom: 16 }}>
         {BUCKETS.map((b) => {

@@ -30,6 +30,7 @@ const GROUPS: Group[] = [
       { tool: "quote", href: "/quotes", icon: "📋", label: "Quotes" },
       { tool: "invoice", href: "/invoices", icon: "📤", label: "Invoices" },
       { tool: "statement", href: "/statement", icon: "📃", label: "Statements" },
+      { tool: "ageanalysis", href: "/age-analysis", icon: "⏳", label: "Age Analysis" },
       { tool: "stock", href: "/stock", icon: "📦", label: "Items" },
       { tool: "recipe", href: "/recipes", icon: "🍳", label: "Cost Calculator" },
     ],
@@ -40,6 +41,7 @@ const GROUPS: Group[] = [
       { tool: "purchaseorder", href: "/purchase-orders", icon: "🛒", label: "Purchase Orders" },
       { tool: "supplierinvoice", href: "/supplier-invoices", icon: "📥", label: "Supplier Invoices" },
       { tool: "remittance", href: "/remittance", icon: "🧾", label: "Remittance" },
+      { tool: "ageanalysis", href: "/age-analysis-payables", icon: "⏳", label: "Age Analysis" },
     ],
   },
   {
@@ -74,7 +76,6 @@ const GROUPS: Group[] = [
       { tool: "tax", href: "/tax", icon: "🧾", label: "Tax & SARS" },
       { tool: "profitloss", href: "/profit-loss", icon: "📈", label: "Profit & Loss" },
       { tool: "profit", href: "/cashflow", icon: "📊", label: "Cash Flow" },
-      { tool: "ageanalysis", href: "/age-analysis", icon: "⏳", label: "Age Analysis" },
     ],
   },
 ];

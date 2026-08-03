@@ -1,7 +1,7 @@
 import { requirePlanAccess } from "@/lib/auth";
 import { AgeAnalysisView } from "@/components/reports/AgeAnalysisView";
 
-export default async function AgeAnalysisPage() {
+export default async function AgeAnalysisPayablesPage() {
   await requirePlanAccess("ageanalysis");
-  return <AgeAnalysisView side="debtors" />;
+  return <AgeAnalysisView side="creditors" />;
 }

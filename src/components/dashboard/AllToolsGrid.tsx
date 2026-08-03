@@ -59,6 +59,7 @@ const NAV_CATEGORIES: { id: string; items: NavItem[] }[] = [
       { href: "/quotes", icon: "📋", label: "Quotes", toolId: "quote" },
       { href: "/invoices", icon: "📤", label: "Invoices", toolId: "invoice" },
       { href: "/statement", icon: "📃", label: "Statements", toolId: "statement", lockId: "statement" },
+      { href: "/age-analysis", icon: "⏳", label: "Age Analysis", toolId: "ageanalysis", lockId: "ageanalysis" },
     ],
   },
   {
@@ -67,6 +68,7 @@ const NAV_CATEGORIES: { id: string; items: NavItem[] }[] = [
       { href: "/purchase-orders", icon: "🛒", label: "Purchase Orders", toolId: "purchaseorder", lockId: "purchaseorder" },
       { href: "/supplier-invoices", icon: "📥", label: "Supplier Invoices", toolId: "supplierinvoice", lockId: "supplierinvoice" },
       { href: "/remittance", icon: "🧾", label: "Remittance", toolId: "remittance", lockId: "remittance" },
+      { href: "/age-analysis-payables", icon: "⏳", label: "Age Analysis", toolId: "ageanalysis", lockId: "ageanalysis" },
     ],
   },
   {
@@ -103,7 +105,6 @@ const NAV_CATEGORIES: { id: string; items: NavItem[] }[] = [
       { href: "/tax", icon: "🧾", label: "Tax & SARS", toolId: "tax" },
       { href: "/cashflow", icon: "📊", label: "Cash Flow", toolId: "profit" },
       { href: "/profit-loss", icon: "📈", label: "Profit & Loss", toolId: "profitloss" },
-      { href: "/age-analysis", icon: "⏳", label: "Age Analysis", toolId: "ageanalysis", lockId: "ageanalysis" },
     ],
   },
 ];

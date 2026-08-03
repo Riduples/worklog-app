@@ -4305,18 +4305,18 @@ export const HELP_ARTICLES: HelpArticle[] = [
         "blocks": [
           {
             "type": "paragraph",
-            "text": "Age Analysis groups your unpaid invoices by how long they have been sitting, so you can see at a glance who still owes you and how overdue each one is. It has two sides: money coming in and money going out."
+            "text": "Age Analysis groups your unpaid invoices by how long they have been sitting, so you can see at a glance who owes what and how overdue each one is. There are two of them, one for each side of your money:"
           },
           {
             "type": "bullets",
             "items": [
-              "Debtors: clients who owe you, from your unpaid invoices.",
-              "Creditors: suppliers you still owe, from your unpaid supplier invoices."
+              "Age Analysis under Sales — what your customers still owe you, from your unpaid invoices.",
+              "Age Analysis under Purchases — what you still owe your suppliers, from your unpaid supplier invoices."
             ]
           },
           {
             "type": "paragraph",
-            "text": "Everything on this page is worked out automatically from the invoices you have already captured. There is nothing to fill in here, you only read it."
+            "text": "Everything on these pages is worked out automatically from the invoices you have already captured. There is nothing to fill in, you only read it."
           }
         ]
       },
@@ -4326,9 +4326,9 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "steps",
             "items": [
-              "Go to Age Analysis, under the \"Compliance & Financials\" tools card (or the \"Compliance & Financials\" group on desktop).",
-              "At the top you will see two buttons: Debtors, with Clients who owe you underneath, and Creditors, with Suppliers you owe underneath. The report opens on Debtors, so you are already looking at who owes you.",
-              "Tap Creditors any time to flip over to what you owe your suppliers, and Debtors to flip back."
+              "For what customers owe you, open Age Analysis under Sales (in the Sales tools card, or the Sales group on desktop).",
+              "For what you owe suppliers, open Age Analysis under Purchases.",
+              "Each one groups the unpaid amounts into 0–30, 31–60, 61–90 and 90+ day buckets, oldest first, so the most overdue stand out."
             ]
           },
           {
