@@ -257,16 +257,7 @@ export function StockView() {
             })
           : sortItems(filtered).map(renderRow))}
 
-      {modalState.open && (
-        <StockModal
-          item={modalState.item}
-          onClose={() => setModalState({ open: false })}
-          onImport={() => {
-            setModalState({ open: false });
-            setImportOpen(true);
-          }}
-        />
-      )}
+      {modalState.open && <StockModal item={modalState.item} onClose={() => setModalState({ open: false })} />}
       {importOpen && <CSVImportModal type="stock" onClose={() => setImportOpen(false)} />}
     </div>
   );

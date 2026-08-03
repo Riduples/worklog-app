@@ -12,7 +12,7 @@ import {
   type CsvImportType,
 } from "@/lib/csvTemplates";
 import { useCsvImport, fetchExistingNames } from "@/lib/supabase/hooks/useCsvImport";
-import { normaliseItemType } from "@/lib/itemTypes";
+import { normaliseItemType, ITEM_TYPE_META } from "@/lib/itemTypes";
 import type { TablesInsert } from "@/lib/types/database";
 
 type StockRow = Omit<TablesInsert<"stock_items">, "user_id" | "business_id">;
@@ -26,6 +26,7 @@ const num = (v: unknown) => {
 
 export function CSVImportModal({ type, onClose }: { type: CsvImportType; onClose: () => void }) {
   const template = CSV_TEMPLATES[type];
+  const requiredCol = template.columns.find((c) => c.required)?.csvHeader ?? "name";
   const [step, setStep] = useState<"upload" | "preview" | "done">("upload");
   const [parsed, setParsed] = useState<ParsedRow[]>([]);
   const [parseError, setParseError] = useState("");
@@ -68,24 +69,30 @@ export function CSVImportModal({ type, onClose }: { type: CsvImportType; onClose
           if (type === "stock") {
             const cost = num(raw.cost_price);
             const sell = num(raw.sell_price);
+            const itemType = normaliseItemType(raw.item_type);
+            // Match the manual form: only products & materials carry a stock
+            // count, so services/labour/packages import with qty & reorder 0.
+            const tracksStock = ITEM_TYPE_META[itemType].showStock;
             row = {
               name,
-              item_type: normaliseItemType(raw.item_type),
-              qty: Math.round(num(raw.qty)),
+              item_type: itemType,
+              qty: tracksStock ? Math.round(num(raw.qty)) : 0,
               cost_price: cost,
               sell_price: sell,
-              reorder_level: Math.round(num(raw.reorder_level)),
+              reorder_level: tracksStock ? Math.round(num(raw.reorder_level)) : 0,
               margin_pct: sell > 0 ? ((sell - cost) / sell) * 100 : 0,
             };
           } else {
             const behaviour = (raw.payment_behaviour ?? "").trim();
             const terms = (raw.payment_terms ?? "").trim();
             if (type === "client" && behaviour && !PAYMENT_BEHAVIOURS.includes(behaviour)) {
-              issues.push(`payment_behaviour "${behaviour}" not recognised — will be left blank`);
+              issues.push(`payment_behaviour "${behaviour}" not recognised — will use the default (Good payer)`);
             }
             if (type === "supplier" && terms && !PAYMENT_TERMS.includes(terms)) {
-              issues.push(`payment_terms "${terms}" not recognised — will be left blank`);
+              issues.push(`payment_terms "${terms}" not recognised — will use the default (On delivery)`);
             }
+            // Match the manual form, which always has a payment option selected:
+            // fall back to its default when the cell is blank or unrecognised.
             row = {
               contact_type: type,
               name,
@@ -93,8 +100,8 @@ export function CSVImportModal({ type, onClose }: { type: CsvImportType; onClose
               email: (raw.email ?? "").trim() || null,
               address: (raw.address ?? "").trim() || null,
               notes: (raw.notes ?? "").trim() || null,
-              payment_behaviour: type === "client" && PAYMENT_BEHAVIOURS.includes(behaviour) ? behaviour : null,
-              payment_terms: type === "supplier" && PAYMENT_TERMS.includes(terms) ? terms : null,
+              payment_behaviour: type === "client" ? (PAYMENT_BEHAVIOURS.includes(behaviour) ? behaviour : "Good payer") : null,
+              payment_terms: type === "supplier" ? (PAYMENT_TERMS.includes(terms) ? terms : "On delivery") : null,
               bank_name: type === "supplier" ? (raw.bank_name ?? "").trim() || null : null,
               account_number: type === "supplier" ? (raw.account_number ?? "").trim() || null : null,
               custom_label: type === "client" ? (raw.custom_label ?? "").trim() || null : null,
@@ -105,7 +112,7 @@ export function CSVImportModal({ type, onClose }: { type: CsvImportType; onClose
         }
 
         if (rows.length === 0) {
-          setParseError("No valid rows found. Make sure the file has a 'name' column with values.");
+          setParseError(`No valid rows found. Make sure the file has a '${requiredCol}' column with values.`);
           return;
         }
         setParsed(rows);
@@ -143,7 +150,7 @@ export function CSVImportModal({ type, onClose }: { type: CsvImportType; onClose
         <>
           <div style={{ background: "#F0F9FF", borderRadius: 12, padding: "14px 16px", marginBottom: 16, fontSize: 13, color: "#0369A1", lineHeight: 1.5 }}>
             Upload a CSV with columns: <strong>{template.columns.map((c) => c.csvHeader).join(", ")}</strong>. Only{" "}
-            <strong>name</strong> is required. Rows matching an existing name are skipped.
+            <strong>{requiredCol}</strong> is required. Rows matching an existing name are skipped.
           </div>
 
           <button

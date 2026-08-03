@@ -9,7 +9,7 @@ import { fmt } from "@/lib/format";
 import { ITEM_TYPES, ITEM_TYPE_META, type ItemType } from "@/lib/itemTypes";
 import { useCreateStockItem, useUpdateStockItem, type StockItem } from "@/lib/supabase/hooks/useStock";
 
-export function StockModal({ item, onClose, onImport }: { item?: StockItem; onClose: () => void; onImport?: () => void }) {
+export function StockModal({ item, onClose }: { item?: StockItem; onClose: () => void }) {
   const isEdit = !!item;
   const [itemType, setItemType] = useState<ItemType>((item?.item_type as ItemType) ?? "service");
   const [name, setName] = useState(item?.name ?? "");
@@ -54,29 +54,6 @@ export function StockModal({ item, onClose, onImport }: { item?: StockItem; onCl
 
   return (
     <Modal title={isEdit ? "Edit stock item" : "Add stock item"} onClose={onClose}>
-      {!isEdit && onImport && (
-        <button
-          type="button"
-          onClick={onImport}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 8,
-            width: "100%",
-            background: "#F0F9FF",
-            border: "1.5px solid #BAE6FD",
-            borderRadius: 14,
-            padding: "14px 16px",
-            marginBottom: 22,
-            cursor: "pointer",
-          }}
-        >
-          <span style={{ fontSize: 15, fontWeight: 700, color: "#0369A1" }}>📁 Import items from CSV</span>
-          <span style={{ fontSize: 13, color: "#64748b" }}>bulk upload</span>
-        </button>
-      )}
-
       <div style={{ marginBottom: 16 }}>
         <label
           style={{

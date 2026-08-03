@@ -49,15 +49,12 @@ export function ContactModal({
   contact,
   defaultType = "client",
   lockType = false,
-  onImport,
   onClose,
 }: {
   contact?: Contact;
   defaultType?: "client" | "supplier";
   /** Opened from a type-locked screen (Customers/Suppliers) — hide the toggle. */
   lockType?: boolean;
-  /** Show the "Import from CSV" banner and run this when tapped. */
-  onImport?: () => void;
   onClose: () => void;
 }) {
   const isEdit = !!contact;
@@ -124,29 +121,6 @@ export function ContactModal({
       <div style={{ background: t.bg, border: `1.5px solid ${t.border}`, borderRadius: 14, padding: "14px 16px", marginBottom: 16, fontSize: 13.5, color: t.text, lineHeight: 1.5 }}>
         {t.icon} <strong>{t.plural}</strong> — {t.intro}
       </div>
-
-      {!isEdit && lockType && onImport && (
-        <button
-          type="button"
-          onClick={onImport}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 8,
-            width: "100%",
-            background: t.bg,
-            border: `1.5px solid ${t.border}`,
-            borderRadius: 14,
-            padding: "14px 16px",
-            marginBottom: 20,
-            cursor: "pointer",
-          }}
-        >
-          <span style={{ fontSize: 15, fontWeight: 700, color: t.text }}>📁 Import {isClient ? "customers" : "suppliers"} from CSV</span>
-          <span style={{ fontSize: 13, color: "#64748b" }}>bulk upload</span>
-        </button>
-      )}
 
       <Field label={`${t.noun} / company name`}>
         <Input value={name} onChange={setName} placeholder={t.namePlaceholder} autoFocus />

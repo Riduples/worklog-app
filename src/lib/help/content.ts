@@ -314,7 +314,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
         "blocks": [
           {
             "type": "paragraph",
-            "text": "If you already have a list of customers or suppliers in a spreadsheet, you can bring them all in together instead of typing them one by one. Start it from the ⬆ Import button at the top of the list, or from the Import customers from CSV (or Import suppliers from CSV) banner at the top of the Add form."
+            "text": "If you already have a list of customers or suppliers in a spreadsheet, you can bring them all in together instead of typing them one by one, using the ⬆ Import button at the top of the list."
           },
           {
             "type": "steps",
@@ -332,7 +332,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           },
           {
             "type": "tip",
-            "text": "If a payment behaviour or payment term in your file is spelled differently to Worklog's options, the preview shows a small warning and simply leaves that field blank. You can fix it later by opening the contact."
+            "text": "If a payment behaviour or payment term in your file is blank or spelled differently to Worklog's options, the contact comes in with the default (Good payer for customers, On delivery for suppliers) — the same as adding one by hand. The preview shows a small warning for anything it did not recognise, and you can change it later by opening the contact."
           },
           {
             "type": "tip",

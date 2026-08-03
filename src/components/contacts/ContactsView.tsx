@@ -253,10 +253,6 @@ export function ContactsView({ only }: { only?: "client" | "supplier" } = {}) {
           contact={modalState.contact}
           defaultType={modalState.defaultType ?? (only ?? undefined)}
           lockType={!!only}
-          onImport={() => {
-            setModalState({ open: false });
-            setImportOpen(true);
-          }}
           onClose={() => setModalState({ open: false })}
         />
       )}
