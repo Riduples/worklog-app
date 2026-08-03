@@ -1120,7 +1120,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
         "blocks": [
           {
             "type": "paragraph",
-            "text": "When the money comes in, mark the invoice paid so you can see at a glance who still owes you. Until then an invoice shows as unpaid, partial (a deposit is in but not the full amount), or overdue (past its due date)."
+            "text": "When the money comes in, mark the invoice paid so you can see at a glance who still owes you. Until then an invoice shows as unpaid, part paid (a deposit is in but not the full amount), or overdue (past its due date)."
           },
           {
             "type": "steps",

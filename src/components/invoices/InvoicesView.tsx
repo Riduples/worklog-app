@@ -13,7 +13,7 @@ import { fmt } from "@/lib/format";
 import { BackLink } from "@/components/ui/BackLink";
 
 // Filter pills follow this order; only statuses actually in use get a pill.
-const STATUS_ORDER = ["unpaid", "partial", "overdue", "paid", "credited"];
+const STATUS_ORDER = ["unpaid", "part paid", "overdue", "paid", "credited"];
 
 const invoiceNo = (inv: Invoice) => parseInt((inv.doc_number ?? "").replace(/\D/g, ""), 10) || 0;
 

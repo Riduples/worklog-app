@@ -27,7 +27,7 @@ export function displayStatus(invoice: Invoice): { label: string; bg: string; fg
   const isOverdue = !!invoice.due_date && invoice.due_date < todayStr();
   const isPartial = Number(invoice.deposit_received || 0) > 0 && Number(invoice.deposit_received || 0) < Number(invoice.invoice_amount);
   if (isOverdue) return { label: "overdue", bg: "#fee2e2", fg: "#991b1b" };
-  if (isPartial) return { label: "partial", bg: "#fff7ed", fg: "#b45309" };
+  if (isPartial) return { label: "part paid", bg: "#fff7ed", fg: "#b45309" };
   return { label: "unpaid", bg: "#fff7ed", fg: "#b45309" };
 }
 
