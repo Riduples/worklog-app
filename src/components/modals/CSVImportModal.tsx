@@ -86,13 +86,11 @@ export function CSVImportModal({ type, onClose }: { type: CsvImportType; onClose
             const behaviour = (raw.payment_behaviour ?? "").trim();
             const terms = (raw.payment_terms ?? "").trim();
             if (type === "client" && behaviour && !PAYMENT_BEHAVIOURS.includes(behaviour)) {
-              issues.push(`payment_behaviour "${behaviour}" not recognised — will use the default (Good payer)`);
+              issues.push(`payment_behaviour "${behaviour}" not recognised — will be left blank`);
             }
             if (type === "supplier" && terms && !PAYMENT_TERMS.includes(terms)) {
-              issues.push(`payment_terms "${terms}" not recognised — will use the default (On delivery)`);
+              issues.push(`payment_terms "${terms}" not recognised — will be left blank`);
             }
-            // Match the manual form, which always has a payment option selected:
-            // fall back to its default when the cell is blank or unrecognised.
             row = {
               contact_type: type,
               name,
@@ -100,8 +98,8 @@ export function CSVImportModal({ type, onClose }: { type: CsvImportType; onClose
               email: (raw.email ?? "").trim() || null,
               address: (raw.address ?? "").trim() || null,
               notes: (raw.notes ?? "").trim() || null,
-              payment_behaviour: type === "client" ? (PAYMENT_BEHAVIOURS.includes(behaviour) ? behaviour : "Good payer") : null,
-              payment_terms: type === "supplier" ? (PAYMENT_TERMS.includes(terms) ? terms : "On delivery") : null,
+              payment_behaviour: type === "client" && PAYMENT_BEHAVIOURS.includes(behaviour) ? behaviour : null,
+              payment_terms: type === "supplier" && PAYMENT_TERMS.includes(terms) ? terms : null,
               bank_name: type === "supplier" ? (raw.bank_name ?? "").trim() || null : null,
               account_number: type === "supplier" ? (raw.account_number ?? "").trim() || null : null,
               custom_label: type === "client" ? (raw.custom_label ?? "").trim() || null : null,

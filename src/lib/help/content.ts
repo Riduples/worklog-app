@@ -332,7 +332,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           },
           {
             "type": "tip",
-            "text": "If a payment behaviour or payment term in your file is blank or spelled differently to Worklog's options, the contact comes in with the default (Good payer for customers, On delivery for suppliers) — the same as adding one by hand. The preview shows a small warning for anything it did not recognise, and you can change it later by opening the contact."
+            "text": "If a payment behaviour or payment term in your file is blank or spelled differently to Worklog's options, that contact comes in with it left blank. The preview shows a small warning for anything it did not recognise, and you can set it later by opening the contact."
           },
           {
             "type": "tip",
