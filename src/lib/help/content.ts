@@ -240,7 +240,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           },
           {
             "type": "paragraph",
-            "text": "Open Customers or Suppliers from the menu. Each list has a Search box at the top and a sort toggle with three choices: A–Z to browse by name, Recent to bring the ones you added or changed most recently to the top, and a payment sort — Payment behaviour on Customers (worst payers first — Problem, then Slow — so you can chase them) and Payment terms on Suppliers (grouped by term)."
+            "text": "Open Customers or Suppliers from the menu. Each list has a Search box, an A–Z / Recent sort toggle on the right (Recent brings the ones you added or changed most recently to the top), and filter pills to narrow the list — by payment behaviour on Customers (Good, Slow or Problem payer) and by payment term on Suppliers. A pill only appears once you actually have contacts with that value."
           }
         ]
       },

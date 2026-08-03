@@ -22,7 +22,8 @@ export function ContactsView({ only }: { only?: "client" | "supplier" } = {}) {
   const supplierAccess = useToolAccess("suppliers");
   const [typeFilter, setTypeFilter] = useState<"all" | "client" | "supplier">("all");
   const [search, setSearch] = useState("");
-  const [sort, setSort] = useState<"az" | "recent" | "payment">("az");
+  const [sort, setSort] = useState<"az" | "recent">("az");
+  const [paymentFilter, setPaymentFilter] = useState<string>("all");
   const [importOpen, setImportOpen] = useState(false);
   const [modalState, setModalState] = useState<{ open: boolean; contact?: Contact; defaultType?: "client" | "supplier" }>({
     open: false,
@@ -32,7 +33,6 @@ export function ContactsView({ only }: { only?: "client" | "supplier" } = {}) {
   const activeType: "all" | "client" | "supplier" = only ?? typeFilter;
   const noun = only === "client" ? "customers" : only === "supplier" ? "suppliers" : "contacts";
   const title = only === "client" ? "Customers" : only === "supplier" ? "Suppliers" : "Contacts";
-  const paymentSortLabel = only === "supplier" ? "Payment terms" : only === "client" ? "Payment behaviour" : "Payment";
 
   const importType = activeType === "supplier" ? "supplier" : "client";
 
@@ -43,30 +43,33 @@ export function ContactsView({ only }: { only?: "client" | "supplier" } = {}) {
   const canDeleteContact = (c: Contact) => (c.contact_type === "supplier" ? supplierAccess : clientAccess).canDelete;
   const accessLoading = clientAccess.loading || supplierAccess.loading;
 
-  // "Payment" sort ranks by how a contact pays: for customers, worst payers
-  // first (Problem → Slow → Good) so the ones to chase are up top; for
-  // suppliers, by payment term in the order the form lists them. Unknown/blank
-  // sinks to the bottom, and same-rank contacts fall back to A–Z.
-  const BEHAVIOUR_ORDER = ["Problem payer", "Slow payer", "Good payer"];
-  const TERMS_ORDER = ["On delivery", "7 days", "30 days", "60 days", "Cash only", "Pre-payment"];
-  const paymentRank = (c: Contact) => {
-    const order = c.contact_type === "client" ? BEHAVIOUR_ORDER : TERMS_ORDER;
-    const value = c.contact_type === "client" ? c.payment_behaviour : c.payment_terms;
-    const i = order.indexOf(value ?? "");
-    return i === -1 ? order.length : i;
-  };
+  // Payment is a filter here (like the type/low-stock pills on Items): customers
+  // filter by payment behaviour, suppliers by payment term. Values are listed in
+  // the same order as the form, and only ones actually in use get a pill.
+  const paymentValueOf = (c: Contact) => (c.contact_type === "supplier" ? c.payment_terms : c.payment_behaviour) ?? "";
+  const PAYMENT_OPTIONS = only === "supplier"
+    ? ["On delivery", "7 days", "30 days", "60 days", "Cash only", "Pre-payment"]
+    : only === "client"
+      ? ["Good payer", "Slow payer", "Problem payer"]
+      : [];
+  const presentPayments = PAYMENT_OPTIONS.filter((v) => (contacts ?? []).some((c) => c.contact_type === only && paymentValueOf(c) === v));
 
   const filtered = (contacts ?? [])
     .filter((c) => {
       if (activeType !== "all" && c.contact_type !== activeType) return false;
+      if (only && paymentFilter !== "all" && paymentValueOf(c) !== paymentFilter) return false;
       if (search && !c.name.toLowerCase().includes(search.toLowerCase())) return false;
       return true;
     })
-    .sort((a, b) => {
-      if (sort === "recent") return (b.updated_at ?? b.created_at ?? "").localeCompare(a.updated_at ?? a.created_at ?? "");
-      if (sort === "payment") return paymentRank(a) - paymentRank(b) || a.name.localeCompare(b.name);
-      return a.name.localeCompare(b.name);
-    });
+    .sort((a, b) =>
+      sort === "recent"
+        ? (b.updated_at ?? b.created_at ?? "").localeCompare(a.updated_at ?? a.created_at ?? "")
+        : a.name.localeCompare(b.name)
+    );
+
+  // How many of this type exist at all (ignoring search/payment filters), so we
+  // can tell "none yet" from "none match your filters".
+  const typeCount = (contacts ?? []).filter((c) => activeType === "all" || c.contact_type === activeType).length;
 
   const handleSoftDelete = (id: string) => {
     if (!confirm(`Remove this ${only === "supplier" ? "supplier" : only === "client" ? "customer" : "contact"}? It stays on any existing quotes/invoices.`)) return;
@@ -158,18 +161,48 @@ export function ContactsView({ only }: { only?: "client" | "supplier" } = {}) {
         </div>
       )}
 
+      {presentPayments.length > 1 && (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
+          {["all", ...presentPayments].map((p) => {
+            const active = paymentFilter === p;
+            return (
+              <button
+                key={p}
+                onClick={() => setPaymentFilter(p)}
+                style={{
+                  padding: "8px 14px",
+                  borderRadius: 20,
+                  border: `1.5px solid ${active ? "#0C4A6E" : "#e2e8f0"}`,
+                  background: active ? "#0C4A6E" : "#fff",
+                  color: active ? "#fff" : "#374151",
+                  fontSize: 12,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                }}
+              >
+                {p === "all" ? "All" : p}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {isLoading && <p style={{ color: "#94a3b8", fontSize: 13 }}>Loading...</p>}
-      {!isLoading && filtered.length === 0 && (
+      {!isLoading && typeCount === 0 && (
         <p style={{ color: "#94a3b8", fontSize: 13, textAlign: "center", marginTop: 40 }}>No {noun} yet.</p>
+      )}
+      {!isLoading && typeCount > 0 && filtered.length === 0 && (
+        <p style={{ color: "#94a3b8", fontSize: 13, textAlign: "center", marginTop: 40 }}>No {noun} match your search.</p>
       )}
 
       {!isLoading && filtered.length > 0 && (
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, margin: "0 0 10px 2px" }}>
           <span style={{ fontSize: 11, color: "#94a3b8" }}>
-            {filtered.length} {filtered.length === 1 ? noun.replace(/s$/, "") : noun}
+            {filtered.length}
+            {filtered.length !== typeCount ? ` of ${typeCount}` : ""} {typeCount === 1 ? noun.replace(/s$/, "") : noun}
           </span>
           <div style={{ display: "flex", gap: 4, background: "#f1f5f9", borderRadius: 10, padding: 3 }}>
-            {(["az", "recent", "payment"] as const).map((s) => (
+            {(["az", "recent"] as const).map((s) => (
               <button
                 key={s}
                 onClick={() => setSort(s)}
@@ -185,7 +218,7 @@ export function ContactsView({ only }: { only?: "client" | "supplier" } = {}) {
                   boxShadow: sort === s ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
                 }}
               >
-                {s === "az" ? "A–Z" : s === "recent" ? "Recent" : paymentSortLabel}
+                {s === "az" ? "A–Z" : "Recent"}
               </button>
             ))}
           </div>
