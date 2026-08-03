@@ -1013,8 +1013,9 @@ export const HELP_ARTICLES: HelpArticle[] = [
             "type": "steps",
             "items": [
               "In the list, tap the costing you want to change. It opens as Edit costing.",
-              "Change the name, lines or markup, then tap Update costing.",
-              "To remove a line, tap the red ✕ on that line."
+              "Change the name, lines or markup, then tap Update Costing.",
+              "To remove a single line, tap the red ✕ on that line.",
+              "To remove the whole costing, tap the ✕ on the right of its row in the list and confirm Remove this costing?"
             ]
           }
         ]

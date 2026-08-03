@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useCostings, type Costing } from "@/lib/supabase/hooks/useCostings";
+import { useCostings, useUpdateCosting, type Costing } from "@/lib/supabase/hooks/useCostings";
 import { CostingModal } from "@/components/modals/CostingModal";
 import { fmt } from "@/lib/format";
 import { ReadOnlyNotice } from "@/components/ui/ReadOnlyNotice";
@@ -13,9 +13,15 @@ import { BackLink } from "@/components/ui/BackLink";
 export function CostCalculatorView() {
   const access = useToolAccess("recipe");
   const { data: costings, isLoading } = useCostings();
+  const updateCosting = useUpdateCosting();
   const [modalState, setModalState] = useState<{ open: boolean; costing?: Costing }>({ open: false });
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<"az" | "recent">("az");
+
+  const handleSoftDelete = (id: string) => {
+    if (!confirm("Remove this costing?")) return;
+    updateCosting.mutate({ id, changes: { deleted_at: new Date().toISOString() } });
+  };
 
   const filtered = (costings ?? [])
     .filter((c) => !search || c.name.toLowerCase().includes(search.toLowerCase()))
@@ -110,37 +116,57 @@ export function CostCalculatorView() {
       )}
 
       {filtered.map((c) => (
-        <button
+        <div
           key={c.id}
-          onClick={() => setModalState({ open: true, costing: c })}
           style={{
-            width: "100%",
-            textAlign: "left",
             background: "#fff",
             borderRadius: 13,
             padding: "12px 14px",
             marginBottom: 8,
-            border: "none",
             boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
-            cursor: "pointer",
             display: "flex",
-            justifyContent: "space-between",
             alignItems: "center",
+            gap: 8,
           }}
         >
-          <div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: "#111" }}>{c.name}</div>
-            <div style={{ fontSize: 11, color: "#94a3b8" }}>
-              Cost {fmt(c.total_cost)}
-              {Number(c.labour_hours) > 0 ? ` · ${Number(c.labour_hours).toFixed(1)}h labour` : ""}
-              {fmtDate(c.updated_at ?? c.created_at) ? ` · updated ${fmtDate(c.updated_at ?? c.created_at)}` : ""}
+          <button
+            onClick={() => setModalState({ open: true, costing: c })}
+            style={{
+              flex: 1,
+              textAlign: "left",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              padding: 0,
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: 8,
+            }}
+          >
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: "#111" }}>{c.name}</div>
+              <div style={{ fontSize: 11, color: "#94a3b8" }}>
+                Cost {fmt(c.total_cost)}
+                {Number(c.labour_hours) > 0 ? ` · ${Number(c.labour_hours).toFixed(1)}h labour` : ""}
+                {fmtDate(c.updated_at ?? c.created_at) ? ` · updated ${fmtDate(c.updated_at ?? c.created_at)}` : ""}
+              </div>
             </div>
-          </div>
-          <div style={{ textAlign: "right" }}>
-            <div style={{ fontSize: 15, fontWeight: 800, color: "#0C4A6E" }}>{fmt(c.suggested_price)}</div>
-            <div style={{ fontSize: 10, color: "#94a3b8" }}>suggested</div>
-          </div>
-        </button>
+            <div style={{ textAlign: "right" }}>
+              <div style={{ fontSize: 15, fontWeight: 800, color: "#0C4A6E" }}>{fmt(c.suggested_price)}</div>
+              <div style={{ fontSize: 10, color: "#94a3b8" }}>suggested</div>
+            </div>
+          </button>
+          {access.canDelete && (
+            <button
+              onClick={() => handleSoftDelete(c.id)}
+              style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer", fontSize: 14, padding: 4 }}
+              aria-label="Remove costing"
+            >
+              ✕
+            </button>
+          )}
+        </div>
       ))}
 
       {modalState.open && <CostingModal costing={modalState.costing} onClose={() => setModalState({ open: false })} />}
