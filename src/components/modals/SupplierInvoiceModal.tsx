@@ -20,7 +20,7 @@ export function SupplierInvoiceModal({ onClose }: { onClose: () => void }) {
   const [refNumber, setRefNumber] = useState("");
   const [issueDate, setIssueDate] = useState(todayStr());
   const [dueDate, setDueDate] = useState("");
-  const [items, setItems] = useState<PurchaseLineItem[]>([{ desc: "", qty: 1, unit_price: 0 }]);
+  const [items, setItems] = useState<PurchaseLineItem[]>([]);
   const [paidAmount, setPaidAmount] = useState("0");
   const [amountOverride, setAmountOverride] = useState("");
   const [linkedPoId, setLinkedPoId] = useState<string | null>(null);
@@ -175,10 +175,10 @@ export function SupplierInvoiceModal({ onClose }: { onClose: () => void }) {
           applySupplierTerms(id);
         }}
         contacts={suppliers}
-        placeholder="Supplier name"
+        placeholder="Type name or pick from suppliers"
       />
 
-      <Field label="Supplier's invoice number (optional)">
+      <Field label="Supplier's invoice / reference number">
         <Input value={refNumber} onChange={setRefNumber} placeholder="Their reference" />
       </Field>
 
@@ -186,17 +186,17 @@ export function SupplierInvoiceModal({ onClose }: { onClose: () => void }) {
         <Input value={issueDate} onChange={setIssueDate} type="date" />
       </Field>
 
-      <Field label="Due date (optional)">
+      <Field label="Due date">
         <Input value={dueDate} onChange={setDueDate} type="date" />
       </Field>
 
       <PurchaseLineItemsEditor items={items} onChange={setItems} />
 
-      <Field label="Total on the invoice (optional)">
-        <Input value={amountOverride} onChange={setAmountOverride} type="number" placeholder={subtotal ? subtotal.toFixed(2) : "auto from the lines above"} />
+      <Field label="Total on the invoice">
+        <Input value={amountOverride} onChange={setAmountOverride} type="number" placeholder={subtotal ? subtotal.toFixed(2) : "auto calculate from the lines above"} />
       </Field>
 
-      <Field label="Already paid">
+      <Field label="Amount already paid (R)">
         <Input value={paidAmount} onChange={setPaidAmount} type="number" placeholder="0.00" />
       </Field>
 
