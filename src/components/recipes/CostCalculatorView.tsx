@@ -39,7 +39,7 @@ export function CostCalculatorView() {
 
   return (
     <div style={{ padding: "20px 16px 100px" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
         <div>
           <BackLink />
           <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 0" }}>Cost Calculator</h1>
@@ -53,10 +53,6 @@ export function CostCalculatorView() {
           </button>
         )}
       </div>
-      <p style={{ fontSize: 12, color: "#94a3b8", marginBottom: 16, lineHeight: 1.5 }}>
-        Cost a job or product from your materials, products and labour, add a markup to see a suggested price, and save it to your price list.
-      </p>
-
       {!access.loading && !access.canEdit && <ReadOnlyNotice level={access.level} what="costings" />}
 
       {!isLoading && (costings ?? []).length > 0 && (

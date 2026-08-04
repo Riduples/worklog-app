@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { ToolTile } from "@/components/dashboard/ToolTile";
 import { useToolGate } from "@/lib/useToolGate";
-import { TOOL_CATEGORIES, type ToolId } from "@/lib/permissions";
+import { TOOL_CATEGORIES, TOOL_LABELS, type ToolId } from "@/lib/permissions";
 import { useLogModal } from "@/components/providers/LogModalProvider";
 
 // The full, permission- and business-type-gated tool list. Shared by the
@@ -162,6 +162,7 @@ export function AllToolsGrid({
                       onClick={it.logKind ? () => handleLog(it.logKind as "income" | "expense") : undefined}
                       icon={it.icon}
                       label={it.label}
+                      desc={it.toolId ? TOOL_LABELS[it.toolId]?.desc : undefined}
                       locked={it.lockId ? tierLocked(it.lockId) : undefined}
                       onLockedClick={it.lockId ? () => onLockedClick(it.lockId as ToolId) : undefined}
                     />

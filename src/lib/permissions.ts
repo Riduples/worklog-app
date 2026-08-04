@@ -90,7 +90,7 @@ export const TOOL_LABELS: Partial<Record<ToolId, { icon: string; label: string; 
   profit: { icon: "💵", label: "Cash Position", desc: "Actual cash in vs out — unpaid invoices and what you owe shown separately" },
   bankstatement: { icon: "🏦", label: "Import Statement", desc: "Upload your bank statement — auto-extracts every transaction" },
   cashup: { icon: "🧮", label: "Daily Cash-Up", desc: "Count your till at the end of the day and check it matches what you logged" },
-  ledger: { icon: "📒", label: "Ledgers", desc: "Track who owes you and who you owe on account" },
+  ledger: { icon: "📒", label: "Ledgers", desc: "Track who owes you money and who you owe" },
   quote: { icon: "📋", label: "Quote", desc: "Send a price to a customer before the job" },
   invoice: { icon: "📤", label: "Invoice", desc: "Bill a customer and track payment" },
   statement: { icon: "📃", label: "Statement", desc: "A summary you can send a customer showing everything they've bought and what they still owe" },
