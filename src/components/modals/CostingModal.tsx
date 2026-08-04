@@ -86,6 +86,15 @@ export function CostingModal({ costing, onClose }: { costing?: Costing; onClose:
   const updateLine = (i: number, changes: Partial<CostingLine>) => setLines(lines.map((l, idx) => (idx === i ? { ...l, ...changes } : l)));
   const removeLine = (i: number) => setLines(lines.filter((_, idx) => idx !== i));
   const addLine = (kind: CostingLineKind) => setLines([...lines, emptyLine(kind)]);
+  // Price-list picks slot in at the top of their section, above the blank rows
+  // you fill in manually, so the pre-filled line reads first.
+  const addPricedLine = (line: CostingLine) =>
+    setLines((prev) => {
+      const firstOfKind = prev.findIndex((l) => l.kind === line.kind);
+      return firstOfKind === -1
+        ? [...prev, line]
+        : [...prev.slice(0, firstOfKind), line, ...prev.slice(firstOfKind)];
+    });
 
   const handleSave = () => {
     if (!name.trim()) {
@@ -133,7 +142,7 @@ export function CostingModal({ costing, onClose }: { costing?: Costing; onClose:
         <Input value={name} onChange={setName} placeholder="e.g. Bathroom renovation, Chicken curry ×10, Full groom package" autoFocus />
       </Field>
 
-      <Field label="Notes / job description (optional)">
+      <Field label="Notes / job description - optional">
         <Textarea value={notes} onChange={setNotes} placeholder="Scope, special requirements, conditions…" rows={3} />
       </Field>
 
@@ -153,7 +162,7 @@ export function CostingModal({ costing, onClose }: { costing?: Costing; onClose:
             const s = (stock ?? []).find((it) => it.id === e.target.value);
             if (!s) return;
             const kind: CostingLineKind = s.item_type === "labour" ? "labour" : s.item_type === "product" ? "product" : "material";
-            setLines([...lines, { kind, desc: s.name, qty: 1, unit_cost: Number(s.cost_price || 0) }]);
+            addPricedLine({ kind, desc: s.name, qty: 1, unit_cost: Number(s.cost_price || 0) });
             e.target.value = "";
           }}
           style={{ width: "100%", padding: "12px 14px", borderRadius: 10, border: "1.5px solid #e2e8f0", fontSize: 14, color: "#334155", background: "#fff", marginBottom: 4, boxSizing: "border-box" }}
