@@ -279,7 +279,7 @@ export function CostingModal({ costing, onClose }: { costing?: Costing; onClose:
           cursor: savedToList || totalCost <= 0 ? "default" : "pointer",
         }}
       >
-        {savedToList ? "✅ Saved to your price list" : "＋ Save as a price-list item"}
+        {savedToList ? "✅ Saved to your price list" : "＋ Save this costing to your price list"}
       </button>
     </Modal>
   );
