@@ -883,6 +883,27 @@ export const HELP_ARTICLES: HelpArticle[] = [
         ]
       },
       {
+        "heading": "Find an item quickly",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "Once your list grows, three controls at the top help you get to the right item fast:"
+          },
+          {
+            "type": "bullets",
+            "items": [
+              "Search items — type any part of a name to filter the list as you go.",
+              "Filter pills — tap a type (Service, Product, Material and so on) to show just those; if anything is running low a ⚠️ Low stock pill appears too, so you can see everything to reorder in one tap. Only the types you actually have show up.",
+              "A–Z / Recent — sort by name, or bring the ones you added or changed most recently to the top."
+            ]
+          },
+          {
+            "type": "tip",
+            "text": "With All selected and A–Z sorting, the list is grouped under type headings (Services, Products, Materials…), each with a count, so it reads like a tidy catalogue."
+          }
+        ]
+      },
+      {
         "heading": "Drop an item onto a quote or invoice",
         "blocks": [
           {
@@ -939,7 +960,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
     "slug": "cost-a-job",
     "category": "Price list & pricing",
     "title": "Work out a price with the Cost Calculator",
-    "summary": "Cost a job or product from its materials and labour, add a markup for a suggested price, and save the result to your price list.",
+    "summary": "Cost a job or product from its materials, products and labour, add a markup for a suggested price, and save the result to your price list.",
     "sections": [
       {
         "heading": "What the Cost Calculator does",
@@ -950,7 +971,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           },
           {
             "type": "paragraph",
-            "text": "You will find it under Price List. Open Cost Calculator and you will see the costings you have saved, each showing its cost and suggested price. Tap any one to open and change it."
+            "text": "You will find it under Price List. Open Cost Calculator and you will see the costings you have saved, each showing its cost, suggested price and when it was last updated. Tap any one to open and change it. Once you have a few, use the Search box to find one by name, and the A–Z / Recent toggle to sort by name or bring the latest to the top."
           }
         ]
       },

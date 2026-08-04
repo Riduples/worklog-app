@@ -17,7 +17,7 @@ export const PAYMENT_TERMS = ["On delivery", "7 days", "30 days", "60 days", "Ca
 
 export const CSV_TEMPLATES: Record<CsvImportType, CsvTemplate> = {
   stock: {
-    label: "Stock items",
+    label: "Items",
     filename: "worklog-stock-template.csv",
     columns: [
       { csvHeader: "description", required: true },

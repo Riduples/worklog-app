@@ -154,7 +154,7 @@ export function StockView() {
         )}
       </div>
 
-      {!access.loading && !access.canEdit && <ReadOnlyNotice level={access.level} what="stock items" />}
+      {!access.loading && !access.canEdit && <ReadOnlyNotice level={access.level} what="items" />}
 
       {!isLoading && (items ?? []).length > 0 && (
         <>
