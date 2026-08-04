@@ -9,11 +9,34 @@ import { ReadOnlyNotice } from "@/components/ui/ReadOnlyNotice";
 import { useToolAccess } from "@/lib/supabase/hooks/useToolAccess";
 import { BackLink } from "@/components/ui/BackLink";
 
+// Filter pills follow this order; only statuses actually in use get a pill.
+const STATUS_ORDER = ["unpaid", "overdue", "paid", "credited"];
+
 export function SupplierInvoicesView() {
   const access = useToolAccess("supplierinvoice");
   const { data: invoices, isLoading } = useSupplierInvoices();
   const [showNew, setShowNew] = useState(false);
   const [selected, setSelected] = useState<SupplierInvoice | null>(null);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [sort, setSort] = useState<"az" | "recent">("recent");
+
+  const presentStatuses = STATUS_ORDER.filter((s) => (invoices ?? []).some((si) => supplierInvoiceDisplayStatus(si).label === s));
+
+  const filtered = (invoices ?? [])
+    .filter((si) => {
+      if (statusFilter !== "all" && supplierInvoiceDisplayStatus(si).label !== statusFilter) return false;
+      if (search) {
+        const s = search.toLowerCase();
+        if (!si.supplier_name.toLowerCase().includes(s) && !(si.supplier_ref_number ?? "").toLowerCase().includes(s)) return false;
+      }
+      return true;
+    })
+    .sort((a, b) =>
+      sort === "az"
+        ? a.supplier_name.localeCompare(b.supplier_name)
+        : (b.created_at ?? b.issue_date ?? "").localeCompare(a.created_at ?? a.issue_date ?? "")
+    );
 
   return (
     <div style={{ padding: "20px 16px 100px" }}>
@@ -34,12 +57,63 @@ export function SupplierInvoicesView() {
 
       {!access.loading && !access.canEdit && <ReadOnlyNotice level={access.level} what="supplier invoices" />}
 
+      {!isLoading && (invoices ?? []).length > 0 && (
+        <>
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search supplier invoices..."
+            style={{ width: "100%", padding: "12px 14px", borderRadius: 12, border: "1.5px solid #e2e8f0", fontSize: 14, boxSizing: "border-box", marginBottom: 12, background: "#fff" }}
+          />
+
+          {presentStatuses.length > 1 && (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
+              {["all", ...presentStatuses].map((s) => {
+                const active = statusFilter === s;
+                return (
+                  <button
+                    key={s}
+                    onClick={() => setStatusFilter(s)}
+                    style={{ padding: "8px 14px", borderRadius: 20, border: `1.5px solid ${active ? "#0C4A6E" : "#e2e8f0"}`, background: active ? "#0C4A6E" : "#fff", color: active ? "#fff" : "#374151", fontSize: 12, fontWeight: 700, cursor: "pointer", textTransform: "capitalize" }}
+                  >
+                    {s === "all" ? "All" : s}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </>
+      )}
+
       {isLoading && <p style={{ color: "#94a3b8", fontSize: 13 }}>Loading...</p>}
       {!isLoading && (invoices ?? []).length === 0 && (
         <p style={{ color: "#94a3b8", fontSize: 13, textAlign: "center", marginTop: 40 }}>No supplier invoices yet.</p>
       )}
+      {!isLoading && (invoices ?? []).length > 0 && filtered.length === 0 && (
+        <p style={{ color: "#94a3b8", fontSize: 13, textAlign: "center", marginTop: 40 }}>No supplier invoices match your search.</p>
+      )}
 
-      {(invoices ?? []).map((si) => {
+      {!isLoading && filtered.length > 0 && (
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, margin: "0 0 10px 2px" }}>
+          <span style={{ fontSize: 11, color: "#94a3b8" }}>
+            {filtered.length}
+            {filtered.length !== (invoices ?? []).length ? ` of ${(invoices ?? []).length}` : ""} bill{(invoices ?? []).length === 1 ? "" : "s"}
+          </span>
+          <div style={{ display: "flex", gap: 4, background: "#f1f5f9", borderRadius: 10, padding: 3 }}>
+            {(["az", "recent"] as const).map((s) => (
+              <button
+                key={s}
+                onClick={() => setSort(s)}
+                style={{ padding: "5px 12px", borderRadius: 8, border: "none", background: sort === s ? "#fff" : "transparent", color: sort === s ? "#0C4A6E" : "#64748b", fontSize: 12, fontWeight: 700, cursor: "pointer", boxShadow: sort === s ? "0 1px 3px rgba(0,0,0,0.1)" : "none" }}
+              >
+                {s === "az" ? "A–Z" : "Recent"}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {filtered.map((si) => {
         const status = supplierInvoiceDisplayStatus(si);
         const totalInclVat = Number(si.invoice_amount) + Number(si.vat_amount ?? 0);
         return (

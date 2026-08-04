@@ -1606,6 +1606,19 @@ export const HELP_ARTICLES: HelpArticle[] = [
         ]
       },
       {
+        "heading": "Find a purchase order",
+        "blocks": [
+          {
+            "type": "bullets",
+            "items": [
+              "Search purchase orders — type any part of the supplier's name or the PO number.",
+              "Status pills — tap pending, acknowledged, fulfilled or cancelled to show just those (only the statuses you actually have appear).",
+              "A–Z / Number / Recent — sort by supplier name, by PO number, or newest first."
+            ]
+          }
+        ]
+      },
+      {
         "heading": "Before you start",
         "blocks": [
           {
@@ -1627,8 +1640,8 @@ export const HELP_ARTICLES: HelpArticle[] = [
               "Tap the + New button at the top right. The New purchase order screen opens.",
               "Fill in the Supplier. To pick a saved supplier, tap the 👤 List button next to the box, search and choose from the list. If the supplier is not saved, just type their name in the box.",
               "Check the Issue date. It fills in with today's date, but you can change it.",
-              "If you have a delivery date in mind, set Requested delivery (optional). You can leave this blank.",
-              "Under Line items, tap + Add line item to add a blank line (or pick one from Add from your items), then type a Description and fill in the Qty and the Unit price. The Line total works out for you.",
+              "If you have a delivery date in mind, set Requested delivery date. You can leave this blank.",
+              "Under Line items, tap + Add line item to add a blank line (or pick one from Add from your items), then type a Description and fill in the Qty and the Unit price (R). The Line total works out for you.",
               "Add a line for each item you need. Use the red ✕ on a line to remove it.",
               "Check the orange totals box. It shows the Subtotal and, if you are VAT-registered, the VAT and the PO total.",
               "Tap Save purchase order."
@@ -1743,17 +1756,17 @@ export const HELP_ARTICLES: HelpArticle[] = [
               "Open Supplier Invoices under Purchases and tap the New button in the top right.",
               "If this bill is for a purchase order you already made, tap the \"Link to a purchase order\" button at the top and pick the order. Worklog fills in the supplier and the items for you. This step is optional and only appears if you have purchase orders.",
               "In the Supplier field, type or pick the supplier you bought from.",
-              "In \"Supplier's invoice number\", type their reference off the bill. This is optional but makes it easy to find later.",
+              "In \"Supplier's invoice / reference number\", type their reference off the bill. This is optional but makes it easy to find later.",
               "Set the Invoice date to the date on the bill. Add a Due date if there is one, so Worklog can flag the bill as overdue once that date has passed.",
-              "Add each thing you bought as a line: a description, the quantity, and the unit price.",
-              "If you have already paid some or all of it, type that in the \"Already paid\" box. Leave it at 0 if you still owe the full amount.",
+              "Under Line items, tap + Add line item (or pick one from Add from your items), then type a Description and fill in the Qty and the Unit price (R). Or, for a lump-sum bill, skip the lines and type the figure straight into Total on the invoice.",
+              "If you have already paid some or all of it, type that in the \"Amount already paid (R)\" box. Leave it at 0 if you still owe the full amount.",
               "Check the summary box. It shows the subtotal, the input VAT you can claim (with the percentage the app is using), anything already paid, and the balance you owe including VAT.",
               "Tap \"Save supplier invoice\"."
             ]
           },
           {
             "type": "tip",
-            "text": "If you fill in the Already paid amount so that nothing is left owing, Worklog saves the bill straight away as paid. Otherwise it is saved as unpaid until you settle it."
+            "text": "If you fill in the amount already paid so that nothing is left owing, Worklog saves the bill straight away as paid. Otherwise it is saved as unpaid until you settle it."
           }
         ]
       },
@@ -1762,7 +1775,15 @@ export const HELP_ARTICLES: HelpArticle[] = [
         "blocks": [
           {
             "type": "paragraph",
-            "text": "On the Supplier Invoices screen each bill shows the supplier, the total including VAT, and a status tag: unpaid, overdue (when the due date has passed), or paid. Tap any bill to open it and see the full details and the balance you still owe."
+            "text": "On the Supplier Invoices screen each bill shows the supplier, the total including VAT, and a status tag: unpaid, overdue (when the due date has passed), paid, or credited. Tap any bill to open it and see the full details and the balance you still owe."
+          },
+          {
+            "type": "bullets",
+            "items": [
+              "Search supplier invoices — type any part of the supplier's name or their reference number.",
+              "Status pills — tap unpaid, overdue, paid or credited to show just those (only the statuses you actually have appear).",
+              "A–Z / Recent — sort by supplier name, or newest first."
+            ]
           }
         ]
       },

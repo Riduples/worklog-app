@@ -72,7 +72,7 @@ export const TOOL_CATEGORIES: { id: string; label: string; icon: string; desc: s
   { id: "stock", label: "Price List", icon: "📋", desc: "Your saved prices for what you sell, plus a calculator to price a job", tools: ["stock", "recipe"] },
   { id: "contacts", label: "Contacts", icon: "👥", desc: "Your customers and suppliers, saved for quick reuse on quotes, invoices & orders", tools: ["clients", "suppliers"] },
   { id: "invoicing", label: "Sales", icon: "📤", desc: "Quotes, invoices, statements & customer age analysis — everything on the selling side", tools: ["quote", "invoice", "statement", "ageanalysis"] },
-  { id: "purchases", label: "Purchases", icon: "📥", desc: "Purchase orders & supplier invoices you receive", tools: ["purchaseorder", "supplierinvoice", "remittance", "payables"] },
+  { id: "purchases", label: "Purchases", icon: "📥", desc: "Purchase orders, supplier invoices, remittances & supplier age analysis — everything on the buying side", tools: ["purchaseorder", "supplierinvoice", "remittance", "payables"] },
   { id: "bookings", label: "Scheduling System", icon: "📅", desc: "Diary, appointments, time & travel — manage how you spend your day", tools: ["booking", "timetrack", "mileage"] },
   { id: "workers", label: "Payroll", icon: "💼", desc: "Employees, wages, payslips & advances", tools: ["staffregister", "payrun", "advances", "leave", "payrollcompliance"] },
   // "ledger" isn't in the source prototype's categories (it dropped Ledgers
