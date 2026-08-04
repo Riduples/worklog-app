@@ -109,8 +109,8 @@ export const HELP_ARTICLES: HelpArticle[] = [
             "items": [
               "In \"Bank\", type your bank, for example FNB, Capitec or Standard Bank.",
               "In \"Account number\", type your business account number.",
-              "In \"Branch code (optional)\", type your branch code if you have it.",
-              "In \"Payment reference (optional)\", type something like your trading name. Customers are then asked to use that plus the document number so you can match the payment. Leave it blank and just the document number is used.",
+              "In \"Branch code - optional\", type your branch code if you have it.",
+              "In \"Payment reference - optional\", type something like your trading name. Customers are then asked to use that plus the document number so you can match the payment. Leave it blank and just the document number is used.",
               "Tap \"Save details\"."
             ]
           }
@@ -1019,7 +1019,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
         "blocks": [
           {
             "type": "paragraph",
-            "text": "Tap Save as a price-list item to add the costed job to your Items as a product — its cost becomes the total cost and its sell price becomes the suggested price. If you costed more than one unit or portion, it saves the per-unit amounts instead. If the costing has labour hours, those are saved on the item too."
+            "text": "Tap Save this costing to your price list to add the costed job to your Items as a product — its cost becomes the total cost and its sell price becomes the suggested price. If you costed more than one unit or portion, it saves the per-unit amounts instead. If the costing has labour hours, those are saved on the item too."
           },
           {
             "type": "tip",
@@ -1509,7 +1509,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
               "Open Log Income.",
               "In Amount, type the money that came in.",
               "In Received from, put the customer's name. If you pick a customer here, Worklog looks up their invoices for you.",
-              "Find the box labelled 'Is this payment for an invoice? (optional)' and tap it.",
+              "Find the box labelled 'Is this payment for an invoice? - optional' and tap it.",
               "A list opens. If you named the customer, their invoices show first under their name, with the rest below. Tap the invoice this payment is for. You can also use the 'Search by customer, number or amount' box to find it.",
               "A blue note appears: 'Linked to [invoice number] — kept out of Profit & Loss so this payment isn't counted twice.' That is your confirmation.",
               "Fill in the rest of the entry as normal, then tap Log income."
@@ -1559,7 +1559,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
               "Go to Import Statement and follow the steps to upload and read your statement.",
               "On the review screen you see every transaction Worklog found, each with a tick so you choose which ones to keep.",
               "If you have invoices on file, a note shows: 'Was a payment settling an invoice or bill you already logged? Link it below so the same money isn't counted twice in Profit & Loss.'",
-              "Under a money-in row you keep ticked, tap the 'Is this payment for an invoice? (optional)' box and pick the invoice it settles, just like in Log Income.",
+              "Under a money-in row you keep ticked, tap the 'Is this payment for an invoice? - optional' box and pick the invoice it settles, just like in Log Income.",
               "If the deposit covers the full balance, the same mark-as-paid tick appears for that row. Leave it ticked to close the invoice off.",
               "When you are happy, tap the Import button at the bottom to save everything."
             ]
@@ -2028,9 +2028,9 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "steps",
             "items": [
-              "Under a ticked money-in row, use Is this payment for an invoice? (optional) to find and tap the matching invoice.",
+              "Under a ticked money-in row, use Is this payment for an invoice? - optional to find and tap the matching invoice.",
               "If the deposit covers the whole balance, Worklog offers a tick to also mark that invoice as paid. A part payment stays linked but leaves the invoice unpaid.",
-              "Under a ticked money-out row, use Is this paying off something in your credit book? (optional) or Is this paying a supplier invoice? (optional) to link what it settles, and tick to mark it paid if the payment covers the full amount."
+              "Under a ticked money-out row, use Is this paying off something in your credit book? - optional or Is this paying a supplier invoice? - optional to link what it settles, and tick to mark it paid if the payment covers the full amount."
             ]
           },
           {
@@ -2197,8 +2197,8 @@ export const HELP_ARTICLES: HelpArticle[] = [
               "Open the Business Hub (the button at the top right of your home screen) and tap the \"Bank accounts\" card.",
               "Tap + Add account.",
               "In Account name, type a name you will recognise, for example FNB Cheque or Till float.",
-              "Bank (optional): type the bank, for example FNB. You can leave this blank.",
-              "Account number (optional): the last 4 digits are enough. This lets Worklog match an uploaded bank statement to this account automatically.",
+              "Bank - optional: type the bank, for example FNB. You can leave this blank.",
+              "Account number - optional: the last 4 digits are enough. This lets Worklog match an uploaded bank statement to this account automatically.",
               "Under Type, pick one: Bank, Savings, Credit card, Cash or Other.",
               "In Balance today (opening balance), type what the account holds right now.",
               "Check the As of date. It defaults to today, which is usually what you want.",
@@ -2342,7 +2342,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
               "Under Who owes whom?, choose client if a customer owes you, or supplier if you owe someone. A line underneath explains each one: client means a customer owes you (a credit sale), supplier means you owe a supplier (bought on credit).",
               "In the Client or Supplier box, start typing the name. If they're already saved as a contact you can pick them from the list, otherwise just type the name in.",
               "In Amount, type how much is owed.",
-              "In Note (optional), write what it was for, like paint and rollers or hair products. You can leave this empty.",
+              "In Note - optional, write what it was for, like paint and rollers or hair products. You can leave this empty.",
               "Check the Date. It fills in today's date, but you can change it to the day the credit was given.",
               "Tap Save entry."
             ]
@@ -2554,7 +2554,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
               "In Hours worked, type the hours. You can use a decimal, for example 2.5 for two and a half hours.",
               "In Hourly rate, type your rate per hour. Leave it as 0 if you are not billing by the hour.",
               "Under Type, choose one: Billable, Non-billable, Admin or Travel.",
-              "Fill in Description (optional) to note what the work was.",
+              "Fill in Description - optional to note what the work was.",
               "Check the Date. It fills in with today, but you can tap it and change it.",
               "Tap Log time to save."
             ]
@@ -2640,7 +2640,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
               "In Odometer start, type your odometer reading before the trip.",
               "In Odometer end, type your odometer reading after the trip.",
               "Under Trip type, tap one of the chips: Client visit, Delivery, Materials run or Business errand. Client visit is chosen for you to start.",
-              "In Purpose (optional), you can add a short note, like Site visit in Soweto. You can leave this empty.",
+              "In Purpose - optional, you can add a short note, like Site visit in Soweto. You can leave this empty.",
               "In Date, set the day of the trip. It starts on today's date.",
               "Once both readings are in, a blue line appears. It shows the kilometres, your SARS deduction, and the rate per kilometre it used.",
               "Tap Log trip to save. Your new trip appears in the list and the totals at the top update."
@@ -2765,7 +2765,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "steps",
             "items": [
-              "On the add or edit screen, tap \"More details (optional)\" to open it.",
+              "On the add or edit screen, tap \"More details - optional\" to open it.",
               "For an employee you can set Days/week; if they are paid hourly you can also set Hours/day. These help the monthly estimate.",
               "Enter the SA ID number (13 digits). The app shows how many digits are still needed as you type.",
               "For an employee, enter the Tax reference (IRP5) from SARS eFiling.",
@@ -3219,7 +3219,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
               "Choose the worker from the list. If they already owe you money, their outstanding amount shows next to their name.",
               "In Amount (R), type how much cash you gave them.",
               "In Repay per pay run (R), you can set an amount to take back automatically each payday, for example 200. Leave it blank to deduct by hand each time. When you fill in both an amount and a repay figure, a line shows roughly how many pay runs it will take to clear.",
-              "In Reason (optional), you can note why, for example transport, groceries or an emergency. You can leave this blank.",
+              "In Reason - optional, you can note why, for example transport, groceries or an emergency. You can leave this blank.",
               "Tap Record Advance."
             ]
           },
@@ -3874,7 +3874,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
               "Under Business type, choose Sole proprietor / Individual or Company (Pty) Ltd.",
               "If you chose Sole proprietor / Individual, pick Your age: Under 65, 65 – 74, or 75 or older. From 65 SARS gives you a bigger rebate, and bigger again from 75, which lowers what you owe.",
               "Look at the block headed From your Worklog records (year-to-date). It shows your total income logged, total expenses logged, net profit and an annualised profit. You do not type these in — they come from your records.",
-              "In Allowable deductions (optional), type any deductions you can claim, for example 50000. Leave it blank if you are not sure.",
+              "In Allowable deductions - optional, type any deductions you can claim, for example 50000. Leave it blank if you are not sure.",
               "If you are an individual, choose your number of Medical aid members from 1 to 5. Worklog works out the medical tax credit for you and shows it just below, as a credit per year applied.",
               "If you picked Period 2, fill in Amount already paid in Period 1 so the tool can subtract it.",
               "Read the dark blue block headed Estimated IRP6. It shows your taxable income, the tax before credits, any rebates and medical credits taken off, your annual tax liability, and the amount due for that period, with the due date."
