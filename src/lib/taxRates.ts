@@ -29,6 +29,10 @@ export type TaxRateSet = {
   MEDICAL_CREDIT_FIRST_TWO: number;
   MEDICAL_CREDIT_ADDITIONAL: number;
   PAYE_BRACKETS: PayeBracket[];
+  // SARS Small Business Corporation sliding scale. Same {from,base,rate} shape as
+  // PAYE_BRACKETS — a qualifying small company is taxed on this instead of the flat
+  // COMPANY_TAX_RATE, so it lives here alongside the other bands.
+  SBC_BRACKETS: PayeBracket[];
   TAX_YEAR: string;
 };
 
@@ -63,8 +67,39 @@ export const TAX_RATES: TaxRateSet = {
     { from: 887000, base: 259783, rate: 0.41 },
     { from: 1878600, base: 666339, rate: 0.45 },
   ],
+  // SARS Small Business Corporation table for the 2027 year of assessment (years
+  // ending 1 Mar 2026 – 28 Feb 2027), verified against SARS's published SBC rates.
+  // Like PAYE, the bases fall out of the band widths — 7%×(365,000−99,000)=18,620
+  // and 18,620+21%×(550,000−365,000)=57,470 — which taxRates.test.ts asserts, and
+  // the 0% band tops out at R99,000, the same figure as the individual tax
+  // threshold (PRIMARY_REBATE ÷ 0.18). A qualifying SBC pays this in place of the
+  // flat 27%. Update at Budget time in step with the tax_rates table's row.
+  SBC_BRACKETS: [
+    { from: 0, base: 0, rate: 0 },
+    { from: 99000, base: 0, rate: 0.07 },
+    { from: 365000, base: 18620, rate: 0.21 },
+    { from: 550000, base: 57470, rate: 0.27 },
+  ],
   TAX_YEAR: "2026/27",
 };
+
+// Parse a JSONB bracket list from a tax_rates row into a validated, ascending
+// PayeBracket[]. calcPAYE/calcSBC scan brackets from the top down and assume
+// ascending order, so a mis-ordered or blank band (e.g. a trailing {from:0})
+// would zero everyone's tax. Require every band finite, sort ascending, and fall
+// back to the known-good hardcoded brackets if anything is off — never silently
+// compute R0 tax off a malformed row.
+function resolveBrackets(raw: unknown, fallback: PayeBracket[]): PayeBracket[] {
+  const parsed: PayeBracket[] = Array.isArray(raw)
+    ? (raw as unknown[]).map((b) => {
+        const o = (b ?? {}) as Record<string, unknown>;
+        return { from: Number(o.from), base: Number(o.base), rate: Number(o.rate) };
+      })
+    : [];
+  const valid =
+    parsed.length > 0 && parsed.every((b) => Number.isFinite(b.from) && Number.isFinite(b.base) && Number.isFinite(b.rate));
+  return valid ? [...parsed].sort((a, b) => a.from - b.from) : fallback;
+}
 
 // Map a tax_rates row to a TaxRateSet, or fall back to the hardcoded set when there
 // is no row. Postgres NUMERIC arrives over the wire as a string, so coerce every
@@ -72,20 +107,6 @@ export const TAX_RATES: TaxRateSet = {
 export function resolveTaxRates(row: Tables<"tax_rates"> | null | undefined): TaxRateSet {
   if (!row) return TAX_RATES;
   const num = (v: unknown) => Number(v);
-  const parsed: PayeBracket[] = Array.isArray(row.paye_brackets)
-    ? (row.paye_brackets as unknown[]).map((b) => {
-        const o = (b ?? {}) as Record<string, unknown>;
-        return { from: Number(o.from), base: Number(o.base), rate: Number(o.rate) };
-      })
-    : [];
-  // Guard the running app against a malformed row: calcPAYE scans brackets from
-  // the top down and assumes ascending order, so a mis-ordered or blank band
-  // (e.g. a trailing {from:0}) would zero PAYE for everyone. Require every band
-  // finite, sort ascending, and fall back to the known-good hardcoded brackets
-  // if anything is off — never silently compute R0 tax.
-  const valid =
-    parsed.length > 0 && parsed.every((b) => Number.isFinite(b.from) && Number.isFinite(b.base) && Number.isFinite(b.rate));
-  const brackets = valid ? [...parsed].sort((a, b) => a.from - b.from) : TAX_RATES.PAYE_BRACKETS;
   return {
     VAT_RATE: num(row.vat_rate),
     MILEAGE_RATE: num(row.mileage_rate),
@@ -102,7 +123,8 @@ export function resolveTaxRates(row: Tables<"tax_rates"> | null | undefined): Ta
     COMPANY_TAX_RATE: num(row.company_tax_rate),
     MEDICAL_CREDIT_FIRST_TWO: num(row.medical_credit_first_two),
     MEDICAL_CREDIT_ADDITIONAL: num(row.medical_credit_additional),
-    PAYE_BRACKETS: brackets,
+    PAYE_BRACKETS: resolveBrackets(row.paye_brackets, TAX_RATES.PAYE_BRACKETS),
+    SBC_BRACKETS: resolveBrackets(row.sbc_brackets, TAX_RATES.SBC_BRACKETS),
     TAX_YEAR: row.tax_year,
   };
 }
@@ -121,16 +143,32 @@ function vatFromGross(gross: number, rate: number): number {
   return gross * (rate / (1 + rate));
 }
 
-function calcPAYE(annualIncome: number, rates: TaxRateSet = TAX_RATES): number {
-  if (annualIncome <= 0) return 0;
-  const brackets = rates.PAYE_BRACKETS;
+// Walk a bracket table from the top down: the first band whose floor the income
+// clears gives base + marginal rate on the excess. Shared by PAYE and SBC, which
+// are the same arithmetic over different bands.
+function taxFromBrackets(income: number, brackets: PayeBracket[]): number {
+  if (income <= 0) return 0;
   for (let i = brackets.length - 1; i >= 0; i--) {
     const b = brackets[i];
-    if (b && annualIncome > b.from) {
-      return b.base + (annualIncome - b.from) * b.rate;
+    if (b && income > b.from) {
+      return b.base + (income - b.from) * b.rate;
     }
   }
   return 0;
+}
+
+function calcPAYE(annualIncome: number, rates: TaxRateSet = TAX_RATES): number {
+  return taxFromBrackets(annualIncome, rates.PAYE_BRACKETS);
+}
+
+// Annual income tax for a qualifying Small Business Corporation. Unlike a standard
+// company (flat COMPANY_TAX_RATE), an SBC pays on a sliding scale whose 0% band
+// leaves the first slice untaxed — so no rebate is applied on top, the scale
+// already builds the relief in. Eligibility (turnover ≤ R20m, natural-person
+// shareholders, not a personal-service or investment entity) is the caller's to
+// assert; this just applies the scale.
+function calcSBC(taxableIncome: number, rates: TaxRateSet = TAX_RATES): number {
+  return taxFromBrackets(taxableIncome, rates.SBC_BRACKETS);
 }
 
 // Monthly PAYE for a given gross, assuming the same amount every month all year.
@@ -193,7 +231,7 @@ function calcMedicalCredit(members: number, rates: TaxRateSet = TAX_RATES): numb
 // The calculations are plain functions and are exported as such — server code and
 // tests can call them directly (default rates = the hardcoded fallback), and a
 // component gets rate-bound versions from useTaxRates() below.
-export { calcPAYE, calcMonthlyPAYE, calcUIF, calcMedicalCredit, calcRebate };
+export { calcPAYE, calcSBC, calcMonthlyPAYE, calcUIF, calcMedicalCredit, calcRebate };
 
 // useTaxRates — the component-facing convenience. Reads the current tax year's
 // rates from the tax_rates table (cached; falls back to the hardcoded set until it
@@ -226,6 +264,7 @@ export function useTaxRates() {
   return {
     ...rates,
     calcPAYE: (annualIncome: number) => calcPAYE(annualIncome, rates),
+    calcSBC: (taxableIncome: number) => calcSBC(taxableIncome, rates),
     calcMonthlyPAYE: (monthlyGross: number, payPeriod?: "Weekly" | "Fortnightly" | "Monthly") =>
       calcMonthlyPAYE(monthlyGross, payPeriod, rates),
     calcUIF: (grossWages: number) => calcUIF(grossWages, rates),

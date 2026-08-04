@@ -4,6 +4,7 @@ import {
   calcMedicalCredit,
   calcMonthlyPAYE,
   calcPAYE,
+  calcSBC,
   calcRebate,
   calcUIF,
   incomeNet,
@@ -100,6 +101,84 @@ describe("SARS tax thresholds fall out of the rebate", () => {
 
   it("charges no tax at the annual threshold", () => {
     expect(Math.max(0, calcPAYE(99_000) - TAX_RATES.PRIMARY_REBATE)).toBeCloseTo(0, 0);
+  });
+});
+
+describe("SBC scale matches SARS 2026/27", () => {
+  it("carries the published Small Business Corporation bands", () => {
+    expect(TAX_RATES.SBC_BRACKETS).toEqual([
+      { from: 0, base: 0, rate: 0 },
+      { from: 99_000, base: 0, rate: 0.07 },
+      { from: 365_000, base: 18_620, rate: 0.21 },
+      { from: 550_000, base: 57_470, rate: 0.27 },
+    ]);
+  });
+
+  it("derives each base from the band below it", () => {
+    // Like PAYE, the cumulative bases aren't independent figures — each is the tax
+    // at the top of the previous band. A typo surfaces here before it reaches a
+    // return: 7%×(365,000−99,000)=18,620; +21%×(550,000−365,000)=57,470.
+    const b = TAX_RATES.SBC_BRACKETS;
+    expect(b[2]!.base).toBeCloseTo(b[1]!.base + (b[2]!.from - b[1]!.from) * b[1]!.rate, 2);
+    expect(b[3]!.base).toBeCloseTo(b[2]!.base + (b[3]!.from - b[2]!.from) * b[2]!.rate, 2);
+  });
+
+  it("starts taxing exactly where the individual threshold ends", () => {
+    // The 0% band tops out at the same R99,000 an individual reaches before PAYE
+    // bites (PRIMARY_REBATE ÷ 18%). If one moves and the other doesn't, this trips.
+    const sbcThreshold = TAX_RATES.SBC_BRACKETS.find((band) => band.rate > 0)?.from;
+    expect(sbcThreshold).toBe(99_000);
+    expect(TAX_RATES.PRIMARY_REBATE / 0.18).toBeCloseTo(sbcThreshold!, 0);
+  });
+
+  it("tops out at the flat company rate", () => {
+    // The SBC scale is relief on the way up, not a different ceiling — its highest
+    // marginal rate is the same flat rate a non-qualifying company pays throughout.
+    const top = TAX_RATES.SBC_BRACKETS[TAX_RATES.SBC_BRACKETS.length - 1]!;
+    expect(top.rate).toBe(TAX_RATES.COMPANY_TAX_RATE);
+  });
+});
+
+describe("calcSBC — annual small-business tax", () => {
+  it("charges nothing in the 0% band", () => {
+    expect(calcSBC(50_000)).toBe(0);
+    expect(calcSBC(99_000)).toBe(0); // the top of the tax-free band
+  });
+
+  it("taxes the 7% band on the slice above the threshold", () => {
+    // R200,000: (200,000 − 99,000) × 7% = 101,000 × 7% = 7,070
+    expect(calcSBC(200_000)).toBeCloseTo(7_070, 2);
+  });
+
+  it("matches a hand-worked top-band case", () => {
+    // R1,000,000: 57,470 + (1,000,000 − 550,000) × 27% = 57,470 + 121,500 = 178,970
+    expect(calcSBC(1_000_000)).toBeCloseTo(178_970, 2);
+  });
+
+  it("is continuous across every band edge", () => {
+    // At the exact start of a band, tax must equal that band's base — otherwise
+    // earning one rand more would jump the bill.
+    const edges: [number, number][] = [
+      [99_000, 0],
+      [365_000, 18_620],
+      [550_000, 57_470],
+    ];
+    for (const [income, expected] of edges) {
+      expect(calcSBC(income)).toBeCloseTo(expected, 2);
+    }
+  });
+
+  it("never taxes zero or negative income", () => {
+    expect(calcSBC(0)).toBe(0);
+    expect(calcSBC(-5_000)).toBe(0);
+  });
+
+  it("relieves a small business well below the flat company rate", () => {
+    // The whole point of the feature: on R200,000 profit a qualifying SBC pays
+    // R7,070, not the R54,000 a flat-27% company would — a ~R47k difference.
+    const flat = 200_000 * TAX_RATES.COMPANY_TAX_RATE;
+    expect(calcSBC(200_000)).toBeLessThan(flat);
+    expect(flat - calcSBC(200_000)).toBeCloseTo(46_930, 2);
   });
 });
 

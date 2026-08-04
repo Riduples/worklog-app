@@ -2060,6 +2060,7 @@ export type Database = {
           paye_brackets: Json
           paye_monthly_threshold: number
           primary_rebate: number
+          sbc_brackets: Json
           sdl_annual_threshold: number
           sdl_rate: number
           secondary_rebate: number
@@ -2085,6 +2086,7 @@ export type Database = {
           paye_brackets: Json
           paye_monthly_threshold: number
           primary_rebate: number
+          sbc_brackets: Json
           sdl_annual_threshold: number
           sdl_rate: number
           secondary_rebate: number
@@ -2110,6 +2112,7 @@ export type Database = {
           paye_brackets?: Json
           paye_monthly_threshold?: number
           primary_rebate?: number
+          sbc_brackets?: Json
           sdl_annual_threshold?: number
           sdl_rate?: number
           secondary_rebate?: number

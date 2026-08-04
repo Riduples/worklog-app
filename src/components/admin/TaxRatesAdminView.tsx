@@ -14,6 +14,7 @@ import type { Tables } from "@/lib/types/database";
 
 type TaxRateRow = Tables<"tax_rates">;
 type BracketDraft = { from: string; base: string; rate: string };
+type BracketNum = { from: number; base: number; rate: number };
 type Draft = {
   id?: string;
   tax_year: string;
@@ -36,10 +37,11 @@ type Draft = {
   tax_jar_rate: string;
   note: string;
   brackets: BracketDraft[];
+  sbcBrackets: BracketDraft[];
 };
 
 // The numeric fields, in display order. Keys match both the Draft and the DB row.
-const NUM_FIELDS: { key: keyof Omit<Draft, "id" | "tax_year" | "effective_from" | "effective_to" | "note" | "brackets">; label: string }[] = [
+const NUM_FIELDS: { key: keyof Omit<Draft, "id" | "tax_year" | "effective_from" | "effective_to" | "note" | "brackets" | "sbcBrackets">; label: string }[] = [
   { key: "primary_rebate", label: "Primary rebate (R/yr)" },
   { key: "secondary_rebate", label: "Secondary rebate — 65+ (R/yr)" },
   { key: "tertiary_rebate", label: "Tertiary rebate — 75+ (R/yr)" },
@@ -59,6 +61,16 @@ const NUM_FIELDS: { key: keyof Omit<Draft, "id" | "tax_year" | "effective_from" 
 
 const s = (v: number | string) => String(v);
 
+// A JSONB bracket array from a row → editable string rows. Shared by the PAYE and
+// SBC tables, which carry the same {from,base,rate} shape.
+const rowBracketsToDraft = (raw: unknown): BracketDraft[] =>
+  Array.isArray(raw)
+    ? (raw as unknown[]).map((b) => {
+        const o = (b ?? {}) as Record<string, unknown>;
+        return { from: s(Number(o.from)), base: s(Number(o.base)), rate: s(Number(o.rate)) };
+      })
+    : [];
+
 // A trimmed, finite number, or null (blank / not a number) — so a blank field is
 // a validation error, never a silent 0.
 const parseNum = (raw: string): number | null => {
@@ -72,13 +84,73 @@ const parseNum = (raw: string): number | null => {
 // "typed 15 for 15%" that would misprice VAT/tax for every business.
 const FRACTION_KEYS: string[] = ["uif_employee_rate", "uif_employer_rate", "sdl_rate", "company_tax_rate", "vat_rate", "tax_jar_rate"];
 
+// Validate one bracket table the way the app reads it back: drop fully-blank rows,
+// require the rest complete with a fractional rate, sort ascending (the calc scans
+// top-down), and require the lowest band to start at 0 — otherwise a stray or
+// mis-ordered band silently zeroes everyone's tax. Returns the clean brackets, or
+// a message naming which table (PAYE vs SBC) is at fault.
+function parseBrackets(rows: BracketDraft[], label: string): { brackets: BracketNum[] } | { error: string } {
+  const nonBlank = rows.filter((b) => !(b.from.trim() === "" && b.base.trim() === "" && b.rate.trim() === ""));
+  const out: BracketNum[] = [];
+  for (const b of nonBlank) {
+    const from = parseNum(b.from);
+    const base = parseNum(b.base);
+    const rate = parseNum(b.rate);
+    if (from === null || base === null || rate === null) {
+      return { error: `Every ${label} bracket needs a from, base and rate.` };
+    }
+    if (rate < 0 || rate > 1) {
+      return { error: `${label} bracket rates should be a fraction between 0 and 1 (e.g. 0.18).` };
+    }
+    out.push({ from, base, rate });
+  }
+  out.sort((a, b) => a.from - b.from);
+  if (!out[0] || out[0].from !== 0) {
+    return { error: `The lowest ${label} bracket must start at 0.` };
+  }
+  return { brackets: out };
+}
+
+// One editable bracket table (PAYE or SBC): the numeric rows plus an add button.
+function BracketRows({
+  rows,
+  onChange,
+  onAdd,
+  onRemove,
+}: {
+  rows: BracketDraft[];
+  onChange: (i: number, key: keyof BracketDraft, value: string) => void;
+  onAdd: () => void;
+  onRemove: (i: number) => void;
+}) {
+  return (
+    <>
+      {rows.map((b, i) => (
+        <div key={i} style={{ display: "flex", gap: 6, marginBottom: 6, alignItems: "center" }}>
+          <Input value={b.from} onChange={(v) => onChange(i, "from", v)} type="number" placeholder="from" />
+          <Input value={b.base} onChange={(v) => onChange(i, "base", v)} type="number" placeholder="base" />
+          <Input value={b.rate} onChange={(v) => onChange(i, "rate", v)} type="number" placeholder="rate" />
+          <button
+            type="button"
+            onClick={() => onRemove(i)}
+            style={{ background: "#fff", border: "1.5px solid #fed7aa", color: "#b45309", borderRadius: 8, padding: "8px 10px", fontSize: 12, cursor: "pointer", flexShrink: 0 }}
+          >
+            ✕
+          </button>
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={onAdd}
+        style={{ background: "#f0f9ff", border: "1.5px solid #bfdbfe", color: "#1e40af", borderRadius: 8, padding: "7px 12px", fontSize: 12, fontWeight: 700, cursor: "pointer", marginBottom: 8 }}
+      >
+        + Add bracket
+      </button>
+    </>
+  );
+}
+
 function rowToDraft(row: TaxRateRow): Draft {
-  const brackets: BracketDraft[] = Array.isArray(row.paye_brackets)
-    ? (row.paye_brackets as unknown[]).map((b) => {
-        const o = (b ?? {}) as Record<string, unknown>;
-        return { from: s(Number(o.from)), base: s(Number(o.base)), rate: s(Number(o.rate)) };
-      })
-    : [];
   return {
     id: row.id,
     tax_year: row.tax_year,
@@ -100,7 +172,8 @@ function rowToDraft(row: TaxRateRow): Draft {
     mileage_rate: s(row.mileage_rate),
     tax_jar_rate: s(row.tax_jar_rate),
     note: row.note ?? "",
-    brackets,
+    brackets: rowBracketsToDraft(row.paye_brackets),
+    sbcBrackets: rowBracketsToDraft(row.sbc_brackets),
   };
 }
 
@@ -150,6 +223,7 @@ function newDraft(latest: TaxRateRow | undefined): Draft {
     tax_jar_rate: s(f.TAX_JAR_RATE),
     note: "",
     brackets: f.PAYE_BRACKETS.map((b) => ({ from: s(b.from), base: s(b.base), rate: s(b.rate) })),
+    sbcBrackets: f.SBC_BRACKETS.map((b) => ({ from: s(b.from), base: s(b.base), rate: s(b.rate) })),
   };
 }
 
@@ -217,7 +291,8 @@ export function TaxRatesAdminView() {
             <div style={{ fontSize: 12, color: "#374151", marginTop: 6, lineHeight: 1.7 }}>
               Primary rebate R{Number(r.primary_rebate).toLocaleString("en-ZA")} · VAT {(Number(r.vat_rate) * 100).toFixed(0)}% ·
               Company tax {(Number(r.company_tax_rate) * 100).toFixed(0)}% · Mileage R{Number(r.mileage_rate)}/km ·
-              {Array.isArray(r.paye_brackets) ? r.paye_brackets.length : 0} PAYE brackets
+              {Array.isArray(r.paye_brackets) ? r.paye_brackets.length : 0} PAYE brackets ·{" "}
+              {Array.isArray(r.sbc_brackets) ? r.sbc_brackets.length : 0} SBC bands
             </div>
           </div>
         );
@@ -250,6 +325,10 @@ function TaxRateEditor({ draft, onClose, onSaved }: { draft: Draft; onClose: () 
     setD((p) => ({ ...p, brackets: p.brackets.map((b, j) => (j === i ? { ...b, [key]: value } : b)) }));
   const addBracket = () => setD((p) => ({ ...p, brackets: [...p.brackets, { from: "", base: "", rate: "" }] }));
   const removeBracket = (i: number) => setD((p) => ({ ...p, brackets: p.brackets.filter((_, j) => j !== i) }));
+  const setSbcBracket = (i: number, key: keyof BracketDraft, value: string) =>
+    setD((p) => ({ ...p, sbcBrackets: p.sbcBrackets.map((b, j) => (j === i ? { ...b, [key]: value } : b)) }));
+  const addSbcBracket = () => setD((p) => ({ ...p, sbcBrackets: [...p.sbcBrackets, { from: "", base: "", rate: "" }] }));
+  const removeSbcBracket = (i: number) => setD((p) => ({ ...p, sbcBrackets: p.sbcBrackets.filter((_, j) => j !== i) }));
 
   const handleSave = async () => {
     setError("");
@@ -283,29 +362,16 @@ function TaxRateEditor({ draft, onClose, onSaved }: { draft: Draft; onClose: () 
     }
     const g = (k: string) => parsed.get(k) as number;
 
-    // PAYE brackets: drop fully-blank rows, require the rest complete, sort
-    // ascending (calcPAYE scans top-down), and require the lowest band to start
-    // at 0 — otherwise a stray/mis-ordered band zeroes everyone's PAYE.
-    const rows = d.brackets.filter((b) => !(b.from.trim() === "" && b.base.trim() === "" && b.rate.trim() === ""));
-    const brackets: { from: number; base: number; rate: number }[] = [];
-    for (const b of rows) {
-      const from = parseNum(b.from);
-      const base = parseNum(b.base);
-      const rate = parseNum(b.rate);
-      if (from === null || base === null || rate === null) {
-        setError("Every PAYE bracket needs a from, base and rate.");
-        return;
-      }
-      if (rate < 0 || rate > 1) {
-        setError("PAYE bracket rates should be a fraction between 0 and 1 (e.g. 0.18).");
-        return;
-      }
-      brackets.push({ from, base, rate });
+    // Both bracket tables are validated the same way (see parseBrackets): blank
+    // rows dropped, the rest complete, sorted ascending, lowest band starting at 0.
+    const payeParsed = parseBrackets(d.brackets, "PAYE");
+    if ("error" in payeParsed) {
+      setError(payeParsed.error);
+      return;
     }
-    brackets.sort((a, b) => a.from - b.from);
-    const first = brackets[0];
-    if (!first || first.from !== 0) {
-      setError("The lowest PAYE bracket must start at 0.");
+    const sbcParsed = parseBrackets(d.sbcBrackets, "SBC");
+    if ("error" in sbcParsed) {
+      setError(sbcParsed.error);
       return;
     }
 
@@ -313,7 +379,8 @@ function TaxRateEditor({ draft, onClose, onSaved }: { draft: Draft; onClose: () 
       tax_year: d.tax_year.trim(),
       effective_from: d.effective_from,
       effective_to: d.effective_to,
-      paye_brackets: brackets,
+      paye_brackets: payeParsed.brackets,
+      sbc_brackets: sbcParsed.brackets,
       primary_rebate: g("primary_rebate"),
       secondary_rebate: g("secondary_rebate"),
       tertiary_rebate: g("tertiary_rebate"),
@@ -367,27 +434,16 @@ function TaxRateEditor({ draft, onClose, onSaved }: { draft: Draft; onClose: () 
       <div style={{ fontSize: 11, color: "#64748b", marginBottom: 8, lineHeight: 1.5 }}>
         Each row: income from (R), cumulative base tax (R), marginal rate (e.g. 0.18). Order low to high.
       </div>
-      {d.brackets.map((b, i) => (
-        <div key={i} style={{ display: "flex", gap: 6, marginBottom: 6, alignItems: "center" }}>
-          <Input value={b.from} onChange={(v) => setBracket(i, "from", v)} type="number" placeholder="from" />
-          <Input value={b.base} onChange={(v) => setBracket(i, "base", v)} type="number" placeholder="base" />
-          <Input value={b.rate} onChange={(v) => setBracket(i, "rate", v)} type="number" placeholder="rate" />
-          <button
-            type="button"
-            onClick={() => removeBracket(i)}
-            style={{ background: "#fff", border: "1.5px solid #fed7aa", color: "#b45309", borderRadius: 8, padding: "8px 10px", fontSize: 12, cursor: "pointer", flexShrink: 0 }}
-          >
-            ✕
-          </button>
-        </div>
-      ))}
-      <button
-        type="button"
-        onClick={addBracket}
-        style={{ background: "#f0f9ff", border: "1.5px solid #bfdbfe", color: "#1e40af", borderRadius: 8, padding: "7px 12px", fontSize: 12, fontWeight: 700, cursor: "pointer", marginBottom: 8 }}
-      >
-        + Add bracket
-      </button>
+      <BracketRows rows={d.brackets} onChange={setBracket} onAdd={addBracket} onRemove={removeBracket} />
+
+      <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 0.6, margin: "16px 0 8px" }}>
+        Small business (SBC) brackets (annual)
+      </div>
+      <div style={{ fontSize: 11, color: "#64748b", marginBottom: 8, lineHeight: 1.5 }}>
+        The Small Business Corporation sliding scale. Same columns as PAYE; the first band starts at 0 with a 0 rate for
+        the tax-free portion. Order low to high.
+      </div>
+      <BracketRows rows={d.sbcBrackets} onChange={setSbcBracket} onAdd={addSbcBracket} onRemove={removeSbcBracket} />
 
       <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 0.6, margin: "16px 0 8px" }}>
         Rebates, thresholds &amp; rates

@@ -34,7 +34,7 @@ export function ProvTaxView() {
   const defaultPeriod = month <= 8 ? `${year}-P1` : `${year}-P2`;
 
   const [period, setPeriod] = useState(defaultPeriod);
-  const [entityType, setEntityType] = useState<"sole_prop" | "company">("sole_prop");
+  const [entityType, setEntityType] = useState<"sole_prop" | "company" | "sbc">("sole_prop");
   const [ageBand, setAgeBand] = useState<AgeBand>("under65");
   const [deductions, setDeductions] = useState("");
   const [medMembers, setMedMembers] = useState("1");
@@ -56,13 +56,29 @@ export function ProvTaxView() {
   const taxableIncome = Math.max(0, annualisedProfit - deductionsAmt);
   const medCredit = taxRates.calcMedicalCredit(parseInt(medMembers || "1"));
 
-  // Rebates stack with age and only apply to a person — a company pays the flat
-  // rate with none. Applying just the primary rebate under-credited anyone over
-  // 65 by R9,444/year (over 75, R12,589), overstating what they owe SARS.
+  // Rebates stack with age and only apply to a person — a company (SBC or not)
+  // pays its rate with none. Applying just the primary rebate under-credited
+  // anyone over 65 by R9,444/year (over 75, R12,589), overstating what they owe.
   const rebate = taxRates.calcRebate(ageBand);
-  const grossTax = entityType === "sole_prop" ? taxRates.calcPAYE(taxableIncome) : taxableIncome * taxRates.COMPANY_TAX_RATE;
+  // Three ways the same taxable income is taxed:
+  //   sole prop → individual PAYE tables, then personal rebates/credits
+  //   SBC       → the reduced small-business sliding scale, no rebates
+  //   company   → flat company rate, no rebates
+  const grossTax =
+    entityType === "sole_prop"
+      ? taxRates.calcPAYE(taxableIncome)
+      : entityType === "sbc"
+        ? taxRates.calcSBC(taxableIncome)
+        : taxableIncome * taxRates.COMPANY_TAX_RATE;
   const netTax =
     entityType === "sole_prop" ? Math.max(0, grossTax - rebate - medCredit) : Math.max(0, grossTax);
+
+  // The SBC 0%-band top and the marginal rates above it, read from the active
+  // scale so the explainer below never drifts from what calcSBC actually uses.
+  const sbcThreshold = taxRates.SBC_BRACKETS.find((b) => b.rate > 0)?.from ?? 0;
+  const sbcRates = taxRates.SBC_BRACKETS.filter((b) => b.rate > 0)
+    .map((b) => `${Math.round(b.rate * 100)}%`)
+    .join(" / ");
   const taxDue = periodNum === "P1" ? netTax * 0.5 : Math.max(0, netTax - parseFloat(priorPaid || "0"));
   const dueDate = periodNum === "P1" ? `31 August ${taxYear}` : `28 February ${taxYear + 1}`;
 
@@ -100,11 +116,33 @@ export function ProvTaxView() {
 
       <Field label="Business type">
         <Chips
-          options={["Sole proprietor / Individual", "Company (Pty) Ltd"]}
-          selected={entityType === "sole_prop" ? "Sole proprietor / Individual" : "Company (Pty) Ltd"}
-          onSelect={(v) => v && setEntityType(v.includes("Sole") ? "sole_prop" : "company")}
+          options={["Sole proprietor / Individual", "Small business (SBC)", "Company (Pty) Ltd"]}
+          selected={
+            entityType === "sole_prop"
+              ? "Sole proprietor / Individual"
+              : entityType === "sbc"
+                ? "Small business (SBC)"
+                : "Company (Pty) Ltd"
+          }
+          onSelect={(v) => {
+            if (!v) return;
+            setEntityType(v.includes("Sole") ? "sole_prop" : v.includes("SBC") ? "sbc" : "company");
+          }}
         />
       </Field>
+
+      {/* SBC is a company that qualifies for a reduced sliding scale under s12E.
+          The app can't verify eligibility, so it's the owner's to confirm — spell
+          out the tests rather than let someone pick it because it pays less. */}
+      {entityType === "sbc" && (
+        <div style={{ background: "#fff7ed", border: "1.5px solid #fed7aa", borderRadius: 12, padding: "11px 14px", marginBottom: 14, fontSize: 12, color: "#92400e", lineHeight: 1.6 }}>
+          <span style={{ fontWeight: 700 }}>Small Business Corporation (SBC)</span> — a reduced sliding scale (0% up to
+          R{sbcThreshold.toLocaleString("en-ZA")}, then {sbcRates}) instead of the flat{" "}
+          {(taxRates.COMPANY_TAX_RATE * 100).toFixed(0)}% company rate. You only qualify if all shareholders are
+          individuals, turnover is under R20 million, the company holds no shares in other companies, and it isn&apos;t
+          mainly a personal-service or investment business. Not sure? Check with your accountant.
+        </div>
+      )}
 
       {/* Only asked of an individual — a company pays a flat rate with no
           rebates, so the question would be meaningless there. */}
@@ -165,7 +203,16 @@ export function ProvTaxView() {
           Estimated IRP6 — {period.replace("-", " ")}
         </div>
         <DarkRow label="Taxable income (annualised)" value={fmt(taxableIncome)} />
-        <DarkRow label={entityType === "sole_prop" ? `Gross tax (SARS tables ${taxRates.TAX_YEAR})` : "Company tax (27%)"} value={fmt(grossTax)} />
+        <DarkRow
+          label={
+            entityType === "sole_prop"
+              ? `Gross tax (SARS tables ${taxRates.TAX_YEAR})`
+              : entityType === "sbc"
+                ? `Small business tax (SBC scale ${taxRates.TAX_YEAR})`
+                : `Company tax (${(taxRates.COMPANY_TAX_RATE * 100).toFixed(0)}%)`
+          }
+          value={fmt(grossTax)}
+        />
         {entityType === "sole_prop" && (
           <DarkRow
             label={ageBand === "under65" ? "Less: primary rebate" : `Less: rebates (primary + age ${ageBand === "75plus" ? "75+" : "65+"})`}
