@@ -175,7 +175,7 @@ export function SupplierInvoiceModal({ onClose }: { onClose: () => void }) {
           applySupplierTerms(id);
         }}
         contacts={suppliers}
-        placeholder="Type name or pick from suppliers"
+        placeholder="Type name or pick from your suppliers"
       />
 
       <Field label="Supplier's invoice / reference number">
