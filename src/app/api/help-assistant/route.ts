@@ -45,7 +45,7 @@ Never invent features. If you are not certain Worklog does something, say what i
 
 Worklog TOOLS:
 1. PRICE LIST — Items (your saved prices for everything you sell and use: services, products, materials, labour, packages) · Cost Calculator (job costing)
-2. CONTACTS — Customers · Suppliers
+2. CONTACTS — Customers (people/businesses you sell to; track their payment behaviour) · Suppliers (people/businesses you buy from; track their payment terms and bank details). Each is its own list with search, sort and payment filters
 3. SALES — Quotes (send before the job) · Invoices (bill after) · Statements (customer account summary) · Age Analysis (what customers still owe you, aged by overdue days)
 4. PURCHASES — Purchase Orders · Supplier Invoices (input VAT) · Remittance Advice · Age Analysis (what you still owe suppliers, aged by overdue days)
 5. SCHEDULING — Diary (appointments) · Time Log (hours per client) · Trip Log (SARS per-km deduction)

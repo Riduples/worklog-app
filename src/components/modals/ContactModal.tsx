@@ -114,7 +114,30 @@ export function ContactModal({
     <Modal title={isEdit ? `Edit ${t.noun.toLowerCase()}` : t.plural} onClose={onClose}>
       {!lockType && (
         <Field label="Type">
-          <Chips options={["client", "supplier"]} selected={contactType} onSelect={(v) => v && setContactType(v as "client" | "supplier")} />
+          <div style={{ display: "flex", gap: 8 }}>
+            {(["client", "supplier"] as const).map((t) => {
+              const active = contactType === t;
+              return (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setContactType(t)}
+                  style={{
+                    padding: "9px 16px",
+                    borderRadius: 20,
+                    border: `1.5px solid ${active ? "#0C4A6E" : "#e2e8f0"}`,
+                    background: active ? "#0C4A6E" : "#fff",
+                    color: active ? "#fff" : "#374151",
+                    fontSize: 13,
+                    fontWeight: 700,
+                    cursor: "pointer",
+                  }}
+                >
+                  {t === "client" ? "Customer" : "Supplier"}
+                </button>
+              );
+            })}
+          </div>
         </Field>
       )}
 
