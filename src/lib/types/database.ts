@@ -1822,6 +1822,7 @@ export type Database = {
           qty: number
           reorder_level: number | null
           sell_price: number | null
+          source_costing_id: string | null
           updated_at: string | null
           user_id: string
         }
@@ -1838,6 +1839,7 @@ export type Database = {
           qty?: number
           reorder_level?: number | null
           sell_price?: number | null
+          source_costing_id?: string | null
           updated_at?: string | null
           user_id: string
         }
@@ -1854,6 +1856,7 @@ export type Database = {
           qty?: number
           reorder_level?: number | null
           sell_price?: number | null
+          source_costing_id?: string | null
           updated_at?: string | null
           user_id?: string
         }
@@ -1863,6 +1866,13 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "business_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_items_source_costing_id_fkey"
+            columns: ["source_costing_id"]
+            isOneToOne: false
+            referencedRelation: "costings"
             referencedColumns: ["id"]
           },
         ]

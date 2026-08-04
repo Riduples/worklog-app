@@ -54,6 +54,11 @@ export function StockModal({ item, onClose }: { item?: StockItem; onClose: () =>
 
   return (
     <Modal title={isEdit ? "Edit stock item" : "Add stock item"} onClose={onClose}>
+      {item?.source_costing_id && (
+        <div style={{ background: "#F0F9FF", border: "1px solid #BAE6FD", borderRadius: 12, padding: "10px 12px", marginBottom: 16, fontSize: 12, color: "#0369A1", lineHeight: 1.45 }}>
+          🧮 Priced from a costing in the Cost Calculator. Refreshing that costing will overwrite the price here — edit it there to keep them in sync.
+        </div>
+      )}
       <div style={{ marginBottom: 16 }}>
         <label
           style={{

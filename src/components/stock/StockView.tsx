@@ -92,6 +92,23 @@ export function StockView() {
             >
               {meta.icon} {meta.label}
             </span>
+            {item.source_costing_id && (
+              <span
+                title="Priced from a costing in the Cost Calculator"
+                style={{
+                  fontSize: 10,
+                  fontWeight: 700,
+                  color: "#0369A1",
+                  background: "#F0F9FF",
+                  border: "1px solid #BAE6FD",
+                  borderRadius: 6,
+                  padding: "1px 6px",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                🧮 from costing
+              </span>
+            )}
           </div>
           <div style={{ fontSize: 11, color: lowStock ? "#be123c" : "#94a3b8" }}>
             {item.qty} in stock{lowStock ? " · Low stock!" : ""} · {fmt(item.sell_price)} each

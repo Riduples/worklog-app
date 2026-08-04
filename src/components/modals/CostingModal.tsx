@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/Textarea";
 import { SaveBtn } from "@/components/ui/SaveBtn";
 import { fmt } from "@/lib/format";
 import { itemTypeMeta } from "@/lib/itemTypes";
-import { useStockItems, useCreateStockItem } from "@/lib/supabase/hooks/useStock";
+import { useStockItems, useCreateStockItem, useUpdateStockItem } from "@/lib/supabase/hooks/useStock";
 import { useCreateCosting, useUpdateCosting, type Costing, type CostingLine, type CostingLineKind } from "@/lib/supabase/hooks/useCostings";
 import { round2 } from "@/lib/creditNotes";
 
@@ -70,12 +70,28 @@ export function CostingModal({ costing, onClose }: { costing?: Costing; onClose:
   const [markup, setMarkup] = useState(String(costing?.markup_pct ?? 30));
   const [error, setError] = useState("");
   const [savedToList, setSavedToList] = useState(false);
+  // The costing's own id — known upfront when editing, filled in the moment we
+  // first persist a brand-new costing so the price-list item can point at it.
+  const [currentCostingId, setCurrentCostingId] = useState<string | null>(costing?.id ?? null);
+  // A price-list item we created this session, so re-saves refresh it rather
+  // than waiting on the stock list to refetch.
+  const [createdLinkId, setCreatedLinkId] = useState<string | null>(null);
 
   const { data: stock } = useStockItems();
   const createCosting = useCreateCosting();
   const updateCosting = useUpdateCosting();
   const createStockItem = useCreateStockItem();
+  const updateStockItem = useUpdateStockItem();
   const saving = createCosting.isPending || updateCosting.isPending;
+  const publishing = createStockItem.isPending || updateStockItem.isPending;
+
+  // The price-list item this costing is already linked to, if any.
+  const linkedItemId =
+    createdLinkId ??
+    (currentCostingId ? (stock ?? []).find((s) => s.source_costing_id === currentCostingId)?.id ?? null : null);
+
+  // Editing anything clears the "saved" flash, nudging a refresh of the linked item.
+  const markUnsaved = () => setSavedToList(false);
 
   const markupNum = parseFloat(markup) || 0;
   const unitsNum = Math.max(parseFloat(units) || 1, 1);
@@ -83,18 +99,41 @@ export function CostingModal({ costing, onClose }: { costing?: Costing; onClose:
   const labourHours = round2(lines.filter((l) => l.kind === "labour").reduce((s, l) => s + (Number(l.qty) || 0), 0));
   const suggestedPrice = round2(totalCost * (1 + markupNum / 100));
 
-  const updateLine = (i: number, changes: Partial<CostingLine>) => setLines(lines.map((l, idx) => (idx === i ? { ...l, ...changes } : l)));
-  const removeLine = (i: number) => setLines(lines.filter((_, idx) => idx !== i));
-  const addLine = (kind: CostingLineKind) => setLines([...lines, emptyLine(kind)]);
+  const updateLine = (i: number, changes: Partial<CostingLine>) => {
+    markUnsaved();
+    setLines(lines.map((l, idx) => (idx === i ? { ...l, ...changes } : l)));
+  };
+  const removeLine = (i: number) => {
+    markUnsaved();
+    setLines(lines.filter((_, idx) => idx !== i));
+  };
+  const addLine = (kind: CostingLineKind) => {
+    markUnsaved();
+    setLines([...lines, emptyLine(kind)]);
+  };
   // Price-list picks slot in at the top of their section, above the blank rows
   // you fill in manually, so the pre-filled line reads first.
-  const addPricedLine = (line: CostingLine) =>
+  const addPricedLine = (line: CostingLine) => {
+    markUnsaved();
     setLines((prev) => {
       const firstOfKind = prev.findIndex((l) => l.kind === line.kind);
       return firstOfKind === -1
         ? [...prev, line]
         : [...prev.slice(0, firstOfKind), line, ...prev.slice(firstOfKind)];
     });
+  };
+
+  const buildCostingPayload = () => ({
+    name: name.trim(),
+    lines,
+    total_cost: totalCost,
+    markup_pct: markupNum,
+    suggested_price: suggestedPrice,
+    labour_hours: labourHours,
+    units: unitsNum,
+    unit_label: unitLabel.trim() || "job",
+    notes: notes.trim() || null,
+  });
 
   const handleSave = () => {
     if (!name.trim()) {
@@ -102,56 +141,83 @@ export function CostingModal({ costing, onClose }: { costing?: Costing; onClose:
       return;
     }
     setError("");
-    const payload = {
-      name: name.trim(),
-      lines,
-      total_cost: totalCost,
-      markup_pct: markupNum,
-      suggested_price: suggestedPrice,
-      labour_hours: labourHours,
-      units: unitsNum,
-      unit_label: unitLabel.trim() || "job",
-      notes: notes.trim() || null,
-    };
-    if (isEdit) {
-      updateCosting.mutate({ id: costing.id, changes: payload }, { onSuccess: onClose });
+    const payload = buildCostingPayload();
+    // Key off currentCostingId, not isEdit: a "save to price list" on a brand-new
+    // costing persists it and sets currentCostingId, so a later "Save Costing"
+    // must update that row rather than create a duplicate.
+    if (currentCostingId) {
+      updateCosting.mutate({ id: currentCostingId, changes: payload }, { onSuccess: onClose });
     } else {
       createCosting.mutate(payload, { onSuccess: onClose });
     }
   };
 
-  const handleSaveToList = () => {
-    createStockItem.mutate(
-      {
-        name: name.trim() || "Costed item",
-        item_type: "product",
-        qty: 0,
+  // Save-to-price-list keeps a real link. It first makes sure the costing itself
+  // is saved (so there's an id to point at), then creates the linked item once
+  // and refreshes that same item on every later save — no silent duplicates, no
+  // stale prices. Deleting the costing later just unlinks the item (SET NULL).
+  const handleSaveToList = async () => {
+    if (!name.trim()) {
+      setError("Give the costing a name first.");
+      return;
+    }
+    setError("");
+    try {
+      // 1. Persist the costing so the price-list item can reference it.
+      const costingPayload = buildCostingPayload();
+      let costingId = currentCostingId;
+      if (costingId) {
+        await updateCosting.mutateAsync({ id: costingId, changes: costingPayload });
+      } else {
+        const created = await createCosting.mutateAsync(costingPayload);
+        costingId = created.id;
+        setCurrentCostingId(created.id);
+      }
+
+      // 2. Push the current numbers to the linked item — create it once, then
+      //    refresh in place. item_type is left alone on refresh so a manual
+      //    re-categorisation on the Items screen isn't clobbered.
+      const priceFields = {
+        name: name.trim(),
         cost_price: round2(totalCost / unitsNum),
         sell_price: round2(suggestedPrice / unitsNum),
-        reorder_level: 0,
         margin_pct: suggestedPrice > 0 ? round2(((suggestedPrice - totalCost) / suggestedPrice) * 100) : 0,
         estimated_hours: labourHours > 0 ? labourHours : null,
-      },
-      { onSuccess: () => setSavedToList(true) }
-    );
+      };
+      if (linkedItemId) {
+        await updateStockItem.mutateAsync({ id: linkedItemId, changes: priceFields });
+      } else {
+        const item = await createStockItem.mutateAsync({
+          ...priceFields,
+          item_type: "product",
+          qty: 0,
+          reorder_level: 0,
+          source_costing_id: costingId,
+        });
+        setCreatedLinkId(item.id);
+      }
+      setSavedToList(true);
+    } catch {
+      setError("Could not save to your price list. Please try again.");
+    }
   };
 
   return (
     <Modal title={isEdit ? "Edit costing" : "New costing"} onClose={onClose}>
       <Field label="Job / product name">
-        <Input value={name} onChange={setName} placeholder="e.g. Bathroom renovation, Chicken curry ×10, Full groom package" autoFocus />
+        <Input value={name} onChange={(v) => { setName(v); markUnsaved(); }} placeholder="e.g. Bathroom renovation, Chicken curry ×10, Full groom package" autoFocus />
       </Field>
 
       <Field label="Notes / job description - optional">
-        <Textarea value={notes} onChange={setNotes} placeholder="Scope, special requirements, conditions…" rows={3} />
+        <Textarea value={notes} onChange={(v) => { setNotes(v); markUnsaved(); }} placeholder="Scope, special requirements, conditions…" rows={3} />
       </Field>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
         <Field label="Number of units / portions">
-          <Input value={units} onChange={setUnits} type="number" placeholder="1" />
+          <Input value={units} onChange={(v) => { setUnits(v); markUnsaved(); }} type="number" placeholder="1" />
         </Field>
         <Field label="Unit label">
-          <Input value={unitLabel} onChange={setUnitLabel} placeholder="job" />
+          <Input value={unitLabel} onChange={(v) => { setUnitLabel(v); markUnsaved(); }} placeholder="job" />
         </Field>
       </div>
 
@@ -231,7 +297,7 @@ export function CostingModal({ costing, onClose }: { costing?: Costing; onClose:
 
       <div style={{ marginTop: 20 }}>
         <Field label="Markup % (profit on top of total cost)">
-          <Input value={markup} onChange={setMarkup} type="number" placeholder="30" />
+          <Input value={markup} onChange={(v) => { setMarkup(v); markUnsaved(); }} type="number" placeholder="30" />
         </Field>
       </div>
 
@@ -265,7 +331,7 @@ export function CostingModal({ costing, onClose }: { costing?: Costing; onClose:
       <button
         type="button"
         onClick={handleSaveToList}
-        disabled={savedToList || createStockItem.isPending || totalCost <= 0}
+        disabled={publishing || totalCost <= 0}
         style={{
           width: "100%",
           marginTop: 10,
@@ -276,11 +342,23 @@ export function CostingModal({ costing, onClose }: { costing?: Costing; onClose:
           color: savedToList ? "#166534" : "#0369A1",
           fontSize: 13,
           fontWeight: 700,
-          cursor: savedToList || totalCost <= 0 ? "default" : "pointer",
+          cursor: publishing || totalCost <= 0 ? "default" : "pointer",
         }}
       >
-        {savedToList ? "✅ Saved to your price list" : "＋ Save this costing to your price list"}
+        {publishing
+          ? "Saving..."
+          : savedToList
+          ? "✅ Saved to your price list"
+          : linkedItemId
+          ? "↻ Update your price-list item"
+          : "＋ Save this costing to your price list"}
       </button>
+
+      {linkedItemId && !savedToList && (
+        <p style={{ fontSize: 11, color: "#94a3b8", margin: "6px 2px 0", lineHeight: 1.4 }}>
+          Refreshes the price-list item this costing already created — no duplicate.
+        </p>
+      )}
     </Modal>
   );
 }
