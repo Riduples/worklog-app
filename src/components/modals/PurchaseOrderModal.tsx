@@ -22,9 +22,7 @@ export function PurchaseOrderModal({ po, onClose }: { po?: PurchaseOrder; onClos
   const [supplierContactId, setSupplierContactId] = useState<string | null>(po?.supplier_contact_id ?? null);
   const [issueDate, setIssueDate] = useState(po?.issue_date ?? todayStr());
   const [requestedDelivery, setRequestedDelivery] = useState(po?.requested_delivery ?? "");
-  const [items, setItems] = useState<PurchaseLineItem[]>(
-    existingItems && existingItems.length ? existingItems : [{ desc: "", qty: 1, unit_price: 0 }]
-  );
+  const [items, setItems] = useState<PurchaseLineItem[]>(existingItems && existingItems.length ? existingItems : []);
   const [error, setError] = useState("");
 
   const { data: contacts } = useContacts();
@@ -87,14 +85,14 @@ export function PurchaseOrderModal({ po, onClose }: { po?: PurchaseOrder; onClos
           setSupplierContactId(id);
         }}
         contacts={suppliers}
-        placeholder="Supplier name"
+        placeholder="Type name or pick from your suppliers"
       />
 
       <Field label="Issue date">
         <Input value={issueDate} onChange={setIssueDate} type="date" />
       </Field>
 
-      <Field label="Requested delivery (optional)">
+      <Field label="Requested delivery date - optional">
         <Input value={requestedDelivery} onChange={setRequestedDelivery} type="date" />
       </Field>
 

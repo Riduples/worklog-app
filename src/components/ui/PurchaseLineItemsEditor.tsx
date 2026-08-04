@@ -33,6 +33,47 @@ export function PurchaseLineItemsEditor({
       >
         Line items
       </label>
+
+      {(stock ?? []).length > 0 && (
+        <select
+          value=""
+          onChange={(e) => {
+            const s = (stock ?? []).find((it) => it.id === e.target.value);
+            if (!s) return;
+            // Purchases are what you PAY, so a picked item seeds its cost price.
+            onChange([...items, { desc: s.name, qty: 1, unit_price: Number(s.cost_price || 0) }]);
+            e.target.value = "";
+          }}
+          style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1.5px solid #e2e8f0", fontSize: 14, color: "#334155", background: "#fff", marginBottom: 10, boxSizing: "border-box" }}
+        >
+          <option value="">Add from your items…</option>
+          {(stock ?? []).map((s) => (
+            <option key={s.id} value={s.id}>
+              {itemTypeMeta(s.item_type).icon} {s.name} — {fmt(s.cost_price)}
+            </option>
+          ))}
+        </select>
+      )}
+
+      <button
+        type="button"
+        onClick={addItem}
+        style={{
+          width: "100%",
+          padding: "10px",
+          borderRadius: 10,
+          border: "1.5px dashed #BAE6FD",
+          background: "#F0F9FF",
+          color: "#0369A1",
+          fontSize: 13,
+          fontWeight: 700,
+          cursor: "pointer",
+          marginBottom: 10,
+        }}
+      >
+        + Add line item
+      </button>
+
       {items.map((item, i) => {
         const lineTotal = Number(item.qty || 0) * Number(item.unit_price || 0);
         return (
@@ -72,7 +113,7 @@ export function PurchaseLineItemsEditor({
                 />
               </div>
               <div>
-                <div style={{ fontSize: 10, color: "#94a3b8", marginBottom: 4 }}>Unit price</div>
+                <div style={{ fontSize: 10, color: "#94a3b8", marginBottom: 4 }}>Unit price (R)</div>
                 <input
                   type="number"
                   value={item.unit_price}
@@ -85,43 +126,6 @@ export function PurchaseLineItemsEditor({
           </div>
         );
       })}
-      {(stock ?? []).length > 0 && (
-        <select
-          value=""
-          onChange={(e) => {
-            const s = (stock ?? []).find((it) => it.id === e.target.value);
-            if (!s) return;
-            // Purchases are what you PAY, so a picked item seeds its cost price.
-            onChange([...items, { desc: s.name, qty: 1, unit_price: Number(s.cost_price || 0) }]);
-            e.target.value = "";
-          }}
-          style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1.5px solid #e2e8f0", fontSize: 14, color: "#334155", background: "#fff", marginBottom: 10, boxSizing: "border-box" }}
-        >
-          <option value="">Add from your items…</option>
-          {(stock ?? []).map((s) => (
-            <option key={s.id} value={s.id}>
-              {itemTypeMeta(s.item_type).icon} {s.name} — {fmt(s.cost_price)}
-            </option>
-          ))}
-        </select>
-      )}
-      <button
-        type="button"
-        onClick={addItem}
-        style={{
-          width: "100%",
-          padding: "10px",
-          borderRadius: 10,
-          border: "1.5px dashed #BAE6FD",
-          background: "#F0F9FF",
-          color: "#0369A1",
-          fontSize: 13,
-          fontWeight: 700,
-          cursor: "pointer",
-        }}
-      >
-        + Add line item
-      </button>
     </div>
   );
 }

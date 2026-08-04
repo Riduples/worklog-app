@@ -34,7 +34,7 @@ export const BUSINESS_TYPE_CORE_TOOLS: Record<BusinessType, ToolId[] | null> = {
   salon: ["income", "expense", "bankstatement", "quote", "invoice", "clients", "stock", "recipe", "booking", "cashup", "staffregister", "advances", "leave", "payrun", "payrollcompliance", "vat201", "emp201", "taxjar", "tax"],
   retail: ["income", "expense", "bankstatement", "clients", "suppliers", "stock", "cashup", "staffregister", "advances", "leave", "payrun", "payrollcompliance", "vat201", "emp201", "taxjar", "tax"],
   food: ["income", "expense", "bankstatement", "clients", "suppliers", "stock", "recipe", "cashup", "staffregister", "advances", "leave", "payrun", "payrollcompliance", "vat201", "emp201", "taxjar", "tax"],
-  trade: ["income", "expense", "bankstatement", "quote", "invoice", "statement", "clients", "suppliers", "stock", "recipe", "booking", "timetrack", "mileage", "staffregister", "advances", "leave", "payrun", "payrollcompliance", "vat201", "emp201", "provtax", "ageanalysis", "profitloss", "taxjar", "tax"],
+  trade: ["income", "expense", "bankstatement", "quote", "invoice", "statement", "clients", "suppliers", "stock", "recipe", "booking", "timetrack", "mileage", "staffregister", "advances", "leave", "payrun", "payrollcompliance", "vat201", "emp201", "provtax", "ageanalysis", "payables", "profitloss", "taxjar", "tax"],
   cleaning: ["income", "expense", "bankstatement", "quote", "invoice", "clients", "booking", "timetrack", "mileage", "staffregister", "advances", "leave", "payrun", "payrollcompliance", "vat201", "taxjar", "tax"],
   freelance: ["income", "expense", "bankstatement", "quote", "invoice", "clients", "timetrack", "provtax", "profitloss", "taxjar", "tax"],
   other: null,

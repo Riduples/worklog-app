@@ -32,6 +32,7 @@ export type ToolId =
   | "mileage"
   | "profitloss"
   | "ageanalysis"
+  | "payables"
   | "compliance"
   | "vat201"
   | "emp201"
@@ -70,8 +71,8 @@ export const ACCESS_LEVEL_MAP = Object.fromEntries(ACCESS_LEVELS.map((l) => [l.i
 export const TOOL_CATEGORIES: { id: string; label: string; icon: string; desc: string; tools: ToolId[] }[] = [
   { id: "stock", label: "Price List", icon: "📋", desc: "Your saved prices for what you sell, plus a calculator to price a job", tools: ["stock", "recipe"] },
   { id: "contacts", label: "Contacts", icon: "👥", desc: "Your customers and suppliers, saved for quick reuse on quotes, invoices & orders", tools: ["clients", "suppliers"] },
-  { id: "invoicing", label: "Sales", icon: "📤", desc: "Quotes & invoices you send to customers", tools: ["quote", "invoice", "statement"] },
-  { id: "purchases", label: "Purchases", icon: "📥", desc: "Purchase orders & supplier invoices you receive", tools: ["purchaseorder", "supplierinvoice", "remittance"] },
+  { id: "invoicing", label: "Sales", icon: "📤", desc: "Quotes & invoices you send to customers", tools: ["quote", "invoice", "statement", "ageanalysis"] },
+  { id: "purchases", label: "Purchases", icon: "📥", desc: "Purchase orders & supplier invoices you receive", tools: ["purchaseorder", "supplierinvoice", "remittance", "payables"] },
   { id: "bookings", label: "Scheduling System", icon: "📅", desc: "Diary, appointments, time & travel — manage how you spend your day", tools: ["booking", "timetrack", "mileage"] },
   { id: "workers", label: "Payroll", icon: "💼", desc: "Employees, wages, payslips & advances", tools: ["staffregister", "payrun", "advances", "leave", "payrollcompliance"] },
   // "ledger" isn't in the source prototype's categories (it dropped Ledgers
@@ -80,7 +81,7 @@ export const TOOL_CATEGORIES: { id: string; label: string; icon: string; desc: s
   // "taxdashboard" is deliberately absent: the /tax hub it described is gated
   // by "tax", so a second id for the same page was a toggle that controlled
   // nothing. Every id below reaches a real screen.
-  { id: "taxcompliance", label: "Compliance & Financials", icon: "💡", desc: "Everything tax, SARS and compliance — your complete financial overview", tools: ["vat201", "emp201", "provtax", "taxjar", "profitloss", "profit", "ageanalysis", "compliance", "tax"] },
+  { id: "taxcompliance", label: "Compliance & Financials", icon: "💡", desc: "Everything tax, SARS and compliance — your complete financial overview", tools: ["vat201", "emp201", "provtax", "taxjar", "profitloss", "profit", "compliance", "tax"] },
 ];
 
 export const TOOL_LABELS: Partial<Record<ToolId, { icon: string; label: string; desc?: string }>> = {
@@ -109,7 +110,8 @@ export const TOOL_LABELS: Partial<Record<ToolId, { icon: string; label: string; 
   timetrack: { icon: "⏱️", label: "Time Log", desc: "Log hours per client — links to quotes, rates & appointments" },
   mileage: { icon: "🚗", label: "Trip Log", desc: "Log business trips — SARS deduction auto-calculated" },
   profitloss: { icon: "📈", label: "Profit & Loss", desc: "The official summary of what your business earned vs spent — needed for SARS and for loan/funding applications" },
-  ageanalysis: { icon: "⏳", label: "Age Analysis", desc: "See who still owes you money (and who you still owe), sorted by how overdue it is — mainly for businesses that let customers pay later" },
+  ageanalysis: { icon: "⏳", label: "Age Analysis (Customers)", desc: "See who still owes you money, sorted by how overdue each invoice is — mainly for businesses that let customers pay later" },
+  payables: { icon: "⏳", label: "Age Analysis (Suppliers)", desc: "See who you still owe, sorted by how overdue each supplier bill is" },
   compliance: { icon: "✅", label: "Compliance Dashboard", desc: "Every SA business obligation — SARS, Labour, CIPC, POPIA — due dates and status in one place" },
   vat201: { icon: "🏦", label: "VAT201", desc: "The monthly/bi-monthly SARS return for VAT-registered businesses — you only need this if you're registered for VAT" },
   emp201: { icon: "👷", label: "EMP201", desc: "The monthly SARS return for tax deducted from employee wages — only needed once you have staff on payroll" },

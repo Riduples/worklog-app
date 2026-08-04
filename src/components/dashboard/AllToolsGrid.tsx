@@ -68,7 +68,7 @@ const NAV_CATEGORIES: { id: string; items: NavItem[] }[] = [
       { href: "/purchase-orders", icon: "🛒", label: "Purchase Orders", toolId: "purchaseorder", lockId: "purchaseorder" },
       { href: "/supplier-invoices", icon: "📥", label: "Supplier Invoices", toolId: "supplierinvoice", lockId: "supplierinvoice" },
       { href: "/remittance", icon: "🧾", label: "Remittance", toolId: "remittance", lockId: "remittance" },
-      { href: "/age-analysis-payables", icon: "⏳", label: "Age Analysis", toolId: "ageanalysis", lockId: "ageanalysis" },
+      { href: "/age-analysis-payables", icon: "⏳", label: "Age Analysis", toolId: "payables", lockId: "payables" },
     ],
   },
   {
