@@ -1,13 +1,18 @@
 "use client";
 
+import { useState } from "react";
 import { useInvoices } from "@/lib/supabase/hooks/useInvoices";
 import { useSupplierInvoices } from "@/lib/supabase/hooks/useSupplierInvoices";
 import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 import { useCreditNotes } from "@/lib/supabase/hooks/useCreditNotes";
+import { useTrialState } from "@/lib/supabase/hooks/useSubscription";
 import { fmt, todayStr } from "@/lib/format";
 import { balanceInclVat } from "@/lib/balance";
 import { sumOnAccount } from "@/lib/creditNotes";
 import { shareReport } from "@/lib/docgen/shareReport";
+import { buildAgeAnalysisHTML } from "@/lib/docgen/buildLedgerHTML";
+import { openDocumentForPrinting } from "@/lib/docgen/shareDocument";
+import { renderPdf, downloadBlob } from "@/lib/docgen/renderPdf";
 import { BackLink } from "@/components/ui/BackLink";
 
 type Bucket = "0–30" | "31–60" | "61–90" | "90+";
@@ -40,6 +45,9 @@ export function AgeAnalysisView({ side }: { side: "debtors" | "creditors" }) {
   const { data: supplierInvoices } = useSupplierInvoices();
   const { data: business } = useBusinessProfile();
   const { data: credits } = useCreditNotes();
+  const { isTrialing, isReadOnly } = useTrialState();
+  const watermark = isTrialing || isReadOnly;
+  const [busy, setBusy] = useState(false);
   const isDebtors = side === "debtors";
 
   const debtors: AgedItem[] = (invoices ?? [])
@@ -83,6 +91,25 @@ export function AgeAnalysisView({ side }: { side: "debtors" | "creditors" }) {
 
   const onAccount = sumOnAccount(credits ?? [], isDebtors ? "customer" : "supplier");
   const netOwed = grandTotal - onAccount;
+
+  const handlePrint = async () => {
+    if (!business || busy) return;
+    setBusy(true);
+    const asAt = new Date().toLocaleDateString("en-ZA", { year: "numeric", month: "long", day: "numeric" });
+    const pdfBuckets = BUCKETS.map((b) => ({ label: b, total: totals[b] }));
+    const pdfItems = items.map((i) => ({ name: i.name, reference: i.docNumber, date: i.date, days: i.days, amount: i.amount }));
+    const pdfTotals = { grandTotal, onAccount, netOwed };
+    const filename = `age-analysis-${isDebtors ? "customers" : "suppliers"}`;
+    try {
+      const blob = await renderPdf({ kind: "ageanalysis", side, buckets: pdfBuckets, items: pdfItems, totals: pdfTotals, asAt });
+      downloadBlob(blob, filename);
+    } catch {
+      // Fall back to the print flow rather than leaving the user stuck.
+      openDocumentForPrinting(buildAgeAnalysisHTML(business, side, pdfBuckets, pdfItems, pdfTotals, asAt, watermark), filename);
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const handleShare = () => {
     const lines = [
@@ -179,12 +206,21 @@ export function AgeAnalysisView({ side }: { side: "debtors" | "creditors" }) {
         })
       )}
 
-      <button
-        onClick={handleShare}
-        style={{ width: "100%", marginTop: 8, background: "#F0F9FF", color: "#0C4A6E", border: "1.5px solid #BAE6FD", borderRadius: 12, padding: 13, fontWeight: 700, fontSize: 13, cursor: "pointer" }}
-      >
-        📤 Share report
-      </button>
+      <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
+        <button
+          onClick={handlePrint}
+          disabled={!business || busy}
+          style={{ flex: 1, background: "#F0F9FF", color: "#0C4A6E", border: "1.5px solid #BAE6FD", borderRadius: 12, padding: 13, fontWeight: 700, fontSize: 13, cursor: "pointer" }}
+        >
+          {busy ? "📄 Preparing..." : "📄 Download PDF"}
+        </button>
+        <button
+          onClick={handleShare}
+          style={{ flex: 1, background: "#F0F9FF", color: "#0C4A6E", border: "1.5px solid #BAE6FD", borderRadius: 12, padding: 13, fontWeight: 700, fontSize: 13, cursor: "pointer" }}
+        >
+          📤 Share
+        </button>
+      </div>
     </div>
   );
 }

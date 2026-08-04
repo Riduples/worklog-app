@@ -271,3 +271,89 @@ export function buildRemittanceHTML(
 </body>
 </html>`;
 }
+
+// An age analysis is an internal working report — who owes you (debtors) or who
+// you owe (creditors), grouped by how overdue each amount is. It's the business's
+// own report, so it heads with their letterhead like the statement/remittance.
+export type AgeAnalysisRow = { name: string; reference: string; date: string; days: number; amount: number };
+export type AgeAnalysisBucket = { label: string; total: number };
+
+export function buildAgeAnalysisHTML(
+  business: BusinessProfile,
+  side: "debtors" | "creditors",
+  buckets: AgeAnalysisBucket[],
+  items: AgeAnalysisRow[],
+  totals: { grandTotal: number; onAccount: number; netOwed: number },
+  asAt: string,
+  watermark = false
+): string {
+  const isDebtors = side === "debtors";
+  const subject = isDebtors ? "Customers" : "Suppliers";
+  const partyHeading = isDebtors ? "Customer" : "Supplier";
+
+  const bucketHead = buckets.map((b) => `<th style="text-align:center;">${esc(b.label)} days</th>`).join("");
+  const bucketCells = buckets.map((b) => `<td style="text-align:center;font-weight:700;">${fmt(b.total)}</td>`).join("");
+
+  const rows = items.length
+    ? items
+        .map(
+          (i) => `
+      <tr>
+        <td>${esc(i.name)}</td>
+        <td>${esc(i.reference || "—")}</td>
+        <td>${esc(i.date || "—")}</td>
+        <td style="text-align:right;">${i.days}</td>
+        <td style="text-align:right;font-weight:700;">${fmt(i.amount)}</td>
+      </tr>`
+        )
+        .join("")
+    : `<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:16px;">Nothing outstanding.</td></tr>`;
+
+  const netLabel = totals.onAccount > 0
+    ? isDebtors
+      ? "Net owed to you"
+      : "Net you owe"
+    : isDebtors
+      ? "Total owed to you"
+      : "Total you owe";
+  const netValue = totals.onAccount > 0 ? totals.netOwed : totals.grandTotal;
+
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" /><title>Age Analysis — ${esc(subject)}</title><style>${SHARED_CSS}</style></head>
+<body>
+  ${watermark ? `<div class="wm">TRIAL — NOT FINAL</div>` : ""}
+  ${header(business, `AGE ANALYSIS — ${subject.toUpperCase()}`, `As at ${asAt}`)}
+  <div class="meta-row">
+    ${fromBlock(business, "Prepared by")}
+    <div style="text-align:right;">
+      <div class="meta-label">Report</div>
+      <div style="font-size:20px;font-weight:800;">${isDebtors ? "Money owed to you" : "Money you owe"}</div>
+    </div>
+  </div>
+  <div style="font-size:11px;font-weight:700;color:#0C4A6E;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;">Outstanding by age</div>
+  <table>
+    <thead><tr>${bucketHead}</tr></thead>
+    <tbody><tr>${bucketCells}</tr></tbody>
+  </table>
+  <div style="font-size:11px;font-weight:700;color:#0C4A6E;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;">Detail</div>
+  <table>
+    <thead>
+      <tr><th>${partyHeading}</th><th>Reference</th><th>Date</th><th style="text-align:right;">Days overdue</th><th style="text-align:right;">Amount</th></tr>
+    </thead>
+    <tbody>${rows}</tbody>
+  </table>
+  <div class="totals">
+    <div class="totals-box">
+      <div class="totals-row"><span>Total ${isDebtors ? "owed to you" : "you owe"}</span><span>${fmt(totals.grandTotal)}</span></div>
+      ${totals.onAccount > 0 ? `<div class="totals-row" style="color:#0C4A6E;"><span>Less credit on account</span><span>−${fmt(totals.onAccount)}</span></div>\n      ` : ""}<div class="totals-row final"><span>${netLabel}</span><span>${fmt(netValue)}</span></div>
+    </div>
+  </div>
+  <div class="footer">
+    An internal age analysis of amounts outstanding as at ${esc(asAt)}.<br/>Generated via Worklog — worklog.co.za${
+      watermark ? `<br/><strong style="color:#dc2626;">Draft — made on a free Worklog trial.</strong>` : ""
+    }
+  </div>
+</body>
+</html>`;
+}

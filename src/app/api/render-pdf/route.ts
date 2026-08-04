@@ -7,10 +7,13 @@ import { buildDocumentHTML, type DocForRender, type DocKind } from "@/lib/docgen
 import {
   buildStatementHTML,
   buildRemittanceHTML,
+  buildAgeAnalysisHTML,
   type StatementLine,
   type RemittanceLine,
   type StatementCredits,
   type RemittanceCredits,
+  type AgeAnalysisRow,
+  type AgeAnalysisBucket,
 } from "@/lib/docgen/buildLedgerHTML";
 import type { BusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 
@@ -30,6 +33,14 @@ type RenderRequest =
       lines: RemittanceLine[];
       payment: { method: string; date: string; reference: string; total: number };
       credits?: RemittanceCredits;
+    }
+  | {
+      kind: "ageanalysis";
+      side: "debtors" | "creditors";
+      buckets: AgeAnalysisBucket[];
+      items: AgeAnalysisRow[];
+      totals: { grandTotal: number; onAccount: number; netOwed: number };
+      asAt: string;
     };
 
 function buildHtml(body: RenderRequest, business: BusinessProfile, watermark: boolean): string | null {
@@ -44,6 +55,8 @@ function buildHtml(body: RenderRequest, business: BusinessProfile, watermark: bo
       return buildStatementHTML(business, body.clientName, body.lines, body.totals, body.asAt, watermark, body.credits);
     case "remittance":
       return buildRemittanceHTML(business, body.supplierName, body.lines, body.payment, watermark, body.credits);
+    case "ageanalysis":
+      return buildAgeAnalysisHTML(business, body.side, body.buckets, body.items, body.totals, body.asAt, watermark);
     default:
       return null;
   }
