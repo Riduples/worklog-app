@@ -137,19 +137,19 @@ export function AllToolsGrid({
         if (!cat || shown.length === 0) return null;
         const isOpen = !!open[id];
         return (
-          <div key={id} style={{ background: "#fff", border: "1.5px solid #e2e8f0", borderRadius: 14, overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
+          <div key={id} style={{ background: "#fff", border: "none", borderRadius: 14, overflow: "hidden", boxShadow: "0 1px 6px rgba(0,0,0,0.08)" }}>
             <button
               type="button"
               onClick={() => setOpen((p) => ({ ...p, [id]: !p[id] }))}
               aria-expanded={isOpen}
-              style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", background: isOpen ? "#F0F9FF" : "#fff", border: "none", cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}
+              style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", background: "#0C4A6E", border: "none", cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}
             >
               <span style={{ fontSize: 26, flexShrink: 0 }}>{cat.icon}</span>
               <span style={{ flex: 1, minWidth: 0 }}>
-                <span style={{ display: "block", fontSize: 15, fontWeight: 800, color: "#0C4A6E" }}>{cat.label}</span>
-                <span style={{ display: "block", fontSize: 11.5, color: "#94a3b8", marginTop: 2 }}>{cat.desc}</span>
+                <span style={{ display: "block", fontSize: 15, fontWeight: 800, color: "#fff" }}>{cat.label}</span>
+                <span style={{ display: "block", fontSize: 11.5, color: "#7DD3FC", marginTop: 2 }}>{cat.desc}</span>
               </span>
-              <span style={{ fontSize: 18, color: isOpen ? "#0C4A6E" : "#94a3b8", flexShrink: 0, transform: isOpen ? "rotate(180deg)" : "none", transition: "transform 0.15s" }}>▾</span>
+              <span style={{ fontSize: 18, color: "#F59E0B", flexShrink: 0, transform: isOpen ? "rotate(180deg)" : "none", transition: "transform 0.15s" }}>▾</span>
             </button>
 
             {isOpen && (
