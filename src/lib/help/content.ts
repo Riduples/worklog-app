@@ -34,7 +34,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
               "In \"Address\", type your street, suburb and city if you want it to show on your documents.",
               "In \"Phone\", type your contact number.",
               "In \"Email\", check the address that is already filled in and change it if you need to.",
-              "If you are VAT registered, type your number in \"VAT number (optional)\". Leave it blank if you are not.",
+              "If you are VAT registered, type your number in \"VAT number\". Leave it blank if you are not.",
               "Tap \"Continue\" to move through the remaining steps — your contact details, how customers pay you, and Tax & SARS — filling in what you can and tapping \"Skip for now\" on the rest, then tap \"Finish setup\" on the last step.",
               "Worklog then shows a \"You're all set up! 🎉\" screen with optional next steps, like adding your bank accounts or inviting your team, and a \"Go to my dashboard\" button to start."
             ]
