@@ -1068,6 +1068,23 @@ export const HELP_ARTICLES: HelpArticle[] = [
         ]
       },
       {
+        "heading": "Find an invoice",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "Once you have a few invoices, the controls at the top of the list help you get to the right one:"
+          },
+          {
+            "type": "bullets",
+            "items": [
+              "Search invoices — type any part of the customer's name or the invoice number.",
+              "Status pills — tap unpaid, part paid, overdue, paid or credited to show just those (only the statuses you actually have appear).",
+              "A–Z / Number / Recent — sort by customer name, by invoice number, or newest first."
+            ]
+          }
+        ]
+      },
+      {
         "heading": "Before you start",
         "blocks": [
           {
@@ -1188,6 +1205,23 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "paragraph",
             "text": "A quote is the price you give a customer before you do the work. You build it in Worklog, share it with your customer (usually on WhatsApp), and once they say yes you can turn that same quote into an invoice without typing everything again."
+          }
+        ]
+      },
+      {
+        "heading": "Find a quote",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "The controls at the top of the Quotes list help you get to the right one once you have a few:"
+          },
+          {
+            "type": "bullets",
+            "items": [
+              "Search quotes — type any part of the customer's name or the quote number.",
+              "Status pills — tap pending, accepted, declined or converted to show just those (only the statuses you actually have appear).",
+              "A–Z / Number / Recent — sort by customer name, by quote number, or newest first."
+            ]
           }
         ]
       },
