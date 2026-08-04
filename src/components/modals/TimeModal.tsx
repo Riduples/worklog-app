@@ -189,7 +189,7 @@ export function TimeModal({ entry, onClose }: { entry?: TimeEntry; onClose: () =
       )}
 
       <ContactPicker
-        label="Customer (optional)"
+        label="Customer - optional"
         value={client}
         onChange={(v, id) => {
           setClient(v);
@@ -211,7 +211,7 @@ export function TimeModal({ entry, onClose }: { entry?: TimeEntry; onClose: () =
         )}
       </Field>
 
-      <Field label="Description (optional)">
+      <Field label="Description - optional">
         <Input value={description} onChange={setDescription} placeholder="What was the work?" />
       </Field>
 

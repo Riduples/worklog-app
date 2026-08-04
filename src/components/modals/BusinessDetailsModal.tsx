@@ -263,10 +263,10 @@ export function BusinessDetailsModal({ business, onClose }: { business: Business
       <Field label="Account number">
         <Input value={bankAccount} onChange={setBankAccount} placeholder="Your business account number" />
       </Field>
-      <Field label="Branch code (optional)">
+      <Field label="Branch code - optional">
         <Input value={bankBranch} onChange={setBankBranch} placeholder="e.g. 250655" />
       </Field>
-      <Field label="Payment reference (optional)">
+      <Field label="Payment reference - optional">
         <Input value={bankRef} onChange={setBankRef} placeholder="e.g. your trading name" />
         <p style={{ fontSize: 11, color: "#64748b", marginTop: 6, lineHeight: 1.5 }}>
           {bankRef.trim()

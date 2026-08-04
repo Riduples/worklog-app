@@ -41,7 +41,7 @@ const THEME = {
     phonePlaceholder: "e.g. 011 123 4567",
     emailPlaceholder: "e.g. orders@supplier.com",
     addressPlaceholder: "e.g. Cnr Eloff & Commissioner, JHB",
-    notesPlaceholder: "Anything useful about this supplier...",
+    notesPlaceholder: "Anything useful — account code, preferences, special requirements",
   },
 } as const;
 
@@ -154,7 +154,7 @@ export function ContactModal({
       <Field label="Email">
         <Input value={email ?? ""} onChange={setEmail} placeholder={t.emailPlaceholder} type="email" />
       </Field>
-      <Field label="Address (optional)">
+      <Field label="Address - optional">
         <Input value={address ?? ""} onChange={setAddress} placeholder={t.addressPlaceholder} />
       </Field>
 
@@ -163,7 +163,7 @@ export function ContactModal({
           <Field label="Payment behaviour">
             <Chips options={PAYMENT_BEHAVIOURS} selected={paymentBehaviour ?? ""} onSelect={setPaymentBehaviour} />
           </Field>
-          <Field label="Notes (optional)">
+          <Field label="Notes - optional">
             <Textarea value={notes ?? ""} onChange={setNotes} placeholder={t.notesPlaceholder} rows={2} />
           </Field>
           <div style={{ background: "#f8fafc", border: "1.5px solid #e2e8f0", borderRadius: 14, padding: 14, marginBottom: 16 }}>
@@ -183,8 +183,11 @@ export function ContactModal({
           <Field label="Payment terms">
             <Chips options={PAYMENT_TERMS} selected={paymentTerms ?? ""} onSelect={setPaymentTerms} />
           </Field>
+          <Field label="Notes - optional">
+            <Textarea value={notes ?? ""} onChange={setNotes} placeholder={t.notesPlaceholder} rows={2} />
+          </Field>
           <div style={{ background: "#fff7ed", border: "1.5px solid #fed7aa", borderRadius: 12, padding: "12px 14px", marginBottom: 12, fontSize: 12.5, color: "#92400e", lineHeight: 1.5 }}>
-            🔒 <strong>Banking details (optional):</strong> Handy for paying this supplier. Banking details are sensitive personal data under POPIA — keep them secure and only store them with the supplier&apos;s agreement.
+            🔒 <strong>Banking details - optional:</strong> Handy for paying this supplier. Banking details are sensitive personal data under POPIA — keep them secure and only store them with the supplier&apos;s agreement.
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             <Field label="Bank">
@@ -194,9 +197,6 @@ export function ContactModal({
               <Input value={accountNumber ?? ""} onChange={setAccountNumber} placeholder="Account no." />
             </Field>
           </div>
-          <Field label="Notes (optional)">
-            <Textarea value={notes ?? ""} onChange={setNotes} placeholder={t.notesPlaceholder} rows={2} />
-          </Field>
         </>
       )}
 

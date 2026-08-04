@@ -198,7 +198,7 @@ export function BookingModal({ booking, onClose }: { booking?: Booking; onClose:
         <Input value={service} onChange={setService} placeholder="e.g. Haircut, geyser install" />
       </Field>
 
-      <Field label="Purpose (optional)">
+      <Field label="Purpose - optional">
         <Input value={purpose} onChange={setPurpose} placeholder="e.g. Quote walkthrough, site visit" />
       </Field>
 
@@ -220,12 +220,12 @@ export function BookingModal({ booking, onClose }: { booking?: Booking; onClose:
         </select>
       </Field>
 
-      <Field label="Location (optional)">
+      <Field label="Location - optional">
         <Input value={location} onChange={setLocation} placeholder="e.g. Customer's site, 12 Main Rd" />
       </Field>
 
       {apptType === "customer" && clientQuotes.length > 0 && (
-        <Field label="Link to a quote (optional)">
+        <Field label="Link to a quote - optional">
           <select value={linkedQuoteId ?? ""} onChange={(e) => setLinkedQuoteId(e.target.value || null)} style={selectStyle}>
             <option value="">— None —</option>
             {clientQuotes.map((q) => (
@@ -237,7 +237,7 @@ export function BookingModal({ booking, onClose }: { booking?: Booking; onClose:
         </Field>
       )}
 
-      <Field label="Notes (optional)">
+      <Field label="Notes - optional">
         <Input value={notes} onChange={setNotes} placeholder="What to bring, topics to cover…" />
       </Field>
 

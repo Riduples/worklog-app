@@ -125,7 +125,7 @@ export function SupplierInvoiceMatcher({
       : "Tap to find a supplier invoice...";
 
   return (
-    <Field label="Is this paying a supplier invoice? (optional)">
+    <Field label="Is this paying a supplier invoice? - optional">
       <div style={{ position: "relative" }}>
         <button
           onClick={() => {

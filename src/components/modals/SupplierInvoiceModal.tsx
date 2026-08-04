@@ -114,7 +114,7 @@ export function SupplierInvoiceModal({ onClose }: { onClose: () => void }) {
               color: linkedPo ? "#0C4A6E" : "#92400e",
             }}
           >
-            {linkedPo ? `🛒 Linked to ${linkedPo.doc_number} — ${linkedPo.supplier_name}` : "🛒 Link to a purchase order (optional) — tap to pick"}
+            {linkedPo ? `🛒 Linked to ${linkedPo.doc_number} — ${linkedPo.supplier_name}` : "🛒 Link to a purchase order - optional — tap to pick"}
           </button>
           {showPoPicker && (
             <div

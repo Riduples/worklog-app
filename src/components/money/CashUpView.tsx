@@ -143,7 +143,7 @@ export function CashUpView() {
         </div>
       )}
 
-      <Field label="Notes (optional)">
+      <Field label="Notes - optional">
         <Input value={notes} onChange={setNotes} placeholder="e.g. Gave R20 change short, forgot to log a sale..." />
       </Field>
 

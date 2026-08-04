@@ -795,7 +795,7 @@ export function QuickLogModal({ onClose }: { onClose: () => void }) {
             </div>
           )}
 
-          <Field label={imageData ? "Add extra details (optional)" : "What happened?"}>
+          <Field label={imageData ? "Add extra details - optional" : "What happened?"}>
             <textarea
               value={text}
               onChange={(e) => setText(e.target.value)}

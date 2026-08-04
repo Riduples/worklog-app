@@ -157,7 +157,7 @@ export function IncomeModal({ onClose }: { onClose: () => void }) {
           setReceivedFromContactId(id);
         }}
         contacts={contacts ?? []}
-        placeholder="Name (optional)"
+        placeholder="Name - optional"
       />
 
       {!isPersonal && (
@@ -251,7 +251,7 @@ export function IncomeModal({ onClose }: { onClose: () => void }) {
         </div>
       )}
 
-      <Field label="Details (optional)">
+      <Field label="Details - optional">
         <Input value={details} onChange={setDetails} placeholder="Extra description" />
       </Field>
 

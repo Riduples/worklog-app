@@ -208,7 +208,7 @@ export function LeaveView() {
         <p style={{ color: "#dc2626", fontSize: 12, marginTop: -2, marginBottom: 10 }}>End date is before the start date — check the dates.</p>
       )}
 
-      <Field label="Note (optional)">
+      <Field label="Note - optional">
         <Input value={note} onChange={setNote} placeholder="e.g. Medical certificate provided" />
       </Field>
 

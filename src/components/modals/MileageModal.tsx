@@ -111,7 +111,7 @@ export function MileageModal({ trip, onClose }: { trip?: MileageTrip; onClose: (
         <Input value={tripDate} onChange={setTripDate} type="date" />
       </Field>
 
-      <Field label="Purpose (optional)">
+      <Field label="Purpose - optional">
         <Input value={purpose} onChange={setPurpose} placeholder="e.g. Site visit in Soweto" />
       </Field>
 

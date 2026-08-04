@@ -133,7 +133,7 @@ export function LedgerEntryMatcher({
       : "Tap to find a credit entry...";
 
   return (
-    <Field label="Is this paying off something in your credit book? (optional)">
+    <Field label="Is this paying off something in your credit book? - optional">
       <div style={{ position: "relative" }}>
         <button
           onClick={() => {

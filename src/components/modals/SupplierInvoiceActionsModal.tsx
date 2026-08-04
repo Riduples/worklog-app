@@ -218,7 +218,7 @@ export function SupplierInvoiceActionsModal({ si, onClose }: { si: SupplierInvoi
                 </div>
               )}
 
-              <Field label="Reason (optional)">
+              <Field label="Reason - optional">
                 <Input value={reason} onChange={setReason} placeholder="e.g. returned goods, overcharge" />
               </Field>
 

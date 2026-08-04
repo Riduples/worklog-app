@@ -454,7 +454,7 @@ function TaxRateEditor({ draft, onClose, onSaved }: { draft: Draft; onClose: () 
         </Field>
       ))}
 
-      <Field label="Note (optional)">
+      <Field label="Note - optional">
         <Input value={d.note} onChange={(v) => setField("note", v)} placeholder="e.g. Budget 2027" />
       </Field>
 

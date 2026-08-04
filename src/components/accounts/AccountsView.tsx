@@ -222,7 +222,7 @@ function TransferModal({ accounts, onClose }: { accounts: BankAccount[]; onClose
       <Field label="Date">
         <Input value={date} onChange={setDate} type="date" />
       </Field>
-      <Field label="Note (optional)">
+      <Field label="Note - optional">
         <Input value={note} onChange={setNote} placeholder="e.g. moved to savings" />
       </Field>
       {error && <p style={{ color: "#dc2626", fontSize: 13, marginBottom: 12 }}>{error}</p>}
@@ -276,10 +276,10 @@ function AccountForm({ account, onClose }: { account: BankAccount | null; onClos
       <Field label="Account name">
         <Input value={name} onChange={setName} placeholder="e.g. FNB Cheque" autoFocus />
       </Field>
-      <Field label="Bank (optional)">
+      <Field label="Bank - optional">
         <Input value={bankName} onChange={setBankName} placeholder="e.g. FNB" />
       </Field>
-      <Field label="Account number (optional)">
+      <Field label="Account number - optional">
         <Input value={accountNumber} onChange={setAccountNumber} placeholder="Last 4 digits are enough, e.g. 1234" />
       </Field>
       <div style={{ fontSize: 11, color: "#94a3b8", marginTop: -4, marginBottom: 12, lineHeight: 1.5 }}>

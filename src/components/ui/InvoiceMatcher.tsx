@@ -143,7 +143,7 @@ export function InvoiceMatcher({
       : "Tap to find an invoice...";
 
   return (
-    <Field label="Is this payment for an invoice? (optional)">
+    <Field label="Is this payment for an invoice? - optional">
       <div style={{ position: "relative" }}>
         <button
           onClick={() => {

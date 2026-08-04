@@ -79,7 +79,7 @@ export function LedgerModal({ onClose }: { onClose: () => void }) {
         <Input value={amount} onChange={setAmount} type="number" placeholder="0.00" />
       </Field>
 
-      <Field label="Note (optional)">
+      <Field label="Note - optional">
         <Input value={note} onChange={setNote} placeholder="What was it for?" />
       </Field>
 

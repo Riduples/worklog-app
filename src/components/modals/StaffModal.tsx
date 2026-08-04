@@ -246,7 +246,7 @@ export function StaffModal({ staff, onClose }: { staff?: StaffMember; onClose: (
       </Field>
 
       <div style={{ background: "#f8fafc", borderRadius: 12, padding: 14, marginBottom: 12 }}>
-        <div style={{ fontSize: 12, fontWeight: 700, color: "#374151", marginBottom: 8 }}>Recurring allowance (optional)</div>
+        <div style={{ fontSize: 12, fontWeight: 700, color: "#374151", marginBottom: 8 }}>Recurring allowance - optional</div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
           <Field label="Allowance per month (R)">
             <Input type="number" value={recurringAllowance} onChange={setRecurringAllowance} placeholder="e.g. 500" />
@@ -305,7 +305,7 @@ export function StaffModal({ staff, onClose }: { staff?: StaffMember; onClose: (
         onClick={() => setShowExtras((p) => !p)}
         style={{ width: "100%", background: "#f8fafc", border: "1.5px solid #e2e8f0", borderRadius: 12, padding: "11px 16px", marginBottom: 10, display: "flex", justifyContent: "space-between", cursor: "pointer" }}
       >
-        <span style={{ fontSize: 13, fontWeight: 600, color: "#64748b" }}>More details (optional)</span>
+        <span style={{ fontSize: 13, fontWeight: 600, color: "#64748b" }}>More details - optional</span>
         <span style={{ color: "#94a3b8" }}>{showExtras ? "▲" : "▼"}</span>
       </button>
       {showExtras && (
@@ -326,7 +326,7 @@ export function StaffModal({ staff, onClose }: { staff?: StaffMember; onClose: (
             <Input type="tel" value={contactNumber} onChange={setContactNumber} placeholder="082 123 4567" />
           </Field>
           {isContractor && (
-            <Field label="Their business / trading name (optional)">
+            <Field label="Their business / trading name - optional">
               <Input value={tradingName} onChange={setTradingName} placeholder="e.g. ABC Plumbing cc" />
             </Field>
           )}

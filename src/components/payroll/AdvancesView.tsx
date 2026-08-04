@@ -178,7 +178,7 @@ export function AdvancesView() {
           ≈ {Math.ceil(parseFloat(amount) / parseFloat(repayPerRun))} pay runs to repay
         </div>
       )}
-      <Field label="Reason (optional)">
+      <Field label="Reason - optional">
         <Input value={note} onChange={setNote} placeholder="e.g. Emergency, transport, groceries..." />
       </Field>
 

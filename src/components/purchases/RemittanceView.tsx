@@ -314,7 +314,7 @@ export function RemittanceView() {
               <Field label="Payment date">
                 <Input type="date" value={paymentDate} onChange={setPaymentDate} />
               </Field>
-              <Field label="Payment reference (optional)">
+              <Field label="Payment reference - optional">
                 <Input value={paymentRef} onChange={setPaymentRef} placeholder="e.g. EFT reference the supplier will see" />
               </Field>
 

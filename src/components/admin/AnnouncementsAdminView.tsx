@@ -216,7 +216,7 @@ function AnnouncementEditor({ draft, onClose, onSaved }: { draft: Draft; onClose
       </Field>
       <div style={{ display: "flex", gap: 10 }}>
         <div style={{ flex: 1 }}>
-          <Field label="Link URL (optional)">
+          <Field label="Link URL - optional">
             <Input value={d.link_url} onChange={(v) => set("link_url", v)} placeholder="/pricing or https://…" />
           </Field>
         </div>
@@ -228,12 +228,12 @@ function AnnouncementEditor({ draft, onClose, onSaved }: { draft: Draft; onClose
       </div>
       <div style={{ display: "flex", gap: 10 }}>
         <div style={{ flex: 1 }}>
-          <Field label="Show from (optional)">
+          <Field label="Show from - optional">
             <Input value={d.starts_at} onChange={(v) => set("starts_at", v)} type="datetime-local" />
           </Field>
         </div>
         <div style={{ flex: 1 }}>
-          <Field label="Hide after (optional)">
+          <Field label="Hide after - optional">
             <Input value={d.ends_at} onChange={(v) => set("ends_at", v)} type="datetime-local" />
           </Field>
         </div>

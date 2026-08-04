@@ -179,7 +179,7 @@ export function ProvTaxView() {
         ))}
       </div>
 
-      <Field label="Allowable deductions (optional)">
+      <Field label="Allowable deductions - optional">
         <Input type="number" value={deductions} onChange={setDeductions} placeholder="e.g. 50000 (home office, retirement annuity)" />
       </Field>
 
