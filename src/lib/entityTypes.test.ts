@@ -57,7 +57,7 @@ describe("entity classification helpers", () => {
     expect(annualReturnForm("trust")).toBe("IT12TR");
     expect(annualReturnForm("sole_proprietor")).toBe("ITR12");
     expect(annualReturnForm("partnership")).toBe("ITR12");
-    expect(annualReturnForm(null)).toBe("ITR12"); // unset → the owner's personal return
+    expect(annualReturnForm(null)).toBeNull(); // unset → form-agnostic, don't guess a personal ITR12
   });
 
   it("lists every entity type with a unique id and populated copy", () => {

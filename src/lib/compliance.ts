@@ -137,7 +137,9 @@ export function buildObligations(ctx: ComplianceContext): Obligation[] {
       icon: "📋",
       // Turnover Tax collapses income tax, CGT and dividends tax into one TT03
       // return; otherwise the form follows the legal entity type.
-      title: ctx.onTurnoverTax ? "Turnover Tax return (TT03)" : `Annual Income Tax (${annualForm})`,
+      // annualForm is null when the owner hasn't set a legal form yet — keep the
+      // form-agnostic "ITR12 / ITR14" wording rather than guessing a personal ITR12.
+      title: ctx.onTurnoverTax ? "Turnover Tax return (TT03)" : `Annual Income Tax (${annualForm ?? "ITR12 / ITR14"})`,
       freq: "Once yearly",
       due: `Last day of Feb ${year + 1}`,
       status: "elsewhere",
@@ -149,7 +151,9 @@ export function buildObligations(ctx: ComplianceContext): Obligation[] {
               ? "As a company / CC / co-op you file an ITR14"
               : annualForm === "IT12TR"
                 ? "As a trust you file an IT12TR"
-                : "As a sole proprietor or partner you declare the business in your own personal ITR12"
+                : annualForm === "ITR12"
+                  ? "As a sole proprietor or partner you declare the business in your own personal ITR12"
+                  : "The return depends on your legal form — a sole proprietor or partner declares it in their own personal ITR12, while a company, CC or co-op files an ITR14. Set your business type in Business details for guidance specific to you"
           }. Requires proper treatment of deductions, depreciation (wear and tear), home office claims, and capital gains. Your Worklog P&L and expense records are the source data — export them for your accountant.`,
       cta: "Open eFiling",
       ctaUrl: "https://www.sarsefiling.co.za",

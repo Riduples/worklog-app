@@ -101,11 +101,12 @@ export function registeredWithCipc(entity: TaxEntityType | null | undefined): bo
   return isCompanyLike(entity);
 }
 
-/** The annual income-tax return SARS expects for this legal form. */
-export function annualReturnForm(entity: TaxEntityType | null | undefined): string {
+/** The annual income-tax return SARS expects for this legal form, or null when
+ *  the form isn't set — the caller then stays form-agnostic rather than guessing
+ *  a personal ITR12 for what might be a company. */
+export function annualReturnForm(entity: TaxEntityType | null | undefined): string | null {
   if (isCompanyLike(entity)) return "ITR14";
   if (entity === "trust") return "IT12TR";
-  // Sole proprietor / partnership are declared in the owner's own personal
-  // return; default to ITR12 when the form isn't set yet.
-  return "ITR12";
+  if (entity === "sole_proprietor" || entity === "partnership") return "ITR12";
+  return null;
 }
