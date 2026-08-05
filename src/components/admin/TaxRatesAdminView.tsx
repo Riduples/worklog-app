@@ -30,6 +30,8 @@ type Draft = {
   sdl_rate: string;
   sdl_annual_threshold: string;
   company_tax_rate: string;
+  trust_tax_rate: string;
+  turnover_tax_max: string;
   medical_credit_first_two: string;
   medical_credit_additional: string;
   vat_rate: string;
@@ -38,10 +40,11 @@ type Draft = {
   note: string;
   brackets: BracketDraft[];
   sbcBrackets: BracketDraft[];
+  turnoverBrackets: BracketDraft[];
 };
 
 // The numeric fields, in display order. Keys match both the Draft and the DB row.
-const NUM_FIELDS: { key: keyof Omit<Draft, "id" | "tax_year" | "effective_from" | "effective_to" | "note" | "brackets" | "sbcBrackets">; label: string }[] = [
+const NUM_FIELDS: { key: keyof Omit<Draft, "id" | "tax_year" | "effective_from" | "effective_to" | "note" | "brackets" | "sbcBrackets" | "turnoverBrackets">; label: string }[] = [
   { key: "primary_rebate", label: "Primary rebate (R/yr)" },
   { key: "secondary_rebate", label: "Secondary rebate — 65+ (R/yr)" },
   { key: "tertiary_rebate", label: "Tertiary rebate — 75+ (R/yr)" },
@@ -54,6 +57,8 @@ const NUM_FIELDS: { key: keyof Omit<Draft, "id" | "tax_year" | "effective_from" 
   { key: "sdl_rate", label: "SDL rate (e.g. 0.01)" },
   { key: "sdl_annual_threshold", label: "SDL exemption threshold (R/yr)" },
   { key: "company_tax_rate", label: "Company tax rate (e.g. 0.27)" },
+  { key: "trust_tax_rate", label: "Trust tax rate (e.g. 0.45)" },
+  { key: "turnover_tax_max", label: "Turnover tax — max qualifying turnover (R/yr)" },
   { key: "vat_rate", label: "VAT rate (e.g. 0.15)" },
   { key: "mileage_rate", label: "Prescribed rate per km (R)" },
   { key: "tax_jar_rate", label: "Tax jar provision rate (e.g. 0.28)" },
@@ -82,7 +87,7 @@ const parseNum = (raw: string): number | null => {
 
 // Rates stored as a fraction (0.15, not 15) — sanity-checked to catch the classic
 // "typed 15 for 15%" that would misprice VAT/tax for every business.
-const FRACTION_KEYS: string[] = ["uif_employee_rate", "uif_employer_rate", "sdl_rate", "company_tax_rate", "vat_rate", "tax_jar_rate"];
+const FRACTION_KEYS: string[] = ["uif_employee_rate", "uif_employer_rate", "sdl_rate", "company_tax_rate", "trust_tax_rate", "vat_rate", "tax_jar_rate"];
 
 // Validate one bracket table the way the app reads it back: drop fully-blank rows,
 // require the rest complete with a fractional rate, sort ascending (the calc scans
@@ -166,6 +171,8 @@ function rowToDraft(row: TaxRateRow): Draft {
     sdl_rate: s(row.sdl_rate),
     sdl_annual_threshold: s(row.sdl_annual_threshold),
     company_tax_rate: s(row.company_tax_rate),
+    trust_tax_rate: s(row.trust_tax_rate),
+    turnover_tax_max: s(row.turnover_tax_max),
     medical_credit_first_two: s(row.medical_credit_first_two),
     medical_credit_additional: s(row.medical_credit_additional),
     vat_rate: s(row.vat_rate),
@@ -174,6 +181,7 @@ function rowToDraft(row: TaxRateRow): Draft {
     note: row.note ?? "",
     brackets: rowBracketsToDraft(row.paye_brackets),
     sbcBrackets: rowBracketsToDraft(row.sbc_brackets),
+    turnoverBrackets: rowBracketsToDraft(row.turnover_tax_brackets),
   };
 }
 
@@ -216,6 +224,8 @@ function newDraft(latest: TaxRateRow | undefined): Draft {
     sdl_rate: s(f.SDL_RATE),
     sdl_annual_threshold: s(f.SDL_ANNUAL_THRESHOLD),
     company_tax_rate: s(f.COMPANY_TAX_RATE),
+    trust_tax_rate: s(f.TRUST_TAX_RATE),
+    turnover_tax_max: s(f.TURNOVER_TAX_MAX),
     medical_credit_first_two: s(f.MEDICAL_CREDIT_FIRST_TWO),
     medical_credit_additional: s(f.MEDICAL_CREDIT_ADDITIONAL),
     vat_rate: s(f.VAT_RATE),
@@ -224,6 +234,7 @@ function newDraft(latest: TaxRateRow | undefined): Draft {
     note: "",
     brackets: f.PAYE_BRACKETS.map((b) => ({ from: s(b.from), base: s(b.base), rate: s(b.rate) })),
     sbcBrackets: f.SBC_BRACKETS.map((b) => ({ from: s(b.from), base: s(b.base), rate: s(b.rate) })),
+    turnoverBrackets: f.TURNOVER_TAX_BRACKETS.map((b) => ({ from: s(b.from), base: s(b.base), rate: s(b.rate) })),
   };
 }
 
@@ -292,7 +303,8 @@ export function TaxRatesAdminView() {
               Primary rebate R{Number(r.primary_rebate).toLocaleString("en-ZA")} · VAT {(Number(r.vat_rate) * 100).toFixed(0)}% ·
               Company tax {(Number(r.company_tax_rate) * 100).toFixed(0)}% · Mileage R{Number(r.mileage_rate)}/km ·
               {Array.isArray(r.paye_brackets) ? r.paye_brackets.length : 0} PAYE brackets ·{" "}
-              {Array.isArray(r.sbc_brackets) ? r.sbc_brackets.length : 0} SBC bands
+              {Array.isArray(r.sbc_brackets) ? r.sbc_brackets.length : 0} SBC bands ·{" "}
+              {Array.isArray(r.turnover_tax_brackets) ? r.turnover_tax_brackets.length : 0} turnover bands
             </div>
           </div>
         );
@@ -329,6 +341,10 @@ function TaxRateEditor({ draft, onClose, onSaved }: { draft: Draft; onClose: () 
     setD((p) => ({ ...p, sbcBrackets: p.sbcBrackets.map((b, j) => (j === i ? { ...b, [key]: value } : b)) }));
   const addSbcBracket = () => setD((p) => ({ ...p, sbcBrackets: [...p.sbcBrackets, { from: "", base: "", rate: "" }] }));
   const removeSbcBracket = (i: number) => setD((p) => ({ ...p, sbcBrackets: p.sbcBrackets.filter((_, j) => j !== i) }));
+  const setTurnoverBracket = (i: number, key: keyof BracketDraft, value: string) =>
+    setD((p) => ({ ...p, turnoverBrackets: p.turnoverBrackets.map((b, j) => (j === i ? { ...b, [key]: value } : b)) }));
+  const addTurnoverBracket = () => setD((p) => ({ ...p, turnoverBrackets: [...p.turnoverBrackets, { from: "", base: "", rate: "" }] }));
+  const removeTurnoverBracket = (i: number) => setD((p) => ({ ...p, turnoverBrackets: p.turnoverBrackets.filter((_, j) => j !== i) }));
 
   const handleSave = async () => {
     setError("");
@@ -374,6 +390,11 @@ function TaxRateEditor({ draft, onClose, onSaved }: { draft: Draft; onClose: () 
       setError(sbcParsed.error);
       return;
     }
+    const turnoverParsed = parseBrackets(d.turnoverBrackets, "Turnover Tax");
+    if ("error" in turnoverParsed) {
+      setError(turnoverParsed.error);
+      return;
+    }
 
     const payload = {
       tax_year: d.tax_year.trim(),
@@ -381,6 +402,7 @@ function TaxRateEditor({ draft, onClose, onSaved }: { draft: Draft; onClose: () 
       effective_to: d.effective_to,
       paye_brackets: payeParsed.brackets,
       sbc_brackets: sbcParsed.brackets,
+      turnover_tax_brackets: turnoverParsed.brackets,
       primary_rebate: g("primary_rebate"),
       secondary_rebate: g("secondary_rebate"),
       tertiary_rebate: g("tertiary_rebate"),
@@ -391,6 +413,8 @@ function TaxRateEditor({ draft, onClose, onSaved }: { draft: Draft; onClose: () 
       sdl_rate: g("sdl_rate"),
       sdl_annual_threshold: g("sdl_annual_threshold"),
       company_tax_rate: g("company_tax_rate"),
+      trust_tax_rate: g("trust_tax_rate"),
+      turnover_tax_max: g("turnover_tax_max"),
       medical_credit_first_two: g("medical_credit_first_two"),
       medical_credit_additional: g("medical_credit_additional"),
       vat_rate: g("vat_rate"),
@@ -444,6 +468,15 @@ function TaxRateEditor({ draft, onClose, onSaved }: { draft: Draft; onClose: () 
         the tax-free portion. Order low to high.
       </div>
       <BracketRows rows={d.sbcBrackets} onChange={setSbcBracket} onAdd={addSbcBracket} onRemove={removeSbcBracket} />
+
+      <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 0.6, margin: "16px 0 8px" }}>
+        Turnover Tax bands (annual turnover)
+      </div>
+      <div style={{ fontSize: 11, color: "#64748b", marginBottom: 8, lineHeight: 1.5 }}>
+        The Sixth Schedule micro-business scale, levied on turnover (not profit). Same columns as PAYE; the first band starts
+        at 0 with a 0 rate for the tax-free portion. Order low to high. The qualifying ceiling is set separately below.
+      </div>
+      <BracketRows rows={d.turnoverBrackets} onChange={setTurnoverBracket} onAdd={addTurnoverBracket} onRemove={removeTurnoverBracket} />
 
       <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 0.6, margin: "16px 0 8px" }}>
         Rebates, thresholds &amp; rates

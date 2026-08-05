@@ -10,6 +10,7 @@ import { useTaxFilings, useMarkFiled } from "@/lib/supabase/hooks/useTaxFilings"
 import { useCreditNotes } from "@/lib/supabase/hooks/useCreditNotes";
 import { sumCreditVat } from "@/lib/creditNotes";
 import { fmt, toLocalIsoDate } from "@/lib/format";
+import { incomeNet } from "@/lib/taxRates";
 import { shareReport } from "@/lib/docgen/shareReport";
 
 const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -94,11 +95,40 @@ export function Vat201View() {
     .reduce((s, r) => s + Number(r.vat_amount ?? 0), 0) - suppCreditVat;
   const vatDue = outputVAT - inputVAT;
 
+  // Turnover split by VAT supply type — VAT201 fields 1 (standard), 2 (zero-rated)
+  // and 3 (exempt), all ex-VAT. Invoices carry an ex-VAT invoice_amount; cash
+  // sales are gross so take incomeNet (zero-rated / exempt rows hold no VAT, so
+  // incomeNet == amount for them). Owner's-own-money income rows aren't supplies
+  // and are excluded, as are payments that only settle an invoice already counted.
+  const turnoverBySupply = (type: string) => {
+    const inv = (invoices ?? [])
+      .filter((r) => r.issue_date >= fromDate && r.issue_date <= toDate && (r.vat_supply_type ?? "standard") === type)
+      .reduce((s, r) => s + Number(r.invoice_amount ?? 0), 0);
+    const cash = (income ?? [])
+      .filter(
+        (r) =>
+          !r.matched_invoice_id &&
+          !r.is_personal &&
+          r.transaction_date >= fromDate &&
+          r.transaction_date <= toDate &&
+          (r.vat_supply_type ?? "standard") === type
+      )
+      .reduce((s, r) => s + incomeNet(r), 0);
+    return inv + cash;
+  };
+  const standardTurnover = turnoverBySupply("standard");
+  const zeroRatedTurnover = turnoverBySupply("zero_rated");
+  const exemptTurnover = turnoverBySupply("exempt");
+  const totalTurnover = standardTurnover + zeroRatedTurnover + exemptTurnover;
+
   const vat201Filings = (filings ?? []).filter((f) => f.filing_type === "vat201");
   const alreadyFiled = vat201Filings.some((f) => f.period_label === label);
 
   const handleShare = () => {
     const lines = [
+      `Standard-rated supplies (excl. VAT): ${fmt(standardTurnover)}`,
+      ...(zeroRatedTurnover > 0 ? [`Zero-rated supplies: ${fmt(zeroRatedTurnover)}`] : []),
+      ...(exemptTurnover > 0 ? [`Exempt supplies: ${fmt(exemptTurnover)}`] : []),
       `Output VAT (on sales): ${fmt(outputVAT)}`,
       ...(custCreditVat > 0 ? [`Less credit notes: −${fmt(custCreditVat)}`] : []),
       `Input VAT (on purchases): ${fmt(inputVAT)}`,
@@ -141,6 +171,30 @@ export function Vat201View() {
         <button onClick={() => step(1)} style={{ background: "#f1f5f9", border: "none", borderRadius: 10, padding: "8px 14px", fontSize: 16, cursor: "pointer" }}>
           ›
         </button>
+      </div>
+
+      <div style={{ background: "#fff", border: "1.5px solid #e2e8f0", borderRadius: 16, padding: "16px 18px", marginBottom: 14 }}>
+        <div style={{ fontSize: 11, color: "#64748b", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 10 }}>
+          Supplies this period (excl. VAT)
+        </div>
+        {([
+          ["Standard-rated (15%)", standardTurnover],
+          ["Zero-rated (0%)", zeroRatedTurnover],
+          ["Exempt", exemptTurnover],
+        ] as [string, number][]).map(([l, v]) => (
+          <div key={l} style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+            <span style={{ fontSize: 13, color: "#374151" }}>{l}</span>
+            <span style={{ fontSize: 14, fontWeight: 600, color: "#0C4A6E" }}>{fmt(v)}</span>
+          </div>
+        ))}
+        <div style={{ borderTop: "1px solid #e2e8f0", marginTop: 6, paddingTop: 8, display: "flex", justifyContent: "space-between" }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: "#111" }}>Total turnover</span>
+          <span style={{ fontSize: 14, fontWeight: 800, color: "#0C4A6E" }}>{fmt(totalTurnover)}</span>
+        </div>
+        <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 8, lineHeight: 1.5 }}>
+          VAT201 fields 1–3. Only standard-rated supplies produce output VAT — zero-rated and exempt turnover is declared but
+          carries none.
+        </div>
       </div>
 
       <div style={{ background: "#0C4A6E", borderRadius: 16, padding: "18px 20px", marginBottom: 14 }}>

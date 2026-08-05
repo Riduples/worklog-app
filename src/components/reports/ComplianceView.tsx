@@ -7,6 +7,7 @@ import { useStaffRegister } from "@/lib/supabase/hooks/useStaffRegister";
 import { useIncome } from "@/lib/supabase/hooks/useIncome";
 import { useTaxFilings } from "@/lib/supabase/hooks/useTaxFilings";
 import { buildObligations, STATUS_STYLE } from "@/lib/compliance";
+import { entityTypeMeta, type TaxEntityType } from "@/lib/entityTypes";
 import type { Plan } from "@/lib/tiers";
 
 type Filter = "all" | "worklog" | "external" | "employees";
@@ -33,6 +34,8 @@ export function ComplianceView() {
       .reduce((s, r) => s + Number(r.amount), 0),
     lastVat201Date: (filings ?? []).find((f) => f.filing_type === "vat201")?.filed_date ?? null,
     lastEmp201Date: (filings ?? []).find((f) => f.filing_type === "emp201")?.filed_date ?? null,
+    entityType: (business?.tax_entity_type as TaxEntityType | null) ?? null,
+    onTurnoverTax: business?.on_turnover_tax ?? false,
   });
 
   const filtered =
@@ -47,6 +50,7 @@ export function ComplianceView() {
   const groups = [...new Set(obligations.map((o) => o.group))];
   const count = (s: string) => obligations.filter((o) => o.status === s).length;
   const plan = (business?.plan ?? "solo") as Plan;
+  const entityLabel = entityTypeMeta((business?.tax_entity_type as TaxEntityType | null) ?? null)?.short;
 
   return (
     <div style={{ padding: "20px 16px 100px" }}>
@@ -70,6 +74,8 @@ export function ComplianceView() {
 
       <div style={{ background: "#0C4A6E", borderRadius: 12, padding: "11px 14px", marginBottom: 14, fontSize: 12, color: "#38BDF8", lineHeight: 1.6 }}>
         <span style={{ fontWeight: 700, color: "#fff" }}>Your business profile: </span>
+        {entityLabel ? `${entityLabel} · ` : ""}
+        {business?.on_turnover_tax ? "Turnover Tax · " : ""}
         {business?.vat_number ? "VAT registered · " : "Not VAT registered · "}
         {employeeCount > 0 ? `${employeeCount} employee${employeeCount !== 1 ? "s" : ""} · ` : "No employees · "}
         {business?.sdl_registered ? "SDL registered · " : "SDL not registered · "}

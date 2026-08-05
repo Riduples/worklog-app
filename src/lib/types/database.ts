@@ -379,13 +379,16 @@ export type Database = {
           default_quote_terms: string | null
           email: string | null
           id: string
+          is_sbc: boolean
           logo_url: string | null
           name: string | null
+          on_turnover_tax: boolean
           paye_ref: string | null
           phone: string | null
           plan: string
           sdl_registered: boolean
           show_all_tools: boolean
+          tax_entity_type: string | null
           updated_at: string | null
           user_id: string
           vat_number: string | null
@@ -403,13 +406,16 @@ export type Database = {
           default_quote_terms?: string | null
           email?: string | null
           id?: string
+          is_sbc?: boolean
           logo_url?: string | null
           name?: string | null
+          on_turnover_tax?: boolean
           paye_ref?: string | null
           phone?: string | null
           plan?: string
           sdl_registered?: boolean
           show_all_tools?: boolean
+          tax_entity_type?: string | null
           updated_at?: string | null
           user_id: string
           vat_number?: string | null
@@ -427,13 +433,16 @@ export type Database = {
           default_quote_terms?: string | null
           email?: string | null
           id?: string
+          is_sbc?: boolean
           logo_url?: string | null
           name?: string | null
+          on_turnover_tax?: boolean
           paye_ref?: string | null
           phone?: string | null
           plan?: string
           sdl_registered?: boolean
           show_all_tools?: boolean
+          tax_entity_type?: string | null
           updated_at?: string | null
           user_id?: string
           vat_number?: string | null
@@ -911,6 +920,7 @@ export type Database = {
           user_id: string
           vat_amount: number
           vat_rate: number | null
+          vat_supply_type: string
           what_for: string | null
         }
         Insert: {
@@ -936,6 +946,7 @@ export type Database = {
           user_id: string
           vat_amount?: number
           vat_rate?: number | null
+          vat_supply_type?: string
           what_for?: string | null
         }
         Update: {
@@ -961,6 +972,7 @@ export type Database = {
           user_id?: string
           vat_amount?: number
           vat_rate?: number | null
+          vat_supply_type?: string
           what_for?: string | null
         }
         Relationships: [
@@ -1074,6 +1086,7 @@ export type Database = {
           user_id: string
           vat_amount: number | null
           vat_rate: number | null
+          vat_supply_type: string
         }
         Insert: {
           balance_due?: number
@@ -1100,6 +1113,7 @@ export type Database = {
           user_id: string
           vat_amount?: number | null
           vat_rate?: number | null
+          vat_supply_type?: string
         }
         Update: {
           balance_due?: number
@@ -1126,6 +1140,7 @@ export type Database = {
           user_id?: string
           vat_amount?: number | null
           vat_rate?: number | null
+          vat_supply_type?: string
         }
         Relationships: [
           {
@@ -2077,6 +2092,9 @@ export type Database = {
           tax_jar_rate: number
           tax_year: string
           tertiary_rebate: number
+          trust_tax_rate: number
+          turnover_tax_brackets: Json
+          turnover_tax_max: number
           uif_ceiling: number
           uif_employee_rate: number
           uif_employer_rate: number
@@ -2103,6 +2121,9 @@ export type Database = {
           tax_jar_rate: number
           tax_year: string
           tertiary_rebate: number
+          trust_tax_rate: number
+          turnover_tax_brackets: Json
+          turnover_tax_max: number
           uif_ceiling: number
           uif_employee_rate: number
           uif_employer_rate: number
@@ -2129,6 +2150,9 @@ export type Database = {
           tax_jar_rate?: number
           tax_year?: string
           tertiary_rebate?: number
+          trust_tax_rate?: number
+          turnover_tax_brackets?: Json
+          turnover_tax_max?: number
           uif_ceiling?: number
           uif_employee_rate?: number
           uif_employer_rate?: number
@@ -2446,6 +2470,7 @@ export type Database = {
           user_id: string
           vat_amount: number | null
           vat_rate: number | null
+          vat_supply_type: string
         }
         SetofOptions: {
           from: "*"

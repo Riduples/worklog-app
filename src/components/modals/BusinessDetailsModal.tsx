@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/Textarea";
 import { Chips } from "@/components/ui/Chips";
 import { SaveBtn } from "@/components/ui/SaveBtn";
 import { BUSINESS_TYPES, coreToolsFor, type BusinessType } from "@/lib/businessTypes";
+import { TAX_ENTITY_TYPES, canQualifySbc, type TaxEntityType } from "@/lib/entityTypes";
 import { LOGO_BUCKET, MAX_LOGO_BYTES, storagePathFromUrl } from "@/lib/logo";
 import { useUpdateBusinessProfile, type BusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 import { useTaxRates } from "@/lib/taxRates";
@@ -33,6 +34,9 @@ export function BusinessDetailsModal({ business, onClose }: { business: Business
   const [vatPeriod, setVatPeriod] = useState(business.vat_period ?? "Bi-monthly");
   const [payeRef, setPayeRef] = useState(business.paye_ref ?? "");
   const [sdlRegistered, setSdlRegistered] = useState(business.sdl_registered ?? false);
+  const [taxEntityType, setTaxEntityType] = useState<TaxEntityType | "">((business.tax_entity_type as TaxEntityType) ?? "");
+  const [isSbc, setIsSbc] = useState(business.is_sbc ?? false);
+  const [onTurnoverTax, setOnTurnoverTax] = useState(business.on_turnover_tax ?? false);
   const [logoUrl, setLogoUrl] = useState(business.logo_url ?? "");
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
@@ -95,12 +99,20 @@ export function BusinessDetailsModal({ business, onClose }: { business: Business
 
   const handleSave = () => {
     setError("");
+    // Keep the regime flags consistent with the entity type before saving: SBC is
+    // only valid for a company / CC / co-op, Turnover Tax never for a trust, and
+    // the two are mutually exclusive (the DB CHECK enforces the last one too).
+    const cleanTurnover = taxEntityType !== "trust" && onTurnoverTax;
+    const cleanSbc = canQualifySbc(taxEntityType || null) && !cleanTurnover && isSbc;
     updateProfile.mutate(
       {
         id: business.id,
         changes: {
           name: name.trim(),
           business_type: businessType || null,
+          tax_entity_type: taxEntityType || null,
+          is_sbc: cleanSbc,
+          on_turnover_tax: cleanTurnover,
           show_all_tools: showAllTools,
           address: address.trim() || null,
           phone: phone.trim() || null,
@@ -307,6 +319,65 @@ export function BusinessDetailsModal({ business, onClose }: { business: Business
         These decide which SARS returns apply to you and appear on your tax reports. Leave blank whatever you&apos;re not
         registered for.
       </div>
+
+      <Field label="How you're registered with SARS">
+        <Chips
+          options={TAX_ENTITY_TYPES.map((e) => e.label)}
+          selected={TAX_ENTITY_TYPES.find((e) => e.id === taxEntityType)?.label ?? ""}
+          onSelect={(label) => {
+            const id = TAX_ENTITY_TYPES.find((e) => e.label === label)?.id ?? "";
+            setTaxEntityType(id);
+            // Drop regime flags that no longer apply to the new legal form.
+            if (id === "trust") setOnTurnoverTax(false);
+            if (!canQualifySbc(id || null)) setIsSbc(false);
+          }}
+        />
+        <p style={{ fontSize: 11, color: "#64748b", marginTop: 6, lineHeight: 1.5 }}>
+          {TAX_ENTITY_TYPES.find((e) => e.id === taxEntityType)?.desc ??
+            "Your legal form decides how your income tax is worked out and which annual return you file."}
+        </p>
+      </Field>
+
+      {taxEntityType !== "trust" && (
+        <Field label="Turnover Tax (micro business)">
+          <button
+            type="button"
+            onClick={() => {
+              const next = !onTurnoverTax;
+              setOnTurnoverTax(next);
+              if (next) setIsSbc(false); // mutually exclusive
+            }}
+            style={{ width: "100%", textAlign: "left", padding: "12px 14px", borderRadius: 12, border: `1.5px solid ${onTurnoverTax ? "#0C4A6E" : "#e2e8f0"}`, background: onTurnoverTax ? "#F0F9FF" : "#fff", cursor: "pointer", display: "flex", alignItems: "center", gap: 10 }}
+          >
+            <span style={{ fontSize: 18 }}>{onTurnoverTax ? "✅" : "⬜"}</span>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: onTurnoverTax ? "#0C4A6E" : "#111" }}>Registered for Turnover Tax</div>
+              <div style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>
+                A single simplified tax on turnover, replacing income &amp; provisional tax. For qualifying micro businesses only.
+              </div>
+            </div>
+          </button>
+        </Field>
+      )}
+
+      {canQualifySbc(taxEntityType || null) && !onTurnoverTax && (
+        <Field label="Small Business Corporation (SBC)">
+          <button
+            type="button"
+            onClick={() => setIsSbc((p) => !p)}
+            style={{ width: "100%", textAlign: "left", padding: "12px 14px", borderRadius: 12, border: `1.5px solid ${isSbc ? "#0C4A6E" : "#e2e8f0"}`, background: isSbc ? "#F0F9FF" : "#fff", cursor: "pointer", display: "flex", alignItems: "center", gap: 10 }}
+          >
+            <span style={{ fontSize: 18 }}>{isSbc ? "✅" : "⬜"}</span>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: isSbc ? "#0C4A6E" : "#111" }}>Qualifies as an SBC</div>
+              <div style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>
+                Reduced sliding scale instead of the flat company rate. All shareholders individuals, turnover under R20m, not a
+                personal-service or investment company.
+              </div>
+            </div>
+          </button>
+        </Field>
+      )}
 
       <Field label="VAT number">
         <Input value={vatNumber} onChange={setVatNumber} placeholder="Leave blank if not VAT registered" />

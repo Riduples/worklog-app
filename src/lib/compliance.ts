@@ -3,6 +3,8 @@
 // tax_filings recency, rather than the prototype's registration-status-only
 // checks. Reference URLs and penalty notes are the prototype's copy verbatim.
 
+import { annualReturnForm, registeredWithCipc, type TaxEntityType } from "@/lib/entityTypes";
+
 // Named for what they mean, not what they look like. These were once "green" /
 // "amber" / "red" / "blue" / "grey", which stopped being true when the app went
 // navy: "green" rendered sky-blue and sat next to a separate "blue". The names
@@ -48,6 +50,12 @@ export type ComplianceContext = {
   annualIncome: number;
   lastVat201Date: string | null;
   lastEmp201Date: string | null;
+  // The business's SARS legal form, or null if the owner hasn't set one. When
+  // null the dashboard keeps its old form-agnostic behaviour rather than guessing.
+  entityType: TaxEntityType | null;
+  // Registered for Turnover Tax — the single simplified tax that replaces income
+  // tax, provisional tax, CGT and dividends tax for a qualifying micro business.
+  onTurnoverTax: boolean;
 };
 
 export function buildObligations(ctx: ComplianceContext): Obligation[] {
@@ -55,6 +63,15 @@ export function buildObligations(ctx: ComplianceContext): Obligation[] {
   const year = today.getFullYear();
   const month = today.getMonth() + 1; // 1-based
   const needsVat = ctx.annualIncome > 1_000_000;
+
+  const entity = ctx.entityType;
+  // The annual return this legal form files (ITR12 / ITR14 / IT12TR).
+  const annualForm = annualReturnForm(entity);
+  // Whether CIPC returns apply. Tri-state on purpose: true (company/CC/co-op),
+  // false (sole prop / partnership / trust — genuinely exempt), or null when the
+  // form is unset, in which case we leave the CIPC items showing as before rather
+  // than hide a real obligation on a guess.
+  const cipcApplies = entity == null ? null : registeredWithCipc(entity);
 
   const nextMonthName = MONTHS[month % 12];
   const nextMonthYear = month === 12 ? year + 1 : year;
@@ -101,25 +118,39 @@ export function buildObligations(ctx: ComplianceContext): Obligation[] {
       group: "SARS",
       id: "provtax",
       icon: "📅",
-      title: "Provisional Tax (IRP6)",
+      // On Turnover Tax there is no provisional tax — the two interim TT02
+      // payments take its place, on the same Aug/Feb rhythm.
+      title: ctx.onTurnoverTax ? "Turnover Tax — interim payments (TT02)" : "Provisional Tax (IRP6)",
       freq: "Twice yearly — Aug and Feb",
       due: provDue,
       status: "ready",
       where: "worklog",
       href: "/provtax",
-      note: "Period 1 (P1) due 31 August — based on first 6 months income. Period 2 (P2) due last day of February — full year. Penalty: 20% if estimate is more than 20% below actual tax. Worklog estimates your amount due — submit the actual return via eFiling or your accountant.",
-      cta: "Open IRP6 Estimator",
+      note: ctx.onTurnoverTax
+        ? "On Turnover Tax you make two interim payments a year in place of provisional tax — the first by end of August, the second by the last day of February — each on the TT02 form. Worklog estimates the amount from your turnover; submit and pay via eFiling."
+        : "Period 1 (P1) due 31 August — based on first 6 months income. Period 2 (P2) due last day of February — full year. Penalty: 20% if estimate is more than 20% below actual tax. Worklog estimates your amount due — submit the actual return via eFiling or your accountant.",
+      cta: ctx.onTurnoverTax ? "Open Turnover Tax estimator" : "Open IRP6 Estimator",
     },
     {
       group: "SARS",
       id: "annualtax",
       icon: "📋",
-      title: "Annual Income Tax (ITR12 / ITR14)",
+      // Turnover Tax collapses income tax, CGT and dividends tax into one TT03
+      // return; otherwise the form follows the legal entity type.
+      title: ctx.onTurnoverTax ? "Turnover Tax return (TT03)" : `Annual Income Tax (${annualForm})`,
       freq: "Once yearly",
       due: `Last day of Feb ${year + 1}`,
       status: "elsewhere",
       where: "accountant",
-      note: "Filed via eFiling or your tax practitioner. ITR12 for individuals and sole proprietors. ITR14 for companies. Requires proper treatment of deductions, depreciation (wear and tear), home office claims, and capital gains. Your Worklog P&L and expense records are the source data — export them for your accountant.",
+      note: ctx.onTurnoverTax
+        ? "On Turnover Tax you file one TT03 return a year in place of normal income tax — with no separate provisional, capital gains or dividends tax. Filed via eFiling or your tax practitioner; your Worklog turnover records are the source data."
+        : `Filed via eFiling or your tax practitioner. ${
+            annualForm === "ITR14"
+              ? "As a company / CC / co-op you file an ITR14"
+              : annualForm === "IT12TR"
+                ? "As a trust you file an IT12TR"
+                : "As a sole proprietor or partner you declare the business in your own personal ITR12"
+          }. Requires proper treatment of deductions, depreciation (wear and tear), home office claims, and capital gains. Your Worklog P&L and expense records are the source data — export them for your accountant.`,
       cta: "Open eFiling",
       ctaUrl: "https://www.sarsefiling.co.za",
     },
@@ -172,10 +203,16 @@ export function buildObligations(ctx: ComplianceContext): Obligation[] {
       icon: "🏢",
       title: "CIPC Annual Return",
       freq: "Annually — anniversary of registration",
-      due: "Annual — check BizPortal",
-      status: "elsewhere",
+      due: cipcApplies === false ? "Not applicable" : "Annual — check BizPortal",
+      // Only companies / CCs / co-ops register with CIPC. A known sole proprietor,
+      // partnership or trust is genuinely exempt (na); an unset form keeps the
+      // original always-shown behaviour.
+      status: cipcApplies === false ? "na" : "elsewhere",
       where: "external",
-      note: "For registered companies (Pty Ltd, NPC, CC) only. Filed and fee paid on BizPortal (bizportal.gov.za). Fee is turnover-based — R100–R3,000 depending on size. A deregistered company cannot sign contracts or open bank accounts. Sole traders and partnerships do not need this.",
+      note:
+        cipcApplies === false
+          ? "Only registered companies, CCs and co-operatives file a CIPC Annual Return. As a sole proprietor, partnership or trust you aren't registered with CIPC, so this doesn't apply to you."
+          : "For registered companies (Pty Ltd, NPC, CC) only. Filed and fee paid on BizPortal (bizportal.gov.za). Fee is turnover-based — R100–R3,000 depending on size. A deregistered company cannot sign contracts or open bank accounts. Sole traders and partnerships do not need this.",
       cta: "Go to BizPortal",
       ctaUrl: "https://www.bizportal.gov.za",
     },
@@ -185,10 +222,13 @@ export function buildObligations(ctx: ComplianceContext): Obligation[] {
       icon: "👤",
       title: "Beneficial Ownership Declaration",
       freq: "Annually (with Annual Return)",
-      due: "Annual — check BizPortal",
-      status: "elsewhere",
+      due: cipcApplies === false ? "Not applicable" : "Annual — check BizPortal",
+      status: cipcApplies === false ? "na" : "elsewhere",
       where: "external",
-      note: "Declared on BizPortal alongside the Annual Return. Lists all individuals who ultimately own or control 5% or more of the company. Required since April 2024. Has been blocking Annual Return filings when outstanding — resolve on BizPortal before your Annual Return.",
+      note:
+        cipcApplies === false
+          ? "Filed by companies and CCs alongside their CIPC Annual Return. It doesn't apply to sole proprietors, partnerships or trusts, which aren't registered with CIPC."
+          : "Declared on BizPortal alongside the Annual Return. Lists all individuals who ultimately own or control 5% or more of the company. Required since April 2024. Has been blocking Annual Return filings when outstanding — resolve on BizPortal before your Annual Return.",
       cta: "Go to BizPortal",
       ctaUrl: "https://www.bizportal.gov.za",
     },

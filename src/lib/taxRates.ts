@@ -26,6 +26,9 @@ export type TaxRateSet = {
   SECONDARY_REBATE: number;
   TERTIARY_REBATE: number;
   COMPANY_TAX_RATE: number;
+  // Flat rate a trust pays on its taxable income (special trusts aside, which are
+  // taxed on the individual scale). No rebates apply.
+  TRUST_TAX_RATE: number;
   MEDICAL_CREDIT_FIRST_TWO: number;
   MEDICAL_CREDIT_ADDITIONAL: number;
   PAYE_BRACKETS: PayeBracket[];
@@ -33,6 +36,12 @@ export type TaxRateSet = {
   // PAYE_BRACKETS — a qualifying small company is taxed on this instead of the flat
   // COMPANY_TAX_RATE, so it lives here alongside the other bands.
   SBC_BRACKETS: PayeBracket[];
+  // SARS Turnover Tax (Sixth Schedule) sliding scale for micro businesses,
+  // levied on TAXABLE TURNOVER (receipts) rather than profit. Same {from,base,rate}
+  // shape. A business only qualifies below TURNOVER_TAX_MAX.
+  TURNOVER_TAX_BRACKETS: PayeBracket[];
+  // The maximum qualifying annual turnover to be on the Turnover Tax system.
+  TURNOVER_TAX_MAX: number;
   TAX_YEAR: string;
 };
 
@@ -56,6 +65,7 @@ export const TAX_RATES: TaxRateSet = {
   SECONDARY_REBATE: 9765,
   TERTIARY_REBATE: 3249,
   COMPANY_TAX_RATE: 0.27,
+  TRUST_TAX_RATE: 0.45,
   MEDICAL_CREDIT_FIRST_TWO: 376,
   MEDICAL_CREDIT_ADDITIONAL: 254,
   PAYE_BRACKETS: [
@@ -80,6 +90,19 @@ export const TAX_RATES: TaxRateSet = {
     { from: 365000, base: 18620, rate: 0.21 },
     { from: 550000, base: 57470, rate: 0.27 },
   ],
+  // SARS Turnover Tax table for the 2027 year of assessment — the first change to
+  // this regime since 2009. The tax-free band rose to R600,000 and the qualifying
+  // ceiling to R2.3m (effective 1 March 2026 for individuals, 1 April 2026 for
+  // companies). Levied on taxable turnover, not profit. Like the other tables the
+  // cumulative bases fall out of the band widths — 1%×(950,000−600,000)=3,500 and
+  // 3,500+2%×(1,400,000−950,000)=12,500 — which taxRates.test.ts asserts.
+  TURNOVER_TAX_BRACKETS: [
+    { from: 0, base: 0, rate: 0 },
+    { from: 600000, base: 0, rate: 0.01 },
+    { from: 950000, base: 3500, rate: 0.02 },
+    { from: 1400000, base: 12500, rate: 0.03 },
+  ],
+  TURNOVER_TAX_MAX: 2300000,
   TAX_YEAR: "2026/27",
 };
 
@@ -121,10 +144,16 @@ export function resolveTaxRates(row: Tables<"tax_rates"> | null | undefined): Ta
     SECONDARY_REBATE: num(row.secondary_rebate),
     TERTIARY_REBATE: num(row.tertiary_rebate),
     COMPANY_TAX_RATE: num(row.company_tax_rate),
+    // Columns added after the table shipped (migration 0107) — a row written
+    // before then has them null, so fall back to the known-good hardcoded value
+    // rather than coercing null to 0 and taxing a trust at 0% / breaking turnover tax.
+    TRUST_TAX_RATE: row.trust_tax_rate != null ? num(row.trust_tax_rate) : TAX_RATES.TRUST_TAX_RATE,
     MEDICAL_CREDIT_FIRST_TWO: num(row.medical_credit_first_two),
     MEDICAL_CREDIT_ADDITIONAL: num(row.medical_credit_additional),
     PAYE_BRACKETS: resolveBrackets(row.paye_brackets, TAX_RATES.PAYE_BRACKETS),
     SBC_BRACKETS: resolveBrackets(row.sbc_brackets, TAX_RATES.SBC_BRACKETS),
+    TURNOVER_TAX_BRACKETS: resolveBrackets(row.turnover_tax_brackets, TAX_RATES.TURNOVER_TAX_BRACKETS),
+    TURNOVER_TAX_MAX: row.turnover_tax_max != null ? num(row.turnover_tax_max) : TAX_RATES.TURNOVER_TAX_MAX,
     TAX_YEAR: row.tax_year,
   };
 }
@@ -169,6 +198,15 @@ function calcPAYE(annualIncome: number, rates: TaxRateSet = TAX_RATES): number {
 // assert; this just applies the scale.
 function calcSBC(taxableIncome: number, rates: TaxRateSet = TAX_RATES): number {
   return taxFromBrackets(taxableIncome, rates.SBC_BRACKETS);
+}
+
+// Annual Turnover Tax for a micro business on the Sixth Schedule. Unlike every
+// other calc here it is levied on TAXABLE TURNOVER (receipts), not profit, and
+// replaces income tax, provisional tax, CGT and dividends tax entirely — so no
+// rebate, deduction or credit is applied on top. Eligibility (turnover ≤
+// TURNOVER_TAX_MAX, and the qualifying-business tests) is the caller's to assert.
+function calcTurnoverTax(taxableTurnover: number, rates: TaxRateSet = TAX_RATES): number {
+  return taxFromBrackets(taxableTurnover, rates.TURNOVER_TAX_BRACKETS);
 }
 
 // Monthly PAYE for a given gross, assuming the same amount every month all year.
@@ -231,7 +269,7 @@ function calcMedicalCredit(members: number, rates: TaxRateSet = TAX_RATES): numb
 // The calculations are plain functions and are exported as such — server code and
 // tests can call them directly (default rates = the hardcoded fallback), and a
 // component gets rate-bound versions from useTaxRates() below.
-export { calcPAYE, calcSBC, calcMonthlyPAYE, calcUIF, calcMedicalCredit, calcRebate };
+export { calcPAYE, calcSBC, calcTurnoverTax, calcMonthlyPAYE, calcUIF, calcMedicalCredit, calcRebate };
 
 // useTaxRates — the component-facing convenience. Reads the current tax year's
 // rates from the tax_rates table (cached; falls back to the hardcoded set until it
@@ -265,6 +303,7 @@ export function useTaxRates() {
     ...rates,
     calcPAYE: (annualIncome: number) => calcPAYE(annualIncome, rates),
     calcSBC: (taxableIncome: number) => calcSBC(taxableIncome, rates),
+    calcTurnoverTax: (taxableTurnover: number) => calcTurnoverTax(taxableTurnover, rates),
     calcMonthlyPAYE: (monthlyGross: number, payPeriod?: "Weekly" | "Fortnightly" | "Monthly") =>
       calcMonthlyPAYE(monthlyGross, payPeriod, rates),
     calcUIF: (grossWages: number) => calcUIF(grossWages, rates),

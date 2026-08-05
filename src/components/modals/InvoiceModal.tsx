@@ -18,6 +18,8 @@ import { useCreateInvoice, useConvertQuoteToInvoice } from "@/lib/supabase/hooks
 import { useQuotes, type Quote, type QuoteLineItem } from "@/lib/supabase/hooks/useQuotes";
 import { createClient } from "@/lib/supabase/client";
 import { RECURRENCE_OPTIONS, recurrenceNext, type Recurrence } from "@/lib/recurrence";
+import { VAT_SUPPLY_TYPES, carriesVat, type VatSupplyType } from "@/lib/vatSupplyTypes";
+import { Chips } from "@/components/ui/Chips";
 import { UPGRADE_DETAILS, type Plan } from "@/lib/tiers";
 
 export function InvoiceModal({ sourceQuote, onClose }: { sourceQuote?: Quote; onClose: () => void }) {
@@ -31,6 +33,7 @@ export function InvoiceModal({ sourceQuote, onClose }: { sourceQuote?: Quote; on
   const [srcQuote, setSrcQuote] = useState<Quote | null>(sourceQuote ?? null);
   const [terms, setTerms] = useState("");
   const [termsSeeded, setTermsSeeded] = useState(false);
+  const [supplyType, setSupplyType] = useState<VatSupplyType>("standard");
   const [error, setError] = useState("");
 
   const { data: contacts } = useContacts();
@@ -52,7 +55,8 @@ export function InvoiceModal({ sourceQuote, onClose }: { sourceQuote?: Quote; on
 
   const subtotal = salesLinesSubtotal(items);
   const isVatRegistered = !!business?.vat_number;
-  const vatAmount = isVatRegistered ? subtotal * VAT_RATE : 0;
+  // Zero-rated and exempt supplies carry no output VAT even when registered.
+  const vatAmount = isVatRegistered && carriesVat(supplyType) ? subtotal * VAT_RATE : 0;
   const depositNum = parseFloat(depositReceived) || 0;
   const balanceDue = subtotal - depositNum;
 
@@ -124,8 +128,9 @@ export function InvoiceModal({ sourceQuote, onClose }: { sourceQuote?: Quote; on
           issue_date: issueDate,
           due_date: dueDate || null,
           status: "unpaid",
-          vat_rate: isVatRegistered ? VAT_RATE : null,
+          vat_rate: isVatRegistered ? (carriesVat(supplyType) ? VAT_RATE : 0) : null,
           vat_amount: vatAmount,
+          vat_supply_type: supplyType,
           terms: terms.trim() || null,
           recurrence: canRecur ? recurrence : "none",
           next_run_date: canRecur ? nextRunDate : null,
@@ -216,6 +221,22 @@ export function InvoiceModal({ sourceQuote, onClose }: { sourceQuote?: Quote; on
 
       <SalesLineItemsEditor items={items} onChange={setItems} />
 
+      {/* VAT treatment is a whole-invoice choice here. Only offered for a fresh
+          invoice: a conversion carries the quote's figures through the RPC, which
+          takes the standard-rated amounts, so it stays standard-rated. */}
+      {!srcQuote && isVatRegistered && (
+        <Field label="VAT treatment">
+          <Chips
+            options={VAT_SUPPLY_TYPES.map((v) => v.label)}
+            selected={VAT_SUPPLY_TYPES.find((v) => v.id === supplyType)?.label ?? ""}
+            onSelect={(label) => {
+              const found = VAT_SUPPLY_TYPES.find((v) => v.label === label);
+              if (found) setSupplyType(found.id);
+            }}
+          />
+        </Field>
+      )}
+
       <Field label="Deposit already received (R)">
         <Input value={depositReceived} onChange={setDepositReceived} type="number" placeholder="0.00" />
       </Field>
@@ -229,13 +250,19 @@ export function InvoiceModal({ sourceQuote, onClose }: { sourceQuote?: Quote; on
 
       <div style={{ background: "#F0F9FF", borderRadius: 12, padding: "12px 14px", marginBottom: 16, fontSize: 13, color: "#0369A1" }}>
         <div style={{ display: "flex", justifyContent: "space-between" }}>
-          <span>Subtotal{isVatRegistered ? " (excl. VAT)" : ""}</span>
+          <span>Subtotal{isVatRegistered && carriesVat(supplyType) ? " (excl. VAT)" : ""}</span>
           <span>{fmt(subtotal)}</span>
         </div>
-        {isVatRegistered && (
+        {isVatRegistered && carriesVat(supplyType) && (
           <div style={{ display: "flex", justifyContent: "space-between" }}>
             <span>VAT ({(VAT_RATE * 100).toFixed(0)}%)</span>
             <span>{fmt(vatAmount)}</span>
+          </div>
+        )}
+        {isVatRegistered && !carriesVat(supplyType) && (
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <span>{supplyType === "zero_rated" ? "Zero-rated (0% VAT)" : "Exempt (no VAT)"}</span>
+            <span>{fmt(0)}</span>
           </div>
         )}
         {depositNum > 0 && (
@@ -245,7 +272,7 @@ export function InvoiceModal({ sourceQuote, onClose }: { sourceQuote?: Quote; on
           </div>
         )}
         <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 800, fontSize: 16, marginTop: 6, paddingTop: 6, borderTop: "1.5px solid #BAE6FD" }}>
-          <span>Balance due{isVatRegistered ? " (incl. VAT)" : ""}</span>
+          <span>Balance due{isVatRegistered && carriesVat(supplyType) ? " (incl. VAT)" : ""}</span>
           <span>{fmt(balanceDue + vatAmount)}</span>
         </div>
       </div>

@@ -5,6 +5,7 @@ import {
   calcMonthlyPAYE,
   calcPAYE,
   calcSBC,
+  calcTurnoverTax,
   calcRebate,
   calcUIF,
   incomeNet,
@@ -41,6 +42,8 @@ describe("rate constants match SARS 2026/27", () => {
     expect(TAX_RATES.MEDICAL_CREDIT_FIRST_TWO).toBe(376);
     expect(TAX_RATES.MEDICAL_CREDIT_ADDITIONAL).toBe(254);
     expect(TAX_RATES.COMPANY_TAX_RATE).toBe(0.27);
+    expect(TAX_RATES.TRUST_TAX_RATE).toBe(0.45);
+    expect(TAX_RATES.TURNOVER_TAX_MAX).toBe(2_300_000);
     expect(TAX_RATES.MILEAGE_RATE).toBe(4.95);
     expect(TAX_RATES.TAX_YEAR).toBe("2026/27");
   });
@@ -179,6 +182,71 @@ describe("calcSBC — annual small-business tax", () => {
     const flat = 200_000 * TAX_RATES.COMPANY_TAX_RATE;
     expect(calcSBC(200_000)).toBeLessThan(flat);
     expect(flat - calcSBC(200_000)).toBeCloseTo(46_930, 2);
+  });
+});
+
+describe("Turnover Tax scale matches SARS 2027 year of assessment", () => {
+  it("carries the published Sixth Schedule bands (overhauled for 2026/27)", () => {
+    expect(TAX_RATES.TURNOVER_TAX_BRACKETS).toEqual([
+      { from: 0, base: 0, rate: 0 },
+      { from: 600_000, base: 0, rate: 0.01 },
+      { from: 950_000, base: 3_500, rate: 0.02 },
+      { from: 1_400_000, base: 12_500, rate: 0.03 },
+    ]);
+  });
+
+  it("derives each base from the band below it", () => {
+    // Cumulative bases aren't independent: 1%×(950,000−600,000)=3,500;
+    // 3,500+2%×(1,400,000−950,000)=12,500. A typo surfaces here.
+    const b = TAX_RATES.TURNOVER_TAX_BRACKETS;
+    expect(b[2]!.base).toBeCloseTo(b[1]!.base + (b[2]!.from - b[1]!.from) * b[1]!.rate, 2);
+    expect(b[3]!.base).toBeCloseTo(b[2]!.base + (b[3]!.from - b[2]!.from) * b[2]!.rate, 2);
+  });
+
+  it("keeps the top band below the qualifying ceiling", () => {
+    // A business over the R2.3m ceiling can't be on turnover tax at all, so the
+    // top band must start below it.
+    const top = TAX_RATES.TURNOVER_TAX_BRACKETS[TAX_RATES.TURNOVER_TAX_BRACKETS.length - 1]!;
+    expect(top.from).toBeLessThan(TAX_RATES.TURNOVER_TAX_MAX);
+  });
+});
+
+describe("calcTurnoverTax — annual tax on turnover", () => {
+  it("charges nothing in the tax-free band", () => {
+    expect(calcTurnoverTax(300_000)).toBe(0);
+    expect(calcTurnoverTax(600_000)).toBe(0); // top of the tax-free band
+  });
+
+  it("taxes the 1% band on the slice above R600,000", () => {
+    // R800,000: (800,000 − 600,000) × 1% = 2,000
+    expect(calcTurnoverTax(800_000)).toBeCloseTo(2_000, 2);
+  });
+
+  it("matches a hand-worked top-band case", () => {
+    // R2,000,000: 12,500 + (2,000,000 − 1,400,000) × 3% = 12,500 + 18,000 = 30,500
+    expect(calcTurnoverTax(2_000_000)).toBeCloseTo(30_500, 2);
+  });
+
+  it("is continuous across every band edge", () => {
+    const edges: [number, number][] = [
+      [600_000, 0],
+      [950_000, 3_500],
+      [1_400_000, 12_500],
+    ];
+    for (const [turnover, expected] of edges) {
+      expect(calcTurnoverTax(turnover)).toBeCloseTo(expected, 2);
+    }
+  });
+
+  it("is far lighter than the flat company rate on the same figure", () => {
+    // The point of the regime: R800,000 turnover attracts R2,000, well under
+    // what a flat 27% would take (though that's on profit, the relief is the idea).
+    expect(calcTurnoverTax(800_000)).toBeLessThan(800_000 * TAX_RATES.COMPANY_TAX_RATE);
+  });
+
+  it("never taxes zero or negative turnover", () => {
+    expect(calcTurnoverTax(0)).toBe(0);
+    expect(calcTurnoverTax(-5_000)).toBe(0);
   });
 });
 

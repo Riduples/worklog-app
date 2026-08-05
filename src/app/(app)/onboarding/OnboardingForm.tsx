@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/Input";
 import { Chips } from "@/components/ui/Chips";
 import { SaveBtn } from "@/components/ui/SaveBtn";
 import { BUSINESS_TYPES, type BusinessType } from "@/lib/businessTypes";
+import { TAX_ENTITY_TYPES, type TaxEntityType } from "@/lib/entityTypes";
 import { useTaxRates } from "@/lib/taxRates";
 import { fmt } from "@/lib/format";
 
@@ -31,6 +32,7 @@ export function OnboardingForm({ userId, userEmail }: { userId: string; userEmai
   const [step, setStep] = useState(0);
   const [name, setName] = useState("");
   const [businessType, setBusinessType] = useState<BusinessType | "">("");
+  const [taxEntityType, setTaxEntityType] = useState<TaxEntityType | "">("");
   const [address, setAddress] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState(userEmail);
@@ -60,6 +62,7 @@ export function OnboardingForm({ userId, userEmail }: { userId: string; userEmai
       user_id: userId,
       name: name.trim(),
       business_type: businessType || null,
+      tax_entity_type: taxEntityType || null,
       address: address.trim() || null,
       phone: phone.trim() || null,
       email: email.trim() || null,
@@ -188,6 +191,17 @@ export function OnboardingForm({ userId, userEmail }: { userId: string; userEmai
       {/* Step 3 — tax */}
       {step === 3 && (
         <>
+          <Field label="How is the business registered with SARS?">
+            <Chips
+              options={TAX_ENTITY_TYPES.map((t) => t.label)}
+              selected={TAX_ENTITY_TYPES.find((t) => t.id === taxEntityType)?.label ?? ""}
+              onSelect={(label) => setTaxEntityType(TAX_ENTITY_TYPES.find((t) => t.label === label)?.id ?? "")}
+            />
+            <p style={{ fontSize: 11, color: MUTED, marginTop: 6, lineHeight: 1.5 }}>
+              This sets how your income tax is worked out and which returns apply. Not sure? Leave it — you can pick it later in
+              Business Details.
+            </p>
+          </Field>
           <Field label="VAT number">
             <Input value={vatNumber} onChange={setVatNumber} placeholder="Leave blank if not VAT registered" autoFocus />
           </Field>

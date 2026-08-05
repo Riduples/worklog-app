@@ -10,6 +10,8 @@ import { PaymentMethodPicker } from "@/components/ui/PaymentMethodPicker";
 import { SarsSuggestionDropdown } from "@/components/ui/SarsSuggestionDropdown";
 import { InvoiceMatcher, paymentSettlesInvoice } from "@/components/ui/InvoiceMatcher";
 import { getSarsIncomeMatch, INCOME_PAYMENT_METHODS, narrowMethodsForAccount, type SarsCategory } from "@/lib/sarsCategories";
+import { VAT_SUPPLY_TYPES, carriesVat, type VatSupplyType } from "@/lib/vatSupplyTypes";
+import { Chips } from "@/components/ui/Chips";
 import { fmt, todayStr } from "@/lib/format";
 import { useTaxRates } from "@/lib/taxRates";
 import { useCreateIncome } from "@/lib/supabase/hooks/useIncome";
@@ -28,6 +30,7 @@ export function IncomeModal({ onClose }: { onClose: () => void }) {
   const [receivedFromContactId, setReceivedFromContactId] = useState<string | null>(null);
   const [details, setDetails] = useState("");
   const [method, setMethod] = useState("Cash");
+  const [supplyType, setSupplyType] = useState<VatSupplyType>("standard");
   const [date, setDate] = useState(todayStr());
   const [matchedInvoiceId, setMatchedInvoiceId] = useState<string | null>(null);
   const [markPaid, setMarkPaid] = useState(false);
@@ -59,7 +62,9 @@ export function IncomeModal({ onClose }: { onClose: () => void }) {
   // ex-VAT subtotal with VAT added on top.
   const amountNum = parseFloat(amount) || 0;
   const isVatRegistered = !!business?.vat_number;
-  const vatAmount = isVatRegistered ? vatFromGross(amountNum, VAT_RATE) : 0;
+  // Only a standard-rated supply carries VAT — a zero-rated or exempt sale holds
+  // none, even for a registered business, so no VAT is extracted from it.
+  const vatAmount = isVatRegistered && carriesVat(supplyType) ? vatFromGross(amountNum, VAT_RATE) : 0;
   const netAmount = amountNum - vatAmount;
   // Provision income tax on what the business actually earned. The VAT portion
   // is SARS's money being held, not income, so it must not be provisioned twice.
@@ -101,8 +106,9 @@ export function IncomeModal({ onClose }: { onClose: () => void }) {
         // Personal money is the owner's own contribution — not income, so it's
         // never taxed or VAT'd, and P&L excludes it (see pnl.ts).
         tax_jar_amount: isPersonal ? 0 : taxJar,
-        vat_rate: isPersonal ? null : isVatRegistered ? VAT_RATE : null,
+        vat_rate: isPersonal ? null : isVatRegistered ? (carriesVat(supplyType) ? VAT_RATE : 0) : null,
         vat_amount: isPersonal ? 0 : vatAmount,
+        vat_supply_type: supplyType,
         matched_invoice_id: isPersonal ? null : matchedInvoiceId,
         account_id: accountId,
         source: "manual",
@@ -215,7 +221,28 @@ export function IncomeModal({ onClose }: { onClose: () => void }) {
             )}
           </div>
 
-          {amountNum > 0 && isVatRegistered && (
+          {isVatRegistered && (
+            <Field label="VAT treatment">
+              <Chips
+                options={VAT_SUPPLY_TYPES.map((v) => v.label)}
+                selected={VAT_SUPPLY_TYPES.find((v) => v.id === supplyType)?.label ?? ""}
+                onSelect={(label) => {
+                  const found = VAT_SUPPLY_TYPES.find((v) => v.label === label);
+                  if (found) setSupplyType(found.id);
+                }}
+              />
+            </Field>
+          )}
+
+          {amountNum > 0 && isVatRegistered && !carriesVat(supplyType) && (
+            <div style={{ background: "#F0F9FF", border: "1.5px solid #BAE6FD", borderRadius: 12, padding: "12px 14px", marginBottom: 10, fontSize: 12, color: "#0C4A6E", lineHeight: 1.6 }}>
+              {supplyType === "zero_rated"
+                ? "Zero-rated sale — you charge no VAT, but it's still declared as zero-rated turnover on your VAT201."
+                : "Exempt sale — outside VAT. No VAT is charged and it isn't part of your taxable turnover."}
+            </div>
+          )}
+
+          {amountNum > 0 && isVatRegistered && carriesVat(supplyType) && (
             <div style={{ background: "#F0F9FF", border: "1.5px solid #BAE6FD", borderRadius: 12, padding: "12px 14px", marginBottom: 10, fontSize: 12, color: "#0C4A6E", lineHeight: 1.6 }}>
               <div style={{ display: "flex", justifyContent: "space-between" }}>
                 <span>Received</span>
