@@ -75,6 +75,7 @@ export function useConvertQuoteToInvoice() {
       depositReceived: number;
       vatRate: number | null;
       vatAmount: number;
+      vatSupplyType: string;
       issueDate: string;
       dueDate: string | null;
       terms: string | null;
@@ -85,6 +86,7 @@ export function useConvertQuoteToInvoice() {
         p_line_items: params.lineItems,
         p_invoice_amount: params.invoiceAmount,
         p_deposit_received: params.depositReceived,
+        p_vat_supply_type: params.vatSupplyType,
         // Postgres allows NULL for these NUMERIC/DATE params (no NOT NULL
         // constraint), but the generated RPC arg types don't capture that —
         // cast at this boundary rather than fabricate non-null defaults.

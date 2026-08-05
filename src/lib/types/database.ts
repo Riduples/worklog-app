@@ -2444,6 +2444,7 @@ export type Database = {
           p_terms?: string
           p_vat_amount: number
           p_vat_rate: number
+          p_vat_supply_type?: string
         }
         Returns: {
           balance_due: number

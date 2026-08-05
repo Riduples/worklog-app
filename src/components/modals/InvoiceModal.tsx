@@ -107,8 +107,9 @@ export function InvoiceModal({ sourceQuote, onClose }: { sourceQuote?: Quote; on
           lineItems: filteredItems,
           invoiceAmount: subtotal,
           depositReceived: depositNum,
-          vatRate: isVatRegistered ? VAT_RATE : null,
+          vatRate: isVatRegistered ? (carriesVat(supplyType) ? VAT_RATE : 0) : null,
           vatAmount,
+          vatSupplyType: supplyType,
           issueDate,
           dueDate: dueDate || null,
           terms: terms.trim() || null,
@@ -221,10 +222,9 @@ export function InvoiceModal({ sourceQuote, onClose }: { sourceQuote?: Quote; on
 
       <SalesLineItemsEditor items={items} onChange={setItems} />
 
-      {/* VAT treatment is a whole-invoice choice here. Only offered for a fresh
-          invoice: a conversion carries the quote's figures through the RPC, which
-          takes the standard-rated amounts, so it stays standard-rated. */}
-      {!srcQuote && isVatRegistered && (
+      {/* VAT treatment is a whole-invoice choice, applied to a fresh invoice and a
+          conversion alike — convert_quote_to_invoice carries it through (0109). */}
+      {isVatRegistered && (
         <Field label="VAT treatment">
           <Chips
             options={VAT_SUPPLY_TYPES.map((v) => v.label)}
