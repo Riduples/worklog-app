@@ -10,7 +10,7 @@ import { useTaxFilings, useMarkFiled } from "@/lib/supabase/hooks/useTaxFilings"
 import { useCreditNotes } from "@/lib/supabase/hooks/useCreditNotes";
 import { sumCreditVat } from "@/lib/creditNotes";
 import { fmt, toLocalIsoDate } from "@/lib/format";
-import { incomeNet } from "@/lib/taxRates";
+import { suppliesByType } from "@/lib/vat201";
 import { shareReport } from "@/lib/docgen/shareReport";
 
 const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -88,6 +88,7 @@ export function Vat201View() {
   const periodCredits = (creditNotes ?? []).filter((c) => c.issue_date >= fromDate && c.issue_date <= toDate);
   const custCreditVat = sumCreditVat(periodCredits, "customer");
   const suppCreditVat = sumCreditVat(periodCredits, "supplier");
+  const hasCustCredits = periodCredits.some((c) => c.ledger === "customer");
 
   const outputVAT = invoicedVAT + cashSalesVAT - custCreditVat;
   const inputVAT = (supplierInvoices ?? [])
@@ -95,31 +96,17 @@ export function Vat201View() {
     .reduce((s, r) => s + Number(r.vat_amount ?? 0), 0) - suppCreditVat;
   const vatDue = outputVAT - inputVAT;
 
-  // Turnover split by VAT supply type — VAT201 fields 1 (standard), 2 (zero-rated)
-  // and 3 (exempt), all ex-VAT. Invoices carry an ex-VAT invoice_amount; cash
-  // sales are gross so take incomeNet (zero-rated / exempt rows hold no VAT, so
-  // incomeNet == amount for them). Owner's-own-money income rows aren't supplies
-  // and are excluded, as are payments that only settle an invoice already counted.
-  const turnoverBySupply = (type: string) => {
-    const inv = (invoices ?? [])
-      .filter((r) => r.issue_date >= fromDate && r.issue_date <= toDate && (r.vat_supply_type ?? "standard") === type)
-      .reduce((s, r) => s + Number(r.invoice_amount ?? 0), 0);
-    const cash = (income ?? [])
-      .filter(
-        (r) =>
-          !r.matched_invoice_id &&
-          !r.is_personal &&
-          r.transaction_date >= fromDate &&
-          r.transaction_date <= toDate &&
-          (r.vat_supply_type ?? "standard") === type
-      )
-      .reduce((s, r) => s + incomeNet(r), 0);
-    return inv + cash;
-  };
-  const standardTurnover = turnoverBySupply("standard");
-  const zeroRatedTurnover = turnoverBySupply("zero_rated");
-  const exemptTurnover = turnoverBySupply("exempt");
-  const totalTurnover = standardTurnover + zeroRatedTurnover + exemptTurnover;
+  // Turnover split by VAT supply type — VAT201 fields 1 (standard), 2 (zero-
+  // rated) and 3 (exempt), all ex-VAT and net of customer credit notes, so the
+  // declared supply values move with the output VAT above instead of staying
+  // gross while the VAT nets. The split and the credit-note netting live in
+  // suppliesByType so they can be tested on their own — see src/lib/vat201.ts.
+  const {
+    standard: standardTurnover,
+    zero_rated: zeroRatedTurnover,
+    exempt: exemptTurnover,
+    total: totalTurnover,
+  } = suppliesByType(invoices ?? [], income ?? [], creditNotes ?? [], fromDate, toDate);
 
   const vat201Filings = (filings ?? []).filter((f) => f.filing_type === "vat201");
   const alreadyFiled = vat201Filings.some((f) => f.period_label === label);
@@ -193,7 +180,7 @@ export function Vat201View() {
         </div>
         <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 8, lineHeight: 1.5 }}>
           VAT201 fields 1–3. Only standard-rated supplies produce output VAT — zero-rated and exempt turnover is declared but
-          carries none.
+          carries none.{hasCustCredits ? " Customer credit notes are already deducted from the supply type they were raised against." : ""}
         </div>
       </div>
 
