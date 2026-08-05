@@ -1557,6 +1557,24 @@ export type Database = {
           },
         ]
       }
+      platform_settings: {
+        Row: {
+          id: boolean
+          signups_enabled: boolean
+          updated_at: string
+        }
+        Insert: {
+          id?: boolean
+          signups_enabled?: boolean
+          updated_at?: string
+        }
+        Update: {
+          id?: boolean
+          signups_enabled?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       quotes: {
         Row: {
           business_id: string
