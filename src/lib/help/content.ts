@@ -2447,7 +2447,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
             "items": [
               "Open the Diary.",
               "Tap the + New button in the top right.",
-              "At Client, start typing the person's name. If they are already in your contacts, pick them from the list. If not, just type the name.",
+              "At Customer, start typing the person's name. If they are already in your contacts, pick them from the list. If not, just type the name.",
               "At Service / job, type what the booking is for, like Haircut or geyser install. You can leave this blank.",
               "Set the Date and the Time.",
               "Type the Total price for the job.",
@@ -2457,7 +2457,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           },
           {
             "type": "paragraph",
-            "text": "A new booking is saved as Confirmed. It then shows up in your list with the client name, service, date, time, price and a status tag."
+            "text": "A new booking is saved as Confirmed. It then shows up in your list with the customer name, service, date, time, price and a status tag."
           }
         ]
       },

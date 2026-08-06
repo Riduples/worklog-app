@@ -172,7 +172,7 @@ export function BookingModal({ booking, onClose }: { booking?: Booking; onClose:
   };
 
   return (
-    <Modal title={isEdit ? "Edit booking" : "New booking"} onClose={onClose}>
+    <Modal title={isEdit ? "Edit appointment" : "New appointment"} onClose={onClose}>
       <Field label="Type">
         <Chips
           options={["Customer", "Supplier"]}
@@ -288,7 +288,7 @@ export function BookingModal({ booking, onClose }: { booking?: Booking; onClose:
       </button>
 
       {error && <p style={{ color: "#dc2626", fontSize: 13, marginBottom: 12 }}>{error}</p>}
-      <SaveBtn label={saving ? "Saving..." : isEdit ? "Save changes" : "Save booking"} onClick={handleSave} disabled={saving} />
+      <SaveBtn label={saving ? "Saving..." : isEdit ? "Save changes" : "Save appointment"} onClick={handleSave} disabled={saving} />
     </Modal>
   );
 }
