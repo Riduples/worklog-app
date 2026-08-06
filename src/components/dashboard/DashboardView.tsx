@@ -22,6 +22,8 @@ import { useWriteAccess } from "@/lib/writeAccess";
 import { useIsPlatformAdmin } from "@/lib/supabase/hooks/usePlatformAdmin";
 import { TaxRatesStaleNudge } from "@/components/admin/TaxRatesStaleNudge";
 import { AllToolsGrid } from "@/components/dashboard/AllToolsGrid";
+import { SetupChecklist } from "@/components/dashboard/SetupChecklist";
+import { computeSetupSteps } from "@/lib/setupChecklist";
 import { BankAccountSelector, ALL_ACCOUNTS, type AccountFilter } from "@/components/ui/BankAccountSelector";
 import { fmt, greeting, todayStr } from "@/lib/format";
 import { inPeriod } from "@/lib/period";
@@ -191,6 +193,15 @@ export function DashboardView({ businessName }: { businessName: string }) {
     });
   }
 
+  // Activation checklist — each step ticks itself off from real data; the card
+  // hides once all are done or the owner dismisses it.
+  const setupSteps = computeSetupSteps({
+    business: business ?? null,
+    accountCount: accounts?.length ?? 0,
+    hasMoneyLogged: (income?.length ?? 0) > 0 || (expenses?.length ?? 0) > 0,
+    invoiceCount: invoices?.length ?? 0,
+  });
+
   type Tx = (Tables<"income"> | Tables<"expenses">) & { txType: "income" | "expense" };
   const recentTx: Tx[] = [
     ...(income ?? []).map((r) => ({ ...r, txType: "income" as const })),
@@ -299,6 +310,14 @@ export function DashboardView({ businessName }: { businessName: string }) {
             Quick Log leads; the structured Income/Expense forms moved to the
             sidebar (desktop) and the "More" sheet (mobile). */}
         <div className="dash-primary">
+          {business && (
+            <SetupChecklist
+              businessId={business.id}
+              steps={setupSteps}
+              hrefFor={(t) => (t === "accounts" ? "/accounts" : t === "invoices" ? "/invoices" : "/business")}
+              onQuickLog={() => (isReadOnly ? router.push("/billing/checkout") : setModal("quicklog"))}
+            />
+          )}
           {(gate("income") || gate("expense")) && (
             <button
               onClick={() => (isReadOnly ? router.push("/billing/checkout") : setModal("quicklog"))}
