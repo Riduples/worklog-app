@@ -1,4 +1,4 @@
-﻿export type Json =
+export type Json =
   | string
   | number
   | boolean
@@ -1485,6 +1485,24 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_settings: {
+        Row: {
+          id: boolean
+          signups_enabled: boolean
+          updated_at: string
+        }
+        Insert: {
+          id?: boolean
+          signups_enabled?: boolean
+          updated_at?: string
+        }
+        Update: {
+          id?: boolean
+          signups_enabled?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       purchase_orders: {
         Row: {
           business_id: string
@@ -1556,24 +1574,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      platform_settings: {
-        Row: {
-          id: boolean
-          signups_enabled: boolean
-          updated_at: string
-        }
-        Insert: {
-          id?: boolean
-          signups_enabled?: boolean
-          updated_at?: string
-        }
-        Update: {
-          id?: boolean
-          signups_enabled?: boolean
-          updated_at?: string
-        }
-        Relationships: []
       }
       quotes: {
         Row: {
@@ -2267,6 +2267,50 @@ export type Database = {
             columns: ["quote_id"]
             isOneToOne: false
             referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_links: {
+        Row: {
+          business_id: string
+          created_at: string | null
+          id: string
+          link_code: string | null
+          link_code_expires_at: string | null
+          phone_e164: string | null
+          updated_at: string | null
+          user_id: string
+          verified_at: string | null
+        }
+        Insert: {
+          business_id: string
+          created_at?: string | null
+          id?: string
+          link_code?: string | null
+          link_code_expires_at?: string | null
+          phone_e164?: string | null
+          updated_at?: string | null
+          user_id: string
+          verified_at?: string | null
+        }
+        Update: {
+          business_id?: string
+          created_at?: string | null
+          id?: string
+          link_code?: string | null
+          link_code_expires_at?: string | null
+          phone_e164?: string | null
+          updated_at?: string | null
+          user_id?: string
+          verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_links_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: true
+            referencedRelation: "business_profiles"
             referencedColumns: ["id"]
           },
         ]

@@ -37,11 +37,14 @@ export async function updateSession(request: NextRequest) {
   // and logged-in (accept button) — it's public but not an "auth route" (an
   // already-logged-in user should NOT be bounced away from it like /login).
   //
-  // The PayFast ITN and the cron routes are called server-to-server with no
-  // session cookie (the ITN from PayFast, /api/cron/* from Vercel Cron). If they
-  // weren't public they'd be redirected to /login and never run — so they pass
-  // through here; each route enforces its own auth (PayFast's signature, or the
-  // CRON_SECRET bearer) and trusts nothing about the session.
+  // The PayFast ITN, the cron routes, and the WhatsApp webhook are all called
+  // server-to-server with no session cookie (the ITN from PayFast, /api/cron/*
+  // from Vercel Cron, the webhook from Meta). If they weren't public they'd be
+  // redirected to /login and never run — so they pass through here; each route
+  // enforces its own auth (PayFast's signature, the CRON_SECRET bearer, or
+  // Meta's X-Hub-Signature-256) and trusts nothing about the session. Note the
+  // allowlist is the exact webhook path, NOT all of /api/whatsapp — the sibling
+  // /api/whatsapp/connect is the in-app opt-in and MUST stay session-gated.
   const isPublicRoute =
     pathname === "/" ||
     isAuthRoute ||
@@ -54,6 +57,7 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith("/privacy") ||
     pathname.startsWith("/help") ||
     pathname === "/api/payfast/notify" ||
+    pathname === "/api/whatsapp/webhook" ||
     pathname.startsWith("/api/cron/");
 
   if (!user && !isPublicRoute) {
