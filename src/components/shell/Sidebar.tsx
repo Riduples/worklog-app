@@ -55,7 +55,7 @@ const GROUPS: Group[] = [
   {
     title: "Work",
     items: [
-      { tool: "booking", href: "/bookings", icon: "📅", label: "Bookings" },
+      { tool: "booking", href: "/bookings", icon: "📅", label: "Diary" },
       { tool: "timetrack", href: "/time", icon: "⏱️", label: "Time Tracker" },
       { tool: "mileage", href: "/mileage", icon: "🚗", label: "Mileage" },
     ],

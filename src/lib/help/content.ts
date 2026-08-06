@@ -2415,14 +2415,14 @@ export const HELP_ARTICLES: HelpArticle[] = [
     "slug": "diary-bookings",
     "category": "Scheduling",
     "title": "Use the Diary for bookings",
-    "summary": "Keep track of your appointments in Bookings, and mark each one complete, no-show or cancelled.",
+    "summary": "Keep track of your appointments in the Diary, and mark each one complete, no-show or cancelled.",
     "sections": [
       {
-        "heading": "What Bookings is for",
+        "heading": "What the Diary is for",
         "blocks": [
           {
             "type": "paragraph",
-            "text": "Bookings is your diary. It keeps a simple list of the jobs and appointments you have coming up: who they are for, when they are, and how much money is involved. Every booking sits on one screen, newest date at the top, so you can see what is ahead at a glance."
+            "text": "The Diary keeps a simple list of the jobs and appointments you have coming up: who they are for, when they are, and how much money is involved. Every booking sits on one screen, newest date at the top, so you can see what is ahead at a glance."
           },
           {
             "type": "paragraph",
@@ -2445,7 +2445,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "steps",
             "items": [
-              "Open Bookings.",
+              "Open the Diary.",
               "Tap the + New button in the top right.",
               "At Client, start typing the person's name. If they are already in your contacts, pick them from the list. If not, just type the name.",
               "At Service / job, type what the booking is for, like Haircut or geyser install. You can leave this blank.",
@@ -2496,7 +2496,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           },
           {
             "type": "tip",
-            "text": "Bookings keeps track of the appointment and the money owed, but it does not send the customer a reminder or a bill. When the job is done and you want to charge for it, create an invoice under Invoices, or log the payment you received under Log Income."
+            "text": "The Diary keeps track of the appointment and the money owed, but it does not send the customer a reminder or a bill. When the job is done and you want to charge for it, create an invoice under Invoices, or log the payment you received under Log Income."
           },
           {
             "type": "warning",
@@ -2527,7 +2527,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           },
           {
             "type": "paragraph",
-            "text": "You will find it under the \"Scheduling System\" tools card — the group that also holds Bookings and Mileage — or the \"Work\" group on the desktop sidebar. The screen is called Time Tracker."
+            "text": "You will find it under the \"Scheduling System\" tools card — the group that also holds the Diary and Mileage — or the \"Work\" group on the desktop sidebar. The screen is called Time Tracker."
           }
         ]
       },
@@ -2625,7 +2625,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
             "type": "bullets",
             "items": [
               "Check your car's odometer before you leave and again when you get back, so you have a start and an end reading.",
-              "The Mileage tool is under the \"Scheduling System\" tools card — the group that also holds Bookings and Time — or the \"Work\" group on the desktop sidebar. Open it and you will see the heading Mileage."
+              "The Mileage tool is under the \"Scheduling System\" tools card — the group that also holds the Diary and Time — or the \"Work\" group on the desktop sidebar. Open it and you will see the heading Mileage."
             ]
           }
         ]
