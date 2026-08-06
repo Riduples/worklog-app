@@ -4,6 +4,7 @@
 // checks. Reference URLs and penalty notes are the prototype's copy verbatim.
 
 import { annualReturnForm, registeredWithCipc, type TaxEntityType } from "@/lib/entityTypes";
+import { toLocalIsoDate } from "@/lib/format";
 
 // Named for what they mean, not what they look like. These were once "green" /
 // "amber" / "red" / "blue" / "grey", which stopped being true when the app went
@@ -18,6 +19,11 @@ export type Obligation = {
   title: string;
   freq: string;
   due: string;
+  // The concrete next-due date (local ISO yyyy-mm-dd) for time-bound obligations
+  // — VAT201, EMP201, provisional tax, the annual return, UIF, COIDA — so the home
+  // screen can rank and count down the soonest ones. null for the once-off /
+  // check-the-portal items (CIPC, POPIA) that have no fixed recurring date.
+  dueDate: string | null;
   status: ComplianceStatus;
   where: "worklog" | "external" | "accountant";
   href?: string;
@@ -42,6 +48,47 @@ export function isRecent(dateStr: string | null | undefined, withinDays: number)
   return days >= 0 && days <= withinDays;
 }
 
+// ── Next-occurrence helpers ──────────────────────────────────────────────────
+// All local-date arithmetic (the app is SAST, no DST) so a deadline lands on the
+// calendar day the owner expects, never a UTC-shifted one.
+function atMidnight(d: Date): Date {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
+function fmtDMY(d: Date): string {
+  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+}
+/** The next calendar occurrence (today or later) of a given day-of-month. */
+function nextDayOfMonth(day: number, from: Date): Date {
+  const floor = atMidnight(from).getTime();
+  let d = new Date(from.getFullYear(), from.getMonth(), day);
+  if (d.getTime() < floor) d = new Date(from.getFullYear(), from.getMonth() + 1, day);
+  return d;
+}
+/** Last day of February for a year (day 0 of March). */
+function lastDayOfFeb(year: number): Date {
+  return new Date(year, 2, 0);
+}
+/** Next end-of-February (the annual-return / provisional P2 anchor). */
+function nextEndOfFeb(from: Date): Date {
+  const floor = atMidnight(from).getTime();
+  const d = lastDayOfFeb(from.getFullYear());
+  return d.getTime() < floor ? lastDayOfFeb(from.getFullYear() + 1) : d;
+}
+/** Next provisional-tax date: the soonest of 31 Aug / end-of-Feb. */
+function nextProvisional(from: Date): Date {
+  const floor = atMidnight(from).getTime();
+  const y = from.getFullYear();
+  return [new Date(y, 7, 31), lastDayOfFeb(y), lastDayOfFeb(y + 1), new Date(y + 1, 7, 31)]
+    .filter((d) => d.getTime() >= floor)
+    .sort((a, b) => a.getTime() - b.getTime())[0]!;
+}
+/** Next 31 March (COIDA Return of Earnings). */
+function nextMar31(from: Date): Date {
+  const floor = atMidnight(from).getTime();
+  const d = new Date(from.getFullYear(), 2, 31);
+  return d.getTime() < floor ? new Date(from.getFullYear() + 1, 2, 31) : d;
+}
+
 export type ComplianceContext = {
   hasVat: boolean;
   hasPaye: boolean;
@@ -58,10 +105,8 @@ export type ComplianceContext = {
   onTurnoverTax: boolean;
 };
 
-export function buildObligations(ctx: ComplianceContext): Obligation[] {
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = today.getMonth() + 1; // 1-based
+export function buildObligations(ctx: ComplianceContext, now: Date = new Date()): Obligation[] {
+  const today = now;
   const needsVat = ctx.annualIncome > 1_000_000;
 
   const entity = ctx.entityType;
@@ -73,11 +118,14 @@ export function buildObligations(ctx: ComplianceContext): Obligation[] {
   // than hide a real obligation on a guess.
   const cipcApplies = entity == null ? null : registeredWithCipc(entity);
 
-  const nextMonthName = MONTHS[month % 12];
-  const nextMonthYear = month === 12 ? year + 1 : year;
-  const vatDue = `25 ${nextMonthName} ${nextMonthYear}`;
-  const emp201Due = `7 ${nextMonthName} ${nextMonthYear}`;
-  const provDue = month <= 8 ? `31 Aug ${year}` : `28 Feb ${year + 1}`;
+  // Concrete next-due dates for the time-bound obligations (null when the
+  // obligation doesn't apply — not VAT-registered / no employees).
+  const vatDate = ctx.hasVat ? nextDayOfMonth(25, today) : null;
+  const empDate = ctx.hasEmployees ? nextDayOfMonth(7, today) : null;
+  const provDate = nextProvisional(today);
+  const annualDate = nextEndOfFeb(today);
+  const coidaDate = ctx.hasEmployees ? nextMar31(today) : null;
+  const iso = (d: Date | null) => (d ? toLocalIsoDate(d) : null);
 
   return [
     {
@@ -86,7 +134,8 @@ export function buildObligations(ctx: ComplianceContext): Obligation[] {
       icon: "🏦",
       title: "VAT201 Return",
       freq: "Monthly or bi-monthly",
-      due: ctx.hasVat ? vatDue : "Not registered",
+      due: vatDate ? fmtDMY(vatDate) : "Not registered",
+      dueDate: iso(vatDate),
       status: ctx.hasVat ? (isRecent(ctx.lastVat201Date, 35) ? "ready" : "action") : needsVat ? "register" : "na",
       where: ctx.hasVat ? "worklog" : "external",
       href: "/vat201",
@@ -104,7 +153,8 @@ export function buildObligations(ctx: ComplianceContext): Obligation[] {
       icon: "👷",
       title: "EMP201 Payroll Return",
       freq: "Monthly by 7th",
-      due: ctx.hasEmployees ? emp201Due : "No employees",
+      due: empDate ? fmtDMY(empDate) : "No employees",
+      dueDate: iso(empDate),
       status: ctx.hasEmployees && ctx.hasPaye ? (isRecent(ctx.lastEmp201Date, 35) ? "ready" : "action") : ctx.hasEmployees ? "action" : "na",
       where: ctx.hasEmployees ? "worklog" : "external",
       href: "/emp201",
@@ -122,7 +172,8 @@ export function buildObligations(ctx: ComplianceContext): Obligation[] {
       // payments take its place, on the same Aug/Feb rhythm.
       title: ctx.onTurnoverTax ? "Turnover Tax — interim payments (TT02)" : "Provisional Tax (IRP6)",
       freq: "Twice yearly — Aug and Feb",
-      due: provDue,
+      due: fmtDMY(provDate),
+      dueDate: iso(provDate),
       status: "ready",
       where: "worklog",
       href: "/provtax",
@@ -141,7 +192,8 @@ export function buildObligations(ctx: ComplianceContext): Obligation[] {
       // form-agnostic "ITR12 / ITR14" wording rather than guessing a personal ITR12.
       title: ctx.onTurnoverTax ? "Turnover Tax return (TT03)" : `Annual Income Tax (${annualForm ?? "ITR12 / ITR14"})`,
       freq: "Once yearly",
-      due: `Last day of Feb ${year + 1}`,
+      due: `Last day of Feb ${annualDate.getFullYear()}`,
+      dueDate: iso(annualDate),
       status: "elsewhere",
       where: "accountant",
       note: ctx.onTurnoverTax
@@ -164,7 +216,8 @@ export function buildObligations(ctx: ComplianceContext): Obligation[] {
       icon: "🛡️",
       title: "UIF Monthly Declaration (UIF-2)",
       freq: "Monthly by 7th",
-      due: ctx.hasEmployees ? emp201Due : "No employees",
+      due: empDate ? fmtDMY(empDate) : "No employees",
+      dueDate: iso(empDate),
       status: ctx.hasEmployees ? "action" : "na",
       where: "external",
       note: ctx.hasEmployees
@@ -179,7 +232,8 @@ export function buildObligations(ctx: ComplianceContext): Obligation[] {
       icon: "🏗️",
       title: "COIDA Return of Earnings (W.Cl.2)",
       freq: "Annually — 31 March",
-      due: `31 Mar ${year + 1}`,
+      due: coidaDate ? fmtDMY(coidaDate) : "No employees",
+      dueDate: iso(coidaDate),
       status: ctx.hasEmployees ? "action" : "na",
       where: "external",
       note: ctx.hasEmployees
@@ -195,6 +249,7 @@ export function buildObligations(ctx: ComplianceContext): Obligation[] {
       title: "COIDA Letter of Good Standing",
       freq: "Renewed annually",
       due: "Renew after Return of Earnings filed",
+      dueDate: null,
       status: ctx.hasEmployees ? "action" : "na",
       where: "external",
       note: "Issued by the Compensation Fund after your Return of Earnings is filed and assessment paid. Required for government tenders, construction sites, and most principal contractor agreements. Download from CompEasy once issued. Keep a copy — inspectors check this on site visits.",
@@ -208,6 +263,7 @@ export function buildObligations(ctx: ComplianceContext): Obligation[] {
       title: "CIPC Annual Return",
       freq: "Annually — anniversary of registration",
       due: cipcApplies === false ? "Not applicable" : "Annual — check BizPortal",
+      dueDate: null,
       // Only companies / CCs / co-ops register with CIPC. A known sole proprietor,
       // partnership or trust is genuinely exempt (na); an unset form keeps the
       // original always-shown behaviour.
@@ -227,6 +283,7 @@ export function buildObligations(ctx: ComplianceContext): Obligation[] {
       title: "Beneficial Ownership Declaration",
       freq: "Annually (with Annual Return)",
       due: cipcApplies === false ? "Not applicable" : "Annual — check BizPortal",
+      dueDate: null,
       status: cipcApplies === false ? "na" : "elsewhere",
       where: "external",
       note:
@@ -243,6 +300,7 @@ export function buildObligations(ctx: ComplianceContext): Obligation[] {
       title: "Information Officer Registration",
       freq: "Once — then maintain",
       due: "Register once — check status",
+      dueDate: null,
       status: "action",
       where: "external",
       note: "Every business that handles personal data (client names, emails, phone numbers — which every Worklog user does) must register an Information Officer with the Information Regulator. By default this is the owner/CEO. Register on the Information Regulator portal (justice.gov.za/inforeg). Fines up to R10 million. One-off task: takes about 30 minutes.",
@@ -250,4 +308,18 @@ export function buildObligations(ctx: ComplianceContext): Obligation[] {
       ctaUrl: "https://www.justice.gov.za/inforeg",
     },
   ];
+}
+
+export type UpcomingDeadline = { obligation: Obligation; daysLeft: number };
+
+// The time-bound obligations that fall due within `withinDays` from now, soonest
+// first — the source for the home screen's deadline nudges. Skips the ones that
+// don't apply (status "na") and the undated once-off items (dueDate null).
+export function upcomingDeadlines(ctx: ComplianceContext, withinDays: number, now: Date = new Date()): UpcomingDeadline[] {
+  const floor = atMidnight(now).getTime();
+  return buildObligations(ctx, now)
+    .filter((o) => o.dueDate != null && o.status !== "na")
+    .map((o) => ({ obligation: o, daysLeft: Math.round((new Date(`${o.dueDate}T00:00:00`).getTime() - floor) / 86_400_000) }))
+    .filter((x) => x.daysLeft >= 0 && x.daysLeft <= withinDays)
+    .sort((a, b) => a.daysLeft - b.daysLeft);
 }

@@ -12,6 +12,7 @@ import { useStockItems } from "@/lib/supabase/hooks/useStock";
 import { useBookings } from "@/lib/supabase/hooks/useBookings";
 import { useBankAccounts } from "@/lib/supabase/hooks/useBankAccounts";
 import { useAccountTransfers } from "@/lib/supabase/hooks/useAccountTransfers";
+import { useStaffRegister } from "@/lib/supabase/hooks/useStaffRegister";
 import { QuickLogModal } from "@/components/modals/QuickLogModal";
 import { UpgradeModal } from "@/components/modals/UpgradeModal";
 import { HelpAssistantModal } from "@/components/modals/HelpAssistantModal";
@@ -28,6 +29,8 @@ import { computePnl } from "@/lib/pnl";
 import { accountBalance } from "@/lib/accounts";
 import { balanceInclVat } from "@/lib/balance";
 import { useToolGate } from "@/lib/useToolGate";
+import { upcomingDeadlines } from "@/lib/compliance";
+import { type TaxEntityType } from "@/lib/entityTypes";
 import { type ToolId } from "@/lib/permissions";
 import type { Tables } from "@/lib/types/database";
 
@@ -41,6 +44,7 @@ export function DashboardView({ businessName }: { businessName: string }) {
   const { data: bookings } = useBookings();
   const { data: accounts } = useBankAccounts();
   const { data: transfers } = useAccountTransfers();
+  const { data: staff } = useStaffRegister();
   const [modal, setModal] = useState<"quicklog" | "help" | null>(null);
   const [period, setPeriod] = useState<"month" | "year" | "all">("year");
   const [account, setAccount] = useState<AccountFilter>(ALL_ACCOUNTS);
@@ -152,6 +156,38 @@ export function DashboardView({ businessName }: { businessName: string }) {
       title: `Low stock: ${lowStock.map((s) => s.name).slice(0, 3).join(", ")}`,
       sub: `${lowStock.length} item${lowStock.length === 1 ? "" : "s"} below reorder level`,
       href: "/stock",
+    });
+  }
+
+  // Upcoming SARS deadlines (VAT201 / EMP201 / Provisional) within two weeks —
+  // only the ones this business actually owes (by VAT/employee/entity status) and
+  // only if the plan/permission lets them open the tool, so a nudge always leads
+  // somewhere useful. Nudges before the date, unlike the reports which look back.
+  const complianceCtx = business
+    ? {
+        hasVat: !!business.vat_number,
+        hasPaye: !!business.paye_ref,
+        hasEmployees: (staff ?? []).length > 0,
+        employeeCount: (staff ?? []).length,
+        annualIncome: (income ?? []).reduce((s, r) => s + Number(r.amount || 0), 0),
+        lastVat201Date: null,
+        lastEmp201Date: null,
+        entityType: (business.tax_entity_type as TaxEntityType | null) ?? null,
+        onTurnoverTax: business.on_turnover_tax ?? false,
+      }
+    : null;
+  const deadlines = complianceCtx
+    ? upcomingDeadlines(complianceCtx, 14).filter((d) => d.obligation.where === "worklog" && gate(d.obligation.id as ToolId))
+    : [];
+  for (const d of deadlines.slice(0, 3)) {
+    const soon = d.daysLeft <= 3;
+    needs.push({
+      key: `deadline-${d.obligation.id}`,
+      icon: d.obligation.icon,
+      bg: soon ? "#fee2e2" : "#fffbeb",
+      title: `${d.obligation.title} due ${d.daysLeft === 0 ? "today" : `in ${d.daysLeft} day${d.daysLeft === 1 ? "" : "s"}`}`,
+      sub: `${d.obligation.due} · tap to prepare`,
+      href: d.obligation.href ?? "/tax",
     });
   }
 
