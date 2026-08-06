@@ -128,14 +128,9 @@ export function AgeAnalysisView({ side }: { side: "debtors" | "creditors" }) {
   return (
     <div style={{ padding: "20px 16px 100px" }}>
       <BackLink label={isDebtors ? "Invoices" : "Supplier Invoices"} href={isDebtors ? "/invoices" : "/supplier-invoices"} />
-      <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 2px" }}>
+      <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 18px" }}>
         {isDebtors ? "Age Analysis — Customers" : "Age Analysis — Suppliers"}
       </h1>
-      <p style={{ fontSize: 12, color: "#94a3b8", margin: "0 0 18px", lineHeight: 1.5 }}>
-        {isDebtors
-          ? "What your customers still owe you, grouped by how overdue each invoice is."
-          : "What you still owe your suppliers, grouped by how overdue each bill is."}
-      </p>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 6, marginBottom: 16 }}>
         {BUCKETS.map((b) => {
