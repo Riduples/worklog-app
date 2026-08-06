@@ -155,10 +155,6 @@ export function RemittanceView() {
       <BackLink />
       <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 18px" }}>Remittance Advice</h1>
 
-      <div style={{ background: "#fff7ed", border: "1.5px solid #fed7aa", borderRadius: 12, padding: "12px 14px", marginBottom: 18, fontSize: 12, color: "#92400e", lineHeight: 1.5 }}>
-        A remittance advice tells your supplier exactly which of their invoices your payment covers. Send it when you make a payment so there&apos;s no confusion on their side.
-      </div>
-
       <Field label="Select supplier">
         <div style={{ position: "relative" }}>
           <Input

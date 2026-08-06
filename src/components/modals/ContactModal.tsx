@@ -12,17 +12,13 @@ import { useCreateContact, useUpdateContact, type Contact } from "@/lib/supabase
 const PAYMENT_BEHAVIOURS = ["Good payer", "Slow payer", "Problem payer"];
 const PAYMENT_TERMS = ["On delivery", "7 days", "30 days", "60 days", "Cash only", "Pre-payment"];
 
-// Per-type look & copy — customers read blue, suppliers amber — so the whole
-// form matches the worklog v126 design.
+// Per-type copy — the label, icon and placeholders switch between customers and
+// suppliers so the form reads right for whichever one you're adding.
 const THEME = {
   client: {
     icon: "👤",
     noun: "Customer",
     plural: "Customers",
-    bg: "#F0F9FF",
-    border: "#BAE6FD",
-    text: "#0369A1",
-    intro: "People or businesses that buy from you. Save them here so you can quickly pick them when creating quotes, invoices, and statements, and track their payment behaviour.",
     namePlaceholder: "e.g. Sipho Dlamini, ABC Pty Ltd...",
     phonePlaceholder: "e.g. 082 123 4567",
     emailPlaceholder: "e.g. name@email.com",
@@ -33,10 +29,6 @@ const THEME = {
     icon: "🏬",
     noun: "Supplier",
     plural: "Suppliers",
-    bg: "#fff7ed",
-    border: "#fed7aa",
-    text: "#b45309",
-    intro: "Businesses or people you buy from. Save them here so you can quickly pick them when creating purchase orders and supplier invoices, and track their payment terms.",
     namePlaceholder: "e.g. Builders Warehouse, John's Hardware...",
     phonePlaceholder: "e.g. 011 123 4567",
     emailPlaceholder: "e.g. orders@supplier.com",
@@ -140,10 +132,6 @@ export function ContactModal({
           </div>
         </Field>
       )}
-
-      <div style={{ background: t.bg, border: `1.5px solid ${t.border}`, borderRadius: 14, padding: "14px 16px", marginBottom: 16, fontSize: 13.5, color: t.text, lineHeight: 1.5 }}>
-        {t.icon} <strong>{t.plural}</strong> — {t.intro}
-      </div>
 
       <Field label={`${t.noun} / company name`}>
         <Input value={name} onChange={setName} placeholder={t.namePlaceholder} autoFocus />
