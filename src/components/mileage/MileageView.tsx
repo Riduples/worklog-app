@@ -99,7 +99,13 @@ export function MileageView() {
         </div>
       ))}
 
-      {modalState.open && <MileageModal trip={modalState.trip} onClose={() => setModalState({ open: false })} />}
+      {modalState.open && (
+        <MileageModal
+          trip={modalState.trip}
+          onClose={() => setModalState({ open: false })}
+          onShowHistory={() => setModalState({ open: false })}
+        />
+      )}
     </div>
   );
 }

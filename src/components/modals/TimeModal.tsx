@@ -51,7 +51,27 @@ function LockedValue({ value }: { value: string }) {
   );
 }
 
-export function TimeModal({ entry, onClose }: { entry?: TimeEntry; onClose: () => void }) {
+/** Greyed placeholder box shown when the diary has nothing to pick yet. */
+function EmptyPickBox({ text }: { text: string }) {
+  return (
+    <div
+      style={{
+        width: "100%",
+        padding: "13px 14px",
+        borderRadius: 12,
+        border: "1.5px solid #e2e8f0",
+        fontSize: 15,
+        boxSizing: "border-box",
+        color: "#94a3b8",
+        background: "#f8fafc",
+      }}
+    >
+      {text}
+    </div>
+  );
+}
+
+export function TimeModal({ entry, onClose, onShowProfitability }: { entry?: TimeEntry; onClose: () => void; onShowProfitability?: () => void }) {
   const isEdit = !!entry;
   const [client, setClient] = useState(entry?.client_name ?? "");
   const [clientContactId, setClientContactId] = useState<string | null>(entry?.client_contact_id ?? null);
@@ -88,6 +108,7 @@ export function TimeModal({ entry, onClose }: { entry?: TimeEntry; onClose: () =
   const labourRates = (stock ?? []).filter((s) => s.item_type === "labour");
   // Diary appointments to log against (a cancelled one is not real work).
   const openBookings = (bookings ?? []).filter((b) => b.status !== "cancelled");
+  const selectedBooking = bookingId ? openBookings.find((b) => b.id === bookingId) ?? null : null;
 
   // Quote link is filtered to the chosen customer — logging one job's time against
   // another job's quote is never what you want. Prefer the contact id match; fall
@@ -172,9 +193,28 @@ export function TimeModal({ entry, onClose }: { entry?: TimeEntry; onClose: () =
   };
 
   return (
-    <Modal title={isEdit ? "Edit time entry" : "Log time"} onClose={onClose}>
-      {!isEdit && openBookings.length > 0 && (
-        <Field label="Diary appointment (auto-fills the details)">
+    <Modal title={isEdit ? "Edit time entry" : "Time Log"} onClose={onClose}>
+      <div style={{ background: "#F0F9FF", border: "1.5px solid #7DD3FC", borderRadius: 12, padding: "10px 14px", marginBottom: 14, fontSize: 12, color: "#0369A1", lineHeight: 1.5 }}>
+        <span style={{ fontWeight: 700 }}>⏱️ Time Log</span> — Pick a diary appointment to auto-fill the customer. Link to a quote to compare time vs quoted amount. Rate from Price List or manual entry.
+      </div>
+
+      {onShowProfitability && (
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
+          <button
+            type="button"
+            onClick={onShowProfitability}
+            style={{ background: "none", border: "none", color: "#0C4A6E", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+          >
+            📊 Job profitability →
+          </button>
+        </div>
+      )}
+
+      {/* Diary appointment — auto-fills the details */}
+      <Field label="Diary appointment">
+        {openBookings.length === 0 ? (
+          <EmptyPickBox text="No appointments yet — add one in Diary" />
+        ) : (
           <select value={bookingId} onChange={(e) => applyBooking(e.target.value)} style={selectStyle}>
             <option value="">— Not from the diary —</option>
             {openBookings.map((b) => (
@@ -185,38 +225,46 @@ export function TimeModal({ entry, onClose }: { entry?: TimeEntry; onClose: () =
               </option>
             ))}
           </select>
-        </Field>
+        )}
+      </Field>
+
+      {selectedBooking && (
+        <div style={{ background: "#F0F9FF", border: "1px solid #BAE6FD", borderRadius: 10, padding: "8px 12px", marginBottom: 10, fontSize: 12, color: "#0369A1" }}>
+          ✅ Customer{selectedBooking.linked_quote_id ? ", date, purpose and quote" : " and date"} auto-filled from diary
+        </div>
       )}
 
       <ContactPicker
-        label="Customer - optional"
+        label="Customer"
         value={client}
         onChange={(v, id) => {
           setClient(v);
           setClientContactId(id);
         }}
         contacts={contacts ?? []}
-        placeholder="Customer name"
+        placeholder="Who did you work for?"
       />
 
-      <Field label="Date">
-        <Input value={entryDate} onChange={setEntryDate} type="date" />
-      </Field>
+      {/* Date & Hours — side by side */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+        <Field label="Date">
+          <Input value={entryDate} onChange={setEntryDate} type="date" />
+        </Field>
+        <Field label="Hours worked">
+          {isEdit ? (
+            <LockedValue value={`${hoursNum.toFixed(1)}h`} />
+          ) : (
+            <Input value={hours} onChange={setHours} type="number" placeholder="e.g. 4" autoFocus />
+          )}
+        </Field>
+      </div>
 
-      <Field label="Hours worked">
-        {isEdit ? (
-          <LockedValue value={`${hoursNum.toFixed(1)}h`} />
-        ) : (
-          <Input value={hours} onChange={setHours} type="number" placeholder="e.g. 2.5" autoFocus />
-        )}
-      </Field>
-
-      <Field label="Description - optional">
-        <Input value={description} onChange={setDescription} placeholder="What was the work?" />
+      <Field label="Purpose - optional">
+        <Input value={description} onChange={setDescription} placeholder="What did you work on?" />
       </Field>
 
       {clientQuotes.length > 0 && (
-        <Field label="Link to a quote (profitability, optional)">
+        <Field label="Link to quote (profitability tracking)">
           <select value={quoteId} onChange={(e) => setQuoteId(e.target.value)} style={selectStyle}>
             <option value="">— No quote —</option>
             {clientQuotes.map((q) => (
@@ -229,12 +277,12 @@ export function TimeModal({ entry, onClose }: { entry?: TimeEntry; onClose: () =
         </Field>
       )}
 
-      <Field label="Labour hourly rate">
+      <Field label="Labour hourly rate (R)">
         {isEdit ? (
           <LockedValue value={fmt(rateNum)} />
         ) : (
           <>
-            <Input value={rate} onChange={setRate} type="number" placeholder="0.00" />
+            <Input value={rate} onChange={setRate} type="number" placeholder="e.g. 350" />
             {labourRates.length > 0 && (
               <select
                 value=""
@@ -256,19 +304,24 @@ export function TimeModal({ entry, onClose }: { entry?: TimeEntry; onClose: () =
         )}
       </Field>
 
-      <Field label="Overtime">
-        {isEdit ? (
+      {/* Overtime — side by side */}
+      {isEdit ? (
+        <Field label="Overtime">
           <LockedValue value={otHoursNum > 0 ? `${otHoursNum.toFixed(1)}h × ${otMultiplier}×` : "None"} />
-        ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-            <Input value={otHours} onChange={setOtHours} type="number" placeholder="OT hours" />
+        </Field>
+      ) : (
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+          <Field label="Overtime hours">
+            <Input value={otHours} onChange={setOtHours} type="number" placeholder="0" />
+          </Field>
+          <Field label="OT rate">
             <select value={otMultiplier} onChange={(e) => setOtMultiplier(e.target.value)} style={selectStyle}>
               <option value="1.5">1.5× — Standard OT</option>
               <option value="2">2× — Sunday / public holiday</option>
             </select>
-          </div>
-        )}
-      </Field>
+          </Field>
+        </div>
+      )}
 
       <Field label="Type">
         {isEdit ? <LockedValue value={billType} /> : <Chips options={BILL_TYPES} selected={billType} onSelect={(v) => v && setBillType(v)} />}
@@ -277,6 +330,29 @@ export function TimeModal({ entry, onClose }: { entry?: TimeEntry; onClose: () =
       {isEdit && (
         <div style={{ background: "#F0F9FF", border: "1.5px solid #BAE6FD", borderRadius: 12, padding: "10px 14px", marginBottom: 14, fontSize: 11, color: "#0369A1", lineHeight: 1.6 }}>
           🔒 Hours, overtime and rate are locked once logged — delete and re-log to change them.
+        </div>
+      )}
+
+      {/* Live profitability panel — hours logged vs quoted hours */}
+      {quoteId && quoteEstHours > 0 && thisSessionHours > 0 && (
+        <div style={{ background: overByHours > 0 ? "#fff1f2" : "#0C4A6E", border: overByHours > 0 ? "1.5px solid #fecdd3" : "none", borderRadius: 12, padding: "12px 16px", marginBottom: 12 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: overByHours > 0 ? "#be123c" : "#38BDF8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>
+            {overByHours > 0 ? "⚠️ Over quoted hours" : "Hours vs quote"}
+          </div>
+          {[
+            ["Quoted hours", `${quoteEstHours}h`],
+            ["Logged so far", `${loggedOnQuote.toFixed(1)}h`],
+            ["This session", `${thisSessionHours.toFixed(1)}h`],
+          ].map(([l, v]) => (
+            <div key={l} style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: overByHours > 0 ? "#9f1239" : "#7DD3FC", marginBottom: 3 }}>
+              <span>{l}</span>
+              <span>{v}</span>
+            </div>
+          ))}
+          <div style={{ borderTop: `1px solid ${overByHours > 0 ? "#fecdd3" : "rgba(255,255,255,0.15)"}`, paddingTop: 7, marginTop: 4, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: overByHours > 0 ? "#be123c" : "#38BDF8" }}>{overByHours > 0 ? "Over by" : "Hours left after this"}</span>
+            <span style={{ fontSize: 18, fontWeight: 900, color: overByHours > 0 ? "#be123c" : "#fff" }}>{(overByHours > 0 ? overByHours : remainingHours).toFixed(1)}h</span>
+          </div>
         </div>
       )}
 
@@ -301,27 +377,8 @@ export function TimeModal({ entry, onClose }: { entry?: TimeEntry; onClose: () =
         </div>
       )}
 
-      {quoteId && quoteEstHours > 0 && (
-        <div
-          style={{
-            background: overByHours > 0 ? "#fff1f2" : "#F0F9FF",
-            border: `1.5px solid ${overByHours > 0 ? "#fecdd3" : "#BAE6FD"}`,
-            borderRadius: 12,
-            padding: "12px 14px",
-            marginBottom: 16,
-            fontSize: 12,
-            color: overByHours > 0 ? "#be123c" : "#0369A1",
-            lineHeight: 1.6,
-          }}
-        >
-          <div style={{ fontWeight: 700, marginBottom: 2 }}>📊 Job profitability</div>
-          {projectedHours.toFixed(1)}h projected vs {quoteEstHours.toFixed(1)}h quoted{" "}
-          {overByHours > 0 ? <strong>— ⚠️ over by {overByHours.toFixed(1)}h</strong> : `— ${remainingHours.toFixed(1)}h left`}
-        </div>
-      )}
-
       {error && <p style={{ color: "#dc2626", fontSize: 13, marginBottom: 12 }}>{error}</p>}
-      <SaveBtn label={saving ? "Saving..." : isEdit ? "Save changes" : "Log time"} onClick={handleSave} disabled={saving} />
+      <SaveBtn label={saving ? "Saving..." : isEdit ? "Save changes" : "Log Time"} icon="⏱️" onClick={handleSave} disabled={saving} />
     </Modal>
   );
 }
