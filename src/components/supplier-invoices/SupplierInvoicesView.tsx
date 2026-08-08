@@ -12,10 +12,10 @@ import { BackLink } from "@/components/ui/BackLink";
 // Filter pills follow this order; only statuses actually in use get a pill.
 const STATUS_ORDER = ["unpaid", "overdue", "paid", "credited"];
 
-// Sort by the supplier's reference number the same way the invoice/quote/PO
+// Sort by our own internal bill number the same way the invoice/quote/PO
 // dashboards sort by their doc number: pull the digits out and compare
-// numerically, so "INV-9" sits above "INV-10" and blank refs fall to the end.
-const refNo = (si: SupplierInvoice) => parseInt((si.supplier_ref_number ?? "").replace(/\D/g, ""), 10) || 0;
+// numerically, so SI-…-9 sits above SI-…-10 and any un-numbered row falls last.
+const docNo = (si: SupplierInvoice) => parseInt((si.doc_number ?? "").replace(/\D/g, ""), 10) || 0;
 
 export function SupplierInvoicesView() {
   const access = useToolAccess("supplierinvoice");
@@ -24,7 +24,7 @@ export function SupplierInvoicesView() {
   const [selected, setSelected] = useState<SupplierInvoice | null>(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [sort, setSort] = useState<"az" | "ref" | "recent">("recent");
+  const [sort, setSort] = useState<"az" | "number" | "recent">("recent");
 
   const presentStatuses = STATUS_ORDER.filter((s) => (invoices ?? []).some((si) => supplierInvoiceDisplayStatus(si).label === s));
 
@@ -33,13 +33,18 @@ export function SupplierInvoicesView() {
       if (statusFilter !== "all" && supplierInvoiceDisplayStatus(si).label !== statusFilter) return false;
       if (search) {
         const s = search.toLowerCase();
-        if (!si.supplier_name.toLowerCase().includes(s) && !(si.supplier_ref_number ?? "").toLowerCase().includes(s)) return false;
+        if (
+          !si.supplier_name.toLowerCase().includes(s) &&
+          !(si.supplier_ref_number ?? "").toLowerCase().includes(s) &&
+          !(si.doc_number ?? "").toLowerCase().includes(s)
+        )
+          return false;
       }
       return true;
     })
     .sort((a, b) => {
       if (sort === "az") return a.supplier_name.localeCompare(b.supplier_name);
-      if (sort === "ref") return refNo(a) - refNo(b);
+      if (sort === "number") return docNo(a) - docNo(b);
       return (b.created_at ?? b.issue_date ?? "").localeCompare(a.created_at ?? a.issue_date ?? "");
     });
 
@@ -105,13 +110,13 @@ export function SupplierInvoicesView() {
             {filtered.length !== (invoices ?? []).length ? ` of ${(invoices ?? []).length}` : ""} bill{(invoices ?? []).length === 1 ? "" : "s"}
           </span>
           <div style={{ display: "flex", gap: 4, background: "#f1f5f9", borderRadius: 10, padding: 3 }}>
-            {(["az", "ref", "recent"] as const).map((s) => (
+            {(["az", "number", "recent"] as const).map((s) => (
               <button
                 key={s}
                 onClick={() => setSort(s)}
                 style={{ padding: "5px 12px", borderRadius: 8, border: "none", background: sort === s ? "#fff" : "transparent", color: sort === s ? "#0C4A6E" : "#64748b", fontSize: 12, fontWeight: 700, cursor: "pointer", boxShadow: sort === s ? "0 1px 3px rgba(0,0,0,0.1)" : "none" }}
               >
-                {s === "az" ? "A–Z" : s === "ref" ? "Ref" : "Recent"}
+                {s === "az" ? "A–Z" : s === "number" ? "Number" : "Recent"}
               </button>
             ))}
           </div>
@@ -143,7 +148,8 @@ export function SupplierInvoicesView() {
             <div>
               <div style={{ fontSize: 14, fontWeight: 700, color: "#111" }}>{si.supplier_name}</div>
               <div style={{ fontSize: 11, color: "#94a3b8" }}>
-                {si.supplier_ref_number ? `${si.supplier_ref_number} · ` : ""}
+                {si.doc_number ? `${si.doc_number} · ` : ""}
+                {si.supplier_ref_number ? `Ref ${si.supplier_ref_number} · ` : ""}
                 {si.issue_date}
               </div>
             </div>

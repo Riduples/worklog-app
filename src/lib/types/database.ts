@@ -1963,6 +1963,7 @@ export type Database = {
           business_id: string
           created_at: string | null
           deleted_at: string | null
+          doc_number: string | null
           due_date: string | null
           id: string
           invoice_amount: number
@@ -1985,6 +1986,7 @@ export type Database = {
           business_id: string
           created_at?: string | null
           deleted_at?: string | null
+          doc_number?: string | null
           due_date?: string | null
           id?: string
           invoice_amount?: number
@@ -2007,6 +2009,7 @@ export type Database = {
           business_id?: string
           created_at?: string | null
           deleted_at?: string | null
+          doc_number?: string | null
           due_date?: string | null
           id?: string
           invoice_amount?: number

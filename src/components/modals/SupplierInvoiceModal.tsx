@@ -13,6 +13,8 @@ import { useContacts } from "@/lib/supabase/hooks/useContacts";
 import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 import { usePurchaseOrders } from "@/lib/supabase/hooks/usePurchaseOrders";
 import { useCreateSupplierInvoice } from "@/lib/supabase/hooks/useSupplierInvoices";
+import { getNextDocNumber } from "@/lib/docNumber";
+import { createClient } from "@/lib/supabase/client";
 
 export function SupplierInvoiceModal({ onClose }: { onClose: () => void }) {
   const [supplier, setSupplier] = useState("");
@@ -66,15 +68,23 @@ export function SupplierInvoiceModal({ onClose }: { onClose: () => void }) {
     setShowPoPicker(false);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!supplier.trim()) {
       setError("Supplier is required.");
       return;
     }
+    if (!business) return;
     setError("");
+
+    // Mint our own internal bill number (SI-YYYY-NNNN), one sequence per
+    // business, so the list has a consistent number to show and sort by — the
+    // supplier_ref_number stays as the supplier's own reference.
+    const supabase = createClient();
+    const docNumber = await getNextDocNumber(supabase, business.id, "SI");
 
     createSI.mutate(
       {
+        doc_number: docNumber,
         supplier_contact_id: supplierContactId,
         supplier_name: supplier.trim(),
         supplier_ref_number: refNumber.trim() || null,

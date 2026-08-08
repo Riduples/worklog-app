@@ -9,6 +9,10 @@ const SERIES = {
   INV: { table: "invoices", column: "doc_number" },
   PO: { table: "purchase_orders", column: "doc_number" },
   CN: { table: "credit_notes", column: "doc_number" },
+  // Our own internal bill number for a supplier invoice, kept separate from the
+  // supplier's own supplier_ref_number (each supplier numbers differently, so
+  // that ref isn't a sortable sequence — this one is).
+  SI: { table: "supplier_invoices", column: "doc_number" },
   EMP: { table: "staff_register", column: "employee_number" },
 } as const;
 
