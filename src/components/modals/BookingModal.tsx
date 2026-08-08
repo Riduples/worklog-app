@@ -114,15 +114,13 @@ export function BookingModal({ booking, onClose }: { booking?: Booking; onClose:
   const [location, setLocation] = useState(booking?.location ?? "");
   const [linkedQuoteId, setLinkedQuoteId] = useState<string | null>(booking?.linked_quote_id ?? null);
   const [notes, setNotes] = useState(booking?.notes ?? "");
-  const [totalPrice, setTotalPrice] = useState(String(booking?.total_price ?? 0));
-  const [depositPaid, setDepositPaid] = useState(String(booking?.deposit_paid ?? 0));
   const [isOnsite, setIsOnsite] = useState(booking?.is_onsite ?? false);
   const [distanceKm, setDistanceKm] = useState(booking?.distance_km != null ? String(booking.distance_km) : "");
   const [recurrence, setRecurrence] = useState<Recurrence>((booking?.recurrence as Recurrence) || "none");
   const [reminder, setReminder] = useState(booking?.reminder ?? false);
   // Open the extras drawer straight away when editing a booking that already has any.
   const [showExtras, setShowExtras] = useState(
-    !!(booking && (booking.service || booking.purpose || booking.location || booking.notes || booking.linked_quote_id || booking.is_onsite || (booking.total_price ?? 0) > 0 || (booking.deposit_paid ?? 0) > 0))
+    !!(booking && (booking.service || booking.purpose || booking.location || booking.notes || booking.linked_quote_id || booking.is_onsite))
   );
   const [error, setError] = useState("");
 
@@ -135,9 +133,6 @@ export function BookingModal({ booking, onClose }: { booking?: Booking; onClose:
   const createMileage = useCreateMileageTrip();
   const saving = createBooking.isPending || updateBooking.isPending;
 
-  const totalNum = parseFloat(totalPrice) || 0;
-  const depositNum = parseFloat(depositPaid) || 0;
-  const balanceDue = totalNum - depositNum;
   const kmNum = parseFloat(distanceKm) || 0;
   const roundTripKm = Math.round(kmNum * 2 * 10) / 10;
 
@@ -183,9 +178,6 @@ export function BookingModal({ booking, onClose }: { booking?: Booking; onClose:
       location: location.trim() || null,
       linked_quote_id: linkedQuoteId,
       notes: notes.trim() || null,
-      total_price: totalNum,
-      deposit_paid: depositNum,
-      balance_due: balanceDue,
       is_onsite: isOnsite,
       distance_km: isOnsite && kmNum > 0 ? kmNum : null,
       recurrence,
@@ -366,20 +358,6 @@ export function BookingModal({ booking, onClose }: { booking?: Booking; onClose:
           <Field label="Notes - optional">
             <Input value={notes} onChange={setNotes} placeholder="What to bring, topics to cover…" />
           </Field>
-
-          <Field label="Total price">
-            <Input value={totalPrice} onChange={setTotalPrice} type="number" placeholder="0.00" />
-          </Field>
-
-          <Field label="Deposit paid">
-            <Input value={depositPaid} onChange={setDepositPaid} type="number" placeholder="0.00" />
-          </Field>
-
-          {totalNum > 0 && (
-            <div style={{ background: "#F0F9FF", borderRadius: 12, padding: "12px 14px", marginBottom: 16, fontSize: 13, color: "#0369A1" }}>
-              Balance due on the day: <strong>{fmt(balanceDue)}</strong>
-            </div>
-          )}
 
           {!isEdit && (
             <Field label="Repeat this booking">

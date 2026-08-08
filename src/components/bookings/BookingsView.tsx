@@ -6,7 +6,7 @@ import { useContacts } from "@/lib/supabase/hooks/useContacts";
 import { BookingModal } from "@/components/modals/BookingModal";
 import { Modal } from "@/components/ui/Modal";
 import { Row } from "@/components/ui/Row";
-import { fmt, todayStr } from "@/lib/format";
+import { todayStr } from "@/lib/format";
 import { ReadOnlyNotice } from "@/components/ui/ReadOnlyNotice";
 import { useToolAccess } from "@/lib/supabase/hooks/useToolAccess";
 import { BackLink } from "@/components/ui/BackLink";
@@ -86,9 +86,6 @@ function BookingActionsModal({
       {duration ? <Row label="Duration" value={duration} /> : null}
       {booking.location ? <Row label="Location" value={booking.location} /> : null}
       {booking.is_onsite && booking.distance_km ? <Row label="Distance (each way)" value={`${booking.distance_km} km`} /> : null}
-      <Row label="Total" value={fmt(booking.total_price)} />
-      {booking.deposit_paid ? <Row label="Deposit paid" value={fmt(booking.deposit_paid)} /> : null}
-      <Row label="Balance due" value={fmt(booking.balance_due)} bold />
       {booking.notes ? <Row label="Notes" value={booking.notes} /> : null}
 
       {isUpcoming && reminderLink && (
@@ -205,7 +202,6 @@ export function BookingsView() {
               </div>
             </div>
             <div style={{ textAlign: "right" }}>
-              <div style={{ fontWeight: 800, fontSize: 15, color: "#0C4A6E" }}>{fmt(b.total_price)}</div>
               <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: color.bg, color: color.fg, textTransform: "uppercase" }}>
                 {b.status.replace("_", " ")}
               </span>
