@@ -205,18 +205,6 @@ export function TimeModal({ entry, onClose, onShowProfitability }: { entry?: Tim
         </div>
       )}
 
-      {onShowProfitability && (
-        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
-          <button
-            type="button"
-            onClick={onShowProfitability}
-            style={{ background: "none", border: "none", color: "#0C4A6E", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
-          >
-            📊 Actual vs estimate →
-          </button>
-        </div>
-      )}
-
       {/* Diary appointment — auto-fills the details */}
       <Field label="Diary appointment">
         {openBookings.length === 0 ? (
@@ -394,6 +382,19 @@ export function TimeModal({ entry, onClose, onShowProfitability }: { entry?: Tim
 
       {error && <p style={{ color: "#dc2626", fontSize: 13, marginBottom: 12 }}>{error}</p>}
       <SaveBtn label={saving ? "Saving..." : isEdit ? "Save changes" : "Log Time"} icon="⏱️" onClick={handleSave} disabled={saving} />
+
+      {/* Secondary navigation, not part of the form — a footer link to the report. */}
+      {onShowProfitability && (
+        <div style={{ display: "flex", justifyContent: "center", marginTop: 12 }}>
+          <button
+            type="button"
+            onClick={onShowProfitability}
+            style={{ background: "none", border: "none", color: "#0C4A6E", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+          >
+            📊 Actual vs estimate →
+          </button>
+        </div>
+      )}
     </Modal>
   );
 }
