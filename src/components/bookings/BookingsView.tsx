@@ -6,7 +6,7 @@ import { useContacts } from "@/lib/supabase/hooks/useContacts";
 import { BookingModal } from "@/components/modals/BookingModal";
 import { Modal } from "@/components/ui/Modal";
 import { Row } from "@/components/ui/Row";
-import { todayStr } from "@/lib/format";
+import { todayStr, addDays } from "@/lib/format";
 import { ReadOnlyNotice } from "@/components/ui/ReadOnlyNotice";
 import { useToolAccess } from "@/lib/supabase/hooks/useToolAccess";
 import { BackLink } from "@/components/ui/BackLink";
@@ -154,12 +154,14 @@ export function BookingsView() {
   const [editing, setEditing] = useState<Booking | null>(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [sort, setSort] = useState<"upcoming" | "az" | "date" | "recent">("upcoming");
 
   const today = todayStr();
+  const tomorrow = addDays(today, 1);
   const all = bookings ?? [];
   const presentStatuses = STATUS_ORDER.filter((s) => all.some((b) => b.status === s));
 
+  // Search and the status pills narrow the whole diary, past appointments
+  // included, so an old record is always findable by name, service or purpose.
   const filtered = all.filter((b) => {
     if (statusFilter !== "all" && b.status !== statusFilter) return false;
     if (search) {
@@ -170,23 +172,83 @@ export function BookingsView() {
     return true;
   });
 
-  // Diary sort. "Upcoming" (the default) shows the soonest appointment first
-  // with today at the top and past appointments below; "A–Z" sorts by customer
-  // name; "Jan–Dec" is straight calendar order, earliest first; "Recent" puts
-  // the latest date first. Within a day the time decides, so a 09:00 sits above
-  // a 14:00.
+  // Agenda read: upcoming soonest-first (today at the top), then past most-
+  // recent-first. Within a day the time decides, so 09:00 sits above 14:00.
   const key = (b: Booking) => `${b.booking_date}T${b.booking_time ?? "00:00"}`;
-  const sorted = [...filtered].sort((a, b) => {
-    if (sort === "az") return a.client_name.localeCompare(b.client_name);
-    if (sort === "recent") return key(b).localeCompare(key(a));
-    if (sort === "date") return key(a).localeCompare(key(b));
-    const aUpcoming = a.booking_date >= today;
-    const bUpcoming = b.booking_date >= today;
-    if (aUpcoming !== bUpcoming) return aUpcoming ? -1 : 1;
-    return aUpcoming ? key(a).localeCompare(key(b)) : key(b).localeCompare(key(a));
+  const upcoming = filtered
+    .filter((b) => b.booking_date >= today)
+    .sort((a, b) => key(a).localeCompare(key(b)));
+  const past = filtered
+    .filter((b) => b.booking_date < today)
+    .sort((a, b) => key(b).localeCompare(key(a)));
+
+  // Group the upcoming run into day sections (Today, Tomorrow, then dated) for
+  // a diary-style read. Past stays one section, each row showing its own date.
+  const upcomingGroups: { date: string; items: Booking[] }[] = [];
+  for (const b of upcoming) {
+    const last = upcomingGroups[upcomingGroups.length - 1];
+    if (last && last.date === b.booking_date) last.items.push(b);
+    else upcomingGroups.push({ date: b.booking_date, items: [b] });
+  }
+
+  const dateHeader = (dateStr: string) => {
+    if (dateStr === today) return "Today";
+    if (dateStr === tomorrow) return "Tomorrow";
+    const [y, m, d] = dateStr.split("-").map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString("en-ZA", { weekday: "short", day: "numeric", month: "short" });
+  };
+  const shortDate = (dateStr: string) => {
+    const [y, m, d] = dateStr.split("-").map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString("en-ZA", { day: "numeric", month: "short" });
+  };
+
+  const sectionHeaderStyle = (accent: boolean): React.CSSProperties => ({
+    fontSize: 11,
+    fontWeight: 700,
+    color: accent ? "#0C4A6E" : "#94a3b8",
+    textTransform: "uppercase",
+    letterSpacing: 0.4,
+    margin: "16px 2px 8px",
   });
-  // The Past divider only makes sense in the upcoming view.
-  const firstPastIdx = sort === "upcoming" ? sorted.findIndex((b) => b.booking_date < today) : -1;
+
+  // One appointment row. `showDate` puts the date in the subtitle for past rows,
+  // which have no per-day header above them.
+  const appointmentRow = (b: Booking, showDate: boolean) => {
+    const color = STATUS_COLORS[b.status] ?? STATUS_COLORS.confirmed;
+    const sub = [showDate ? shortDate(b.booking_date) : null, b.booking_time, b.purpose || b.service]
+      .filter(Boolean)
+      .join(" · ");
+    return (
+      <button
+        key={b.id}
+        onClick={() => setSelected(b)}
+        style={{
+          width: "100%",
+          background: "#fff",
+          borderRadius: 13,
+          padding: "12px 14px",
+          marginBottom: 8,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
+          border: "none",
+          cursor: "pointer",
+          textAlign: "left",
+        }}
+      >
+        <div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: "#111" }}>{b.client_name}</div>
+          {sub && <div style={{ fontSize: 11, color: "#94a3b8" }}>{sub}</div>}
+        </div>
+        <div style={{ textAlign: "right" }}>
+          <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: color.bg, color: color.fg, textTransform: "uppercase" }}>
+            {b.status.replace("_", " ")}
+          </span>
+        </div>
+      </button>
+    );
+  };
 
   return (
     <div style={{ padding: "20px 16px 100px" }}>
@@ -258,86 +320,32 @@ export function BookingsView() {
       {!isLoading && all.length === 0 && (
         <p style={{ color: "#94a3b8", fontSize: 13, textAlign: "center", marginTop: 40 }}>No appointments yet.</p>
       )}
-      {!isLoading && all.length > 0 && sorted.length === 0 && (
+      {!isLoading && all.length > 0 && filtered.length === 0 && (
         <p style={{ color: "#94a3b8", fontSize: 13, textAlign: "center", marginTop: 40 }}>No appointments match your search.</p>
       )}
 
-      {!isLoading && sorted.length > 0 && (
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, margin: "0 0 10px 2px" }}>
+      {!isLoading && filtered.length > 0 && (
+        <div style={{ margin: "0 0 4px 2px" }}>
           <span style={{ fontSize: 11, color: "#94a3b8" }}>
-            {sorted.length}
-            {sorted.length !== all.length ? ` of ${all.length}` : ""} appointment{all.length === 1 ? "" : "s"}
+            {filtered.length}
+            {filtered.length !== all.length ? ` of ${all.length}` : ""} appointment{all.length === 1 ? "" : "s"}
           </span>
-          <div style={{ display: "flex", gap: 4, background: "#f1f5f9", borderRadius: 10, padding: 3 }}>
-            {(["upcoming", "az", "date", "recent"] as const).map((s) => (
-              <button
-                key={s}
-                onClick={() => setSort(s)}
-                style={{
-                  padding: "5px 12px",
-                  borderRadius: 8,
-                  border: "none",
-                  background: sort === s ? "#fff" : "transparent",
-                  color: sort === s ? "#0C4A6E" : "#64748b",
-                  fontSize: 12,
-                  fontWeight: 700,
-                  cursor: "pointer",
-                  boxShadow: sort === s ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
-                }}
-              >
-                {s === "upcoming" ? "Upcoming" : s === "az" ? "A–Z" : s === "date" ? "Jan–Dec" : "Recent"}
-              </button>
-            ))}
-          </div>
         </div>
       )}
 
-      {sorted.map((b, i) => {
-        const color = STATUS_COLORS[b.status] ?? STATUS_COLORS.confirmed;
-        // Label the boundary between upcoming and past, but only when there is
-        // something upcoming above it.
-        const showPastDivider = i === firstPastIdx && firstPastIdx > 0;
-        return (
-          <div key={b.id}>
-            {showPastDivider && (
-              <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.4, margin: "16px 2px 8px" }}>
-                Past
-              </div>
-            )}
-            <button
-              onClick={() => setSelected(b)}
-              style={{
-                width: "100%",
-                background: "#fff",
-                borderRadius: 13,
-                padding: "12px 14px",
-                marginBottom: 8,
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
-                border: "none",
-                cursor: "pointer",
-                textAlign: "left",
-              }}
-            >
-              <div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: "#111" }}>{b.client_name}</div>
-                <div style={{ fontSize: 11, color: "#94a3b8" }}>
-                  {b.service ? `${b.service} · ` : ""}
-                  {b.booking_date}
-                  {b.booking_time ? ` · ${b.booking_time}` : ""}
-                </div>
-              </div>
-              <div style={{ textAlign: "right" }}>
-                <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: color.bg, color: color.fg, textTransform: "uppercase" }}>
-                  {b.status.replace("_", " ")}
-                </span>
-              </div>
-            </button>
-          </div>
-        );
-      })}
+      {upcomingGroups.map((g) => (
+        <div key={g.date}>
+          <div style={sectionHeaderStyle(true)}>{dateHeader(g.date)}</div>
+          {g.items.map((b) => appointmentRow(b, false))}
+        </div>
+      ))}
+
+      {past.length > 0 && (
+        <div>
+          <div style={sectionHeaderStyle(false)}>Past</div>
+          {past.map((b) => appointmentRow(b, true))}
+        </div>
+      )}
 
       {showNew && <BookingModal onClose={() => setShowNew(false)} />}
       {editing && <BookingModal booking={editing} onClose={() => setEditing(null)} />}
