@@ -18,7 +18,7 @@ const TOOL_HREF: Partial<Record<ToolId, string>> = {
   purchaseorder: "/purchase-orders",
   supplierinvoice: "/supplier-invoices",
   remittance: "/remittance",
-  booking: "/bookings",
+  booking: "/diary",
   timetrack: "/time",
   mileage: "/mileage",
   staffregister: "/staff",

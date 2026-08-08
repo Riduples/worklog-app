@@ -1,7 +1,7 @@
-import { requireBusinessProfile } from "@/lib/auth";
-import { BookingsView } from "@/components/bookings/BookingsView";
+import { redirect } from "next/navigation";
 
-export default async function BookingsPage() {
-  await requireBusinessProfile();
-  return <BookingsView />;
+// The Diary tool used to live at /bookings. Keep the old path working — cached
+// PWA links, bookmarks and shortcuts still point here — by sending it to /diary.
+export default function BookingsRedirect() {
+  redirect("/diary");
 }
