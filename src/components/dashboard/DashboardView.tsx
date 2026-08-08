@@ -147,7 +147,7 @@ export function DashboardView({ businessName }: { businessName: string }) {
       bg: "#BAE6FD",
       title: `${b.client_name}${b.booking_time ? ` — ${b.booking_time}` : ""}`,
       sub: b.purpose || b.service || "Appointment today",
-      href: "/bookings",
+      href: "/diary",
     });
   }
   if (gate("stock") && lowStock.length > 0) {

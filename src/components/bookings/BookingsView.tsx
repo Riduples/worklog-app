@@ -19,6 +19,11 @@ const STATUS_COLORS: Record<string, { bg: string; fg: string }> = {
   no_show: { bg: "#fee2e2", fg: "#991b1b" },
 };
 
+// Status filter pills follow this order; only statuses actually in use get a
+// pill, so a diary with nothing cancelled never shows a Cancelled pill.
+const STATUS_ORDER = ["confirmed", "pending", "complete", "no_show", "cancelled"];
+const statusLabel = (s: string) => (s === "all" ? "All" : s.replace("_", "-"));
+
 // Normalise a stored phone to the wa.me digits-only form. SA numbers are typed
 // every which way ("073 005 5112", "+27 73…", "2773…"); wa.me wants pure digits
 // with the country code, so strip separators and turn a local leading 0 into 27.
@@ -147,20 +152,39 @@ export function BookingsView() {
   const [showNew, setShowNew] = useState(false);
   const [selected, setSelected] = useState<Booking | null>(null);
   const [editing, setEditing] = useState<Booking | null>(null);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [sort, setSort] = useState<"upcoming" | "date" | "recent">("upcoming");
 
-  // Diary order: soonest upcoming first (today at the top), then past
-  // appointments below as a record, most-recent first. Within a day the time
-  // decides, so a 09:00 sits above a 14:00.
   const today = todayStr();
-  const sortedBookings = [...(bookings ?? [])].sort((a, b) => {
+  const all = bookings ?? [];
+  const presentStatuses = STATUS_ORDER.filter((s) => all.some((b) => b.status === s));
+
+  const filtered = all.filter((b) => {
+    if (statusFilter !== "all" && b.status !== statusFilter) return false;
+    if (search) {
+      const s = search.toLowerCase();
+      const hay = `${b.client_name} ${b.service ?? ""} ${b.purpose ?? ""}`.toLowerCase();
+      if (!hay.includes(s)) return false;
+    }
+    return true;
+  });
+
+  // Diary sort. "Upcoming" (the default) shows the soonest appointment first
+  // with today at the top and past appointments below; "Jan–Dec" is straight
+  // calendar order, earliest first; "Recent" puts the latest date first. Within
+  // a day the time decides, so a 09:00 sits above a 14:00.
+  const key = (b: Booking) => `${b.booking_date}T${b.booking_time ?? "00:00"}`;
+  const sorted = [...filtered].sort((a, b) => {
+    if (sort === "recent") return key(b).localeCompare(key(a));
+    if (sort === "date") return key(a).localeCompare(key(b));
     const aUpcoming = a.booking_date >= today;
     const bUpcoming = b.booking_date >= today;
     if (aUpcoming !== bUpcoming) return aUpcoming ? -1 : 1;
-    const ak = `${a.booking_date}T${a.booking_time ?? "00:00"}`;
-    const bk = `${b.booking_date}T${b.booking_time ?? "00:00"}`;
-    return aUpcoming ? ak.localeCompare(bk) : bk.localeCompare(ak);
+    return aUpcoming ? key(a).localeCompare(key(b)) : key(b).localeCompare(key(a));
   });
-  const firstPastIdx = sortedBookings.findIndex((b) => b.booking_date < today);
+  // The Past divider only makes sense in the upcoming view.
+  const firstPastIdx = sort === "upcoming" ? sorted.findIndex((b) => b.booking_date < today) : -1;
 
   return (
     <div style={{ padding: "20px 16px 100px" }}>
@@ -181,12 +205,92 @@ export function BookingsView() {
 
       {!access.loading && !access.canEdit && <ReadOnlyNotice level={access.level} what="appointments" />}
 
-      {isLoading && <p style={{ color: "#94a3b8", fontSize: 13 }}>Loading...</p>}
-      {!isLoading && (bookings ?? []).length === 0 && (
-        <p style={{ color: "#94a3b8", fontSize: 13, textAlign: "center", marginTop: 40 }}>No appointments yet.</p>
+      {!isLoading && all.length > 0 && (
+        <>
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search appointments..."
+            style={{
+              width: "100%",
+              padding: "12px 14px",
+              borderRadius: 12,
+              border: "1.5px solid #e2e8f0",
+              fontSize: 14,
+              boxSizing: "border-box",
+              marginBottom: 12,
+              background: "#fff",
+            }}
+          />
+
+          {presentStatuses.length > 1 && (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
+              {["all", ...presentStatuses].map((s) => {
+                const active = statusFilter === s;
+                return (
+                  <button
+                    key={s}
+                    onClick={() => setStatusFilter(s)}
+                    style={{
+                      padding: "8px 14px",
+                      borderRadius: 20,
+                      border: `1.5px solid ${active ? "#0C4A6E" : "#e2e8f0"}`,
+                      background: active ? "#0C4A6E" : "#fff",
+                      color: active ? "#fff" : "#374151",
+                      fontSize: 12,
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      textTransform: "capitalize",
+                    }}
+                  >
+                    {statusLabel(s)}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </>
       )}
 
-      {sortedBookings.map((b, i) => {
+      {isLoading && <p style={{ color: "#94a3b8", fontSize: 13 }}>Loading...</p>}
+      {!isLoading && all.length === 0 && (
+        <p style={{ color: "#94a3b8", fontSize: 13, textAlign: "center", marginTop: 40 }}>No appointments yet.</p>
+      )}
+      {!isLoading && all.length > 0 && sorted.length === 0 && (
+        <p style={{ color: "#94a3b8", fontSize: 13, textAlign: "center", marginTop: 40 }}>No appointments match your search.</p>
+      )}
+
+      {!isLoading && sorted.length > 0 && (
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, margin: "0 0 10px 2px" }}>
+          <span style={{ fontSize: 11, color: "#94a3b8" }}>
+            {sorted.length}
+            {sorted.length !== all.length ? ` of ${all.length}` : ""} appointment{all.length === 1 ? "" : "s"}
+          </span>
+          <div style={{ display: "flex", gap: 4, background: "#f1f5f9", borderRadius: 10, padding: 3 }}>
+            {(["upcoming", "date", "recent"] as const).map((s) => (
+              <button
+                key={s}
+                onClick={() => setSort(s)}
+                style={{
+                  padding: "5px 12px",
+                  borderRadius: 8,
+                  border: "none",
+                  background: sort === s ? "#fff" : "transparent",
+                  color: sort === s ? "#0C4A6E" : "#64748b",
+                  fontSize: 12,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  boxShadow: sort === s ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
+                }}
+              >
+                {s === "upcoming" ? "Upcoming" : s === "date" ? "Jan–Dec" : "Recent"}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {sorted.map((b, i) => {
         const color = STATUS_COLORS[b.status] ?? STATUS_COLORS.confirmed;
         // Label the boundary between upcoming and past, but only when there is
         // something upcoming above it.
