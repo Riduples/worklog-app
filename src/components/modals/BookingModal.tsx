@@ -106,7 +106,6 @@ export function BookingModal({ booking, onClose }: { booking?: Booking; onClose:
   const [apptType, setApptType] = useState<"customer" | "supplier">((booking?.appt_type as "customer" | "supplier") || "customer");
   const [client, setClient] = useState(booking?.client_name ?? "");
   const [clientContactId, setClientContactId] = useState<string | null>(booking?.client_contact_id ?? null);
-  const [service, setService] = useState(booking?.service ?? "");
   const [purpose, setPurpose] = useState(booking?.purpose ?? "");
   const [bookingDate, setBookingDate] = useState(booking?.booking_date ?? todayStr());
   const [bookingTime, setBookingTime] = useState(booking ? booking.booking_time ?? "" : "09:00");
@@ -120,7 +119,7 @@ export function BookingModal({ booking, onClose }: { booking?: Booking; onClose:
   const [reminder, setReminder] = useState(booking?.reminder ?? false);
   // Open the extras drawer straight away when editing a booking that already has any.
   const [showExtras, setShowExtras] = useState(
-    !!(booking && (booking.service || booking.purpose || booking.location || booking.notes || booking.linked_quote_id || booking.is_onsite))
+    !!(booking && (booking.purpose || booking.location || booking.notes || booking.linked_quote_id || booking.is_onsite))
   );
   const [error, setError] = useState("");
 
@@ -170,7 +169,6 @@ export function BookingModal({ booking, onClose }: { booking?: Booking; onClose:
       appt_type: apptType,
       client_name: client.trim(),
       client_contact_id: clientContactId,
-      service: service.trim() || null,
       purpose: purpose.trim() || null,
       booking_date: bookingDate,
       booking_time: bookingTime || null,
@@ -208,7 +206,7 @@ export function BookingModal({ booking, onClose }: { booking?: Booking; onClose:
                 odometer_end: roundTripKm,
                 km_travelled: roundTripKm,
                 trip_type: apptType === "supplier" ? "Supplier visit" : "Customer visit",
-                purpose: `On-site: ${service.trim() || purpose.trim() || client.trim()}`,
+                purpose: `On-site: ${purpose.trim() || client.trim()}`,
                 sars_deduction: Math.round(roundTripKm * MILEAGE_RATE * 100) / 100,
                 trip_date: bookingDate,
                 booking_id: created.id,
@@ -299,10 +297,6 @@ export function BookingModal({ booking, onClose }: { booking?: Booking; onClose:
         <div style={{ background: "#f8fafc", borderRadius: 12, padding: "14px", marginBottom: 12 }}>
           <Field label="Purpose - optional">
             <Input value={purpose} onChange={setPurpose} placeholder={apptType === "supplier" ? "e.g. Collect materials, Price discussion…" : "e.g. Quote walkthrough, Site visit…"} />
-          </Field>
-
-          <Field label="Service / job - optional">
-            <Input value={service} onChange={setService} placeholder="e.g. Haircut, geyser install" />
           </Field>
 
           <Field label="Duration">

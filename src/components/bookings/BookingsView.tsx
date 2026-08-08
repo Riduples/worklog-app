@@ -80,7 +80,7 @@ function BookingActionsModal({
           </span>
         )}
       </div>
-      <Row label="Service" value={booking.service ?? "—"} />
+      {booking.service ? <Row label="Service" value={booking.service} /> : null}
       {booking.purpose ? <Row label="Purpose" value={booking.purpose} /> : null}
       <Row label="Date" value={`${booking.booking_date}${booking.booking_time ? ` · ${booking.booking_time}` : ""}`} />
       {duration ? <Row label="Duration" value={duration} /> : null}
