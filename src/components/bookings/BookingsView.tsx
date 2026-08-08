@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useBookings, useUpdateBooking, type Booking } from "@/lib/supabase/hooks/useBookings";
 import { useContacts } from "@/lib/supabase/hooks/useContacts";
+import { useQuotes } from "@/lib/supabase/hooks/useQuotes";
+import { RECURRENCE_LABEL, type Recurrence } from "@/lib/recurrence";
 import { BookingModal } from "@/components/modals/BookingModal";
 import { Modal } from "@/components/ui/Modal";
 import { Row } from "@/components/ui/Row";
@@ -56,6 +58,8 @@ function BookingActionsModal({
 }) {
   const updateBooking = useUpdateBooking();
   const { data: contacts } = useContacts();
+  const { data: quotes } = useQuotes();
+  const linkedQuote = booking.linked_quote_id ? (quotes ?? []).find((q) => q.id === booking.linked_quote_id) ?? null : null;
   const color = STATUS_COLORS[booking.status] ?? STATUS_COLORS.confirmed;
   const setStatus = (status: string) => updateBooking.mutate({ id: booking.id, changes: { status } }, { onSuccess: onClose });
   // A past appointment can only be marked complete/no-show, not rescheduled or
@@ -89,9 +93,11 @@ function BookingActionsModal({
       {booking.purpose ? <Row label="Purpose" value={booking.purpose} /> : null}
       <Row label="Date" value={`${booking.booking_date}${booking.booking_time ? ` · ${booking.booking_time}` : ""}`} />
       {duration ? <Row label="Duration" value={duration} /> : null}
+      {booking.recurrence && booking.recurrence !== "none" ? <Row label="Repeats" value={RECURRENCE_LABEL[booking.recurrence as Recurrence]} /> : null}
       {booking.location ? <Row label="Location" value={booking.location} /> : null}
       {booking.is_onsite && booking.distance_km ? <Row label="Distance (each way)" value={`${booking.distance_km} km`} /> : null}
       {booking.notes ? <Row label="Notes" value={booking.notes} /> : null}
+      {linkedQuote ? <Row label="Linked quote" value={linkedQuote.doc_number} /> : null}
 
       {isUpcoming && reminderLink && (
         <a
@@ -137,7 +143,7 @@ function BookingActionsModal({
               onClick={() => setStatus("cancelled")}
               style={{ flex: 1, background: "#f1f5f9", color: "#64748b", border: "none", borderRadius: 12, padding: 13, fontWeight: 700, cursor: "pointer" }}
             >
-              Cancel
+              Cancel appointment
             </button>
           </div>
         </>

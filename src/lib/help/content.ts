@@ -2487,7 +2487,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
               "To change an appointment that is today or still coming up, tap Edit appointment.",
               "When the job is done, tap Mark Complete.",
               "If the customer did not turn up, tap No-show.",
-              "If the appointment fell away, tap Cancel."
+              "If the appointment fell away, tap Cancel appointment."
             ]
           },
           {
@@ -2506,7 +2506,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
               "When the list gets long, use the search box to find an appointment by customer, service or purpose, and tap a status pill (All, Confirmed, Complete and so on) to show only those. Search and the pills look through past appointments too, so an old record is easy to find.",
               "The status colours help you scan: confirmed and complete show in blue, no-show in red, and cancelled in grey.",
               "Past appointments cannot be edited — you can still mark them Complete or No-show, but not reschedule them.",
-              "Once an appointment is Complete, No-show or Cancelled, the Mark Complete, No-show and Cancel buttons fall away. Those appointments stay in your diary as a record."
+              "Once an appointment is Complete, No-show or Cancelled, the Mark Complete, No-show and Cancel appointment buttons fall away. Those appointments stay in your diary as a record."
             ]
           },
           {
