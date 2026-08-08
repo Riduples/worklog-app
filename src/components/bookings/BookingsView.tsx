@@ -109,7 +109,7 @@ function BookingActionsModal({
           onClick={() => onEdit(booking)}
           style={{ width: "100%", background: "#F0F9FF", color: "#0369A1", border: "1.5px solid #BAE6FD", borderRadius: 14, padding: 15, fontWeight: 700, cursor: "pointer", marginTop: 16 }}
         >
-          ✏️ Edit booking
+          ✏️ Edit appointment
         </button>
       )}
 
@@ -148,12 +148,26 @@ export function BookingsView() {
   const [selected, setSelected] = useState<Booking | null>(null);
   const [editing, setEditing] = useState<Booking | null>(null);
 
+  // Diary order: soonest upcoming first (today at the top), then past
+  // appointments below as a record, most-recent first. Within a day the time
+  // decides, so a 09:00 sits above a 14:00.
+  const today = todayStr();
+  const sortedBookings = [...(bookings ?? [])].sort((a, b) => {
+    const aUpcoming = a.booking_date >= today;
+    const bUpcoming = b.booking_date >= today;
+    if (aUpcoming !== bUpcoming) return aUpcoming ? -1 : 1;
+    const ak = `${a.booking_date}T${a.booking_time ?? "00:00"}`;
+    const bk = `${b.booking_date}T${b.booking_time ?? "00:00"}`;
+    return aUpcoming ? ak.localeCompare(bk) : bk.localeCompare(ak);
+  });
+  const firstPastIdx = sortedBookings.findIndex((b) => b.booking_date < today);
+
   return (
     <div style={{ padding: "20px 16px 100px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
         <div>
           <BackLink />
-          <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 0" }}>Bookings</h1>
+          <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 0" }}>Diary</h1>
         </div>
         {access.canEdit && (
           <button
@@ -165,48 +179,57 @@ export function BookingsView() {
         )}
       </div>
 
-      {!access.loading && !access.canEdit && <ReadOnlyNotice level={access.level} what="bookings" />}
+      {!access.loading && !access.canEdit && <ReadOnlyNotice level={access.level} what="appointments" />}
 
       {isLoading && <p style={{ color: "#94a3b8", fontSize: 13 }}>Loading...</p>}
       {!isLoading && (bookings ?? []).length === 0 && (
-        <p style={{ color: "#94a3b8", fontSize: 13, textAlign: "center", marginTop: 40 }}>No bookings yet.</p>
+        <p style={{ color: "#94a3b8", fontSize: 13, textAlign: "center", marginTop: 40 }}>No appointments yet.</p>
       )}
 
-      {(bookings ?? []).map((b) => {
+      {sortedBookings.map((b, i) => {
         const color = STATUS_COLORS[b.status] ?? STATUS_COLORS.confirmed;
+        // Label the boundary between upcoming and past, but only when there is
+        // something upcoming above it.
+        const showPastDivider = i === firstPastIdx && firstPastIdx > 0;
         return (
-          <button
-            key={b.id}
-            onClick={() => setSelected(b)}
-            style={{
-              width: "100%",
-              background: "#fff",
-              borderRadius: 13,
-              padding: "12px 14px",
-              marginBottom: 8,
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
-              border: "none",
-              cursor: "pointer",
-              textAlign: "left",
-            }}
-          >
-            <div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: "#111" }}>{b.client_name}</div>
-              <div style={{ fontSize: 11, color: "#94a3b8" }}>
-                {b.service ? `${b.service} · ` : ""}
-                {b.booking_date}
-                {b.booking_time ? ` · ${b.booking_time}` : ""}
+          <div key={b.id}>
+            {showPastDivider && (
+              <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.4, margin: "16px 2px 8px" }}>
+                Past
               </div>
-            </div>
-            <div style={{ textAlign: "right" }}>
-              <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: color.bg, color: color.fg, textTransform: "uppercase" }}>
-                {b.status.replace("_", " ")}
-              </span>
-            </div>
-          </button>
+            )}
+            <button
+              onClick={() => setSelected(b)}
+              style={{
+                width: "100%",
+                background: "#fff",
+                borderRadius: 13,
+                padding: "12px 14px",
+                marginBottom: 8,
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
+                border: "none",
+                cursor: "pointer",
+                textAlign: "left",
+              }}
+            >
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: "#111" }}>{b.client_name}</div>
+                <div style={{ fontSize: 11, color: "#94a3b8" }}>
+                  {b.service ? `${b.service} · ` : ""}
+                  {b.booking_date}
+                  {b.booking_time ? ` · ${b.booking_time}` : ""}
+                </div>
+              </div>
+              <div style={{ textAlign: "right" }}>
+                <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: color.bg, color: color.fg, textTransform: "uppercase" }}>
+                  {b.status.replace("_", " ")}
+                </span>
+              </div>
+            </button>
+          </div>
         );
       })}
 

@@ -435,7 +435,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           },
           {
             "type": "paragraph",
-            "text": "Quick Log is not only for money any more. From the same box it can also start a booking, add stock, log a trip or hours worked, or save a new contact — and when you describe something bigger, like an invoice or a pay run, it points you to the right tool instead. The full Quick Log guide lists everything it handles; this section covers the money side."
+            "text": "Quick Log is not only for money any more. From the same box it can also make an appointment, add stock, log a trip or hours worked, or save a new contact — and when you describe something bigger, like an invoice or a pay run, it points you to the right tool instead. The full Quick Log guide lists everything it handles; this section covers the money side."
           },
           {
             "type": "steps",
@@ -485,7 +485,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
     "slug": "quick-log",
     "category": "Getting started",
     "title": "Quick Log — record almost anything",
-    "summary": "The gold button that turns a typed, spoken or photographed note into the right entry — income, an expense, a booking, stock, a trip, hours worked or a new contact — and points bigger jobs at the right tool.",
+    "summary": "The gold button that turns a typed, spoken or photographed note into the right entry — income, an expense, an appointment, stock, a trip, hours worked or a new contact — and points bigger jobs at the right tool.",
     "sections": [
       {
         "heading": "What Quick Log is",
@@ -512,7 +512,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
             "items": [
               "Income — money that came in. \"R450 cash from Thabo for the gate fix\".",
               "Expense — money that went out. \"Bought R200 fuel at Engen, paid card\". A photo of a till slip is almost always an expense.",
-              "Booking — an appointment set for a client, with no money paid yet. \"Book Sarah for Friday 2pm, braai catering R1500\".",
+              "Appointment — set for a client, with no money paid yet. \"Book Sarah for Friday 2pm, braai catering R1500\".",
               "Stock — an item and quantity to add to your price list. \"Add 20 bags cement at R80 each\".",
               "Trip — kilometres driven for the business, for your mileage log. \"Drove 45km to Sandton for a site visit\".",
               "Time — hours worked on a job. \"3 hours plumbing for Mrs Khumalo\".",
@@ -521,7 +521,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           },
           {
             "type": "tip",
-            "text": "If money changed hands, Quick Log treats it as income or an expense first — even if a job or appointment is mentioned. \"Sarah paid R500 for today's appointment\" is logged as income, not a booking."
+            "text": "If money changed hands, Quick Log treats it as income or an expense first — even if a job or appointment is mentioned. \"Sarah paid R500 for today's appointment\" is logged as income, not an appointment."
           }
         ]
       },
@@ -551,7 +551,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
             "items": [
               "Tap the gold \"Just tell me\" button on your home screen (it opens a window titled Quick Log).",
               "Tell it what happened — type, Speak, Camera or Upload. Say it naturally; mixing English, Afrikaans, isiZulu or other languages, and short SMS-style spelling, are all fine.",
-              "Tap Log it. Worklog reads it and shows a card with what it worked out — for example Income detected, Booking detected or Trip detected — with the amounts and details filled in.",
+              "Tap Log it. Worklog reads it and shows a card with what it worked out — for example Income detected, Appointment detected or Trip detected — with the amounts and details filled in.",
               "Check the card. Fix anything that looks wrong, and add the extra bits each kind of entry offers (for income, link an invoice you sent and pick the bank account).",
               "Tap Confirm & Save to keep it, or Discard to throw it away and start again."
             ]
@@ -2414,15 +2414,15 @@ export const HELP_ARTICLES: HelpArticle[] = [
   {
     "slug": "diary-bookings",
     "category": "Scheduling",
-    "title": "Use Bookings as your diary",
-    "summary": "Keep your appointments and jobs in Bookings — who they are with, what they are for and when — and mark each one complete, no-show or cancelled.",
+    "title": "Use the Diary to make appointments",
+    "summary": "Make and keep appointments in the Diary — who they are with, what they are for and when — and mark each one complete, no-show or cancelled.",
     "sections": [
       {
-        "heading": "What Bookings is for",
+        "heading": "What the Diary is for",
         "blocks": [
           {
             "type": "paragraph",
-            "text": "Bookings is your diary. It keeps a simple list of the appointments and jobs you have coming up: who they are with, what they are for, and when. Every booking sits on one screen with a status tag, so you can see what is ahead at a glance."
+            "text": "The Diary is where you make your appointments. It keeps a simple list of the appointments and jobs you have coming up: who they are with, what they are for, and when. Every appointment sits on one screen with a status tag, so you can see what is ahead at a glance."
           },
           {
             "type": "paragraph",
@@ -2435,28 +2435,28 @@ export const HELP_ARTICLES: HelpArticle[] = [
         "blocks": [
           {
             "type": "tip",
-            "text": "You can type a customer's name straight into a booking, so you do not have to set them up first. But if you add your regulars under Customers (or Suppliers), you can pick them from a list instead of typing the name each time — and Worklog can then send them a WhatsApp reminder."
+            "text": "You can type a customer's name straight into an appointment, so you do not have to set them up first. But if you add your regulars under Customers (or Suppliers), you can pick them from a list instead of typing the name each time — and Worklog can then send them a WhatsApp reminder."
           }
         ]
       },
       {
-        "heading": "Add a booking",
+        "heading": "Make an appointment",
         "blocks": [
           {
             "type": "steps",
             "items": [
-              "Open Bookings.",
+              "Open the Diary.",
               "Tap the + New button in the top right.",
-              "Choose the Booking type — Customer or Supplier.",
+              "Choose the Appointment type — Customer or Supplier.",
               "At Customer (or Supplier), start typing the name. If they are already in your contacts, pick them from the list. If not, just type the name.",
               "Set the Date and the Time.",
               "Need more? Tap Add more details for a purpose, how long it will take, a location, an on-site visit, a linked quote, notes, a repeat, or a day-before WhatsApp reminder. You can skip all of these.",
-              "Tap Save booking."
+              "Tap Save appointment."
             ]
           },
           {
             "type": "paragraph",
-            "text": "A new booking is saved as Confirmed and shows up in your list with the name, date, time and a status tag. If it clashes with another booking at the same time, Worklog warns you before you save."
+            "text": "A new appointment is saved as Confirmed and shows up in your diary with the name, date, time and a status tag. If it clashes with another appointment at the same time, Worklog warns you before you save."
           }
         ]
       },
@@ -2467,32 +2467,32 @@ export const HELP_ARTICLES: HelpArticle[] = [
             "type": "bullets",
             "items": [
               "Turn on On-site / mobile visit and add the distance each way. When you save, Worklog logs a mileage trip at the SARS rate for you, so you do not have to capture it again under Trip Log.",
-              "Turn on the day-before WhatsApp reminder, then open the booking and tap Send WhatsApp reminder. This needs the customer's phone number saved on their contact.",
-              "Set Repeat to book the same slot again automatically — Worklog pre-fills the next few dates for you."
+              "Turn on the day-before WhatsApp reminder, then open the appointment and tap Send WhatsApp reminder. This needs the customer's phone number saved on their contact.",
+              "Set Repeat to make the same appointment again automatically — Worklog pre-fills the next few dates for you."
             ]
           }
         ]
       },
       {
-        "heading": "Open a booking and update it",
+        "heading": "Open an appointment and update it",
         "blocks": [
           {
             "type": "paragraph",
-            "text": "Tap any booking in the list to open it. You will see the status, the date and time, and any details you added."
+            "text": "Tap any appointment in the diary to open it. You will see the status, the date and time, and any details you added."
           },
           {
             "type": "steps",
             "items": [
-              "Tap the booking you want.",
-              "To change a booking that is today or still coming up, tap Edit booking.",
+              "Tap the appointment you want.",
+              "To change an appointment that is today or still coming up, tap Edit appointment.",
               "When the job is done, tap Mark Complete.",
               "If the customer did not turn up, tap No-show.",
-              "If the booking fell away, tap Cancel."
+              "If the appointment fell away, tap Cancel."
             ]
           },
           {
             "type": "paragraph",
-            "text": "The status tag on the booking changes to match: Complete, No show or Cancelled. This gives you an honest record of what actually happened, including who keeps not showing up."
+            "text": "The status tag changes to match: Complete, No show or Cancelled. This gives you an honest record of what actually happened, including who keeps not showing up."
           }
         ]
       },
@@ -2502,19 +2502,19 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "bullets",
             "items": [
-              "Bookings are listed with the latest date first.",
+              "Your diary lists the soonest appointment first, so what is next is always at the top. Past appointments sit below, under a Past heading, as a record.",
               "The status colours help you scan: confirmed and complete show in blue, no-show in red, and cancelled in grey.",
-              "Past bookings cannot be edited — you can still mark them Complete or No-show, but not reschedule them.",
-              "Once a booking is Complete, No-show or Cancelled, the Mark Complete, No-show and Cancel buttons fall away. Those bookings stay on your list as a record."
+              "Past appointments cannot be edited — you can still mark them Complete or No-show, but not reschedule them.",
+              "Once an appointment is Complete, No-show or Cancelled, the Mark Complete, No-show and Cancel buttons fall away. Those appointments stay in your diary as a record."
             ]
           },
           {
             "type": "tip",
-            "text": "Bookings keeps track of the appointment, but it does not send the customer a bill. When the job is done and you want to charge for it, create an invoice under Invoices, or log the payment you received under Log Income."
+            "text": "The Diary keeps track of the appointment, but it does not send the customer a bill. When the job is done and you want to charge for it, create an invoice under Invoices, or log the payment you received under Log Income."
           },
           {
             "type": "warning",
-            "text": "Marking a booking Complete, No-show or Cancelled cannot be undone. Once you tap one, the buttons fall away and you cannot switch it back, so only tap them once you are sure."
+            "text": "Marking an appointment Complete, No-show or Cancelled cannot be undone. Once you tap one, the buttons fall away and you cannot switch it back, so only tap them once you are sure."
           }
         ]
       }
@@ -2541,7 +2541,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           },
           {
             "type": "paragraph",
-            "text": "You will find it under the \"Scheduling System\" tools card — the group that also holds Bookings and Mileage — or the \"Work\" group on the desktop sidebar. The screen is called Time Tracker."
+            "text": "You will find it under the \"Scheduling System\" tools card — the group that also holds the Diary and Mileage — or the \"Work\" group on the desktop sidebar. The screen is called Time Tracker."
           }
         ]
       },
@@ -2639,7 +2639,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
             "type": "bullets",
             "items": [
               "Check your car's odometer before you leave and again when you get back, so you have a start and an end reading.",
-              "The Mileage tool is under the \"Scheduling System\" tools card — the group that also holds Bookings and Time — or the \"Work\" group on the desktop sidebar. Open it and you will see the heading Mileage."
+              "The Mileage tool is under the \"Scheduling System\" tools card — the group that also holds the Diary and Time — or the \"Work\" group on the desktop sidebar. Open it and you will see the heading Mileage."
             ]
           }
         ]
@@ -3512,7 +3512,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
               "Tap + Invite in the top right. The \"Invite a team member\" box opens.",
               "Type the person's email address in the Email box.",
               "Choose a Role. Member is a normal user whose access you control. Owner has full control of everything, the same as you, so only pick this for someone you fully trust.",
-              "If you chose Member, pick their Access: \"Can log only\" (add income, expenses, quotes and bookings day-to-day, but no reports, deleting or payroll), \"Can see everything\" (open and view any tool but change nothing), or \"Full control (manager)\" (the same as an owner). You can also tap \"Customize per tool instead\" to set access tool by tool.",
+              "If you chose Member, pick their Access: \"Can log only\" (add income, expenses, quotes and appointments day-to-day, but no reports, deleting or payroll), \"Can see everything\" (open and view any tool but change nothing), or \"Full control (manager)\" (the same as an owner). You can also tap \"Customize per tool instead\" to set access tool by tool.",
               "Tap Create invite link."
             ]
           },
@@ -3585,7 +3585,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
         "blocks": [
           {
             "type": "paragraph",
-            "text": "When you invite someone to your business, you decide what they may see and do. Permissions let you switch each tool on or off for a person, and set how far they can go once it is on. You might want your assistant to log income and take bookings, but not see your reports or run payroll. This is where you set that."
+            "text": "When you invite someone to your business, you decide what they may see and do. Permissions let you switch each tool on or off for a person, and set how far they can go once it is on. You might want your assistant to log income and make appointments, but not see your reports or run payroll. This is where you set that."
           },
           {
             "type": "paragraph",
@@ -3633,7 +3633,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "bullets",
             "items": [
-              "Can log only — can add income, expenses, quotes and bookings day to day. Can't see reports, delete anything, or run payroll.",
+              "Can log only — can add income, expenses, quotes and appointments day to day. Can't see reports, delete anything, or run payroll.",
               "Can see everything — can open and check any tool or report, but can't add, edit, delete or approve anything.",
               "Full control (manager) — complete access, the same as the owner. Only give this to someone you fully trust."
             ]

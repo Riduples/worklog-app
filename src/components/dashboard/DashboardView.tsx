@@ -146,7 +146,7 @@ export function DashboardView({ businessName }: { businessName: string }) {
       icon: "📅",
       bg: "#BAE6FD",
       title: `${b.client_name}${b.booking_time ? ` — ${b.booking_time}` : ""}`,
-      sub: b.purpose || b.service || "Booking today",
+      sub: b.purpose || b.service || "Appointment today",
       href: "/bookings",
     });
   }

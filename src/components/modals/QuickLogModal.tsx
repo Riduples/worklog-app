@@ -36,7 +36,7 @@ const EXAMPLES = [
 const ACTION_META: Record<QuickLogAction, { icon: string; label: string }> = {
   income: { icon: "💰", label: "Income detected" },
   expense: { icon: "💸", label: "Expense detected" },
-  booking: { icon: "📅", label: "Booking detected" },
+  booking: { icon: "📅", label: "Appointment detected" },
   stock: { icon: "📦", label: "Stock item detected" },
   mileage: { icon: "🚗", label: "Trip detected" },
   time: { icon: "⏱️", label: "Time entry detected" },
@@ -75,7 +75,7 @@ function validateDraft(d: QuickLogDraft): string | null {
         ? 'I couldn\'t find a clear amount. Add the rand amount, e.g. "R450 cash from Thabo".'
         : null;
     case "booking":
-      return !d.person.trim() ? 'Who is the booking for? Add a name, e.g. "Book Sarah for Friday 2pm".' : null;
+      return !d.person.trim() ? 'Who is the appointment for? Add a name, e.g. "Book Sarah for Friday 2pm".' : null;
     case "stock":
       return !d.whatFor.trim() ? 'What item is this? e.g. "Add 20 bags cement at R80".' : null;
     case "mileage":
@@ -291,7 +291,7 @@ export function QuickLogModal({ onClose }: { onClose: () => void }) {
             // Nothing paid yet, so the whole price is still due.
             balance_due: price,
           },
-          { onSuccess: () => onSaved(`📅 Booking for ${draft.person} saved`) }
+          { onSuccess: () => onSaved(`📅 Appointment for ${draft.person} saved`) }
         );
         break;
       }
@@ -389,7 +389,7 @@ export function QuickLogModal({ onClose }: { onClose: () => void }) {
         }}
       >
         <span style={{ fontWeight: 700 }}>✨ Quick Log</span> — Tell Worklog what happened in any way that works for you.
-        Log money in or out, a booking, stock, a trip, hours or a new contact — type it, say it, or snap a photo. Worklog
+        Log money in or out, an appointment, stock, a trip, hours or a new contact — type it, say it, or snap a photo. Worklog
         reads it and logs it for you to confirm.
       </div>
 
