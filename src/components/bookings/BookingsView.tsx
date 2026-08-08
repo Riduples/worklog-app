@@ -324,7 +324,9 @@ export function BookingsView() {
 
       {isLoading && <p style={{ color: "#94a3b8", fontSize: 13 }}>Loading...</p>}
       {!isLoading && all.length === 0 && (
-        <p style={{ color: "#94a3b8", fontSize: 13, textAlign: "center", marginTop: 40 }}>No appointments yet.</p>
+        <p style={{ color: "#94a3b8", fontSize: 13, textAlign: "center", marginTop: 40 }}>
+          No appointments yet.{access.canEdit ? " Tap “+ New” to make your first appointment." : ""}
+        </p>
       )}
       {!isLoading && all.length > 0 && filtered.length === 0 && (
         <p style={{ color: "#94a3b8", fontSize: 13, textAlign: "center", marginTop: 40 }}>No appointments match your search.</p>
