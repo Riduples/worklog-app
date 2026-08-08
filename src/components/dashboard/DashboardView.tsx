@@ -124,7 +124,7 @@ export function DashboardView({ businessName }: { businessName: string }) {
   const unpaidTotal = unpaidInvoices.reduce((s, i) => s + balanceInclVat(i.balance_due, i.vat_amount), 0);
   const todaysBookings = gate("booking")
     ? (bookings ?? []).filter(
-        (b) => b.booking_date === today && b.status !== "cancelled" && b.status !== "no_show" && b.status !== "completed"
+        (b) => b.booking_date === today && b.status !== "cancelled" && b.status !== "no_show" && b.status !== "complete"
       )
     : [];
 
@@ -146,7 +146,7 @@ export function DashboardView({ businessName }: { businessName: string }) {
       icon: "📅",
       bg: "#BAE6FD",
       title: `${b.client_name}${b.booking_time ? ` — ${b.booking_time}` : ""}`,
-      sub: b.service || "Appointment today",
+      sub: b.purpose || b.service || "Booking today",
       href: "/bookings",
     });
   }

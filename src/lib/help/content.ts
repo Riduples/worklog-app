@@ -2414,19 +2414,19 @@ export const HELP_ARTICLES: HelpArticle[] = [
   {
     "slug": "diary-bookings",
     "category": "Scheduling",
-    "title": "Use the Diary for bookings",
-    "summary": "Keep track of your appointments in Bookings, and mark each one complete, no-show or cancelled.",
+    "title": "Use Bookings as your diary",
+    "summary": "Keep your appointments and jobs in Bookings — who they are with, what they are for and when — and mark each one complete, no-show or cancelled.",
     "sections": [
       {
         "heading": "What Bookings is for",
         "blocks": [
           {
             "type": "paragraph",
-            "text": "Bookings is your diary. It keeps a simple list of the jobs and appointments you have coming up: who they are for, when they are, and how much money is involved. Every booking sits on one screen, newest date at the top, so you can see what is ahead at a glance."
+            "text": "Bookings is your diary. It keeps a simple list of the appointments and jobs you have coming up: who they are with, what they are for, and when. Every booking sits on one screen with a status tag, so you can see what is ahead at a glance."
           },
           {
             "type": "paragraph",
-            "text": "Each booking also keeps track of the money. You capture the total price and any deposit already paid, and Worklog works out the balance still due on the day."
+            "text": "You can book customers or suppliers, mark on-site visits so Worklog logs the travel for you, and line up a day-before WhatsApp reminder to send in one tap."
           }
         ]
       },
@@ -2435,7 +2435,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
         "blocks": [
           {
             "type": "tip",
-            "text": "You can type a customer's name straight into a booking, so you do not have to set them up first. But if you add your regular customers under Customers, you can pick them from a list instead of typing the name each time."
+            "text": "You can type a customer's name straight into a booking, so you do not have to set them up first. But if you add your regulars under Customers (or Suppliers), you can pick them from a list instead of typing the name each time — and Worklog can then send them a WhatsApp reminder."
           }
         ]
       },
@@ -2447,17 +2447,29 @@ export const HELP_ARTICLES: HelpArticle[] = [
             "items": [
               "Open Bookings.",
               "Tap the + New button in the top right.",
-              "At Client, start typing the person's name. If they are already in your contacts, pick them from the list. If not, just type the name.",
-              "At Service / job, type what the booking is for, like Haircut or geyser install. You can leave this blank.",
+              "Choose the Booking type — Customer or Supplier.",
+              "At Customer (or Supplier), start typing the name. If they are already in your contacts, pick them from the list. If not, just type the name.",
               "Set the Date and the Time.",
-              "Type the Total price for the job.",
-              "If they have already paid a deposit, type it at Deposit paid. Worklog shows the balance due on the day underneath.",
+              "Need more? Tap Add more details for a purpose, how long it will take, a location, an on-site visit, a linked quote, notes, a repeat, or a day-before WhatsApp reminder. You can skip all of these.",
               "Tap Save booking."
             ]
           },
           {
             "type": "paragraph",
-            "text": "A new booking is saved as Confirmed. It then shows up in your list with the client name, service, date, time, price and a status tag."
+            "text": "A new booking is saved as Confirmed and shows up in your list with the name, date, time and a status tag. If it clashes with another booking at the same time, Worklog warns you before you save."
+          }
+        ]
+      },
+      {
+        "heading": "On-site visits and reminders",
+        "blocks": [
+          {
+            "type": "bullets",
+            "items": [
+              "Turn on On-site / mobile visit and add the distance each way. When you save, Worklog logs a mileage trip at the SARS rate for you, so you do not have to capture it again under Trip Log.",
+              "Turn on the day-before WhatsApp reminder, then open the booking and tap Send WhatsApp reminder. This needs the customer's phone number saved on their contact.",
+              "Set Repeat to book the same slot again automatically — Worklog pre-fills the next few dates for you."
+            ]
           }
         ]
       },
@@ -2466,13 +2478,14 @@ export const HELP_ARTICLES: HelpArticle[] = [
         "blocks": [
           {
             "type": "paragraph",
-            "text": "Tap any booking in the list to open it. You will see the status, the service, the date and time, the total, any deposit paid, and the balance due."
+            "text": "Tap any booking in the list to open it. You will see the status, the date and time, and any details you added."
           },
           {
             "type": "steps",
             "items": [
               "Tap the booking you want.",
-              "To close off a job that happened, tap Mark Complete.",
+              "To change a booking that is today or still coming up, tap Edit booking.",
+              "When the job is done, tap Mark Complete.",
               "If the customer did not turn up, tap No-show.",
               "If the booking fell away, tap Cancel."
             ]
@@ -2489,25 +2502,26 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "bullets",
             "items": [
-              "Bookings are listed with the newest date first.",
+              "Bookings are listed with the latest date first.",
               "The status colours help you scan: confirmed and complete show in blue, no-show in red, and cancelled in grey.",
+              "Past bookings cannot be edited — you can still mark them Complete or No-show, but not reschedule them.",
               "Once a booking is Complete, No-show or Cancelled, the Mark Complete, No-show and Cancel buttons fall away. Those bookings stay on your list as a record."
             ]
           },
           {
             "type": "tip",
-            "text": "Bookings keeps track of the appointment and the money owed, but it does not send the customer a reminder or a bill. When the job is done and you want to charge for it, create an invoice under Invoices, or log the payment you received under Log Income."
+            "text": "Bookings keeps track of the appointment, but it does not send the customer a bill. When the job is done and you want to charge for it, create an invoice under Invoices, or log the payment you received under Log Income."
           },
           {
             "type": "warning",
-            "text": "Changing a status cannot be undone from the booking. Once you tap Mark Complete, No-show or Cancel, the buttons fall away and you cannot switch it back, so only tap them once you are sure."
+            "text": "Marking a booking Complete, No-show or Cancelled cannot be undone. Once you tap one, the buttons fall away and you cannot switch it back, so only tap them once you are sure."
           }
         ]
       }
     ],
     "related": [
       "add-customers-and-suppliers",
-      "time-log",
+      "trip-log-mileage",
       "create-and-send-an-invoice",
       "log-money-in-and-out"
     ]

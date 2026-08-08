@@ -109,7 +109,7 @@ function BookingActionsModal({
           onClick={() => onEdit(booking)}
           style={{ width: "100%", background: "#F0F9FF", color: "#0369A1", border: "1.5px solid #BAE6FD", borderRadius: 14, padding: 15, fontWeight: 700, cursor: "pointer", marginTop: 16 }}
         >
-          ✏️ Edit appointment
+          ✏️ Edit booking
         </button>
       )}
 

@@ -234,16 +234,16 @@ export function BookingModal({ booking, onClose }: { booking?: Booking; onClose:
   };
 
   return (
-    <Modal title={isEdit ? "Edit Appointment" : "New Appointment"} onClose={onClose}>
+    <Modal title={isEdit ? "Edit booking" : "New booking"} onClose={onClose}>
       <button
         type="button"
         onClick={onClose}
         style={{ background: "none", border: "none", color: "#64748b", fontSize: 13, fontWeight: 600, cursor: "pointer", marginBottom: 16, padding: 0 }}
       >
-        ← Diary
+        ← Bookings
       </button>
 
-      <Field label="Appointment type">
+      <Field label="Booking type">
         <Chips
           options={["Customer", "Supplier"]}
           selected={apptType === "supplier" ? "Supplier" : "Customer"}
@@ -279,7 +279,7 @@ export function BookingModal({ booking, onClose }: { booking?: Booking; onClose:
 
       {hasConflict && (
         <div style={{ background: "#fff1f2", border: "1.5px solid #fecdd3", borderRadius: 10, padding: "10px 14px", marginBottom: 12, fontSize: 12, color: "#be123c", fontWeight: 600 }}>
-          ⚠️ You have another appointment at this time.
+          ⚠️ You already have another booking at this time.
         </div>
       )}
 
@@ -397,7 +397,7 @@ export function BookingModal({ booking, onClose }: { booking?: Booking; onClose:
       )}
 
       {error && <p style={{ color: "#dc2626", fontSize: 13, marginBottom: 12 }}>{error}</p>}
-      <SaveBtn label={saving ? "Saving..." : isEdit ? "Update Appointment" : "Book Appointment"} icon="📓" onClick={handleSave} disabled={saving} />
+      <SaveBtn label={saving ? "Saving..." : isEdit ? "Save changes" : "Save booking"} icon="📓" onClick={handleSave} disabled={saving} />
     </Modal>
   );
 }
