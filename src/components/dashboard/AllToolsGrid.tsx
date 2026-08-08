@@ -74,7 +74,7 @@ const NAV_CATEGORIES: { id: string; items: NavItem[] }[] = [
   {
     id: "bookings", // Scheduling System
     items: [
-      { href: "/bookings", icon: "📅", label: "Bookings", toolId: "booking" },
+      { href: "/diary", icon: "📅", label: "Diary", toolId: "booking" },
       { href: "/time", icon: "⏱️", label: "Time Tracker", toolId: "timetrack" },
       { href: "/mileage", icon: "🚗", label: "Mileage", toolId: "mileage" },
     ],
