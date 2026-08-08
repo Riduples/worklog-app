@@ -199,9 +199,11 @@ export function TimeModal({ entry, onClose, onShowProfitability }: { entry?: Tim
 
   return (
     <Modal title={isEdit ? "Edit time entry" : "Time Log"} onClose={onClose}>
-      <div style={{ background: "#F0F9FF", border: "1.5px solid #7DD3FC", borderRadius: 12, padding: "10px 14px", marginBottom: 14, fontSize: 12, color: "#0369A1", lineHeight: 1.5 }}>
-        <span style={{ fontWeight: 700 }}>⏱️ Time Log</span> — Pick a diary appointment to auto-fill the customer. Link to a quote to compare time vs quoted amount. Rate from Price List or manual entry.
-      </div>
+      {!isEdit && openBookings.length > 0 && (
+        <div style={{ background: "#F0F9FF", border: "1.5px solid #7DD3FC", borderRadius: 12, padding: "10px 14px", marginBottom: 14, fontSize: 12, color: "#0369A1", lineHeight: 1.5 }}>
+          <span style={{ fontWeight: 700 }}>⏱️ Tip</span> — pick a diary appointment below to fill in the customer and date automatically.
+        </div>
+      )}
 
       {onShowProfitability && (
         <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
