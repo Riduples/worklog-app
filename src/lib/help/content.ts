@@ -2570,7 +2570,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
               "On the Log time screen, fill in Client (optional). Start typing to pick someone from your contacts, or just type a name. You can also leave it blank.",
               "In Hours worked, type the hours. You can use a decimal, for example 2.5 for two and a half hours.",
               "In Hourly rate, type your rate per hour. Leave it as 0 if you are not billing by the hour.",
-              "Under Type, choose one: Billable, Non-billable, Admin or Travel.",
+              "Under Type, choose Billable or Non-billable.",
               "Fill in Description - optional to note what the work was.",
               "Check the Date. It fills in with today, but you can tap it and change it.",
               "Tap Log time to save."
@@ -2597,7 +2597,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
             "type": "bullets",
             "items": [
               "Search box — type a client or a word from the description to narrow the list, the same way Contacts, Sales and Purchases work.",
-              "Type pills — tap Billable, Non-billable, Admin or Travel to show only that type. Only the types you have actually used appear, and All brings everything back.",
+              "Type pills — tap Billable or Non-billable to show only that type. The pills appear once you have used both types, and All brings everything back.",
               "Sort toggle — switch between Recent (most recent date first, the default) and A–Z (by client name). A small count above the list shows how many entries are showing."
             ]
           }

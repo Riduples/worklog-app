@@ -10,16 +10,17 @@ import { ReadOnlyNotice } from "@/components/ui/ReadOnlyNotice";
 import { useToolAccess } from "@/lib/supabase/hooks/useToolAccess";
 import { BackLink } from "@/components/ui/BackLink";
 
+// The Time modal only ever records Billable or Non-billable (see TimeModal's
+// BILL_TYPES), so those are the only two types the list needs to colour or
+// filter by. Anything unexpected falls back to the Billable colour below.
 const TYPE_COLORS: Record<string, { bg: string; fg: string }> = {
   Billable: { bg: "#F0F9FF", fg: "#0369A1" },
   "Non-billable": { bg: "#f1f5f9", fg: "#64748b" },
-  Admin: { bg: "#fff7ed", fg: "#b45309" },
-  Travel: { bg: "#e0f2fe", fg: "#0369a1" },
 };
 
 // Type filter pills follow this order; only types actually in use get a pill,
 // matching how Contacts, Sales, Purchases and the rest of the list tools behave.
-const TYPE_ORDER = ["Billable", "Non-billable", "Admin", "Travel"];
+const TYPE_ORDER = ["Billable", "Non-billable"];
 
 export function TimeView() {
   const access = useToolAccess("timetrack");
