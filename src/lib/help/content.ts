@@ -2587,11 +2587,19 @@ export const HELP_ARTICLES: HelpArticle[] = [
         "blocks": [
           {
             "type": "paragraph",
-            "text": "Every entry you save shows in a list, with the client (or the description if there is no client), the date, the hours, and a coloured tag for the type. The list is sorted by date, with the most recent date at the top."
+            "text": "Every entry you save shows in a list, with the client (or the description if there is no client), the date, the hours, and a coloured tag for the type. New entries start most-recent-first."
           },
           {
             "type": "paragraph",
             "text": "When you have entries, a summary bar sits above the list. It shows your total hours logged, and next to Billable, the total amount you can bill from your Billable entries."
+          },
+          {
+            "type": "bullets",
+            "items": [
+              "Search box — type a client or a word from the description to narrow the list, the same way Contacts, Sales and Purchases work.",
+              "Type pills — tap Billable, Non-billable, Admin or Travel to show only that type. Only the types you have actually used appear, and All brings everything back.",
+              "Sort toggle — switch between Recent (most recent date first, the default) and A–Z (by client name). A small count above the list shows how many entries are showing."
+            ]
           }
         ]
       },
