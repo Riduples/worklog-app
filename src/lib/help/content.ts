@@ -2467,7 +2467,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
             "type": "bullets",
             "items": [
               "Turn on On-site / mobile visit and add the distance each way. When you save, Worklog logs a mileage trip at the SARS rate for you, so you do not have to capture it again under Trip Log.",
-              "Turn on the day-before WhatsApp reminder, then open the appointment and tap Send WhatsApp reminder. This needs the customer's phone number saved on their contact.",
+              "Open an upcoming appointment and tap Send WhatsApp reminder — the message is ready to send. This needs the customer's phone number saved on their contact. The day-before reminder switch is just a note to yourself to send one.",
               "Set Repeat to make the same appointment again automatically — Worklog pre-fills the next few dates for you."
             ]
           }
@@ -2492,7 +2492,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           },
           {
             "type": "paragraph",
-            "text": "The status tag changes to match: Complete, No show or Cancelled. This gives you an honest record of what actually happened, including who keeps not showing up."
+            "text": "The status tag changes to match: Complete, No-show or Cancelled. This gives you an honest record of what actually happened, including who keeps not showing up."
           }
         ]
       },
