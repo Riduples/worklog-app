@@ -270,20 +270,6 @@ export function TimeModal({ entry, onClose, onShowProfitability }: { entry?: Tim
         <Input value={description} onChange={setDescription} placeholder="What did you work on?" />
       </Field>
 
-      {clientQuotes.length > 0 && (
-        <Field label="Link to quote (actual vs estimate hours)">
-          <select value={quoteId} onChange={(e) => setQuoteId(e.target.value)} style={selectStyle}>
-            <option value="">— No quote —</option>
-            {clientQuotes.map((q) => (
-              <option key={q.id} value={q.id}>
-                {q.doc_number} · {q.client_name}
-                {q.estimated_hours ? ` · ${q.estimated_hours}h quoted` : ""}
-              </option>
-            ))}
-          </select>
-        </Field>
-      )}
-
       <Field label="Can you bill this?">
         {isEdit ? <LockedValue value={billType} /> : <Chips options={BILL_TYPES} selected={billType} onSelect={(v) => v && setBillType(v)} />}
       </Field>
@@ -338,6 +324,22 @@ export function TimeModal({ entry, onClose, onShowProfitability }: { entry?: Tim
             </div>
           )}
         </>
+      )}
+
+      {/* Optional quote link — drives the live actual-vs-estimate panel below,
+          so it sits just above it rather than in the middle of the billing flow. */}
+      {clientQuotes.length > 0 && (
+        <Field label="Link to quote (actual vs estimate hours)">
+          <select value={quoteId} onChange={(e) => setQuoteId(e.target.value)} style={selectStyle}>
+            <option value="">— No quote —</option>
+            {clientQuotes.map((q) => (
+              <option key={q.id} value={q.id}>
+                {q.doc_number} · {q.client_name}
+                {q.estimated_hours ? ` · ${q.estimated_hours}h quoted` : ""}
+              </option>
+            ))}
+          </select>
+        </Field>
       )}
 
       {isEdit && (
