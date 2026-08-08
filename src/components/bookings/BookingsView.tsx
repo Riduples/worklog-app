@@ -154,7 +154,7 @@ export function BookingsView() {
   const [editing, setEditing] = useState<Booking | null>(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [sort, setSort] = useState<"upcoming" | "date" | "recent">("upcoming");
+  const [sort, setSort] = useState<"upcoming" | "az" | "date" | "recent">("upcoming");
 
   const today = todayStr();
   const all = bookings ?? [];
@@ -171,11 +171,13 @@ export function BookingsView() {
   });
 
   // Diary sort. "Upcoming" (the default) shows the soonest appointment first
-  // with today at the top and past appointments below; "Jan–Dec" is straight
-  // calendar order, earliest first; "Recent" puts the latest date first. Within
-  // a day the time decides, so a 09:00 sits above a 14:00.
+  // with today at the top and past appointments below; "A–Z" sorts by customer
+  // name; "Jan–Dec" is straight calendar order, earliest first; "Recent" puts
+  // the latest date first. Within a day the time decides, so a 09:00 sits above
+  // a 14:00.
   const key = (b: Booking) => `${b.booking_date}T${b.booking_time ?? "00:00"}`;
   const sorted = [...filtered].sort((a, b) => {
+    if (sort === "az") return a.client_name.localeCompare(b.client_name);
     if (sort === "recent") return key(b).localeCompare(key(a));
     if (sort === "date") return key(a).localeCompare(key(b));
     const aUpcoming = a.booking_date >= today;
@@ -267,7 +269,7 @@ export function BookingsView() {
             {sorted.length !== all.length ? ` of ${all.length}` : ""} appointment{all.length === 1 ? "" : "s"}
           </span>
           <div style={{ display: "flex", gap: 4, background: "#f1f5f9", borderRadius: 10, padding: 3 }}>
-            {(["upcoming", "date", "recent"] as const).map((s) => (
+            {(["upcoming", "az", "date", "recent"] as const).map((s) => (
               <button
                 key={s}
                 onClick={() => setSort(s)}
@@ -283,7 +285,7 @@ export function BookingsView() {
                   boxShadow: sort === s ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
                 }}
               >
-                {s === "upcoming" ? "Upcoming" : s === "date" ? "Jan–Dec" : "Recent"}
+                {s === "upcoming" ? "Upcoming" : s === "az" ? "A–Z" : s === "date" ? "Jan–Dec" : "Recent"}
               </button>
             ))}
           </div>

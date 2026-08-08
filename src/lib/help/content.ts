@@ -2503,7 +2503,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
             "type": "bullets",
             "items": [
               "Your diary lists the soonest appointment first, so what is next is always at the top. Past appointments sit below, under a Past heading, as a record.",
-              "When the list gets long, use the search box to find an appointment by name, tap a status pill (All, Confirmed, Complete and so on) to show only those, and switch the order between Upcoming, Jan–Dec (calendar order) and Recent (latest first).",
+              "When the list gets long, use the search box to find an appointment by name, tap a status pill (All, Confirmed, Complete and so on) to show only those, and switch the order between Upcoming, A–Z (by customer name), Jan–Dec (calendar order) and Recent (latest first).",
               "The status colours help you scan: confirmed and complete show in blue, no-show in red, and cancelled in grey.",
               "Past appointments cannot be edited — you can still mark them Complete or No-show, but not reschedule them.",
               "Once an appointment is Complete, No-show or Cancelled, the Mark Complete, No-show and Cancel buttons fall away. Those appointments stay in your diary as a record."
