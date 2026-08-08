@@ -1023,7 +1023,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           },
           {
             "type": "tip",
-            "text": "Because the item carries its hours, adding it to a quote line lets the quote auto-suggest its estimated hours — which then feeds Job Profitability in the Time Log."
+            "text": "Because the item carries its hours, adding it to a quote line lets the quote auto-suggest its estimated hours — which then feeds the Actual vs Estimate view in the Time Tracker."
           }
         ]
       },
@@ -1282,7 +1282,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           },
           {
             "type": "paragraph",
-            "text": "Once the quote is saved, link your time entries to it and Worklog compares the hours you have logged against the hours you quoted. See Track job profitability (hours vs quote)."
+            "text": "Once the quote is saved, link your time entries to it and Worklog compares the hours you have logged against the hours you quoted. See Track actual hours vs your estimate."
           }
         ]
       },
@@ -4569,7 +4569,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
   {
     "slug": "job-profitability",
     "category": "Scheduling",
-    "title": "Track job profitability (hours vs quote)",
+    "title": "Track actual hours vs your estimate",
     "summary": "Link time entries to a quote and compare the hours you have logged against the hours you quoted, so you know when a job is running over.",
     "sections": [
       {
@@ -4577,7 +4577,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
         "blocks": [
           {
             "type": "paragraph",
-            "text": "Job Profitability compares the hours you actually log against the hours you quoted for a job — an honest hours-vs-hours read. It uses two things: an estimated-hours figure on the quote, and a link from each time entry to that quote."
+            "text": "Actual vs Estimate compares the hours you actually log against the hours you quoted for a job — an honest hours-vs-hours read, not a money figure. It uses two things: an estimated-hours figure on the quote, and a link from each time entry to that quote."
           }
         ]
       },
@@ -4595,11 +4595,11 @@ export const HELP_ARTICLES: HelpArticle[] = [
         ]
       },
       {
-        "heading": "The Job Profitability view",
+        "heading": "The Actual vs Estimate view",
         "blocks": [
           {
             "type": "paragraph",
-            "text": "In the Time Tracker, tap the Job Profitability tab. Each job shows the hours logged against the hours quoted with a progress bar and a badge — a red Over when a job has blown its quoted hours, or an OK when it is within them. Jobs that are most over sort to the top."
+            "text": "In the Time Tracker, tap the Actual vs Estimate tab. Each job shows the hours logged against the hours quoted with a progress bar and a badge — a red Over when a job has blown its quoted hours, or an OK when it is within them. Jobs that are most over sort to the top."
           }
         ]
       }

@@ -109,7 +109,7 @@ export function TimeView() {
                 cursor: "pointer",
               }}
             >
-              {v === "log" ? "Time log" : "📊 Job Profitability"}
+              {v === "log" ? "Time log" : "📊 Actual vs Estimate"}
             </button>
           ))}
         </div>

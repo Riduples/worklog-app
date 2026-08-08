@@ -131,7 +131,7 @@ export function TimeModal({ entry, onClose, onShowProfitability }: { entry?: Tim
     if (b.linked_quote_id) setQuoteId(b.linked_quote_id);
   };
 
-  // Live job profitability: hours already logged against the linked quote (this
+  // Live actual-vs-estimate hours: hours already logged against the linked quote (this
   // entry excluded so an edit doesn't double-count) + this session's base+OT, vs
   // the hours quoted for the job.
   const selectedQuote = (quotes ?? []).find((q) => q.id === quoteId) ?? null;
@@ -205,7 +205,7 @@ export function TimeModal({ entry, onClose, onShowProfitability }: { entry?: Tim
             onClick={onShowProfitability}
             style={{ background: "none", border: "none", color: "#0C4A6E", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
           >
-            📊 Job profitability →
+            📊 Actual vs estimate →
           </button>
         </div>
       )}
@@ -264,7 +264,7 @@ export function TimeModal({ entry, onClose, onShowProfitability }: { entry?: Tim
       </Field>
 
       {clientQuotes.length > 0 && (
-        <Field label="Link to quote (profitability tracking)">
+        <Field label="Link to quote (actual vs estimate hours)">
           <select value={quoteId} onChange={(e) => setQuoteId(e.target.value)} style={selectStyle}>
             <option value="">— No quote —</option>
             {clientQuotes.map((q) => (
@@ -333,7 +333,7 @@ export function TimeModal({ entry, onClose, onShowProfitability }: { entry?: Tim
         </div>
       )}
 
-      {/* Live profitability panel — hours logged vs quoted hours */}
+      {/* Live actual-vs-estimate panel — hours logged vs quoted hours */}
       {quoteId && quoteEstHours > 0 && thisSessionHours > 0 && (
         <div style={{ background: overByHours > 0 ? "#fff1f2" : "#0C4A6E", border: overByHours > 0 ? "1.5px solid #fecdd3" : "none", borderRadius: 12, padding: "12px 16px", marginBottom: 12 }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: overByHours > 0 ? "#be123c" : "#38BDF8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>
