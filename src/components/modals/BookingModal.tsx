@@ -117,6 +117,12 @@ export function BookingModal({ booking, onClose }: { booking?: Booking; onClose:
   const [distanceKm, setDistanceKm] = useState(booking?.distance_km != null ? String(booking.distance_km) : "");
   const [recurrence, setRecurrence] = useState<Recurrence>((booking?.recurrence as Recurrence) || "none");
   const [reminder, setReminder] = useState(booking?.reminder ?? false);
+  // New appointments default to Confirmed (the common case — a slot you've just
+  // agreed), but can be entered as Pending when it's only tentative. The toggle
+  // is offered for a still-live booking; a completed/cancelled one keeps its
+  // status untouched on edit.
+  const [status, setStatus] = useState<string>(booking?.status ?? "confirmed");
+  const canSetStatus = !isEdit || booking?.status === "confirmed" || booking?.status === "pending";
   // Open the extras drawer straight away when editing a booking that already has any.
   const [showExtras, setShowExtras] = useState(
     !!(booking && (booking.purpose || booking.location || booking.notes || booking.linked_quote_id || booking.is_onsite))
@@ -186,12 +192,14 @@ export function BookingModal({ booking, onClose }: { booking?: Booking; onClose:
     // one-time side-effects below (the recurring series, the on-site mileage log)
     // can't fire a second time and spawn duplicates.
     if (isEdit) {
-      updateBooking.mutate({ id: booking.id, changes: { ...changes, status: booking.status } }, { onSuccess: onClose });
+      // Keep the toggle's value for a live booking; otherwise leave the
+      // completed/cancelled status exactly as it was.
+      updateBooking.mutate({ id: booking.id, changes: { ...changes, status: canSetStatus ? status : booking.status } }, { onSuccess: onClose });
       return;
     }
 
     createBooking.mutate(
-      { ...changes, status: "confirmed" },
+      { ...changes, status },
       {
         onSuccess: async (created) => {
           // On-site visit → log the round trip's SARS-rate mileage deduction. We do
@@ -223,7 +231,7 @@ export function BookingModal({ booking, onClose }: { booking?: Booking; onClose:
               if (!next) break;
               d = next;
               await createBooking
-                .mutateAsync({ ...changes, booking_date: d, recurrence: "none", is_onsite: false, distance_km: null, status: "confirmed" })
+                .mutateAsync({ ...changes, booking_date: d, recurrence: "none", is_onsite: false, distance_km: null, status })
                 .catch(() => {});
             }
           }
@@ -247,6 +255,23 @@ export function BookingModal({ booking, onClose }: { booking?: Booking; onClose:
           }}
         />
       </Field>
+
+      {canSetStatus && (
+        <Field label="Status">
+          <Chips
+            options={["Confirmed", "Pending"]}
+            selected={status === "pending" ? "Pending" : "Confirmed"}
+            onSelect={(v) => {
+              if (v) setStatus(v === "Pending" ? "pending" : "confirmed");
+            }}
+          />
+          {status === "pending" && (
+            <p style={{ fontSize: 12, color: "#94a3b8", margin: "8px 2px 0" }}>
+              Tentative — open the appointment later to confirm it.
+            </p>
+          )}
+        </Field>
+      )}
 
       <ContactPicker
         label={apptType === "supplier" ? "Supplier" : "Customer"}

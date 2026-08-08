@@ -2450,13 +2450,14 @@ export const HELP_ARTICLES: HelpArticle[] = [
               "Choose the Appointment type — Customer or Supplier.",
               "At Customer (or Supplier), start typing the name. If they are already in your contacts, pick them from the list. If not, just type the name.",
               "Set the Date and the Time.",
+              "Leave the Status on Confirmed for a slot that is set, or switch it to Pending if it is only tentative and still to be confirmed.",
               "Need more? Tap Add more details for a purpose, how long it will take, a location, an on-site visit, a linked quote, notes, a repeat, or a day-before WhatsApp reminder. You can skip all of these.",
               "Tap Save appointment."
             ]
           },
           {
             "type": "paragraph",
-            "text": "A new appointment is saved as Confirmed and shows up in your diary with the name, date, time and a status tag. If it clashes with another appointment at the same time, Worklog warns you before you save."
+            "text": "A new appointment is saved as Confirmed by default — or as Pending if you set it tentative — and shows up in your diary with the name, date, time and a status tag. If it clashes with another appointment at the same time, Worklog warns you before you save."
           }
         ]
       },
@@ -2485,6 +2486,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
             "items": [
               "Tap the appointment you want.",
               "To change an appointment that is today or still coming up, tap Edit appointment.",
+              "If it is still Pending and now firmed up, tap Confirm appointment.",
               "When the job is done, tap Mark Complete.",
               "If the customer did not turn up, tap No-show.",
               "If the appointment fell away, tap Cancel appointment."
@@ -2504,7 +2506,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
             "items": [
               "Your diary reads like an agenda: appointments are grouped by day under Today, Tomorrow and dated headings, soonest first, with past appointments below under a Past heading as a record.",
               "When the list gets long, use the search box to find an appointment by customer, service or purpose, and tap a status pill (All, Confirmed, Complete and so on) to show only those. Search and the pills look through past appointments too, so an old record is easy to find.",
-              "The status colours help you scan: confirmed and complete show in blue, no-show in red, and cancelled in grey.",
+              "The status colours help you scan: confirmed and complete show in blue, pending in amber, no-show in red, and cancelled in grey.",
               "Past appointments cannot be edited — you can still mark them Complete or No-show, but not reschedule them.",
               "Once an appointment is Complete, No-show or Cancelled, the Mark Complete, No-show and Cancel appointment buttons fall away. Those appointments stay in your diary as a record."
             ]
