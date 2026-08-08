@@ -103,6 +103,9 @@ export function TimeModal({ entry, onClose, onShowProfitability }: { entry?: Tim
   const otEarned = otHoursNum * rateNum * otMult;
   const totalEarned = baseEarned + otEarned;
   const amountToBill = billType === "Billable" ? totalEarned : 0;
+  // Rate, overtime and the rand totals only mean anything for billable time —
+  // non-billable work is logged for its hours alone, so hide the money fields.
+  const showEarnings = billType === "Billable";
 
   // Price list — only Labour-type items make sense as an hourly rate.
   const labourRates = (stock ?? []).filter((s) => s.item_type === "labour");
@@ -178,8 +181,10 @@ export function TimeModal({ entry, onClose, onShowProfitability }: { entry?: Tim
         client_name: client.trim() || null,
         client_contact_id: clientContactId,
         hours_worked: hoursNum,
-        hourly_rate: rateNum,
-        ot_hours: otHoursNum,
+        // Non-billable time carries no rate/overtime — those fields are hidden
+        // for it, so don't persist a stale value left over from a toggle flip.
+        hourly_rate: showEarnings ? rateNum : 0,
+        ot_hours: showEarnings ? otHoursNum : 0,
         ot_multiplier: otMult,
         amount_to_bill: amountToBill,
         bill_type: billType,
@@ -277,59 +282,65 @@ export function TimeModal({ entry, onClose, onShowProfitability }: { entry?: Tim
         </Field>
       )}
 
-      <Field label="Labour hourly rate (R)">
-        {isEdit ? (
-          <LockedValue value={fmt(rateNum)} />
-        ) : (
-          <>
-            <Input value={rate} onChange={setRate} type="number" placeholder="e.g. 350" />
-            {labourRates.length > 0 && (
-              <select
-                value=""
-                onChange={(e) => {
-                  const s = labourRates.find((x) => x.id === e.target.value);
-                  if (s) setRate(String(s.sell_price ?? s.cost_price ?? 0));
-                }}
-                style={{ ...selectStyle, marginTop: 8, fontSize: 13, color: "#64748b" }}
-              >
-                <option value="">📋 Use a price-list rate…</option>
-                {labourRates.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name} — {fmt(s.sell_price ?? s.cost_price ?? 0)}/hr
-                  </option>
-                ))}
-              </select>
-            )}
-          </>
-        )}
-      </Field>
-
-      {/* Overtime — side by side */}
-      {isEdit ? (
-        <Field label="Overtime">
-          <LockedValue value={otHoursNum > 0 ? `${otHoursNum.toFixed(1)}h × ${otMultiplier}×` : "None"} />
-        </Field>
-      ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-          <Field label="Overtime hours">
-            <Input value={otHours} onChange={setOtHours} type="number" placeholder="0" />
-          </Field>
-          <Field label="OT rate">
-            <select value={otMultiplier} onChange={(e) => setOtMultiplier(e.target.value)} style={selectStyle}>
-              <option value="1.5">1.5× — Standard OT</option>
-              <option value="2">2× — Sunday / public holiday</option>
-            </select>
-          </Field>
-        </div>
-      )}
-
       <Field label="Can you bill this?">
         {isEdit ? <LockedValue value={billType} /> : <Chips options={BILL_TYPES} selected={billType} onSelect={(v) => v && setBillType(v)} />}
       </Field>
 
+      {/* Rate, overtime and the rand totals are billable-only — a non-billable
+          entry just records its hours, so these stay hidden for it. */}
+      {showEarnings && (
+        <>
+          <Field label="Labour hourly rate (R)">
+            {isEdit ? (
+              <LockedValue value={fmt(rateNum)} />
+            ) : (
+              <>
+                <Input value={rate} onChange={setRate} type="number" placeholder="e.g. 350" />
+                {labourRates.length > 0 && (
+                  <select
+                    value=""
+                    onChange={(e) => {
+                      const s = labourRates.find((x) => x.id === e.target.value);
+                      if (s) setRate(String(s.sell_price ?? s.cost_price ?? 0));
+                    }}
+                    style={{ ...selectStyle, marginTop: 8, fontSize: 13, color: "#64748b" }}
+                  >
+                    <option value="">📋 Use a price-list rate…</option>
+                    {labourRates.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name} — {fmt(s.sell_price ?? s.cost_price ?? 0)}/hr
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </>
+            )}
+          </Field>
+
+          {/* Overtime — side by side */}
+          {isEdit ? (
+            <Field label="Overtime">
+              <LockedValue value={otHoursNum > 0 ? `${otHoursNum.toFixed(1)}h × ${otMultiplier}×` : "None"} />
+            </Field>
+          ) : (
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              <Field label="Overtime hours">
+                <Input value={otHours} onChange={setOtHours} type="number" placeholder="0" />
+              </Field>
+              <Field label="OT rate">
+                <select value={otMultiplier} onChange={(e) => setOtMultiplier(e.target.value)} style={selectStyle}>
+                  <option value="1.5">1.5× — Standard OT</option>
+                  <option value="2">2× — Sunday / public holiday</option>
+                </select>
+              </Field>
+            </div>
+          )}
+        </>
+      )}
+
       {isEdit && (
         <div style={{ background: "#F0F9FF", border: "1.5px solid #BAE6FD", borderRadius: 12, padding: "10px 14px", marginBottom: 14, fontSize: 11, color: "#0369A1", lineHeight: 1.6 }}>
-          🔒 Hours, overtime and rate are locked once logged — delete and re-log to change them.
+          🔒 {showEarnings ? "Hours, overtime and rate are" : "Hours are"} locked once logged — delete and re-log to change them.
         </div>
       )}
 
@@ -356,7 +367,7 @@ export function TimeModal({ entry, onClose, onShowProfitability }: { entry?: Tim
         </div>
       )}
 
-      {totalEarned > 0 && (
+      {showEarnings && totalEarned > 0 && (
         <div style={{ background: "#0C4A6E", borderRadius: 12, padding: "12px 16px", marginBottom: 16 }}>
           {baseEarned > 0 && (
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: "#7DD3FC", marginBottom: otEarned > 0 ? 4 : 0 }}>
@@ -371,7 +382,7 @@ export function TimeModal({ entry, onClose, onShowProfitability }: { entry?: Tim
             </div>
           )}
           <div style={{ borderTop: "1px solid rgba(255,255,255,0.15)", paddingTop: 8, marginTop: 4, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ fontSize: 13, color: "#38BDF8", fontWeight: 700 }}>{billType === "Billable" ? "Amount to bill" : "Total logged"}</span>
+            <span style={{ fontSize: 13, color: "#38BDF8", fontWeight: 700 }}>Amount to bill</span>
             <span style={{ fontSize: 20, color: "#fff", fontWeight: 900 }}>{fmt(totalEarned)}</span>
           </div>
         </div>

@@ -2569,9 +2569,9 @@ export const HELP_ARTICLES: HelpArticle[] = [
               "Open the Time Tracker and tap the + New button in the top corner.",
               "On the Log time screen, fill in Client (optional). Start typing to pick someone from your contacts, or just type a name. You can also leave it blank.",
               "In Hours worked, type the hours. You can use a decimal, for example 2.5 for two and a half hours.",
-              "In Hourly rate, type your rate per hour. Leave it as 0 if you are not billing by the hour.",
+              "Fill in Purpose - optional to note what the work was.",
               "At \"Can you bill this?\", choose Billable if you will charge the customer for it, or Non-billable if you will not.",
-              "Fill in Description - optional to note what the work was.",
+              "If it is Billable, type your Labour hourly rate — or pick one from your price list. Non-billable time is logged for its hours only, so it asks for no rate.",
               "Check the Date. It fills in with today, but you can tap it and change it.",
               "Tap Log time to save."
             ]
