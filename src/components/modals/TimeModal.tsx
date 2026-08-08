@@ -323,7 +323,7 @@ export function TimeModal({ entry, onClose, onShowProfitability }: { entry?: Tim
         </div>
       )}
 
-      <Field label="Type">
+      <Field label="Can you bill this?">
         {isEdit ? <LockedValue value={billType} /> : <Chips options={BILL_TYPES} selected={billType} onSelect={(v) => v && setBillType(v)} />}
       </Field>
 
