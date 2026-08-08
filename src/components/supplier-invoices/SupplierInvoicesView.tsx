@@ -12,6 +12,11 @@ import { BackLink } from "@/components/ui/BackLink";
 // Filter pills follow this order; only statuses actually in use get a pill.
 const STATUS_ORDER = ["unpaid", "overdue", "paid", "credited"];
 
+// Sort by the supplier's reference number the same way the invoice/quote/PO
+// dashboards sort by their doc number: pull the digits out and compare
+// numerically, so "INV-9" sits above "INV-10" and blank refs fall to the end.
+const refNo = (si: SupplierInvoice) => parseInt((si.supplier_ref_number ?? "").replace(/\D/g, ""), 10) || 0;
+
 export function SupplierInvoicesView() {
   const access = useToolAccess("supplierinvoice");
   const { data: invoices, isLoading } = useSupplierInvoices();
@@ -19,7 +24,7 @@ export function SupplierInvoicesView() {
   const [selected, setSelected] = useState<SupplierInvoice | null>(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [sort, setSort] = useState<"az" | "recent">("recent");
+  const [sort, setSort] = useState<"az" | "ref" | "recent">("recent");
 
   const presentStatuses = STATUS_ORDER.filter((s) => (invoices ?? []).some((si) => supplierInvoiceDisplayStatus(si).label === s));
 
@@ -32,11 +37,11 @@ export function SupplierInvoicesView() {
       }
       return true;
     })
-    .sort((a, b) =>
-      sort === "az"
-        ? a.supplier_name.localeCompare(b.supplier_name)
-        : (b.created_at ?? b.issue_date ?? "").localeCompare(a.created_at ?? a.issue_date ?? "")
-    );
+    .sort((a, b) => {
+      if (sort === "az") return a.supplier_name.localeCompare(b.supplier_name);
+      if (sort === "ref") return refNo(a) - refNo(b);
+      return (b.created_at ?? b.issue_date ?? "").localeCompare(a.created_at ?? a.issue_date ?? "");
+    });
 
   return (
     <div style={{ padding: "20px 16px 100px" }}>
@@ -100,13 +105,13 @@ export function SupplierInvoicesView() {
             {filtered.length !== (invoices ?? []).length ? ` of ${(invoices ?? []).length}` : ""} bill{(invoices ?? []).length === 1 ? "" : "s"}
           </span>
           <div style={{ display: "flex", gap: 4, background: "#f1f5f9", borderRadius: 10, padding: 3 }}>
-            {(["az", "recent"] as const).map((s) => (
+            {(["az", "ref", "recent"] as const).map((s) => (
               <button
                 key={s}
                 onClick={() => setSort(s)}
                 style={{ padding: "5px 12px", borderRadius: 8, border: "none", background: sort === s ? "#fff" : "transparent", color: sort === s ? "#0C4A6E" : "#64748b", fontSize: 12, fontWeight: 700, cursor: "pointer", boxShadow: sort === s ? "0 1px 3px rgba(0,0,0,0.1)" : "none" }}
               >
-                {s === "az" ? "A–Z" : "Recent"}
+                {s === "az" ? "A–Z" : s === "ref" ? "Ref" : "Recent"}
               </button>
             ))}
           </div>
