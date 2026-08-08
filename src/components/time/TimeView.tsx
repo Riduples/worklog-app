@@ -175,6 +175,19 @@ export function TimeView() {
 
       {filtered.map((e) => {
         const color = TYPE_COLORS[e.bill_type] ?? TYPE_COLORS.Billable;
+        // Tap the row to open the entry — the same interaction as price lists,
+        // contacts, sales and purchases. View-only users get a non-tappable row.
+        const body = (
+          <>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "#111" }}>
+              {e.client_name || e.description || "Time entry"}
+            </div>
+            <div style={{ fontSize: 11, color: "#94a3b8" }}>
+              {e.entry_date} · {Number(e.hours_worked).toFixed(1)}h
+              {e.bill_type === "Billable" && Number(e.amount_to_bill) > 0 ? ` · ${fmt(e.amount_to_bill)}` : ""}
+            </div>
+          </>
+        );
         return (
           <div
             key={e.id}
@@ -189,27 +202,20 @@ export function TimeView() {
               boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
             }}
           >
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 14, fontWeight: 700, color: "#111" }}>
-                {e.client_name || e.description || "Time entry"}
-              </div>
-              <div style={{ fontSize: 11, color: "#94a3b8" }}>
-                {e.entry_date} · {Number(e.hours_worked).toFixed(1)}h
-                {e.bill_type === "Billable" && Number(e.amount_to_bill) > 0 ? ` · ${fmt(e.amount_to_bill)}` : ""}
-              </div>
-            </div>
+            {access.canEdit ? (
+              <button
+                onClick={() => setModalState({ open: true, entry: e })}
+                style={{ background: "none", border: "none", textAlign: "left", cursor: "pointer", flex: 1, padding: 0 }}
+                aria-label="Open time entry"
+              >
+                {body}
+              </button>
+            ) : (
+              <div style={{ flex: 1 }}>{body}</div>
+            )}
             <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: color.bg, color: color.fg, marginRight: 8 }}>
               {e.bill_type}
             </span>
-            {access.canEdit && (
-              <button
-                onClick={() => setModalState({ open: true, entry: e })}
-                style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer", fontSize: 14, padding: 4 }}
-                aria-label="Edit time entry"
-              >
-                ✏️
-              </button>
-            )}
             {access.canDelete && (
               <button
                 onClick={() => handleSoftDelete(e.id)}

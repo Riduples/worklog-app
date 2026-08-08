@@ -2604,6 +2604,19 @@ export const HELP_ARTICLES: HelpArticle[] = [
         ]
       },
       {
+        "heading": "Open and change an entry",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "Tap any entry in the list to open it — the same as in your price list, contacts, sales and purchases. You can change the customer, the date, the purpose, and the quote it is linked to."
+          },
+          {
+            "type": "paragraph",
+            "text": "The hours, hourly rate, overtime and the billable choice are locked once an entry is saved, so your billable total cannot drift after the fact. To change any of those, remove the entry and log it again."
+          }
+        ]
+      },
+      {
         "heading": "Remove an entry",
         "blocks": [
           {
