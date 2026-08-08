@@ -24,7 +24,27 @@ const selectStyle: React.CSSProperties = {
   fontFamily: "inherit",
 };
 
-export function MileageModal({ trip, onClose }: { trip?: MileageTrip; onClose: () => void }) {
+/** Greyed placeholder box shown when the diary has nothing to pick yet. */
+function EmptyPickBox({ text }: { text: string }) {
+  return (
+    <div
+      style={{
+        width: "100%",
+        padding: "13px 14px",
+        borderRadius: 12,
+        border: "1.5px solid #e2e8f0",
+        fontSize: 15,
+        boxSizing: "border-box",
+        color: "#94a3b8",
+        background: "#f8fafc",
+      }}
+    >
+      {text}
+    </div>
+  );
+}
+
+export function MileageModal({ trip, onClose, onShowHistory }: { trip?: MileageTrip; onClose: () => void; onShowHistory?: () => void }) {
   const isEdit = !!trip;
   const [odoStart, setOdoStart] = useState(trip ? String(trip.odometer_start) : "");
   const [odoEnd, setOdoEnd] = useState(trip ? String(trip.odometer_end) : "");
@@ -47,6 +67,7 @@ export function MileageModal({ trip, onClose }: { trip?: MileageTrip; onClose: (
 
   // Diary appointments to log a drive against (a cancelled one is not a real trip).
   const openBookings = (bookings ?? []).filter((b) => b.status !== "cancelled");
+  const selectedBooking = bookingId ? openBookings.find((b) => b.id === bookingId) ?? null : null;
 
   const applyBooking = (id: string) => {
     setBookingId(id);
@@ -87,9 +108,28 @@ export function MileageModal({ trip, onClose }: { trip?: MileageTrip; onClose: (
   };
 
   return (
-    <Modal title={isEdit ? "Edit trip" : "Log trip"} onClose={onClose}>
-      {openBookings.length > 0 && (
-        <Field label="Diary appointment (auto-fills the details)">
+    <Modal title={isEdit ? "Edit trip" : "Trip Log"} onClose={onClose}>
+      <div style={{ background: "#F0F9FF", border: "1.5px solid #7DD3FC", borderRadius: 12, padding: "10px 14px", marginBottom: 14, fontSize: 12, color: "#0369A1", lineHeight: 1.5 }}>
+        <span style={{ fontWeight: 700 }}>🚗 Trip Log</span> — Pick a diary appointment and the purpose and date auto-fill. Then enter start and end odometer. SARS mileage deduction calculated automatically.
+      </div>
+
+      {onShowHistory && (
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
+          <button
+            type="button"
+            onClick={onShowHistory}
+            style={{ background: "none", border: "none", color: "#0C4A6E", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+          >
+            📋 View history →
+          </button>
+        </div>
+      )}
+
+      {/* Diary appointment — auto-fills the details */}
+      <Field label="Diary appointment">
+        {openBookings.length === 0 ? (
+          <EmptyPickBox text="No appointments yet — add one in Diary" />
+        ) : (
           <select value={bookingId} onChange={(e) => applyBooking(e.target.value)} style={selectStyle}>
             <option value="">— Not from the diary —</option>
             {openBookings.map((b) => (
@@ -100,7 +140,13 @@ export function MileageModal({ trip, onClose }: { trip?: MileageTrip; onClose: (
               </option>
             ))}
           </select>
-        </Field>
+        )}
+      </Field>
+
+      {selectedBooking && (
+        <div style={{ background: "#F0F9FF", border: "1px solid #BAE6FD", borderRadius: 10, padding: "8px 12px", marginBottom: 10, fontSize: 12, color: "#0369A1" }}>
+          ✅ Date and purpose auto-filled from diary appointment
+        </div>
       )}
 
       <Field label="Trip type">
@@ -112,25 +158,35 @@ export function MileageModal({ trip, onClose }: { trip?: MileageTrip; onClose: (
       </Field>
 
       <Field label="Purpose - optional">
-        <Input value={purpose} onChange={setPurpose} placeholder="e.g. Site visit in Soweto" />
+        <Input value={purpose} onChange={setPurpose} placeholder="e.g. Site visit, Quote delivery, Pick up materials…" />
       </Field>
 
-      <Field label="Odometer start">
-        <Input value={odoStart} onChange={setOdoStart} type="number" placeholder="e.g. 45230" autoFocus />
-      </Field>
-
-      <Field label="Odometer end">
-        <Input value={odoEnd} onChange={setOdoEnd} type="number" placeholder="e.g. 45265" />
-      </Field>
+      {/* Odometer — side by side */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+        <Field label="Start odometer (km)">
+          <Input value={odoStart} onChange={setOdoStart} type="number" placeholder="e.g. 85430" autoFocus />
+        </Field>
+        <Field label="End odometer (km)">
+          <Input value={odoEnd} onChange={setOdoEnd} type="number" placeholder="e.g. 85487" />
+        </Field>
+      </div>
 
       {km > 0 && (
-        <div style={{ background: "#F0F9FF", borderRadius: 12, padding: "12px 14px", marginBottom: 16, fontSize: 13, color: "#0369A1" }}>
-          {km.toFixed(1)} km · SARS deduction: <strong>{fmt(deduction)}</strong> (R{MILEAGE_RATE.toFixed(2)}/km)
+        <div style={{ background: "#0C4A6E", borderRadius: 12, padding: "12px 16px", marginBottom: 14 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+            <span style={{ fontSize: 13, color: "#38BDF8" }}>Distance</span>
+            <span style={{ fontSize: 14, color: "#fff", fontWeight: 700 }}>{km.toFixed(1)} km</span>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <span style={{ fontSize: 13, color: "#38BDF8" }}>SARS deduction @ R{MILEAGE_RATE.toFixed(2)}/km</span>
+            <span style={{ fontSize: 18, color: "#F59E0B", fontWeight: 900 }}>{fmt(deduction)}</span>
+          </div>
+          <div style={{ fontSize: 10, color: "#7DD3FC", marginTop: 6 }}>Auto-logged as expense for tax records</div>
         </div>
       )}
 
       {error && <p style={{ color: "#dc2626", fontSize: 13, marginBottom: 12 }}>{error}</p>}
-      <SaveBtn label={saving ? "Saving..." : isEdit ? "Save changes" : "Log trip"} onClick={handleSave} disabled={saving} />
+      <SaveBtn label={saving ? "Saving..." : isEdit ? "Update Trip" : "Log Trip"} icon="🚗" onClick={handleSave} disabled={saving} />
     </Modal>
   );
 }

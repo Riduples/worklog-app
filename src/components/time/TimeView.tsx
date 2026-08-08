@@ -147,7 +147,16 @@ export function TimeView() {
         </>
       )}
 
-      {modalState.open && <TimeModal entry={modalState.entry} onClose={() => setModalState({ open: false })} />}
+      {modalState.open && (
+        <TimeModal
+          entry={modalState.entry}
+          onClose={() => setModalState({ open: false })}
+          onShowProfitability={() => {
+            setModalState({ open: false });
+            setView("profitability");
+          }}
+        />
+      )}
     </div>
   );
 }
