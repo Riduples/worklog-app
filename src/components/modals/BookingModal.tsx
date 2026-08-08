@@ -235,14 +235,6 @@ export function BookingModal({ booking, onClose }: { booking?: Booking; onClose:
 
   return (
     <Modal title={isEdit ? "Edit appointment" : "New appointment"} onClose={onClose}>
-      <button
-        type="button"
-        onClick={onClose}
-        style={{ background: "none", border: "none", color: "#64748b", fontSize: 13, fontWeight: 600, cursor: "pointer", marginBottom: 16, padding: 0 }}
-      >
-        ← Diary
-      </button>
-
       <Field label="Appointment type">
         <Chips
           options={["Customer", "Supplier"]}
@@ -354,7 +346,7 @@ export function BookingModal({ booking, onClose }: { booking?: Booking; onClose:
           </Field>
 
           {!isEdit && (
-            <Field label="Repeat this booking">
+            <Field label="Repeat this appointment">
               <Chips
                 options={RECURRENCE_OPTIONS.map((o) => o.label)}
                 selected={RECURRENCE_OPTIONS.find((o) => o.id === recurrence)?.label ?? "Once off"}
