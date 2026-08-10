@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useBookings, useUpdateBooking, type Booking } from "@/lib/supabase/hooks/useBookings";
 import { BookingModal } from "@/components/modals/BookingModal";
+import { BookingViewModal } from "@/components/modals/BookingViewModal";
 import { todayStr, addDays } from "@/lib/format";
 import { ReadOnlyNotice } from "@/components/ui/ReadOnlyNotice";
 import { useToolAccess } from "@/lib/supabase/hooks/useToolAccess";
@@ -27,6 +28,7 @@ export function BookingsView() {
   const updateBooking = useUpdateBooking();
   const [showNew, setShowNew] = useState(false);
   const [editing, setEditing] = useState<Booking | null>(null);
+  const [viewing, setViewing] = useState<Booking | null>(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
@@ -95,10 +97,14 @@ export function BookingsView() {
     margin: "16px 2px 8px",
   });
 
+  // Editors open the appointment straight in its editor; view-only teammates get
+  // the read-only detail sheet instead of an editable form they can't save.
+  const openRow = (b: Booking) => (access.canEdit ? setEditing(b) : setViewing(b));
+
   // One appointment row. `showDate` puts the date in the subtitle for past rows,
-  // which have no per-day header above them. Tapping the row opens the appointment
-  // straight in its editor; the ✕ soft-deletes it after a confirm — mirroring the
-  // Items list, so the two dashboards behave the same way.
+  // which have no per-day header above them. Tapping the row opens the appointment;
+  // the ✕ soft-deletes it after a confirm — mirroring the Items list, so the two
+  // dashboards behave the same way.
   const appointmentRow = (b: Booking, showDate: boolean) => {
     const color = STATUS_COLORS[b.status] ?? STATUS_COLORS.confirmed;
     const sub = [showDate ? shortDate(b.booking_date) : null, b.booking_time, b.purpose || b.service]
@@ -119,7 +125,7 @@ export function BookingsView() {
         }}
       >
         <button
-          onClick={() => setEditing(b)}
+          onClick={() => openRow(b)}
           style={{ background: "none", border: "none", textAlign: "left", cursor: "pointer", flex: 1, padding: 0, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}
         >
           <div>
@@ -244,6 +250,7 @@ export function BookingsView() {
 
       {showNew && <BookingModal onClose={() => setShowNew(false)} />}
       {editing && <BookingModal booking={editing} onClose={() => setEditing(null)} />}
+      {viewing && <BookingViewModal booking={viewing} onClose={() => setViewing(null)} />}
     </div>
   );
 }
