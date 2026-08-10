@@ -229,6 +229,7 @@ export function TimeModal({ entry, onClose, onShowProfitability }: { entry?: Tim
         </div>
       )}
 
+      {/* WHO — who did you work for? */}
       <ContactPicker
         label="Customer"
         value={client}
@@ -240,7 +241,12 @@ export function TimeModal({ entry, onClose, onShowProfitability }: { entry?: Tim
         placeholder="Who did you work for?"
       />
 
-      {/* Date & Hours — side by side */}
+      {/* WHAT — describe the job before quantifying it. */}
+      <Field label="Purpose - optional">
+        <Input value={description} onChange={setDescription} placeholder="What did you work on?" />
+      </Field>
+
+      {/* WHEN & HOW LONG — date and hours side by side. */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
         <Field label="Date">
           <Input value={entryDate} onChange={setEntryDate} type="date" />
@@ -254,10 +260,7 @@ export function TimeModal({ entry, onClose, onShowProfitability }: { entry?: Tim
         </Field>
       </div>
 
-      <Field label="Purpose - optional">
-        <Input value={description} onChange={setDescription} placeholder="What did you work on?" />
-      </Field>
-
+      {/* BILLING — is it billable, and at what rate? */}
       <Field label="Can you bill this?">
         {isEdit ? <LockedValue value={billType} /> : <Chips options={BILL_TYPES} selected={billType} onSelect={(v) => v && setBillType(v)} />}
       </Field>
@@ -314,8 +317,14 @@ export function TimeModal({ entry, onClose, onShowProfitability }: { entry?: Tim
         </>
       )}
 
-      {/* Optional quote link — drives the live actual-vs-estimate panel below,
-          so it sits just above it rather than in the middle of the billing flow. */}
+      {isEdit && (
+        <div style={{ background: "#F0F9FF", border: "1.5px solid #BAE6FD", borderRadius: 12, padding: "10px 14px", marginBottom: 14, fontSize: 11, color: "#0369A1", lineHeight: 1.6 }}>
+          🔒 {showEarnings ? "Hours, overtime and rate are" : "Hours are"} locked once logged — delete and re-log to change them.
+        </div>
+      )}
+
+      {/* JOB TRACKING — link to a quote, then watch logged hours against the
+          estimate. The link sits just above its live panel below. */}
       {clientQuotes.length > 0 && (
         <Field label="Link to quote (actual vs estimate hours)">
           <select value={quoteId} onChange={(e) => setQuoteId(e.target.value)} style={selectStyle}>
@@ -328,12 +337,6 @@ export function TimeModal({ entry, onClose, onShowProfitability }: { entry?: Tim
             ))}
           </select>
         </Field>
-      )}
-
-      {isEdit && (
-        <div style={{ background: "#F0F9FF", border: "1.5px solid #BAE6FD", borderRadius: 12, padding: "10px 14px", marginBottom: 14, fontSize: 11, color: "#0369A1", lineHeight: 1.6 }}>
-          🔒 {showEarnings ? "Hours, overtime and rate are" : "Hours are"} locked once logged — delete and re-log to change them.
-        </div>
       )}
 
       {/* Live actual-vs-estimate panel — hours logged vs quoted hours */}
