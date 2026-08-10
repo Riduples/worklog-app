@@ -2533,14 +2533,14 @@ export const HELP_ARTICLES: HelpArticle[] = [
     "slug": "time-log",
     "category": "Scheduling",
     "title": "Track your time",
-    "summary": "Log the hours you work for each client or job in the Time Log, so you can see your total time and your billable hours.",
+    "summary": "Log the hours you work for each customer or job in the Time Log, so you can see your total time and your billable hours.",
     "sections": [
       {
         "heading": "What the Time Log is for",
         "blocks": [
           {
             "type": "paragraph",
-            "text": "The Time Log keeps a simple record of the hours you work. Each entry has a client, the hours, whether the work is billable, and an optional description. Worklog adds up your hours for you, and shows how many of them are billable. It tracks hours only — no rand amounts — so you price the work yourself when you invoice."
+            "text": "The Time Log keeps a simple record of the hours you work. Each entry has a customer, the hours, whether the work is billable, and an optional description. Worklog adds up your hours for you, and shows how many of them are billable. It tracks hours only — no rand amounts — so you price the work yourself when you invoice."
           },
           {
             "type": "paragraph",
@@ -2554,7 +2554,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "bullets",
             "items": [
-              "You do not need to add the client to your Customers first. You can start typing to pick an existing contact, or just type any name. You can also leave it blank."
+              "You do not need to add the customer to your Customers first. You can start typing to pick an existing contact, or just type any name. You can also leave it blank."
             ]
           }
         ]
@@ -2566,7 +2566,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
             "type": "steps",
             "items": [
               "Open the Time Log and tap the + New button in the top corner.",
-              "On the Log time screen, fill in Client (optional). Start typing to pick someone from your contacts, or just type a name. You can also leave it blank.",
+              "On the Log time screen, fill in Customer (optional). Start typing to pick someone from your contacts, or just type a name. You can also leave it blank.",
               "In Hours worked, type the hours. You can use a decimal, for example 2.5 for two and a half hours.",
               "Fill in Purpose - optional to note what the work was.",
               "At \"Can you bill this?\", choose Billable if you will charge the customer for it, or Non-billable if you will not. This is just a label on the hours — no amount is recorded.",
@@ -2585,7 +2585,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
         "blocks": [
           {
             "type": "paragraph",
-            "text": "Every entry you save shows in a list, with the client (or the description if there is no client), the date, the hours, and a coloured tag for the type. New entries start most-recent-first."
+            "text": "Every entry you save shows in a list, with the customer (or the description if there is no customer), the date, the hours, and a coloured tag for the type. New entries start most-recent-first."
           },
           {
             "type": "paragraph",
@@ -2594,9 +2594,9 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "bullets",
             "items": [
-              "Search box — type a client or a word from the description to narrow the list, the same way Contacts, Sales and Purchases work.",
+              "Search box — type a customer or a word from the description to narrow the list, the same way Contacts, Sales and Purchases work.",
               "Type pills — tap Billable or Non-billable to show only that type. The pills appear once you have used both types, and All brings everything back.",
-              "Sort toggle — switch between Recent (most recent date first, the default) and A–Z (by client name). A small count above the list shows how many entries are showing."
+              "Sort toggle — switch between Recent (most recent date first, the default) and A–Z (by customer name). A small count above the list shows how many entries are showing."
             ]
           }
         ]
@@ -2623,7 +2623,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           },
           {
             "type": "warning",
-            "text": "The Time Log records your hours but does not create an invoice on its own. To actually charge a client for billable time, make an invoice and add the amount there."
+            "text": "The Time Log records your hours but does not create an invoice on its own. To actually charge a customer for billable time, make an invoice and add the amount there."
           }
         ]
       }
