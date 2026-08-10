@@ -211,9 +211,16 @@ export function BookingModal({ booking, onClose }: { booking?: Booking; onClose:
   });
 
   // A one-tap lifecycle change on the open appointment — saves any pending field
-  // edits alongside the new status, then closes. Edit-mode only.
+  // edits alongside the new status, then closes. Edit-mode only. Guards the same
+  // required field Save does, so recording an outcome can't quietly persist a
+  // blank customer if the field was cleared first.
   const applyStatus = (next: string) => {
     if (!booking) return;
+    if (!client.trim()) {
+      setError(`${apptType === "supplier" ? "Supplier" : "Customer"} is required.`);
+      return;
+    }
+    setError("");
     updateBooking.mutate({ id: booking.id, changes: { ...buildChanges(), status: next } }, { onSuccess: onClose });
   };
 
