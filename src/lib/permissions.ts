@@ -108,7 +108,7 @@ export const TOOL_LABELS: Partial<Record<ToolId, { icon: string; label: string; 
   leave: { icon: "🏖️", label: "Leave", desc: "Record & track leave per employee — links to Pay Run" },
   payrollcompliance: { icon: "📋", label: "Payroll Compliance", desc: "PAYE, UIF, SDL & ETI payable, EMP201/EMP501 & COIDA reminders — your payroll statutory items in one place" },
   timetrack: { icon: "⏱️", label: "Time Log", desc: "Log the hours you work per client — link them to quotes & diary appointments" },
-  mileage: { icon: "🚗", label: "Trip Log", desc: "Log business trips — SARS deduction auto-calculated" },
+  mileage: { icon: "🚗", label: "Travel Log", desc: "Log business trips — SARS deduction auto-calculated" },
   profitloss: { icon: "📈", label: "Profit & Loss", desc: "The official summary of what your business earned vs spent — needed for SARS and for loan/funding applications" },
   ageanalysis: { icon: "⏳", label: "Age Analysis (Customers)", desc: "See who still owes you money, sorted by how overdue each invoice is — mainly for businesses that let customers pay later" },
   payables: { icon: "⏳", label: "Age Analysis (Suppliers)", desc: "See who you still owe, sorted by how overdue each supplier bill is" },

@@ -676,7 +676,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
         "blocks": [
           {
             "type": "paragraph",
-            "text": "If the business uses up its AI logs for the month, the Quick Log AI shortcut pauses until the 1st — but logging your money never stops. Log income and Log expense on the home screen keep working exactly as before, with no limit at all. The other tools — the Diary, your price list, the Trip Log and so on — are always there to enter things by hand too."
+            "text": "If the business uses up its AI logs for the month, the Quick Log AI shortcut pauses until the 1st — but logging your money never stops. Log income and Log expense on the home screen keep working exactly as before, with no limit at all. The other tools — the Diary, your price list, the Travel Log and so on — are always there to enter things by hand too."
           },
           {
             "type": "tip",
@@ -1023,7 +1023,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           },
           {
             "type": "tip",
-            "text": "Because the item carries its hours, adding it to a quote line lets the quote auto-suggest its estimated hours — which then feeds the Actual vs Estimate view in the Time Tracker."
+            "text": "Because the item carries its hours, adding it to a quote line lets the quote auto-suggest its estimated hours — which then feeds the Hours vs Estimate report in Time & Travel Reports."
           }
         ]
       },
@@ -2467,7 +2467,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "bullets",
             "items": [
-              "Turn on On-site / mobile visit and add the distance each way. When you save, Worklog logs a mileage trip at the SARS rate for you, so you do not have to capture it again under Trip Log.",
+              "Turn on On-site / mobile visit and add the distance each way. When you save, Worklog logs a mileage trip at the SARS rate for you, so you do not have to capture it again under Travel Log.",
               "Open an upcoming appointment and tap Send WhatsApp reminder — the message is ready to send. This needs the customer's phone number saved on their contact. The day-before reminder switch is just a note to yourself to send one.",
               "Set Repeat to make the same appointment again automatically — Worklog pre-fills the next few dates for you."
             ]
@@ -2533,18 +2533,18 @@ export const HELP_ARTICLES: HelpArticle[] = [
     "slug": "time-log",
     "category": "Scheduling",
     "title": "Track your time",
-    "summary": "Log the hours you work for each client or job in the Time Tracker, so you can see your total time and your billable hours.",
+    "summary": "Log the hours you work for each client or job in the Time Log, so you can see your total time and your billable hours.",
     "sections": [
       {
-        "heading": "What the Time Tracker is for",
+        "heading": "What the Time Log is for",
         "blocks": [
           {
             "type": "paragraph",
-            "text": "The Time Tracker keeps a simple record of the hours you work. Each entry has a client, the hours, whether the work is billable, and an optional description. Worklog adds up your hours for you, and shows how many of them are billable. It tracks hours only — no rand amounts — so you price the work yourself when you invoice."
+            "text": "The Time Log keeps a simple record of the hours you work. Each entry has a client, the hours, whether the work is billable, and an optional description. Worklog adds up your hours for you, and shows how many of them are billable. It tracks hours only — no rand amounts — so you price the work yourself when you invoice."
           },
           {
             "type": "paragraph",
-            "text": "You will find it under the \"Scheduling System\" tools card — the group that also holds the Diary and Mileage — or the \"Work\" group on the desktop sidebar. The screen is called Time Tracker."
+            "text": "You will find it under the \"Scheduling System\" tools card — the group that also holds the Diary and Travel Log — or the \"Work\" group on the desktop sidebar. The screen is called Time Log."
           }
         ]
       },
@@ -2565,7 +2565,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "steps",
             "items": [
-              "Open the Time Tracker and tap the + New button in the top corner.",
+              "Open the Time Log and tap the + New button in the top corner.",
               "On the Log time screen, fill in Client (optional). Start typing to pick someone from your contacts, or just type a name. You can also leave it blank.",
               "In Hours worked, type the hours. You can use a decimal, for example 2.5 for two and a half hours.",
               "Fill in Purpose - optional to note what the work was.",
@@ -2623,7 +2623,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           },
           {
             "type": "warning",
-            "text": "The Time Tracker records your hours but does not create an invoice on its own. To actually charge a client for billable time, make an invoice and add the amount there."
+            "text": "The Time Log records your hours but does not create an invoice on its own. To actually charge a client for billable time, make an invoice and add the amount there."
           }
         ]
       }
@@ -2638,15 +2638,15 @@ export const HELP_ARTICLES: HelpArticle[] = [
   {
     "slug": "trip-log-mileage",
     "category": "Scheduling",
-    "title": "Log mileage (Trip Log)",
+    "title": "Log travel (Travel Log)",
     "summary": "Record the business kilometres you drive so Worklog works out your SARS travel deduction for you.",
     "sections": [
       {
-        "heading": "What the Mileage tool does",
+        "heading": "What the Travel Log does",
         "blocks": [
           {
             "type": "paragraph",
-            "text": "When you drive for work, SARS lets you claim a deduction for those kilometres. The Mileage tool keeps a record of each business trip. You enter your odometer readings, Worklog works out the distance, and it multiplies that by the SARS per-kilometre rate to show your deduction. When you have trips logged, a band near the top shows your running total: total kilometres and the total SARS deduction so far."
+            "text": "When you drive for work, SARS lets you claim a deduction for those kilometres. The Travel Log keeps a record of each business trip. You enter your odometer readings, Worklog works out the distance, and it multiplies that by the SARS per-kilometre rate to show your deduction. For a printable summary of your total kilometres and SARS deduction, open Time & Travel Reports and tap the Travel tab."
           }
         ]
       },
@@ -2657,7 +2657,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
             "type": "bullets",
             "items": [
               "Check your car's odometer before you leave and again when you get back, so you have a start and an end reading.",
-              "The Mileage tool is under the \"Scheduling System\" tools card — the group that also holds the Diary and Time — or the \"Work\" group on the desktop sidebar. Open it and you will see the heading Mileage."
+              "The Travel Log is under the \"Scheduling System\" tools card — the group that also holds the Diary and Time Log — or the \"Work\" group on the desktop sidebar. Open it and you will see the heading Travel Log."
             ]
           }
         ]
@@ -2668,14 +2668,14 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "steps",
             "items": [
-              "On the Mileage screen, tap + New at the top right. A box titled Log trip opens.",
-              "In Odometer start, type your odometer reading before the trip.",
-              "In Odometer end, type your odometer reading after the trip.",
-              "Under Trip type, tap one of the chips: Client visit, Delivery, Materials run or Business errand. Client visit is chosen for you to start.",
-              "In Purpose - optional, you can add a short note, like Site visit in Soweto. You can leave this empty.",
+              "On the Travel Log screen, tap + New at the top right. A box titled New trip opens.",
+              "Optionally pick a Diary appointment to auto-fill the date and purpose.",
+              "Under Trip type, tap one of the chips: Customer visit, Supplier visit or Other. Customer visit is chosen for you to start.",
+              "In Purpose - optional, add a short note like Site visit in Soweto. You can leave this empty.",
               "In Date, set the day of the trip. It starts on today's date.",
+              "In Start odometer type your reading before the trip, and in End odometer your reading after it.",
               "Once both readings are in, a blue line appears. It shows the kilometres, your SARS deduction, and the rate per kilometre it used.",
-              "Tap Log trip to save. Your new trip appears in the list and the totals at the top update."
+              "Tap Log Trip to save. Your new trip appears in the list."
             ]
           },
           {
@@ -2689,28 +2689,24 @@ export const HELP_ARTICLES: HelpArticle[] = [
         "blocks": [
           {
             "type": "paragraph",
-            "text": "Each trip in the list shows the trip type and purpose on the top line, and below it the date, the kilometres and the deduction for that trip. The blue band at the top adds them all up for you."
+            "text": "Each trip in the list shows the trip type and purpose on the top line, and below it the date, the kilometres and the deduction for that trip. Search, filter by trip type, and sort the list the same way the other tools work. For the running totals, open Time & Travel Reports and tap the Travel tab."
           },
           {
             "type": "tip",
-            "text": "The per-kilometre rate is set by SARS and Worklog fills it in for you. You can see the exact rate it used on the blue line inside the Log trip box. You do not type the rate in yourself."
+            "text": "The per-kilometre rate is set by SARS and Worklog fills it in for you. You can see the exact rate it used on the blue line inside the trip box. You do not type the rate in yourself."
           }
         ]
       },
       {
-        "heading": "Fixing a mistake",
+        "heading": "Change or remove a trip",
         "blocks": [
           {
             "type": "steps",
             "items": [
-              "Find the trip in the list.",
-              "Tap the ✕ on the right of that trip.",
-              "When it asks Remove this trip?, confirm. The trip is removed and your totals update."
+              "Tap the trip in the list to open it, change any detail, and tap Update Trip.",
+              "To remove it instead, tap the ✕ on the right of that trip.",
+              "When it asks Remove this trip?, confirm."
             ]
-          },
-          {
-            "type": "warning",
-            "text": "There is no edit button on a saved trip. If you typed a reading wrong, remove the trip and log it again with the correct odometer readings."
           }
         ]
       },
@@ -4242,7 +4238,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
             "type": "bullets",
             "items": [
               "Tax jar: how much you have set aside for income tax over this period, from your income entries.",
-              "Mileage deduction: the SARS travel deduction added up from your Trip Log for the period."
+              "Mileage deduction: the SARS travel deduction added up from your Travel Log for the period."
             ]
           }
         ]
@@ -4602,11 +4598,11 @@ export const HELP_ARTICLES: HelpArticle[] = [
         ]
       },
       {
-        "heading": "The Actual vs Estimate view",
+        "heading": "The Hours vs Estimate report",
         "blocks": [
           {
             "type": "paragraph",
-            "text": "In the Time Tracker, tap the Actual vs Estimate tab. Each job shows the hours logged against the hours quoted with a progress bar and a badge — a red Over when a job has blown its quoted hours, or an OK when it is within them. Jobs that are most over sort to the top."
+            "text": "Open Time & Travel Reports and tap the Hours vs Estimate tab. Each job shows the hours logged against the hours quoted with a progress bar and a badge — a red Over when a job has blown its quoted hours, or an OK when it is within them — plus a billable / non-billable split so you can decide whether to bill an over-run or absorb it. Jobs that are most over sort to the top."
           }
         ]
       }

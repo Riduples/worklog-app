@@ -44,7 +44,7 @@ function EmptyPickBox({ text }: { text: string }) {
   );
 }
 
-export function MileageModal({ trip, onClose, onShowHistory }: { trip?: MileageTrip; onClose: () => void; onShowHistory?: () => void }) {
+export function MileageModal({ trip, onClose }: { trip?: MileageTrip; onClose: () => void }) {
   const isEdit = !!trip;
   const [odoStart, setOdoStart] = useState(trip ? String(trip.odometer_start) : "");
   const [odoEnd, setOdoEnd] = useState(trip ? String(trip.odometer_end) : "");
@@ -108,23 +108,7 @@ export function MileageModal({ trip, onClose, onShowHistory }: { trip?: MileageT
   };
 
   return (
-    <Modal title={isEdit ? "Edit trip" : "Trip Log"} onClose={onClose}>
-      <div style={{ background: "#F0F9FF", border: "1.5px solid #7DD3FC", borderRadius: 12, padding: "10px 14px", marginBottom: 14, fontSize: 12, color: "#0369A1", lineHeight: 1.5 }}>
-        <span style={{ fontWeight: 700 }}>🚗 Trip Log</span> — Pick a diary appointment and the purpose and date auto-fill. Then enter start and end odometer. SARS mileage deduction calculated automatically.
-      </div>
-
-      {onShowHistory && (
-        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
-          <button
-            type="button"
-            onClick={onShowHistory}
-            style={{ background: "none", border: "none", color: "#0C4A6E", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
-          >
-            📋 View history →
-          </button>
-        </div>
-      )}
-
+    <Modal title={isEdit ? "Edit trip" : "New trip"} onClose={onClose}>
       {/* Diary appointment — auto-fills the details */}
       <Field label="Diary appointment">
         {openBookings.length === 0 ? (
@@ -149,19 +133,21 @@ export function MileageModal({ trip, onClose, onShowHistory }: { trip?: MileageT
         </div>
       )}
 
+      {/* WHAT — the kind of trip and what it was for. */}
       <Field label="Trip type">
         <Chips options={TRIP_TYPES} selected={tripType} onSelect={(v) => v && setTripType(v)} />
-      </Field>
-
-      <Field label="Date">
-        <Input value={tripDate} onChange={setTripDate} type="date" />
       </Field>
 
       <Field label="Purpose - optional">
         <Input value={purpose} onChange={setPurpose} placeholder="e.g. Site visit, Quote delivery, Pick up materials…" />
       </Field>
 
-      {/* Odometer — side by side */}
+      {/* WHEN */}
+      <Field label="Date">
+        <Input value={tripDate} onChange={setTripDate} type="date" />
+      </Field>
+
+      {/* HOW FAR — odometer readings; the SARS deduction is worked out below. */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
         <Field label="Start odometer (km)">
           <Input value={odoStart} onChange={setOdoStart} type="number" placeholder="e.g. 85430" autoFocus />

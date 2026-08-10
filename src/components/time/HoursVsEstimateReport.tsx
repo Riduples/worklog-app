@@ -11,9 +11,6 @@ import { buildActualVsEstimateHTML } from "@/lib/docgen/buildLedgerHTML";
 import { openDocumentForPrinting } from "@/lib/docgen/shareDocument";
 import { renderPdf, downloadBlob } from "@/lib/docgen/renderPdf";
 import { todayStr } from "@/lib/format";
-import { BackLink } from "@/components/ui/BackLink";
-
-const STATUS_LABEL: Record<JobStatus, string> = { over: "Over", near: "Near limit", ontrack: "On track", none: "No estimate" };
 
 const STATUS_META: Record<JobStatus, { badge: string; bg: string; border: string; text: string; bar: string }> = {
   over: { badge: "⚠️ Over", bg: "#fff1f2", border: "#fecdd3", text: "#be123c", bar: "#ef4444" },
@@ -21,13 +18,14 @@ const STATUS_META: Record<JobStatus, { badge: string; bg: string; border: string
   ontrack: { badge: "✅ On track", bg: "#F0F9FF", border: "#BAE6FD", text: "#0369A1", bar: "#0C4A6E" },
   none: { badge: "— No estimate", bg: "#f8fafc", border: "#e2e8f0", text: "#64748b", bar: "#94a3b8" },
 };
+const STATUS_LABEL: Record<JobStatus, string> = { over: "Over", near: "Near limit", ontrack: "On track", none: "No estimate" };
 
 const fmtH = (h: number) => `${h.toFixed(1)}h`;
 
-// The Actual vs Estimate report — a standalone Scheduling subtool (like Age
-// Analysis). Per job it shows the hours quoted against the hours logged, whether
-// it's over, and the billable / non-billable split so an over-run can be judged.
-export function ActualVsEstimateView() {
+// The Hours-vs-Estimate tab of the Time & Travel Reports tool. Per job it shows
+// the hours quoted against the hours logged, whether it's over, and the billable
+// / non-billable split so an over-run can be judged — bill it or absorb it.
+export function HoursVsEstimateReport() {
   const { data: entries } = useTimeEntries();
   const { data: quotes } = useQuotes();
   const { data: business } = useBusinessProfile();
@@ -39,13 +37,11 @@ export function ActualVsEstimateView() {
   const withEstimate = jobs.filter((j) => j.hasEstimate);
   const other = jobs.filter((j) => !j.hasEstimate);
 
-  // Top-line totals — only jobs that carry an estimate can be compared.
   const totalQuoted = withEstimate.reduce((s, j) => s + j.quotedHours, 0);
   const totalLogged = withEstimate.reduce((s, j) => s + j.totalHours, 0);
   const totalOver = withEstimate.reduce((s, j) => s + j.overBy, 0);
   const overCount = withEstimate.filter((j) => j.status === "over").length;
 
-  // The same numbers the cards show, flattened for the PDF/print templates.
   const pdfRows = withEstimate.map((j) => ({
     client: j.client,
     reference: j.quote?.doc_number ?? "",
@@ -68,7 +64,6 @@ export function ActualVsEstimateView() {
       const blob = await renderPdf({ kind: "actualvsestimate", rows: pdfRows, other: pdfOther, totals: pdfTotals, asAt });
       downloadBlob(blob, "actual-vs-estimate");
     } catch {
-      // Fall back to the print flow rather than leaving the user stuck.
       openDocumentForPrinting(buildActualVsEstimateHTML(business, pdfRows, pdfOther, pdfTotals, asAt, watermark), "actual-vs-estimate");
     } finally {
       setBusy(false);
@@ -120,7 +115,6 @@ export function ActualVsEstimateView() {
           </>
         )}
 
-        {/* Billable split — the line that lets you make the call on any over-run. */}
         <div style={{ display: "flex", gap: 8 }}>
           <div style={{ flex: 1, background: "#F0F9FF", border: "1px solid #BAE6FD", borderRadius: 10, padding: "8px 10px" }}>
             <div style={{ fontSize: 10, fontWeight: 700, color: "#0369A1", textTransform: "uppercase", letterSpacing: 0.3 }}>Billable</div>
@@ -142,10 +136,7 @@ export function ActualVsEstimateView() {
   };
 
   return (
-    <div style={{ padding: "20px 16px 100px" }}>
-      <BackLink label="Time Tracker" href="/time" />
-      <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 16px" }}>Actual vs Estimate</h1>
-
+    <>
       {withEstimate.length > 0 && (
         <>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 6, marginBottom: 14 }}>
@@ -208,6 +199,6 @@ export function ActualVsEstimateView() {
           </button>
         </div>
       )}
-    </div>
+    </>
   );
 }

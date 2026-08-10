@@ -183,8 +183,8 @@ export function TimeModal({ entry, onClose }: { entry?: TimeEntry; onClose: () =
         </p>
       </Field>
 
-      {/* JOB TRACKING — link to a quote so this time shows on the Actual vs
-          Estimate report (Scheduling → Actual vs Estimate). */}
+      {/* JOB TRACKING — link to a quote so this time shows on the Hours vs
+          Estimate tab of Time & Travel Reports. */}
       {clientQuotes.length > 0 && (
         <Field label="Link to quote">
           <select value={quoteId} onChange={(e) => setQuoteId(e.target.value)} style={selectStyle}>
@@ -197,7 +197,7 @@ export function TimeModal({ entry, onClose }: { entry?: TimeEntry; onClose: () =
             ))}
           </select>
           <p style={{ fontSize: 12, color: "#94a3b8", margin: "8px 2px 0" }}>
-            Links this time to the quote so it counts on the Actual vs Estimate report.
+            Links this time to the quote so it counts on the Hours vs Estimate report.
           </p>
         </Field>
       )}

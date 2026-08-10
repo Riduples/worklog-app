@@ -460,3 +460,73 @@ export function buildActualVsEstimateHTML(
 </body>
 </html>`;
 }
+
+// Travel report — the business's own record of kilometres driven for work and the
+// SARS deduction claimed, for tax records. Heads with their letterhead.
+export type TravelReportRow = { date: string; type: string; purpose: string; km: number; deduction: number };
+
+export function buildTravelReportHTML(
+  business: BusinessProfile,
+  rows: TravelReportRow[],
+  totals: { trips: number; km: number; deduction: number },
+  asAt: string,
+  watermark = false
+): string {
+  const detailRows = rows.length
+    ? rows
+        .map(
+          (r) => `
+      <tr>
+        <td>${esc(r.date)}</td>
+        <td>${esc(r.type)}</td>
+        <td>${esc(r.purpose || "—")}</td>
+        <td style="text-align:right;">${r.km.toFixed(1)} km</td>
+        <td style="text-align:right;font-weight:700;">${fmt(r.deduction)}</td>
+      </tr>`
+        )
+        .join("")
+    : `<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:16px;">No trips logged.</td></tr>`;
+
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" /><title>Travel Report</title><style>${SHARED_CSS}</style></head>
+<body>
+  ${watermark ? `<div class="wm">TRIAL — NOT FINAL</div>` : ""}
+  ${header(business, "TRAVEL REPORT", `As at ${asAt}`)}
+  <div class="meta-row">
+    ${fromBlock(business, "Prepared by")}
+    <div style="text-align:right;">
+      <div class="meta-label">Report</div>
+      <div style="font-size:20px;font-weight:800;">Business travel &amp; SARS deduction</div>
+    </div>
+  </div>
+  <div style="font-size:11px;font-weight:700;color:#0C4A6E;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;">Summary</div>
+  <table>
+    <thead><tr><th style="text-align:center;">Trips</th><th style="text-align:center;">Total distance</th><th style="text-align:center;">SARS deduction</th></tr></thead>
+    <tbody><tr>
+      <td style="text-align:center;font-weight:700;">${totals.trips}</td>
+      <td style="text-align:center;font-weight:700;">${totals.km.toFixed(1)} km</td>
+      <td style="text-align:center;font-weight:700;color:#92400e;">${fmt(totals.deduction)}</td>
+    </tr></tbody>
+  </table>
+  <div style="font-size:11px;font-weight:700;color:#0C4A6E;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;">Trips</div>
+  <table>
+    <thead>
+      <tr><th>Date</th><th>Type</th><th>Purpose</th><th style="text-align:right;">Distance</th><th style="text-align:right;">Deduction</th></tr>
+    </thead>
+    <tbody>${detailRows}</tbody>
+  </table>
+  <div class="totals">
+    <div class="totals-box">
+      <div class="totals-row"><span>Total distance</span><span>${totals.km.toFixed(1)} km</span></div>
+      <div class="totals-row final"><span>Total SARS deduction</span><span>${fmt(totals.deduction)}</span></div>
+    </div>
+  </div>
+  <div class="footer">
+    A record of business kilometres and the SARS travel deduction claimed as at ${esc(asAt)}.<br/>Generated via Worklog — worklog.co.za${
+      watermark ? `<br/><strong style="color:#dc2626;">Draft — made on a free Worklog trial.</strong>` : ""
+    }
+  </div>
+</body>
+</html>`;
+}

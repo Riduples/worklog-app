@@ -17,7 +17,7 @@ import type { ToolId } from "@/lib/permissions";
 // JS — see globals.css. It gates through useToolGate, the same hook the
 // dashboard tiles use, so the two can't offer different tools.
 
-type Item = { tool: ToolId; href: string; icon: string; label: string };
+type Item = { tool: ToolId; anyOf?: ToolId[]; href: string; icon: string; label: string };
 type Group = { title: string; items: Item[] };
 
 // Mirrors the dashboard's grouping, with one difference: the dashboard leads
@@ -56,9 +56,9 @@ const GROUPS: Group[] = [
     title: "Work",
     items: [
       { tool: "booking", href: "/diary", icon: "📅", label: "Diary" },
-      { tool: "timetrack", href: "/time", icon: "⏱️", label: "Time Tracker" },
-      { tool: "timetrack", href: "/actual-vs-estimate", icon: "📊", label: "Actual vs Estimate" },
-      { tool: "mileage", href: "/mileage", icon: "🚗", label: "Mileage" },
+      { tool: "timetrack", href: "/time", icon: "⏱️", label: "Time Log" },
+      { tool: "mileage", href: "/mileage", icon: "🚗", label: "Travel Log" },
+      { tool: "timetrack", anyOf: ["timetrack", "mileage"], href: "/time-travel-reports", icon: "📊", label: "Time & Travel Reports" },
     ],
   },
   {
@@ -153,7 +153,7 @@ export function Sidebar() {
       {gate("suppliers") && navLink("/suppliers", "🏬", "Suppliers", isActive("/suppliers"))}
 
       {GROUPS.map((group) => {
-        const visible = group.items.filter((i) => gate(i.tool));
+        const visible = group.items.filter((i) => (i.anyOf ? i.anyOf.some(gate) : gate(i.tool)));
         // Log income / Log expense sit under the Money tools, at the foot of the group.
         const isMoney = group.title === "Money";
         const showLogs = isMoney && (gate("income") || gate("expense"));

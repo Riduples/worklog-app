@@ -76,9 +76,9 @@ const NAV_CATEGORIES: { id: string; items: NavItem[] }[] = [
     id: "bookings", // Scheduling System
     items: [
       { href: "/diary", icon: "📅", label: "Diary", toolId: "booking" },
-      { href: "/time", icon: "⏱️", label: "Time Tracker", toolId: "timetrack" },
-      { href: "/actual-vs-estimate", icon: "📊", label: "Actual vs Estimate", toolId: "timetrack", desc: "Hours logged vs the hours you quoted, per job — spot when work runs over" },
-      { href: "/mileage", icon: "🚗", label: "Mileage", toolId: "mileage" },
+      { href: "/time", icon: "⏱️", label: "Time Log", toolId: "timetrack" },
+      { href: "/mileage", icon: "🚗", label: "Travel Log", toolId: "mileage" },
+      { href: "/time-travel-reports", icon: "📊", label: "Time & Travel Reports", anyOf: ["timetrack", "mileage"], desc: "Hours logged vs quoted, and business travel with SARS deduction — printable reports" },
     ],
   },
   {
