@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useBookings, useUpdateBooking, type Booking } from "@/lib/supabase/hooks/useBookings";
 import { BookingModal } from "@/components/modals/BookingModal";
 import { BookingViewModal } from "@/components/modals/BookingViewModal";
@@ -31,6 +32,25 @@ export function BookingsView() {
   const [viewing, setViewing] = useState<Booking | null>(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+
+  // Deep link from the dashboard's "Needs you today" card: /diary?open=<id> opens
+  // that appointment straight away — in the editor for editors, the read-only
+  // sheet otherwise. Sync during render once the bookings and the access verdict
+  // have loaded (matching the dashboard's ?upgrade= handling), firing once via
+  // the consumed guard; a tiny effect then strips the param so a closed sheet
+  // never re-opens and the diary keeps a clean URL.
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const openId = searchParams.get("open");
+  const [consumedOpenId, setConsumedOpenId] = useState<string | null>(null);
+  if (openId && openId !== consumedOpenId && !isLoading && !access.loading) {
+    const match = (bookings ?? []).find((b) => b.id === openId);
+    if (match) (access.canEdit ? setEditing : setViewing)(match);
+    setConsumedOpenId(openId);
+  }
+  useEffect(() => {
+    if (openId && openId === consumedOpenId) router.replace("/diary");
+  }, [openId, consumedOpenId, router]);
 
   // Delete is a soft delete: stamp deleted_at so the row drops out of every diary
   // query (they all filter deleted_at IS NULL) while the record survives for
