@@ -36,6 +36,18 @@ const selectStyle: React.CSSProperties = {
   boxSizing: "border-box",
 };
 
+// Normalise a stored phone to the wa.me digits-only form. SA numbers are typed
+// every which way ("073 005 5112", "+27 73…", "2773…"); wa.me wants pure digits
+// with the country code, so strip separators and turn a local leading 0 into 27.
+function waNumber(phone: string | null | undefined): string | null {
+  if (!phone) return null;
+  let d = phone.replace(/\D/g, "");
+  if (!d) return null;
+  if (d.startsWith("0")) d = "27" + d.slice(1);
+  else if (d.length === 9) d = "27" + d; // 0 dropped entirely
+  return d;
+}
+
 // "HH:MM" → minutes past midnight, or null if unparseable.
 function toMinutes(t: string): number | null {
   if (!t) return null;
@@ -164,6 +176,47 @@ export function BookingModal({ booking, onClose }: { booking?: Booking; onClose:
       return newStart < be && newEnd > bs;
     });
 
+  // ── Appointment lifecycle (edit mode only) ──
+  // A "live" booking (confirmed/pending) can still be completed, no-showed or
+  // cancelled; a past one can be marked complete/no-show but not reminded about.
+  const isLive = isEdit && (booking.status === "confirmed" || booking.status === "pending");
+  const isPast = isEdit ? booking.booking_date < todayStr() : false;
+  // The customer's number lives on their contact record. Only build a reminder
+  // link if we can resolve one and the appointment is still upcoming.
+  const contact = clientContactId ? (contacts ?? []).find((c) => c.id === clientContactId) : null;
+  const waNum = waNumber(contact?.phone);
+  const firstName = client.split(" ")[0] || client;
+  const whenText = `${bookingDate}${bookingTime ? ` at ${bookingTime}` : ""}`;
+  const reminderMsg = `Hi ${firstName}, a friendly reminder about your ${(booking?.service ? booking.service + " " : "")}appointment on ${whenText}. Please let me know if anything changes. Thank you!`;
+  const reminderLink = isLive && !isPast && waNum ? `https://wa.me/${waNum}?text=${encodeURIComponent(reminderMsg)}` : null;
+
+  // The field edits currently entered, ready to persist. Both Save changes and
+  // the lifecycle buttons (Complete / No-show / Cancel) send this, so recording
+  // an outcome never quietly discards an edit the user just made.
+  const buildChanges = () => ({
+    appt_type: apptType,
+    client_name: client.trim(),
+    client_contact_id: clientContactId,
+    purpose: purpose.trim() || null,
+    booking_date: bookingDate,
+    booking_time: bookingTime || null,
+    duration_min: durationMin,
+    location: location.trim() || null,
+    linked_quote_id: linkedQuoteId,
+    notes: notes.trim() || null,
+    is_onsite: isOnsite,
+    distance_km: isOnsite && kmNum > 0 ? kmNum : null,
+    recurrence,
+    reminder,
+  });
+
+  // A one-tap lifecycle change on the open appointment — saves any pending field
+  // edits alongside the new status, then closes. Edit-mode only.
+  const applyStatus = (next: string) => {
+    if (!booking) return;
+    updateBooking.mutate({ id: booking.id, changes: { ...buildChanges(), status: next } }, { onSuccess: onClose });
+  };
+
   const handleSave = async () => {
     if (!client.trim()) {
       setError(`${apptType === "supplier" ? "Supplier" : "Customer"} is required.`);
@@ -171,22 +224,7 @@ export function BookingModal({ booking, onClose }: { booking?: Booking; onClose:
     }
     setError("");
 
-    const changes = {
-      appt_type: apptType,
-      client_name: client.trim(),
-      client_contact_id: clientContactId,
-      purpose: purpose.trim() || null,
-      booking_date: bookingDate,
-      booking_time: bookingTime || null,
-      duration_min: durationMin,
-      location: location.trim() || null,
-      linked_quote_id: linkedQuoteId,
-      notes: notes.trim() || null,
-      is_onsite: isOnsite,
-      distance_km: isOnsite && kmNum > 0 ? kmNum : null,
-      recurrence,
-      reminder,
-    };
+    const changes = buildChanges();
 
     // Editing updates ONLY this one booking and never calls createBooking, so the
     // one-time side-effects below (the recurring series, the on-site mileage log)
@@ -243,6 +281,8 @@ export function BookingModal({ booking, onClose }: { booking?: Booking; onClose:
 
   return (
     <Modal title={isEdit ? "Edit appointment" : "New appointment"} onClose={onClose}>
+      {/* ── WHO ── the appointment type drives the contact list, so the two sit
+          together at the top: pick the kind of appointment, then who it's with. */}
       <Field label="Appointment type">
         <Chips
           options={["Customer", "Supplier"]}
@@ -256,23 +296,6 @@ export function BookingModal({ booking, onClose }: { booking?: Booking; onClose:
         />
       </Field>
 
-      {canSetStatus && (
-        <Field label="Status">
-          <Chips
-            options={["Confirmed", "Pending"]}
-            selected={status === "pending" ? "Pending" : "Confirmed"}
-            onSelect={(v) => {
-              if (v) setStatus(v === "Pending" ? "pending" : "confirmed");
-            }}
-          />
-          {status === "pending" && (
-            <p style={{ fontSize: 12, color: "#94a3b8", margin: "8px 2px 0" }}>
-              Tentative — open the appointment later to confirm it.
-            </p>
-          )}
-        </Field>
-      )}
-
       <ContactPicker
         label={apptType === "supplier" ? "Supplier" : "Customer"}
         value={client}
@@ -284,7 +307,8 @@ export function BookingModal({ booking, onClose }: { booking?: Booking; onClose:
         placeholder={apptType === "supplier" ? "Which supplier?" : "Who is this with?"}
       />
 
-      {/* Date & Time — side by side */}
+      {/* ── WHEN ── date & time, with the slot preview right below so the booked
+          window is confirmed the moment it's set. */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
         <Field label="Date">
           <Input value={bookingDate} onChange={setBookingDate} type="date" />
@@ -300,7 +324,36 @@ export function BookingModal({ booking, onClose }: { booking?: Booking; onClose:
         </div>
       )}
 
-      {/* Optional extras drawer */}
+      {/* Time-block preview */}
+      {bookingTime && (
+        <div style={{ background: "#0C4A6E", borderRadius: 12, padding: "11px 16px", marginBottom: 14, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <span style={{ fontSize: 12, color: "#38BDF8" }}>{bookingDate}</span>
+          <span style={{ fontSize: 16, fontWeight: 800, color: "#fff" }}>
+            {bookingTime}
+            {durationMin ? ` — ${endTime(bookingTime, durationMin)}` : ""}
+          </span>
+        </div>
+      )}
+
+      {/* ── STATUS ── is this slot agreed, or only tentative? */}
+      {canSetStatus && (
+        <Field label="Status">
+          <Chips
+            options={["Confirmed", "Pending"]}
+            selected={status === "pending" ? "Pending" : "Confirmed"}
+            onSelect={(v) => {
+              if (v) setStatus(v === "Pending" ? "pending" : "confirmed");
+            }}
+          />
+          {status === "pending" && (
+            <p style={{ fontSize: 12, color: "#94a3b8", margin: "8px 2px 0" }}>
+              Tentative — a slot you&apos;ve pencilled in but not yet agreed.
+            </p>
+          )}
+        </Field>
+      )}
+
+      {/* ── DETAILS ── optional extras drawer */}
       <button
         type="button"
         onClick={() => setShowExtras((p) => !p)}
@@ -396,17 +449,6 @@ export function BookingModal({ booking, onClose }: { booking?: Booking; onClose:
         </div>
       )}
 
-      {/* Time-block preview */}
-      {bookingTime && (
-        <div style={{ background: "#0C4A6E", borderRadius: 12, padding: "11px 16px", marginBottom: 14, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <span style={{ fontSize: 12, color: "#38BDF8" }}>{bookingDate}</span>
-          <span style={{ fontSize: 16, fontWeight: 800, color: "#fff" }}>
-            {bookingTime}
-            {durationMin ? ` — ${endTime(bookingTime, durationMin)}` : ""}
-          </span>
-        </div>
-      )}
-
       {linkedQuote && (
         <div style={{ fontSize: 11, color: "#0369A1", marginBottom: 12, fontWeight: 600 }}>
           📄 Linked to {linkedQuote.doc_number}
@@ -414,7 +456,59 @@ export function BookingModal({ booking, onClose }: { booking?: Booking; onClose:
       )}
 
       {error && <p style={{ color: "#dc2626", fontSize: 13, marginBottom: 12 }}>{error}</p>}
+
+      {/* ── SAVE ── the primary action, whether adding or editing. */}
       <SaveBtn label={saving ? "Saving..." : isEdit ? "Save changes" : "Save appointment"} icon="📓" onClick={handleSave} disabled={saving} />
+
+      {/* ── COMMUNICATE ── remind the customer their slot is coming up. */}
+      {reminderLink && (
+        <a
+          href={reminderLink}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ display: "block", textAlign: "center", width: "100%", background: "#25D366", color: "#fff", border: "none", borderRadius: 14, padding: 15, fontWeight: 700, cursor: "pointer", marginTop: 12, textDecoration: "none", boxSizing: "border-box" }}
+        >
+          📲 Send WhatsApp reminder
+        </a>
+      )}
+      {isLive && !isPast && !reminderLink && reminder && (
+        <p style={{ fontSize: 12, color: "#94a3b8", marginTop: 12, textAlign: "center" }}>
+          Add this customer&apos;s phone number to their contact to send a reminder.
+        </p>
+      )}
+
+      {/* ── OUTCOME ── record how a live appointment went. Saves any edits above
+          alongside the new status. */}
+      {isLive && (
+        <>
+          <button
+            type="button"
+            onClick={() => applyStatus("complete")}
+            disabled={saving}
+            style={{ width: "100%", background: "#0C4A6E", color: "#fff", border: "none", borderRadius: 14, padding: 16, fontWeight: 700, cursor: "pointer", marginTop: 12 }}
+          >
+            ✅ Mark complete
+          </button>
+          <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
+            <button
+              type="button"
+              onClick={() => applyStatus("no_show")}
+              disabled={saving}
+              style={{ flex: 1, background: "#fee2e2", color: "#991b1b", border: "none", borderRadius: 12, padding: 13, fontWeight: 700, cursor: "pointer" }}
+            >
+              No-show
+            </button>
+            <button
+              type="button"
+              onClick={() => applyStatus("cancelled")}
+              disabled={saving}
+              style={{ flex: 1, background: "#f1f5f9", color: "#64748b", border: "none", borderRadius: 12, padding: 13, fontWeight: 700, cursor: "pointer" }}
+            >
+              Cancel appointment
+            </button>
+          </div>
+        </>
+      )}
     </Modal>
   );
 }
