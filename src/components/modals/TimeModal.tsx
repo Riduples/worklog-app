@@ -11,7 +11,7 @@ import { todayStr } from "@/lib/format";
 import { useContacts } from "@/lib/supabase/hooks/useContacts";
 import { useQuotes } from "@/lib/supabase/hooks/useQuotes";
 import { useBookings } from "@/lib/supabase/hooks/useBookings";
-import { useCreateTimeEntry, useUpdateTimeEntry, useTimeEntries, loggedHours, type TimeEntry } from "@/lib/supabase/hooks/useTimeEntries";
+import { useCreateTimeEntry, useUpdateTimeEntry, type TimeEntry } from "@/lib/supabase/hooks/useTimeEntries";
 
 // Billable is just an hours label — "did I do this to charge for it?" — not a
 // money field. The Time Tracker records hours; pricing happens when you invoice.
@@ -63,7 +63,6 @@ export function TimeModal({ entry, onClose }: { entry?: TimeEntry; onClose: () =
   const { data: contacts } = useContacts();
   const { data: quotes } = useQuotes();
   const { data: bookings } = useBookings();
-  const { data: allEntries } = useTimeEntries();
   const createEntry = useCreateTimeEntry();
   const updateEntry = useUpdateTimeEntry();
   const saving = createEntry.isPending || updateEntry.isPending;
@@ -94,19 +93,6 @@ export function TimeModal({ entry, onClose }: { entry?: TimeEntry; onClose: () =
     if (b.purpose || b.service) setDescription(b.purpose || b.service || "");
     if (b.linked_quote_id) setQuoteId(b.linked_quote_id);
   };
-
-  // Live actual-vs-estimate hours: hours already logged against the linked quote (this
-  // entry excluded so an edit doesn't double-count) + this session's hours, vs the
-  // hours quoted for the job. loggedHours() counts any legacy overtime too.
-  const selectedQuote = (quotes ?? []).find((q) => q.id === quoteId) ?? null;
-  const quoteEstHours = Number(selectedQuote?.estimated_hours ?? 0);
-  const loggedOnQuote = (allEntries ?? [])
-    .filter((e) => e.quote_id === quoteId && e.id !== entry?.id)
-    .reduce((s, e) => s + loggedHours(e), 0);
-  const thisSessionHours = hoursNum + Number(entry?.ot_hours ?? 0);
-  const projectedHours = loggedOnQuote + thisSessionHours;
-  const overByHours = quoteEstHours > 0 && projectedHours > quoteEstHours ? projectedHours - quoteEstHours : 0;
-  const remainingHours = quoteEstHours > 0 ? Math.max(0, quoteEstHours - projectedHours) : 0;
 
   const handleSave = () => {
     if (!hoursNum || hoursNum <= 0) {
@@ -197,9 +183,10 @@ export function TimeModal({ entry, onClose }: { entry?: TimeEntry; onClose: () =
         </p>
       </Field>
 
-      {/* JOB TRACKING — link to a quote to compare logged hours against the estimate. */}
+      {/* JOB TRACKING — link to a quote so this time shows on the Actual vs
+          Estimate report (Scheduling → Actual vs Estimate). */}
       {clientQuotes.length > 0 && (
-        <Field label="Link to quote (actual vs estimate hours)">
+        <Field label="Link to quote">
           <select value={quoteId} onChange={(e) => setQuoteId(e.target.value)} style={selectStyle}>
             <option value="">— No quote —</option>
             {clientQuotes.map((q) => (
@@ -209,30 +196,10 @@ export function TimeModal({ entry, onClose }: { entry?: TimeEntry; onClose: () =
               </option>
             ))}
           </select>
+          <p style={{ fontSize: 12, color: "#94a3b8", margin: "8px 2px 0" }}>
+            Links this time to the quote so it counts on the Actual vs Estimate report.
+          </p>
         </Field>
-      )}
-
-      {/* Live actual-vs-estimate panel — hours logged vs quoted hours */}
-      {quoteId && quoteEstHours > 0 && thisSessionHours > 0 && (
-        <div style={{ background: overByHours > 0 ? "#fff1f2" : "#0C4A6E", border: overByHours > 0 ? "1.5px solid #fecdd3" : "none", borderRadius: 12, padding: "12px 16px", marginBottom: 12 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: overByHours > 0 ? "#be123c" : "#38BDF8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>
-            {overByHours > 0 ? "⚠️ Over quoted hours" : "Hours vs quote"}
-          </div>
-          {[
-            ["Quoted hours", `${quoteEstHours}h`],
-            ["Logged so far", `${loggedOnQuote.toFixed(1)}h`],
-            ["This session", `${thisSessionHours.toFixed(1)}h`],
-          ].map(([l, v]) => (
-            <div key={l} style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: overByHours > 0 ? "#9f1239" : "#7DD3FC", marginBottom: 3 }}>
-              <span>{l}</span>
-              <span>{v}</span>
-            </div>
-          ))}
-          <div style={{ borderTop: `1px solid ${overByHours > 0 ? "#fecdd3" : "rgba(255,255,255,0.15)"}`, paddingTop: 7, marginTop: 4, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: overByHours > 0 ? "#be123c" : "#38BDF8" }}>{overByHours > 0 ? "Over by" : "Hours left after this"}</span>
-            <span style={{ fontSize: 18, fontWeight: 900, color: overByHours > 0 ? "#be123c" : "#fff" }}>{(overByHours > 0 ? overByHours : remainingHours).toFixed(1)}h</span>
-          </div>
-        </div>
       )}
 
       {error && <p style={{ color: "#dc2626", fontSize: 13, marginBottom: 12 }}>{error}</p>}
