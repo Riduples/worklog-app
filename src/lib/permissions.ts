@@ -73,7 +73,7 @@ export const TOOL_CATEGORIES: { id: string; label: string; icon: string; desc: s
   { id: "contacts", label: "Contacts", icon: "👥", desc: "Your customers and suppliers, saved for quick reuse on quotes, invoices & orders", tools: ["clients", "suppliers"] },
   { id: "invoicing", label: "Sales", icon: "📤", desc: "Quotes, invoices, statements & customer age analysis — everything on the selling side", tools: ["quote", "invoice", "statement", "ageanalysis"] },
   { id: "purchases", label: "Purchases", icon: "📥", desc: "Purchase orders, supplier invoices, remittances & supplier age analysis — everything on the buying side", tools: ["purchaseorder", "supplierinvoice", "remittance", "payables"] },
-  { id: "bookings", label: "Scheduling System", icon: "📅", desc: "Diary, appointments, time & travel — manage how you spend your day", tools: ["booking", "timetrack", "mileage"] },
+  { id: "bookings", label: "Scheduling System", icon: "📅", desc: "Appointments, time & travel — manage how you spend your day", tools: ["booking", "timetrack", "mileage"] },
   { id: "workers", label: "Payroll", icon: "💼", desc: "Employees, wages, payslips & advances", tools: ["staffregister", "payrun", "advances", "leave", "payrollcompliance"] },
   // "ledger" isn't in the source prototype's categories (it dropped Ledgers
   // from the matrix) but the tool exists here, so it needs a home to be gated.
@@ -107,7 +107,7 @@ export const TOOL_LABELS: Partial<Record<ToolId, { icon: string; label: string; 
   advances: { icon: "💰", label: "Advances", desc: "Record employee loans & track repayments" },
   leave: { icon: "🏖️", label: "Leave", desc: "Record & track leave per employee — links to Pay Run" },
   payrollcompliance: { icon: "📋", label: "Payroll Compliance", desc: "PAYE, UIF, SDL & ETI payable, EMP201/EMP501 & COIDA reminders — your payroll statutory items in one place" },
-  timetrack: { icon: "⏱️", label: "Time Log", desc: "Log hours per client — links to quotes, rates & appointments" },
+  timetrack: { icon: "⏱️", label: "Time Log", desc: "Log the hours you work per client — link them to quotes & diary appointments" },
   mileage: { icon: "🚗", label: "Trip Log", desc: "Log business trips — SARS deduction auto-calculated" },
   profitloss: { icon: "📈", label: "Profit & Loss", desc: "The official summary of what your business earned vs spent — needed for SARS and for loan/funding applications" },
   ageanalysis: { icon: "⏳", label: "Age Analysis (Customers)", desc: "See who still owes you money, sorted by how overdue each invoice is — mainly for businesses that let customers pay later" },

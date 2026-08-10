@@ -357,3 +357,106 @@ export function buildAgeAnalysisHTML(
 </body>
 </html>`;
 }
+
+// Actual vs Estimate — an internal report comparing the hours logged on each job
+// against the hours quoted for it, with the billable / non-billable split so an
+// over-run can be judged. Business's own report, so it heads with their letterhead.
+export type JobHoursRow = {
+  client: string;
+  reference: string; // quote doc number
+  quotedHours: number;
+  loggedHours: number;
+  billableHours: number;
+  nonBillableHours: number;
+  overBy: number; // hours past the quote (0 when within)
+  remaining: number; // hours left before the quote (0 when over)
+  status: string; // "Over" | "Near limit" | "On track"
+};
+export type OtherJobHoursRow = { client: string; loggedHours: number; billableHours: number; nonBillableHours: number };
+
+export function buildActualVsEstimateHTML(
+  business: BusinessProfile,
+  rows: JobHoursRow[],
+  other: OtherJobHoursRow[],
+  totals: { quoted: number; logged: number; over: number },
+  asAt: string,
+  watermark = false
+): string {
+  const h = (n: number) => `${n.toFixed(1)}h`;
+
+  const detailRows = rows.length
+    ? rows
+        .map(
+          (r) => `
+      <tr>
+        <td>${esc(r.client)}</td>
+        <td>${esc(r.reference || "—")}</td>
+        <td style="text-align:right;">${h(r.quotedHours)}</td>
+        <td style="text-align:right;font-weight:700;">${h(r.loggedHours)}</td>
+        <td style="text-align:right;">${h(r.billableHours)}</td>
+        <td style="text-align:right;">${h(r.nonBillableHours)}</td>
+        <td style="text-align:right;font-weight:700;color:${r.overBy > 0 ? "#be123c" : "#0369A1"};">${r.overBy > 0 ? `+${h(r.overBy)}` : `${h(r.remaining)} left`}</td>
+        <td>${esc(r.status)}</td>
+      </tr>`
+        )
+        .join("")
+    : `<tr><td colspan="8" style="text-align:center;color:#94a3b8;padding:16px;">No quoted jobs with linked time yet.</td></tr>`;
+
+  const otherSection = other.length
+    ? `<div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.6px;margin:8px 0 10px;">Other logged time — no estimate</div>
+  <table>
+    <thead>
+      <tr><th>Client</th><th style="text-align:right;">Logged</th><th style="text-align:right;">Billable</th><th style="text-align:right;">Non-billable</th></tr>
+    </thead>
+    <tbody>${other
+      .map(
+        (o) => `
+      <tr>
+        <td>${esc(o.client)}</td>
+        <td style="text-align:right;font-weight:700;">${h(o.loggedHours)}</td>
+        <td style="text-align:right;">${h(o.billableHours)}</td>
+        <td style="text-align:right;">${h(o.nonBillableHours)}</td>
+      </tr>`
+      )
+      .join("")}</tbody>
+  </table>
+  `
+    : "";
+
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" /><title>Actual vs Estimate</title><style>${SHARED_CSS}</style></head>
+<body>
+  ${watermark ? `<div class="wm">TRIAL — NOT FINAL</div>` : ""}
+  ${header(business, "ACTUAL VS ESTIMATE", `As at ${asAt}`)}
+  <div class="meta-row">
+    ${fromBlock(business, "Prepared by")}
+    <div style="text-align:right;">
+      <div class="meta-label">Report</div>
+      <div style="font-size:20px;font-weight:800;">Hours logged vs quoted</div>
+    </div>
+  </div>
+  <div style="font-size:11px;font-weight:700;color:#0C4A6E;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;">Summary</div>
+  <table>
+    <thead><tr><th style="text-align:center;">Quoted hours</th><th style="text-align:center;">Logged hours</th><th style="text-align:center;">Over quote</th></tr></thead>
+    <tbody><tr>
+      <td style="text-align:center;font-weight:700;">${h(totals.quoted)}</td>
+      <td style="text-align:center;font-weight:700;">${h(totals.logged)}</td>
+      <td style="text-align:center;font-weight:700;color:${totals.over > 0 ? "#be123c" : "#0369A1"};">${h(totals.over)}</td>
+    </tr></tbody>
+  </table>
+  <div style="font-size:11px;font-weight:700;color:#0C4A6E;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;">Per job</div>
+  <table>
+    <thead>
+      <tr><th>Job</th><th>Quote</th><th style="text-align:right;">Quoted</th><th style="text-align:right;">Logged</th><th style="text-align:right;">Billable</th><th style="text-align:right;">Non-bill.</th><th style="text-align:right;">Variance</th><th>Status</th></tr>
+    </thead>
+    <tbody>${detailRows}</tbody>
+  </table>
+  ${otherSection}<div class="footer">
+    Hours logged against quoted estimates as at ${esc(asAt)}. Billable / non-billable split shown so any over-run can be billed or absorbed.<br/>Generated via Worklog — worklog.co.za${
+      watermark ? `<br/><strong style="color:#dc2626;">Draft — made on a free Worklog trial.</strong>` : ""
+    }
+  </div>
+</body>
+</html>`;
+}

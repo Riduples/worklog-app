@@ -8,12 +8,15 @@ import {
   buildStatementHTML,
   buildRemittanceHTML,
   buildAgeAnalysisHTML,
+  buildActualVsEstimateHTML,
   type StatementLine,
   type RemittanceLine,
   type StatementCredits,
   type RemittanceCredits,
   type AgeAnalysisRow,
   type AgeAnalysisBucket,
+  type JobHoursRow,
+  type OtherJobHoursRow,
 } from "@/lib/docgen/buildLedgerHTML";
 import type { BusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 
@@ -41,6 +44,13 @@ type RenderRequest =
       items: AgeAnalysisRow[];
       totals: { grandTotal: number; onAccount: number; netOwed: number };
       asAt: string;
+    }
+  | {
+      kind: "actualvsestimate";
+      rows: JobHoursRow[];
+      other: OtherJobHoursRow[];
+      totals: { quoted: number; logged: number; over: number };
+      asAt: string;
     };
 
 function buildHtml(body: RenderRequest, business: BusinessProfile, watermark: boolean): string | null {
@@ -57,6 +67,8 @@ function buildHtml(body: RenderRequest, business: BusinessProfile, watermark: bo
       return buildRemittanceHTML(business, body.supplierName, body.lines, body.payment, watermark, body.credits);
     case "ageanalysis":
       return buildAgeAnalysisHTML(business, body.side, body.buckets, body.items, body.totals, body.asAt, watermark);
+    case "actualvsestimate":
+      return buildActualVsEstimateHTML(business, body.rows, body.other, body.totals, body.asAt, watermark);
     default:
       return null;
   }

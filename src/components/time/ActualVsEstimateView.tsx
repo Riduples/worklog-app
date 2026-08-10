@@ -1,12 +1,19 @@
 "use client";
 
+import { useState } from "react";
 import { useTimeEntries } from "@/lib/supabase/hooks/useTimeEntries";
 import { useQuotes } from "@/lib/supabase/hooks/useQuotes";
 import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
+import { useTrialState } from "@/lib/supabase/hooks/useSubscription";
 import { aggregateJobHours, type JobHours, type JobStatus } from "@/lib/jobHours";
 import { shareReport } from "@/lib/docgen/shareReport";
+import { buildActualVsEstimateHTML } from "@/lib/docgen/buildLedgerHTML";
+import { openDocumentForPrinting } from "@/lib/docgen/shareDocument";
+import { renderPdf, downloadBlob } from "@/lib/docgen/renderPdf";
 import { todayStr } from "@/lib/format";
 import { BackLink } from "@/components/ui/BackLink";
+
+const STATUS_LABEL: Record<JobStatus, string> = { over: "Over", near: "Near limit", ontrack: "On track", none: "No estimate" };
 
 const STATUS_META: Record<JobStatus, { badge: string; bg: string; border: string; text: string; bar: string }> = {
   over: { badge: "⚠️ Over", bg: "#fff1f2", border: "#fecdd3", text: "#be123c", bar: "#ef4444" },
@@ -24,6 +31,9 @@ export function ActualVsEstimateView() {
   const { data: entries } = useTimeEntries();
   const { data: quotes } = useQuotes();
   const { data: business } = useBusinessProfile();
+  const { isTrialing, isReadOnly } = useTrialState();
+  const watermark = isTrialing || isReadOnly;
+  const [busy, setBusy] = useState(false);
 
   const jobs = aggregateJobHours(entries ?? [], quotes ?? []);
   const withEstimate = jobs.filter((j) => j.hasEstimate);
@@ -34,6 +44,36 @@ export function ActualVsEstimateView() {
   const totalLogged = withEstimate.reduce((s, j) => s + j.totalHours, 0);
   const totalOver = withEstimate.reduce((s, j) => s + j.overBy, 0);
   const overCount = withEstimate.filter((j) => j.status === "over").length;
+
+  // The same numbers the cards show, flattened for the PDF/print templates.
+  const pdfRows = withEstimate.map((j) => ({
+    client: j.client,
+    reference: j.quote?.doc_number ?? "",
+    quotedHours: j.quotedHours,
+    loggedHours: j.totalHours,
+    billableHours: j.billableHours,
+    nonBillableHours: j.nonBillableHours,
+    overBy: j.overBy,
+    remaining: j.remaining,
+    status: STATUS_LABEL[j.status],
+  }));
+  const pdfOther = other.map((j) => ({ client: j.client, loggedHours: j.totalHours, billableHours: j.billableHours, nonBillableHours: j.nonBillableHours }));
+  const pdfTotals = { quoted: totalQuoted, logged: totalLogged, over: totalOver };
+
+  const handlePrint = async () => {
+    if (!business || busy) return;
+    setBusy(true);
+    const asAt = new Date().toLocaleDateString("en-ZA", { year: "numeric", month: "long", day: "numeric" });
+    try {
+      const blob = await renderPdf({ kind: "actualvsestimate", rows: pdfRows, other: pdfOther, totals: pdfTotals, asAt });
+      downloadBlob(blob, "actual-vs-estimate");
+    } catch {
+      // Fall back to the print flow rather than leaving the user stuck.
+      openDocumentForPrinting(buildActualVsEstimateHTML(business, pdfRows, pdfOther, pdfTotals, asAt, watermark), "actual-vs-estimate");
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const handleShare = () => {
     const lines: string[] = [];
@@ -151,13 +191,22 @@ export function ActualVsEstimateView() {
         </>
       )}
 
-      {withEstimate.length > 0 && (
-        <button
-          onClick={handleShare}
-          style={{ width: "100%", background: "#F0F9FF", color: "#0C4A6E", border: "1.5px solid #BAE6FD", borderRadius: 12, padding: 13, fontWeight: 700, fontSize: 13, cursor: "pointer", marginTop: 8 }}
-        >
-          📤 Share
-        </button>
+      {jobs.length > 0 && (
+        <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
+          <button
+            onClick={handlePrint}
+            disabled={!business || busy}
+            style={{ flex: 1, background: "#F0F9FF", color: "#0C4A6E", border: "1.5px solid #BAE6FD", borderRadius: 12, padding: 13, fontWeight: 700, fontSize: 13, cursor: "pointer" }}
+          >
+            {busy ? "📄 Preparing..." : "📄 Download PDF"}
+          </button>
+          <button
+            onClick={handleShare}
+            style={{ flex: 1, background: "#F0F9FF", color: "#0C4A6E", border: "1.5px solid #BAE6FD", borderRadius: 12, padding: 13, fontWeight: 700, fontSize: 13, cursor: "pointer" }}
+          >
+            📤 Share
+          </button>
+        </div>
       )}
     </div>
   );
