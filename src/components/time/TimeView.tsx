@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useTimeEntries, useUpdateTimeEntry, type TimeEntry } from "@/lib/supabase/hooks/useTimeEntries";
+import { useTimeEntries, useUpdateTimeEntry, loggedHours, type TimeEntry } from "@/lib/supabase/hooks/useTimeEntries";
 import { useQuotes } from "@/lib/supabase/hooks/useQuotes";
 import { TimeModal } from "@/components/modals/TimeModal";
 import { JobProfitabilityView } from "@/components/time/JobProfitabilityView";
@@ -37,7 +37,7 @@ export function TimeView() {
   const billableTotal = all
     .filter((e) => e.bill_type === "Billable")
     .reduce((s, e) => s + Number(e.amount_to_bill || 0), 0);
-  const totalHours = all.reduce((s, e) => s + Number(e.hours_worked || 0), 0);
+  const totalHours = all.reduce((s, e) => s + loggedHours(e), 0);
 
   // Only the bill types actually in use get a filter pill.
   const presentTypes = TYPE_ORDER.filter((t) => all.some((e) => e.bill_type === t));
@@ -183,7 +183,8 @@ export function TimeView() {
               {e.client_name || e.description || "Time entry"}
             </div>
             <div style={{ fontSize: 11, color: "#94a3b8" }}>
-              {e.entry_date} · {Number(e.hours_worked).toFixed(1)}h
+              {e.entry_date} · {loggedHours(e).toFixed(1)}h
+              {Number(e.ot_hours) > 0 ? ` (incl. ${Number(e.ot_hours).toFixed(1)}h OT)` : ""}
               {e.bill_type === "Billable" && Number(e.amount_to_bill) > 0 ? ` · ${fmt(e.amount_to_bill)}` : ""}
             </div>
           </>

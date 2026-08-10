@@ -12,7 +12,7 @@ import { useContacts } from "@/lib/supabase/hooks/useContacts";
 import { useQuotes } from "@/lib/supabase/hooks/useQuotes";
 import { useStockItems } from "@/lib/supabase/hooks/useStock";
 import { useBookings } from "@/lib/supabase/hooks/useBookings";
-import { useCreateTimeEntry, useUpdateTimeEntry, useTimeEntries, type TimeEntry } from "@/lib/supabase/hooks/useTimeEntries";
+import { useCreateTimeEntry, useUpdateTimeEntry, useTimeEntries, loggedHours, type TimeEntry } from "@/lib/supabase/hooks/useTimeEntries";
 
 const BILL_TYPES = ["Billable", "Non-billable"];
 
@@ -141,7 +141,7 @@ export function TimeModal({ entry, onClose, onShowProfitability }: { entry?: Tim
   const quoteEstHours = Number(selectedQuote?.estimated_hours ?? 0);
   const loggedOnQuote = (allEntries ?? [])
     .filter((e) => e.quote_id === quoteId && e.id !== entry?.id)
-    .reduce((s, e) => s + Number(e.hours_worked || 0) + Number(e.ot_hours || 0), 0);
+    .reduce((s, e) => s + loggedHours(e), 0);
   const thisSessionHours = hoursNum + otHoursNum;
   const projectedHours = loggedOnQuote + thisSessionHours;
   const overByHours = quoteEstHours > 0 && projectedHours > quoteEstHours ? projectedHours - quoteEstHours : 0;
