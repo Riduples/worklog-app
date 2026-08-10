@@ -57,6 +57,7 @@ const GROUPS: Group[] = [
     items: [
       { tool: "booking", href: "/diary", icon: "📅", label: "Diary" },
       { tool: "timetrack", href: "/time", icon: "⏱️", label: "Time Tracker" },
+      { tool: "timetrack", href: "/actual-vs-estimate", icon: "📊", label: "Actual vs Estimate" },
       { tool: "mileage", href: "/mileage", icon: "🚗", label: "Mileage" },
     ],
   },

@@ -29,6 +29,7 @@ type NavItem = {
   logKind?: "income" | "expense"; // an action item that opens the log modal, not a route
   icon: string;
   label: string;
+  desc?: string; // tile description override; falls back to the tool's label desc
   // How the item earns its place in the list:
   toolId?: ToolId; // visible when this tool's permission gate passes
   anyOf?: ToolId[]; // visible when ANY of these gates pass (one page, many perms)
@@ -76,6 +77,7 @@ const NAV_CATEGORIES: { id: string; items: NavItem[] }[] = [
     items: [
       { href: "/diary", icon: "📅", label: "Diary", toolId: "booking" },
       { href: "/time", icon: "⏱️", label: "Time Tracker", toolId: "timetrack" },
+      { href: "/actual-vs-estimate", icon: "📊", label: "Actual vs Estimate", toolId: "timetrack", desc: "Hours logged vs the hours you quoted, per job — spot when work runs over" },
       { href: "/mileage", icon: "🚗", label: "Mileage", toolId: "mileage" },
     ],
   },
@@ -162,7 +164,7 @@ export function AllToolsGrid({
                       onClick={it.logKind ? () => handleLog(it.logKind as "income" | "expense") : undefined}
                       icon={it.icon}
                       label={it.label}
-                      desc={it.toolId ? TOOL_LABELS[it.toolId]?.desc : undefined}
+                      desc={it.desc ?? (it.toolId ? TOOL_LABELS[it.toolId]?.desc : undefined)}
                       locked={it.lockId ? tierLocked(it.lockId) : undefined}
                       onLockedClick={it.lockId ? () => onLockedClick(it.lockId as ToolId) : undefined}
                     />

@@ -2,9 +2,7 @@
 
 import { useState } from "react";
 import { useTimeEntries, useUpdateTimeEntry, loggedHours, type TimeEntry } from "@/lib/supabase/hooks/useTimeEntries";
-import { useQuotes } from "@/lib/supabase/hooks/useQuotes";
 import { TimeModal } from "@/components/modals/TimeModal";
-import { JobProfitabilityView } from "@/components/time/JobProfitabilityView";
 import { ReadOnlyNotice } from "@/components/ui/ReadOnlyNotice";
 import { useToolAccess } from "@/lib/supabase/hooks/useToolAccess";
 import { BackLink } from "@/components/ui/BackLink";
@@ -24,18 +22,13 @@ const TYPE_ORDER = ["Billable", "Non-billable"];
 export function TimeView() {
   const access = useToolAccess("timetrack");
   const { data: entries, isLoading } = useTimeEntries();
-  const { data: quotes } = useQuotes();
   const updateEntry = useUpdateTimeEntry();
   const [modalState, setModalState] = useState<{ open: boolean; entry?: TimeEntry }>({ open: false });
-  const [view, setView] = useState<"log" | "profitability">("log");
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [sort, setSort] = useState<"az" | "recent">("recent");
 
   const all = entries ?? [];
-  const totalHours = all.reduce((s, e) => s + loggedHours(e), 0);
-  // Hours-only tracker: the summary counts billable hours, not a rand amount.
-  const billableHours = all.filter((e) => e.bill_type === "Billable").reduce((s, e) => s + loggedHours(e), 0);
 
   // Only the bill types actually in use get a filter pill.
   const presentTypes = TYPE_ORDER.filter((t) => all.some((e) => e.bill_type === t));
@@ -81,42 +74,6 @@ export function TimeView() {
 
       {!access.loading && !access.canEdit && <ReadOnlyNotice level={access.level} what="time entries" />}
 
-      {all.length > 0 && (
-        <div style={{ background: "#F0F9FF", borderRadius: 12, padding: "12px 14px", marginBottom: 16, fontSize: 13, color: "#0369A1", display: "flex", justifyContent: "space-between" }}>
-          <span>{totalHours.toFixed(1)}h logged</span>
-          <span>
-            Billable: <strong>{billableHours.toFixed(1)}h</strong>
-          </span>
-        </div>
-      )}
-
-      {all.length > 0 && (
-        <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
-          {(["log", "profitability"] as const).map((v) => (
-            <button
-              key={v}
-              onClick={() => setView(v)}
-              style={{
-                padding: "8px 14px",
-                borderRadius: 20,
-                border: `1.5px solid ${view === v ? "#0C4A6E" : "#e2e8f0"}`,
-                background: view === v ? "#0C4A6E" : "#fff",
-                color: view === v ? "#fff" : "#374151",
-                fontSize: 12,
-                fontWeight: 700,
-                cursor: "pointer",
-              }}
-            >
-              {v === "log" ? "Time log" : "📊 Actual vs Estimate"}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {view === "profitability" ? (
-        <JobProfitabilityView entries={entries ?? []} quotes={quotes ?? []} />
-      ) : (
-        <>
       {!isLoading && all.length > 0 && (
         <input
           value={search}
@@ -226,17 +183,11 @@ export function TimeView() {
           </div>
         );
       })}
-        </>
-      )}
 
       {modalState.open && (
         <TimeModal
           entry={modalState.entry}
           onClose={() => setModalState({ open: false })}
-          onShowProfitability={() => {
-            setModalState({ open: false });
-            setView("profitability");
-          }}
         />
       )}
     </div>

@@ -32,6 +32,9 @@ export function BookingsView() {
   const [viewing, setViewing] = useState<Booking | null>(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  // "date" keeps the diary agenda (upcoming grouped by day, then past); "az" is a
+  // flat list by client name — the same count + sort pattern the other list tools use.
+  const [sort, setSort] = useState<"date" | "az">("date");
 
   // Deep link from the dashboard's "Needs you today" card: /diary?open=<id> opens
   // that appointment straight away — in the editor for editors, the read-only
@@ -246,26 +249,57 @@ export function BookingsView() {
       )}
 
       {!isLoading && filtered.length > 0 && (
-        <div style={{ margin: "0 0 4px 2px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", margin: "0 0 10px 2px" }}>
           <span style={{ fontSize: 11, color: "#94a3b8" }}>
             {filtered.length}
             {filtered.length !== all.length ? ` of ${all.length}` : ""} appointment{all.length === 1 ? "" : "s"}
           </span>
+          <div style={{ display: "flex", gap: 4, background: "#f1f5f9", borderRadius: 10, padding: 3 }}>
+            {(["date", "az"] as const).map((s) => (
+              <button
+                key={s}
+                onClick={() => setSort(s)}
+                style={{
+                  padding: "5px 12px",
+                  borderRadius: 8,
+                  border: "none",
+                  background: sort === s ? "#fff" : "transparent",
+                  color: sort === s ? "#0C4A6E" : "#64748b",
+                  fontSize: 12,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  boxShadow: sort === s ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
+                }}
+              >
+                {s === "date" ? "Date" : "A–Z"}
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
-      {upcomingGroups.map((g) => (
-        <div key={g.date}>
-          <div style={sectionHeaderStyle(true)}>{dateHeader(g.date)}</div>
-          {g.items.map((b) => appointmentRow(b, false))}
-        </div>
-      ))}
+      {/* Date keeps the diary agenda (upcoming days, then past). A–Z flattens the
+          whole set into one client-name-sorted list, each row showing its date. */}
+      {sort === "az" ? (
+        [...filtered]
+          .sort((a, b) => a.client_name.localeCompare(b.client_name))
+          .map((b) => appointmentRow(b, true))
+      ) : (
+        <>
+          {upcomingGroups.map((g) => (
+            <div key={g.date}>
+              <div style={sectionHeaderStyle(true)}>{dateHeader(g.date)}</div>
+              {g.items.map((b) => appointmentRow(b, false))}
+            </div>
+          ))}
 
-      {past.length > 0 && (
-        <div>
-          <div style={sectionHeaderStyle(false)}>Past</div>
-          {past.map((b) => appointmentRow(b, true))}
-        </div>
+          {past.length > 0 && (
+            <div>
+              <div style={sectionHeaderStyle(false)}>Past</div>
+              {past.map((b) => appointmentRow(b, true))}
+            </div>
+          )}
+        </>
       )}
 
       {showNew && <BookingModal onClose={() => setShowNew(false)} />}

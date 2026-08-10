@@ -48,7 +48,7 @@ function EmptyPickBox({ text }: { text: string }) {
   );
 }
 
-export function TimeModal({ entry, onClose, onShowProfitability }: { entry?: TimeEntry; onClose: () => void; onShowProfitability?: () => void }) {
+export function TimeModal({ entry, onClose }: { entry?: TimeEntry; onClose: () => void }) {
   const isEdit = !!entry;
   const [client, setClient] = useState(entry?.client_name ?? "");
   const [clientContactId, setClientContactId] = useState<string | null>(entry?.client_contact_id ?? null);
@@ -137,12 +137,6 @@ export function TimeModal({ entry, onClose, onShowProfitability }: { entry?: Tim
 
   return (
     <Modal title={isEdit ? "Edit time entry" : "Time Log"} onClose={onClose}>
-      {!isEdit && openBookings.length > 0 && (
-        <div style={{ background: "#F0F9FF", border: "1.5px solid #7DD3FC", borderRadius: 12, padding: "10px 14px", marginBottom: 14, fontSize: 12, color: "#0369A1", lineHeight: 1.5 }}>
-          <span style={{ fontWeight: 700 }}>⏱️ Tip</span> — pick a diary appointment below to fill in the customer and date automatically.
-        </div>
-      )}
-
       {/* Diary appointment — auto-fills the details */}
       <Field label="Diary appointment">
         {openBookings.length === 0 ? (
@@ -243,19 +237,6 @@ export function TimeModal({ entry, onClose, onShowProfitability }: { entry?: Tim
 
       {error && <p style={{ color: "#dc2626", fontSize: 13, marginBottom: 12 }}>{error}</p>}
       <SaveBtn label={saving ? "Saving..." : isEdit ? "Save changes" : "Log Time"} icon="⏱️" onClick={handleSave} disabled={saving} />
-
-      {/* Secondary navigation, not part of the form — a footer link to the report. */}
-      {onShowProfitability && (
-        <div style={{ display: "flex", justifyContent: "center", marginTop: 12 }}>
-          <button
-            type="button"
-            onClick={onShowProfitability}
-            style={{ background: "none", border: "none", color: "#0C4A6E", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
-          >
-            📊 Actual vs estimate →
-          </button>
-        </div>
-      )}
     </Modal>
   );
 }

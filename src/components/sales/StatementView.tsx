@@ -146,10 +146,6 @@ export function StatementView() {
       <BackLink />
       <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 18px" }}>Customer Statement</h1>
 
-      <div style={{ background: "#F0F9FF", border: "1.5px solid #7DD3FC", borderRadius: 12, padding: "12px 14px", marginBottom: 18, fontSize: 12, color: "#0369A1", lineHeight: 1.5 }}>
-        A statement shows a customer their full account history — all invoices issued and what they still owe. Share it to resolve disputes or as a payment reminder.
-      </div>
-
       <Field label="Select customer">
         <div style={{ position: "relative" }}>
           <Input value={selectedClient} onChange={setSelectedClient} placeholder="Type name or tap List..." />
