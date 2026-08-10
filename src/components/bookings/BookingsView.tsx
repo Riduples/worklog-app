@@ -48,11 +48,13 @@ function fmtDuration(min: number | null | undefined): string | null {
 function BookingActionsModal({
   booking,
   canEdit,
+  canDelete,
   onEdit,
   onClose,
 }: {
   booking: Booking;
   canEdit: boolean;
+  canDelete: boolean;
   onEdit: (b: Booking) => void;
   onClose: () => void;
 }) {
@@ -62,6 +64,14 @@ function BookingActionsModal({
   const linkedQuote = booking.linked_quote_id ? (quotes ?? []).find((q) => q.id === booking.linked_quote_id) ?? null : null;
   const color = STATUS_COLORS[booking.status] ?? STATUS_COLORS.confirmed;
   const setStatus = (status: string) => updateBooking.mutate({ id: booking.id, changes: { status } }, { onSuccess: onClose });
+  // Delete is a soft delete: stamp deleted_at so the row drops out of every
+  // diary query (they all filter deleted_at IS NULL) while the record survives
+  // for history. Unlike Cancel — which keeps the appointment visible as a
+  // cancelled entry — deleting removes it from the diary entirely.
+  const handleDelete = () => {
+    if (!confirm("Delete this appointment? It will be removed from your diary.")) return;
+    updateBooking.mutate({ id: booking.id, changes: { deleted_at: new Date().toISOString() } }, { onSuccess: onClose });
+  };
   // A past appointment can only be marked complete/no-show, not rescheduled or
   // re-priced, so editing is offered on today's and future bookings only.
   const isPast = booking.booking_date < todayStr();
@@ -124,6 +134,15 @@ function BookingActionsModal({
         </button>
       )}
 
+      {booking.status === "pending" && (
+        <button
+          onClick={() => setStatus("confirmed")}
+          style={{ width: "100%", background: "#F0F9FF", color: "#0369A1", border: "1.5px solid #BAE6FD", borderRadius: 14, padding: 15, fontWeight: 700, cursor: "pointer", marginTop: 16 }}
+        >
+          ✓ Confirm appointment
+        </button>
+      )}
+
       {(booking.status === "confirmed" || booking.status === "pending") && (
         <>
           <button
@@ -147,6 +166,15 @@ function BookingActionsModal({
             </button>
           </div>
         </>
+      )}
+
+      {canDelete && (
+        <button
+          onClick={handleDelete}
+          style={{ width: "100%", background: "#fff", color: "#991b1b", border: "1.5px solid #fecaca", borderRadius: 14, padding: 15, fontWeight: 700, cursor: "pointer", marginTop: 16 }}
+        >
+          🗑 Delete appointment
+        </button>
       )}
     </Modal>
   );
@@ -361,6 +389,7 @@ export function BookingsView() {
         <BookingActionsModal
           booking={selected}
           canEdit={access.canEdit}
+          canDelete={access.canDelete}
           onEdit={(b) => {
             setSelected(null);
             setEditing(b);

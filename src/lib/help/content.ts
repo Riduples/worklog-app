@@ -1023,7 +1023,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           },
           {
             "type": "tip",
-            "text": "Because the item carries its hours, adding it to a quote line lets the quote auto-suggest its estimated hours — which then feeds Job Profitability in the Time Log."
+            "text": "Because the item carries its hours, adding it to a quote line lets the quote auto-suggest its estimated hours — which then feeds the Actual vs Estimate view in the Time Tracker."
           }
         ]
       },
@@ -1282,7 +1282,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           },
           {
             "type": "paragraph",
-            "text": "Once the quote is saved, link your time entries to it and Worklog compares the hours you have logged against the hours you quoted. See Track job profitability (hours vs quote)."
+            "text": "Once the quote is saved, link your time entries to it and Worklog compares the hours you have logged against the hours you quoted. See Track actual hours vs your estimate."
           }
         ]
       },
@@ -2450,13 +2450,14 @@ export const HELP_ARTICLES: HelpArticle[] = [
               "Choose the Appointment type — Customer or Supplier.",
               "At Customer (or Supplier), start typing the name. If they are already in your contacts, pick them from the list. If not, just type the name.",
               "Set the Date and the Time.",
+              "Leave the Status on Confirmed for a slot that is set, or switch it to Pending if it is only tentative and still to be confirmed.",
               "Need more? Tap Add more details for a purpose, how long it will take, a location, an on-site visit, a linked quote, notes, a repeat, or a day-before WhatsApp reminder. You can skip all of these.",
               "Tap Save appointment."
             ]
           },
           {
             "type": "paragraph",
-            "text": "A new appointment is saved as Confirmed and shows up in your diary with the name, date, time and a status tag. If it clashes with another appointment at the same time, Worklog warns you before you save."
+            "text": "A new appointment is saved as Confirmed by default — or as Pending if you set it tentative — and shows up in your diary with the name, date, time and a status tag. If it clashes with another appointment at the same time, Worklog warns you before you save."
           }
         ]
       },
@@ -2485,6 +2486,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
             "items": [
               "Tap the appointment you want.",
               "To change an appointment that is today or still coming up, tap Edit appointment.",
+              "If it is still Pending and now firmed up, tap Confirm appointment.",
               "When the job is done, tap Mark Complete.",
               "If the customer did not turn up, tap No-show.",
               "If the appointment fell away, tap Cancel appointment."
@@ -2504,7 +2506,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
             "items": [
               "Your diary reads like an agenda: appointments are grouped by day under Today, Tomorrow and dated headings, soonest first, with past appointments below under a Past heading as a record.",
               "When the list gets long, use the search box to find an appointment by customer, service or purpose, and tap a status pill (All, Confirmed, Complete and so on) to show only those. Search and the pills look through past appointments too, so an old record is easy to find.",
-              "The status colours help you scan: confirmed and complete show in blue, no-show in red, and cancelled in grey.",
+              "The status colours help you scan: confirmed and complete show in blue, pending in amber, no-show in red, and cancelled in grey.",
               "Past appointments cannot be edited — you can still mark them Complete or No-show, but not reschedule them.",
               "Once an appointment is Complete, No-show or Cancelled, the Mark Complete, No-show and Cancel appointment buttons fall away. Those appointments stay in your diary as a record."
             ]
@@ -2567,9 +2569,9 @@ export const HELP_ARTICLES: HelpArticle[] = [
               "Open the Time Tracker and tap the + New button in the top corner.",
               "On the Log time screen, fill in Client (optional). Start typing to pick someone from your contacts, or just type a name. You can also leave it blank.",
               "In Hours worked, type the hours. You can use a decimal, for example 2.5 for two and a half hours.",
-              "In Hourly rate, type your rate per hour. Leave it as 0 if you are not billing by the hour.",
-              "Under Type, choose one: Billable, Non-billable, Admin or Travel.",
-              "Fill in Description - optional to note what the work was.",
+              "Fill in Purpose - optional to note what the work was.",
+              "At \"Can you bill this?\", choose Billable if you will charge the customer for it, or Non-billable if you will not.",
+              "If it is Billable, type your Labour hourly rate — or pick one from your price list. Non-billable time is logged for its hours only, so it asks for no rate.",
               "Check the Date. It fills in with today, but you can tap it and change it.",
               "Tap Log time to save."
             ]
@@ -2585,11 +2587,32 @@ export const HELP_ARTICLES: HelpArticle[] = [
         "blocks": [
           {
             "type": "paragraph",
-            "text": "Every entry you save shows in a list, with the client (or the description if there is no client), the date, the hours, and a coloured tag for the type. The list is sorted by date, with the most recent date at the top."
+            "text": "Every entry you save shows in a list, with the client (or the description if there is no client), the date, the hours, and a coloured tag for the type. New entries start most-recent-first."
           },
           {
             "type": "paragraph",
             "text": "When you have entries, a summary bar sits above the list. It shows your total hours logged, and next to Billable, the total amount you can bill from your Billable entries."
+          },
+          {
+            "type": "bullets",
+            "items": [
+              "Search box — type a client or a word from the description to narrow the list, the same way Contacts, Sales and Purchases work.",
+              "Type pills — tap Billable or Non-billable to show only that type. The pills appear once you have used both types, and All brings everything back.",
+              "Sort toggle — switch between Recent (most recent date first, the default) and A–Z (by client name). A small count above the list shows how many entries are showing."
+            ]
+          }
+        ]
+      },
+      {
+        "heading": "Open and change an entry",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "Tap any entry in the list to open it — the same as in your price list, contacts, sales and purchases. You can change the customer, the date, the purpose, and the quote it is linked to."
+          },
+          {
+            "type": "paragraph",
+            "text": "The hours, hourly rate, overtime and the billable choice are locked once an entry is saved, so your billable total cannot drift after the fact. To change any of those, remove the entry and log it again."
           }
         ]
       },
@@ -4559,7 +4582,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
   {
     "slug": "job-profitability",
     "category": "Scheduling",
-    "title": "Track job profitability (hours vs quote)",
+    "title": "Track actual hours vs your estimate",
     "summary": "Link time entries to a quote and compare the hours you have logged against the hours you quoted, so you know when a job is running over.",
     "sections": [
       {
@@ -4567,7 +4590,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
         "blocks": [
           {
             "type": "paragraph",
-            "text": "Job Profitability compares the hours you actually log against the hours you quoted for a job — an honest hours-vs-hours read. It uses two things: an estimated-hours figure on the quote, and a link from each time entry to that quote."
+            "text": "Actual vs Estimate compares the hours you actually log against the hours you quoted for a job — an honest hours-vs-hours read, not a money figure. It uses two things: an estimated-hours figure on the quote, and a link from each time entry to that quote."
           }
         ]
       },
@@ -4585,11 +4608,11 @@ export const HELP_ARTICLES: HelpArticle[] = [
         ]
       },
       {
-        "heading": "The Job Profitability view",
+        "heading": "The Actual vs Estimate view",
         "blocks": [
           {
             "type": "paragraph",
-            "text": "In the Time Tracker, tap the Job Profitability tab. Each job shows the hours logged against the hours quoted with a progress bar and a badge — a red Over when a job has blown its quoted hours, or an OK when it is within them. Jobs that are most over sort to the top."
+            "text": "In the Time Tracker, tap the Actual vs Estimate tab. Each job shows the hours logged against the hours quoted with a progress bar and a badge — a red Over when a job has blown its quoted hours, or an OK when it is within them. Jobs that are most over sort to the top."
           }
         ]
       }

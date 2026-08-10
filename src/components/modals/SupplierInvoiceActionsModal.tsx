@@ -126,7 +126,7 @@ export function SupplierInvoiceActionsModal({ si, onClose }: { si: SupplierInvoi
   });
 
   return (
-    <Modal title={si.supplier_ref_number ? `Invoice ${si.supplier_ref_number}` : "Supplier invoice"} onClose={onClose}>
+    <Modal title={si.doc_number ? `Invoice ${si.doc_number}` : si.supplier_ref_number ? `Invoice ${si.supplier_ref_number}` : "Supplier invoice"} onClose={onClose}>
       <div style={{ marginBottom: 16 }}>
         <span
           style={{
@@ -144,6 +144,7 @@ export function SupplierInvoiceActionsModal({ si, onClose }: { si: SupplierInvoi
       </div>
 
       <Row label="Supplier" value={si.supplier_name} />
+      {si.supplier_ref_number ? <Row label="Supplier ref" value={si.supplier_ref_number} /> : null}
       <Row label="Invoice date" value={si.issue_date} />
       <Row label="Due date" value={si.due_date ?? "—"} />
 
