@@ -2533,14 +2533,14 @@ export const HELP_ARTICLES: HelpArticle[] = [
     "slug": "time-log",
     "category": "Scheduling",
     "title": "Track your time",
-    "summary": "Log the hours you work for each client or job in the Time Tracker, so you can see your total time and what you can bill.",
+    "summary": "Log the hours you work for each client or job in the Time Tracker, so you can see your total time and your billable hours.",
     "sections": [
       {
         "heading": "What the Time Tracker is for",
         "blocks": [
           {
             "type": "paragraph",
-            "text": "The Time Tracker keeps a simple record of the hours you work. Each entry has a client, the hours, an hourly rate, a type of work, and an optional description. Worklog adds up your hours for you, and works out what you can bill on the hours you mark as Billable."
+            "text": "The Time Tracker keeps a simple record of the hours you work. Each entry has a client, the hours, whether the work is billable, and an optional description. Worklog adds up your hours for you, and shows how many of them are billable. It tracks hours only — no rand amounts — so you price the work yourself when you invoice."
           },
           {
             "type": "paragraph",
@@ -2554,8 +2554,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "bullets",
             "items": [
-              "You do not need to add the client to your Customers first. You can start typing to pick an existing contact, or just type any name. You can also leave it blank.",
-              "Have your hourly rate handy if you want Worklog to work out the amount you can bill."
+              "You do not need to add the client to your Customers first. You can start typing to pick an existing contact, or just type any name. You can also leave it blank."
             ]
           }
         ]
@@ -2570,15 +2569,14 @@ export const HELP_ARTICLES: HelpArticle[] = [
               "On the Log time screen, fill in Client (optional). Start typing to pick someone from your contacts, or just type a name. You can also leave it blank.",
               "In Hours worked, type the hours. You can use a decimal, for example 2.5 for two and a half hours.",
               "Fill in Purpose - optional to note what the work was.",
-              "At \"Can you bill this?\", choose Billable if you will charge the customer for it, or Non-billable if you will not.",
-              "If it is Billable, type your Labour hourly rate — or pick one from your price list. Non-billable time is logged for its hours only, so it asks for no rate.",
+              "At \"Can you bill this?\", choose Billable if you will charge the customer for it, or Non-billable if you will not. This is just a label on the hours — no amount is recorded.",
               "Check the Date. It fills in with today, but you can tap it and change it.",
               "Tap Log time to save."
             ]
           },
           {
             "type": "tip",
-            "text": "When you choose Billable and enter both hours and a rate, Worklog shows a blue box that reads To bill, with the amount worked out as hours times rate. That is the amount you can put on an invoice later."
+            "text": "Link the entry to a quote that has an estimated-hours figure, and Worklog shows a live box comparing the hours logged against the hours you quoted — so you can see when a job is running over."
           }
         ]
       },
@@ -2591,7 +2589,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           },
           {
             "type": "paragraph",
-            "text": "When you have entries, a summary bar sits above the list. It shows your total hours logged, and next to Billable, the total amount you can bill from your Billable entries."
+            "text": "When you have entries, a summary bar sits above the list. It shows your total hours logged, and next to Billable, how many of those hours are billable."
           },
           {
             "type": "bullets",
@@ -2608,11 +2606,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
         "blocks": [
           {
             "type": "paragraph",
-            "text": "Tap any entry in the list to open it — the same as in your price list, contacts, sales and purchases. You can change the customer, the date, the purpose, and the quote it is linked to."
-          },
-          {
-            "type": "paragraph",
-            "text": "The hours, hourly rate, overtime and the billable choice are locked once an entry is saved, so your billable total cannot drift after the fact. To change any of those, remove the entry and log it again."
+            "text": "Tap any entry in the list to open it — the same as in your price list, contacts, sales and purchases. You can change the customer, the hours, the date, the purpose, whether it is billable, and the quote it is linked to. Tap Save changes when you are done."
           }
         ]
       },

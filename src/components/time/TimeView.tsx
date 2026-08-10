@@ -5,7 +5,6 @@ import { useTimeEntries, useUpdateTimeEntry, loggedHours, type TimeEntry } from 
 import { useQuotes } from "@/lib/supabase/hooks/useQuotes";
 import { TimeModal } from "@/components/modals/TimeModal";
 import { JobProfitabilityView } from "@/components/time/JobProfitabilityView";
-import { fmt } from "@/lib/format";
 import { ReadOnlyNotice } from "@/components/ui/ReadOnlyNotice";
 import { useToolAccess } from "@/lib/supabase/hooks/useToolAccess";
 import { BackLink } from "@/components/ui/BackLink";
@@ -34,10 +33,9 @@ export function TimeView() {
   const [sort, setSort] = useState<"az" | "recent">("recent");
 
   const all = entries ?? [];
-  const billableTotal = all
-    .filter((e) => e.bill_type === "Billable")
-    .reduce((s, e) => s + Number(e.amount_to_bill || 0), 0);
   const totalHours = all.reduce((s, e) => s + loggedHours(e), 0);
+  // Hours-only tracker: the summary counts billable hours, not a rand amount.
+  const billableHours = all.filter((e) => e.bill_type === "Billable").reduce((s, e) => s + loggedHours(e), 0);
 
   // Only the bill types actually in use get a filter pill.
   const presentTypes = TYPE_ORDER.filter((t) => all.some((e) => e.bill_type === t));
@@ -87,7 +85,7 @@ export function TimeView() {
         <div style={{ background: "#F0F9FF", borderRadius: 12, padding: "12px 14px", marginBottom: 16, fontSize: 13, color: "#0369A1", display: "flex", justifyContent: "space-between" }}>
           <span>{totalHours.toFixed(1)}h logged</span>
           <span>
-            Billable: <strong>{fmt(billableTotal)}</strong>
+            Billable: <strong>{billableHours.toFixed(1)}h</strong>
           </span>
         </div>
       )}
@@ -185,7 +183,6 @@ export function TimeView() {
             <div style={{ fontSize: 11, color: "#94a3b8" }}>
               {e.entry_date} · {loggedHours(e).toFixed(1)}h
               {Number(e.ot_hours) > 0 ? ` (incl. ${Number(e.ot_hours).toFixed(1)}h OT)` : ""}
-              {e.bill_type === "Billable" && Number(e.amount_to_bill) > 0 ? ` · ${fmt(e.amount_to_bill)}` : ""}
             </div>
           </>
         );
