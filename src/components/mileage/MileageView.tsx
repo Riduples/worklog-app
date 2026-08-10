@@ -96,7 +96,9 @@ export function MileageView() {
 
       {isLoading && <p style={{ color: "#94a3b8", fontSize: 13 }}>Loading...</p>}
       {!isLoading && all.length === 0 && (
-        <p style={{ color: "#94a3b8", fontSize: 13, textAlign: "center", marginTop: 40 }}>No trips logged yet.</p>
+        <p style={{ color: "#94a3b8", fontSize: 13, textAlign: "center", marginTop: 40 }}>
+          No trips logged yet.{access.canEdit ? " Tap “+ New” to log your first trip." : ""}
+        </p>
       )}
       {!isLoading && all.length > 0 && filtered.length === 0 && (
         <p style={{ color: "#94a3b8", fontSize: 13, textAlign: "center", marginTop: 40 }}>No trips match your search.</p>

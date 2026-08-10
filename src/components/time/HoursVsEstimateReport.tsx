@@ -139,6 +139,9 @@ export function HoursVsEstimateReport() {
     <>
       {withEstimate.length > 0 && (
         <>
+          <p style={{ fontSize: 11, color: "#94a3b8", margin: "0 2px 12px" }}>
+            Each job&apos;s total hours to date against the hours quoted for it.
+          </p>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 6, marginBottom: 14 }}>
             {[
               { label: "Quoted", value: totalQuoted, color: "#0369A1", bg: "#F0F9FF", border: "#BAE6FD" },

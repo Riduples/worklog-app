@@ -102,7 +102,9 @@ export function TimeView() {
 
       {isLoading && <p style={{ color: "#94a3b8", fontSize: 13 }}>Loading...</p>}
       {!isLoading && all.length === 0 && (
-        <p style={{ color: "#94a3b8", fontSize: 13, textAlign: "center", marginTop: 40 }}>No time entries yet.</p>
+        <p style={{ color: "#94a3b8", fontSize: 13, textAlign: "center", marginTop: 40 }}>
+          No time entries yet.{access.canEdit ? " Tap “+ New” to log your first." : ""}
+        </p>
       )}
       {!isLoading && all.length > 0 && filtered.length === 0 && (
         <p style={{ color: "#94a3b8", fontSize: 13, textAlign: "center", marginTop: 40 }}>No time entries match your search.</p>
@@ -115,7 +117,7 @@ export function TimeView() {
             {filtered.length !== all.length ? ` of ${all.length}` : ""} entr{all.length === 1 ? "y" : "ies"}
           </span>
           <div style={{ display: "flex", gap: 4, background: "#f1f5f9", borderRadius: 10, padding: 3 }}>
-            {(["az", "recent"] as const).map((s) => (
+            {(["recent", "az"] as const).map((s) => (
               <button
                 key={s}
                 onClick={() => setSort(s)}

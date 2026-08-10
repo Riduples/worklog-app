@@ -2576,7 +2576,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           },
           {
             "type": "tip",
-            "text": "Link the entry to a quote that has an estimated-hours figure, and Worklog shows a live box comparing the hours logged against the hours you quoted — so you can see when a job is running over."
+            "text": "Link the entry to a quote that has an estimated-hours figure. Those hours then feed the Hours vs Estimate report in Time & Travel Reports, so you can see when a job is running over its quoted time."
           }
         ]
       },
@@ -2629,6 +2629,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
       }
     ],
     "related": [
+      "time-travel-reports",
       "diary-bookings",
       "trip-log-mileage",
       "create-and-send-an-invoice",
@@ -2725,6 +2726,46 @@ export const HELP_ARTICLES: HelpArticle[] = [
       "diary-bookings",
       "log-money-in-and-out",
       "tax-jar"
+    ]
+  },
+  {
+    "slug": "time-travel-reports",
+    "category": "Scheduling",
+    "title": "Time & Travel Reports",
+    "summary": "Two printable reports in one place: the hours you logged versus what you quoted, and your business travel with the SARS deduction.",
+    "sections": [
+      {
+        "heading": "What it is",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "Time & Travel Reports sits under the \"Scheduling System\" tools card, or the \"Work\" group on the desktop sidebar. It has two tabs — Hours vs Estimate and Travel — and each has its own Download PDF and Share buttons."
+          }
+        ]
+      },
+      {
+        "heading": "Hours vs Estimate",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "Every job you have logged time against shows the hours to date versus the hours quoted, a progress bar, and a badge — Over (red) when it has passed the quote, Near limit, or On track. It also splits the hours into billable and non-billable, so when a job runs over you can decide whether to bill the extra or absorb it. To feed this report, put an estimated-hours figure on the quote and pick that quote under Link to quote when you log time."
+          }
+        ]
+      },
+      {
+        "heading": "Travel",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "Pick a period — This month, This year or All time — and the report totals your trips, kilometres and SARS deduction for it, grouped by trip type. This is the summary to keep for tax: tap Download PDF for a letterheaded copy, or Share for a quick text summary."
+          }
+        ]
+      }
+    ],
+    "related": [
+      "time-log",
+      "trip-log-mileage",
+      "job-profitability"
     ]
   },
   {
@@ -4580,7 +4621,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
         "blocks": [
           {
             "type": "paragraph",
-            "text": "Actual vs Estimate compares the hours you actually log against the hours you quoted for a job — an honest hours-vs-hours read, not a money figure. It uses two things: an estimated-hours figure on the quote, and a link from each time entry to that quote."
+            "text": "The Hours vs Estimate report compares the hours you actually log against the hours you quoted for a job — an honest hours-vs-hours read, not a money figure. It uses two things: an estimated-hours figure on the quote, and a link from each time entry to that quote."
           }
         ]
       },
@@ -4591,8 +4632,8 @@ export const HELP_ARTICLES: HelpArticle[] = [
             "type": "steps",
             "items": [
               "On the quote, fill in Estimated hours for this job. If you built lines from priced items that carry hours, this is suggested for you.",
-              "In the Time Log, when you record time, pick the quote under Link to a quote.",
-              "As you log, a panel shows the hours projected against the quote versus the hours quoted, and warns when you go over."
+              "In the Time Log, when you record time, pick the quote under Link to quote.",
+              "Open Time & Travel Reports and tap Hours vs Estimate to see the hours logged against the quote, with a warning when a job goes over."
             ]
           }
         ]
@@ -4608,6 +4649,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
       }
     ],
     "related": [
+      "time-travel-reports",
       "time-log",
       "send-a-quote",
       "cost-a-job"

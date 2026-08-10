@@ -470,7 +470,8 @@ export function buildTravelReportHTML(
   rows: TravelReportRow[],
   totals: { trips: number; km: number; deduction: number },
   asAt: string,
-  watermark = false
+  watermark = false,
+  periodLabel?: string
 ): string {
   const detailRows = rows.length
     ? rows
@@ -492,12 +493,13 @@ export function buildTravelReportHTML(
 <head><meta charset="utf-8" /><title>Travel Report</title><style>${SHARED_CSS}</style></head>
 <body>
   ${watermark ? `<div class="wm">TRIAL — NOT FINAL</div>` : ""}
-  ${header(business, "TRAVEL REPORT", `As at ${asAt}`)}
+  ${header(business, "TRAVEL REPORT", periodLabel ? `${periodLabel} · as at ${asAt}` : `As at ${asAt}`)}
   <div class="meta-row">
     ${fromBlock(business, "Prepared by")}
     <div style="text-align:right;">
       <div class="meta-label">Report</div>
       <div style="font-size:20px;font-weight:800;">Business travel &amp; SARS deduction</div>
+      ${periodLabel ? `<div style="font-size:12px;color:#64748b;margin-top:2px;">${esc(periodLabel)}</div>` : ""}
     </div>
   </div>
   <div style="font-size:11px;font-weight:700;color:#0C4A6E;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;">Summary</div>

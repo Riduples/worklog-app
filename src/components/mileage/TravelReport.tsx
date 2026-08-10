@@ -9,9 +9,13 @@ import { buildTravelReportHTML } from "@/lib/docgen/buildLedgerHTML";
 import { openDocumentForPrinting } from "@/lib/docgen/shareDocument";
 import { renderPdf, downloadBlob } from "@/lib/docgen/renderPdf";
 import { fmt, todayStr } from "@/lib/format";
+import { inPeriod, PERIOD_LABELS, type Period } from "@/lib/period";
 
 // Trip types shown in this order; only types actually used get a section.
 const TYPE_ORDER = ["Customer visit", "Supplier visit", "Other"];
+// Tax records are read by period, so the report is period-scoped — this month for
+// a quick check, this year for a tax logbook, or everything.
+const PERIODS: Period[] = ["month", "year", "all"];
 
 // The Travel tab of the Time & Travel Reports tool — the summarised, printable
 // version of the Travel Log: total kilometres and SARS deduction, grouped by
@@ -22,8 +26,12 @@ export function TravelReport() {
   const { isTrialing, isReadOnly } = useTrialState();
   const watermark = isTrialing || isReadOnly;
   const [busy, setBusy] = useState(false);
+  const [period, setPeriod] = useState<Period>("year");
 
-  const all = [...(trips ?? [])].sort((a, b) => (b.trip_date ?? "").localeCompare(a.trip_date ?? ""));
+  const within = inPeriod(period);
+  const all = [...(trips ?? [])]
+    .filter((t) => within(t.trip_date ?? ""))
+    .sort((a, b) => (b.trip_date ?? "").localeCompare(a.trip_date ?? ""));
   const totalKm = all.reduce((s, t) => s + Number(t.km_travelled || 0), 0);
   const totalDeduction = all.reduce((s, t) => s + Number(t.sars_deduction || 0), 0);
 
@@ -54,10 +62,10 @@ export function TravelReport() {
     setBusy(true);
     const asAt = new Date().toLocaleDateString("en-ZA", { year: "numeric", month: "long", day: "numeric" });
     try {
-      const blob = await renderPdf({ kind: "travelreport", rows: pdfRows, totals: pdfTotals, asAt });
+      const blob = await renderPdf({ kind: "travelreport", rows: pdfRows, totals: pdfTotals, asAt, periodLabel: PERIOD_LABELS[period] });
       downloadBlob(blob, "travel-report");
     } catch {
-      openDocumentForPrinting(buildTravelReportHTML(business, pdfRows, pdfTotals, asAt, watermark), "travel-report");
+      openDocumentForPrinting(buildTravelReportHTML(business, pdfRows, pdfTotals, asAt, watermark, PERIOD_LABELS[period]), "travel-report");
     } finally {
       setBusy(false);
     }
@@ -71,15 +79,34 @@ export function TravelReport() {
       ``,
       ...groups.map((g) => `${g.type}: ${g.km.toFixed(1)} km · ${fmt(g.deduction)}`),
     ];
-    void shareReport("Travel Report", `Business travel · as at ${todayStr()}`, lines, business);
+    void shareReport("Travel Report", `${PERIOD_LABELS[period]} · as at ${todayStr()}`, lines, business);
   };
 
-  if (all.length === 0) {
-    return <p style={{ color: "#94a3b8", fontSize: 13, textAlign: "center", margin: "40px 0" }}>No trips logged yet.</p>;
-  }
+  const hasAnyTrips = (trips ?? []).length > 0;
 
   return (
     <>
+      {/* Period — tax records are read a month or a year at a time. */}
+      <div style={{ display: "flex", gap: 4, background: "#f1f5f9", borderRadius: 10, padding: 3, marginBottom: 14 }}>
+        {PERIODS.map((p) => (
+          <button
+            key={p}
+            onClick={() => setPeriod(p)}
+            style={{ flex: 1, padding: "7px 10px", borderRadius: 8, border: "none", background: period === p ? "#fff" : "transparent", color: period === p ? "#0C4A6E" : "#64748b", fontSize: 12, fontWeight: 700, cursor: "pointer", boxShadow: period === p ? "0 1px 3px rgba(0,0,0,0.1)" : "none" }}
+          >
+            {PERIOD_LABELS[p]}
+          </button>
+        ))}
+      </div>
+
+      {all.length === 0 && (
+        <p style={{ color: "#94a3b8", fontSize: 13, textAlign: "center", margin: "40px 0" }}>
+          {hasAnyTrips ? `No trips in ${PERIOD_LABELS[period].toLowerCase()}.` : "No trips logged yet."}
+        </p>
+      )}
+
+      {all.length > 0 && (
+        <>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 6, marginBottom: 16 }}>
         {[
           { label: "Trips", value: String(all.length), color: "#0f172a", bg: "#f8fafc", border: "#e2e8f0" },
@@ -126,6 +153,8 @@ export function TravelReport() {
           📤 Share
         </button>
       </div>
+        </>
+      )}
     </>
   );
 }

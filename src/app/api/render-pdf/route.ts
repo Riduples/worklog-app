@@ -59,6 +59,7 @@ type RenderRequest =
       rows: TravelReportRow[];
       totals: { trips: number; km: number; deduction: number };
       asAt: string;
+      periodLabel?: string;
     };
 
 function buildHtml(body: RenderRequest, business: BusinessProfile, watermark: boolean): string | null {
@@ -78,7 +79,7 @@ function buildHtml(body: RenderRequest, business: BusinessProfile, watermark: bo
     case "actualvsestimate":
       return buildActualVsEstimateHTML(business, body.rows, body.other, body.totals, body.asAt, watermark);
     case "travelreport":
-      return buildTravelReportHTML(business, body.rows, body.totals, body.asAt, watermark);
+      return buildTravelReportHTML(business, body.rows, body.totals, body.asAt, watermark, body.periodLabel);
     default:
       return null;
   }
