@@ -24,19 +24,17 @@ export const HELP_ARTICLES: HelpArticle[] = [
         "blocks": [
           {
             "type": "paragraph",
-            "text": "Setting up is a short setup wizard — a few quick steps with a progress bar along the top. Only the business name is required to carry on. On the later steps you can tap \"Skip for now\" and add them another time."
+            "text": "Setting up is a short wizard — four quick steps with a progress bar along the top that shows \"Step 1 of 4\", \"Step 2 of 4\" and so on. Only your business name is required to carry on. On the steps in between you can tap \"Skip for now\" and add those bits another time."
           },
           {
             "type": "steps",
             "items": [
-              "In \"Business / trading name\", type your business name, for example Thabo's Plumbing. This is the one field you really need.",
-              "Under \"What kind of business is it?\", tap the option that fits best: Salon / Beauty / Barber, Spaza / Retail shop, Takeaway / Café, Plumber / Electrician / Contractor, Cleaning / Gardening, Freelancer / Solo service, or Other.",
-              "In \"Address\", type your street, suburb and city if you want it to show on your documents.",
-              "In \"Phone\", type your contact number.",
-              "In \"Email\", check the address that is already filled in and change it if you need to.",
-              "If you are VAT registered, type your number in \"VAT number\". Leave it blank if you are not.",
-              "Tap \"Continue\" to move through the remaining steps — your contact details, how customers pay you, and Tax & SARS — filling in what you can and tapping \"Skip for now\" on the rest, then tap \"Finish setup\" on the last step.",
-              "Worklog then shows a \"You're all set up! 🎉\" screen with optional next steps, like adding your bank accounts or inviting your team, and a \"Go to my dashboard\" button to start."
+              "Step 1, Your business: in \"Business / trading name\", type your business name, for example Thabo's Plumbing. This is the one field you really need.",
+              "Still on Step 1, under \"What kind of business is it?\", tap the option that fits best: Salon / Beauty / Barber, Spaza / Retail shop, Takeaway / Café, Plumber / Electrician / Contractor, Cleaning / Gardening, Freelancer / Solo service, or Other. Then tap \"Continue\".",
+              "Step 2, Contact details: fill in your Address, Phone and Email (your sign-up email is already filled in for you). These show on your quotes and invoices. Tap \"Continue\", or \"Skip for now\".",
+              "Step 3, How customers pay you: type your Bank and Account number, plus a Branch code and Payment reference if you have them. These print your bank details on invoices so a customer knows where to pay. Tap \"Continue\", or \"Skip for now\".",
+              "Step 4, Tax & SARS: choose how the business is registered with SARS, and add your VAT number, PAYE reference and SDL if they apply. Leave blank whatever you are not registered for.",
+              "Tap \"Finish setup\". Worklog then shows a \"You're all set up! 🎉\" screen with a couple of optional next steps — \"Add your bank accounts\" and \"Invite your team\" — and a \"Go to my dashboard →\" button to start."
             ]
           },
           {
@@ -126,6 +124,8 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "steps",
             "items": [
+              "Under \"How you're registered with SARS\", tap your legal form: Sole proprietor / Individual, Partnership, Company (Pty) Ltd, Close corporation (CC), Co-operative or Trust. This sets how your income tax is worked out and which annual return applies.",
+              "If a simpler tax regime fits, use the toggle that appears below it: \"Registered for Turnover Tax\" for a qualifying micro business, or — if you picked a company, CC or co-operative — \"Qualifies as an SBC\" for the Small Business Corporation sliding scale. Leave both off if neither applies to you.",
               "In \"VAT number\", type your VAT number if you are VAT registered. Leave it blank if you are not.",
               "If you fill in a VAT number, a \"VAT period\" choice appears. Tap \"Monthly\" or \"Bi-monthly\" to match how often you file.",
               "In \"PAYE reference number\", type the PAYE reference from SARS eFiling. This is needed for EMP201 if you have staff.",
@@ -388,10 +388,12 @@ export const HELP_ARTICLES: HelpArticle[] = [
             "items": [
               "Open Log income.",
               "In Amount, type what you received, for example 450. This is the full amount that landed in your hand or account.",
-              "In What for?, type a short description like Gate fix or Braai catering. As you type, Worklog may suggest a SARS category underneath — tap one to use it, or just carry on typing.",
+              "Just below Amount is a toggle that says \"This is my own money going in (owner's contribution) — keep it out of income & tax\". Leave it off for a normal sale. Only tap it when you are putting your own money into the business.",
               "Under Received from, start typing the customer's name. If they are already a saved contact you can pick them from the list; otherwise just type the name. This field is optional.",
               "If the payment settles an invoice you sent, pick it in the invoice matcher that appears. Worklog ticks the option to mark that invoice paid for you when the payment covers it — leave it ticked, or untick it if you do not want that yet.",
-              "Choose a Payment method — the chips include Cash, EFT / Bank transfer, a card option, Debit order, Voucher / Gift card and Other. Cash is chosen to start with.",
+              "If it is not against an invoice, type a short description in What for?, like Gate fix or Braai catering. As you type, Worklog may suggest a SARS category underneath — tap one to use it, or just carry on typing.",
+              "If you are VAT registered, a VAT treatment choice appears on a cash sale — Standard-rated (15%), Zero-rated (0%) or Exempt. Leave it on Standard-rated for a normal sale.",
+              "Choose a Payment method — the chips are Cash, EFT / Bank transfer, Card, Voucher / Gift card and Other. Cash is chosen to start with.",
               "If you have bank accounts set up, choose which account the money went into.",
               "Check the Date (it defaults to today) and add anything extra under Details if you like.",
               "Tap Log income to save."
@@ -415,10 +417,11 @@ export const HELP_ARTICLES: HelpArticle[] = [
             "items": [
               "Open Log expense.",
               "In Amount, type what you paid.",
-              "In What for?, type what it was for, like Fuel at Engen or Cement. Worklog may suggest a SARS category as you type — tap one if it fits.",
+              "Just below Amount is a toggle that says \"This is my own money coming out (owner's drawing) — not a business expense\". Leave it off for a normal business cost. Only tap it when you are taking your own money out of the business.",
               "Under Paid to, type or pick the supplier or person you paid. This is optional.",
-              "If this payment clears something you owe — an entry in your credit book, or a supplier invoice you recorded — pick it in the matcher that appears and tick the option to mark it paid.",
-              "Choose a Payment method.",
+              "If this payment clears something you owe — an entry in your ledgers, or a supplier invoice you recorded — pick it in the matcher that appears and tick the option to mark it paid.",
+              "If it is not against a bill, type what it was for in What for?, like Fuel at Engen or Cement. Worklog may suggest a SARS category as you type — tap one if it fits.",
+              "Choose a Payment method — the chips are Cash, EFT / Bank transfer, Card (debit), Card (credit), Debit order and Other.",
               "If you have bank accounts set up, choose which account the money came out of.",
               "Check the Date and add extra notes under Details if you want.",
               "Tap Log expense to save."
@@ -465,7 +468,8 @@ export const HELP_ARTICLES: HelpArticle[] = [
             "type": "bullets",
             "items": [
               "The amount you type is always the full amount that changed hands. For income, Worklog takes any VAT back out of it — you do not add VAT on top.",
-              "Linking a payment to an invoice matters: it stops the same money being counted twice on your reports. Only link it when the payment really is for that invoice.",
+              "The owner's-money toggles — \"owner's contribution\" on Log income and \"owner's drawing\" on Log expense — are for when you put your own cash in or take it out. Worklog keeps those out of your income, expenses and tax, so your profit stays right.",
+              "Linking a payment to an invoice or a bill matters: it stops the same money being counted twice on your reports. Only link it when the payment really is for that document.",
               "Worklog is record-keeping software, not a tax adviser. The VAT and tax-jar figures are estimates to help you plan. For your own situation, check with SARS or a registered tax practitioner."
             ]
           }
@@ -707,14 +711,23 @@ export const HELP_ARTICLES: HelpArticle[] = [
     "slug": "getting-help",
     "category": "Getting started",
     "title": "Getting help in Worklog",
-    "summary": "Use the built-in Help assistant to get answers on the spot, and reach a real person on WhatsApp when you want a hand with your setup.",
+    "summary": "Get answers on the spot from the built-in Help assistant, browse the full Help Centre of step-by-step guides, and reach a real person on WhatsApp when you want a hand with your setup.",
     "sections": [
+      {
+        "heading": "Two places to find help",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "Worklog has two built-in ways to help you. The Help assistant is a chat helper that answers a specific question right there and then. The Help Centre is a library of step-by-step guides — like this one — that you can browse and search. This guide covers both, plus how to reach a real person when you need one."
+          }
+        ]
+      },
       {
         "heading": "What the Help assistant is",
         "blocks": [
           {
             "type": "paragraph",
-            "text": "Worklog has a built-in Help assistant. It is a friendly chat helper that answers your questions about how to use the app, and explains South African tax and labour rules in plain language. Ask it anything, any time, right inside Worklog."
+            "text": "The Help assistant is a friendly chat helper that answers your questions about how to use the app, and explains South African tax and labour rules in plain language. Ask it anything, any time, right inside Worklog."
           },
           {
             "type": "paragraph",
@@ -740,7 +753,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
         "blocks": [
           {
             "type": "paragraph",
-            "text": "When Help opens you will see a short blue note that says Ask me anything, and a list of Popular questions to get you going, like Where do I start?, How do I send a quote? and How does VAT work in Worklog?"
+            "text": "When Help opens you will see a short blue note that says Ask me anything, and a list of Popular questions to get you going, like Where do I start?, How do I send a quote? and How does VAT work in Worklog? Under the Popular questions there is also an \"Or browse the full Help Centre →\" link, if you would rather read the step-by-step guides."
           },
           {
             "type": "steps",
@@ -753,6 +766,23 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "tip",
             "text": "You can keep the conversation going. Each answer may offer a follow-up question or two, or you can just type your next question in the box."
+          }
+        ]
+      },
+      {
+        "heading": "Browse the Help Centre",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "The Help Centre holds all the step-by-step guides in one place, grouped by topic. There are three ways to open it."
+          },
+          {
+            "type": "bullets",
+            "items": [
+              "On a computer, tap \"❓ Help Centre\" near the bottom of the menu down the left of the screen.",
+              "On your phone, tap \"More\" at the bottom right, then \"❓ Help Centre — browse all guides\".",
+              "Inside the Help assistant, tap \"Or browse the full Help Centre →\" under the Popular questions."
+            ]
           }
         ]
       },
@@ -1103,15 +1133,22 @@ export const HELP_ARTICLES: HelpArticle[] = [
             "type": "steps",
             "items": [
               "Open Invoices from the Sales area.",
-              "Tap + New in the top corner. The New invoice screen opens.",
-              "In the Client box, pick a customer from your list or type a new name.",
+              "Tap + New in the top right. The New invoice screen opens.",
+              "If you are billing from a quote you already sent, use Start from a quote - optional at the top and pick it — Worklog carries over the customer and line items. Leave it on None (blank invoice) to start fresh. (This picker only appears if you have quotes that haven't been invoiced yet.)",
+              "In Customer / Company name, type the customer's name, or tap the 👤 List button next to it to search and pick a saved customer.",
               "Check the Issue date and Due date. Worklog fills the issue date as today and sets the due date 30 days later. Tap either one to change it.",
               "Under Line items, tap + Add line item to add a blank line (or pick one from Add from your items), then fill in the Description, the Qty, and the Unit price. Each line shows its Line total.",
               "Tap + Add line item for another line. Tap the ✕ next to a line to remove it.",
+              "If you are VAT registered, choose the VAT treatment — Standard-rated (15%), Zero-rated (0%) or Exempt. Most sales are Standard-rated.",
               "If the customer already paid a deposit, type it into Deposit already received.",
-              "Check the summary box. It shows the Subtotal, the VAT if you are VAT-registered, any deposit taken off, and the Balance due at the bottom.",
+              "Add any Terms & conditions - optional. They print at the foot of the invoice, and if you set default invoice terms in Business details they fill in here on their own.",
+              "Check the summary box. It shows the Subtotal, the VAT if you are VAT-registered and standard-rated, any deposit taken off, and the Balance due at the bottom.",
               "Tap Save invoice."
             ]
+          },
+          {
+            "type": "tip",
+            "text": "The VAT treatment only appears if you are VAT registered. Leave it on Standard-rated (15%) for most sales. Choose Zero-rated (0%) for things like basic foodstuffs, exports or fuel, or Exempt for things like residential rent — both charge no VAT, but Worklog still records the sale on the right line for your VAT201."
           },
           {
             "type": "tip",
@@ -1245,12 +1282,13 @@ export const HELP_ARTICLES: HelpArticle[] = [
             "items": [
               "Open Quotes from the menu.",
               "Tap + New in the top right. The New quote screen opens.",
-              "Fill in the Client. Type the customer's name straight into the box. If you have saved contacts, you can tap the 👤 List button next to it, search, and pick one instead.",
+              "Fill in the Customer / Company name. Type the customer's name straight into the box. If you have saved contacts, you can tap the 👤 List button next to it, search, and pick one instead.",
               "Check the Issue date. It fills in with today's date, but you can tap it to change it.",
               "Check the Valid until date. Worklog fills this in for you (30 days ahead). Tap it to change it if you want the quote to stay open for longer or shorter.",
               "Under Line items, tap + Add line item to add a blank line (or pick one from Add from your items), then fill in the Description, the Qty (quantity) and the Unit price. The Line total works itself out as you type.",
               "Add a line for each thing you want on the quote. Tap the ✕ next to a line to remove it.",
               "If you want money up front, type the amount in Deposit to request. Leave it as 0 if you don't.",
+              "Add any Terms & conditions - optional. They print at the foot of the quote, and if you set default quote terms in Business details they fill in here on their own.",
               "Check the totals in the blue box at the bottom, then tap Save quote."
             ]
           }
@@ -1379,7 +1417,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
     "slug": "send-a-customer-statement",
     "category": "Sales",
     "title": "Send a customer statement",
-    "summary": "Pick a customer and share a statement showing all their invoices and what they still owe.",
+    "summary": "Pick a customer and share a statement showing all their invoices, any credit notes, and what they still owe.",
     "sections": [
       {
         "heading": "What a statement is",
@@ -1414,13 +1452,41 @@ export const HELP_ARTICLES: HelpArticle[] = [
             "type": "steps",
             "items": [
               "Open the Customer Statement page.",
-              "In the Select customer box, start typing the customer's name, or tap the List button on the right to see all your customers.",
+              "In the Select customer box, start typing the customer's name, or tap the 👤 List button on the right to see all your customers.",
               "If you tapped List, pick the customer from the list. Anyone who still owes you money shows the amount owed next to their name, so it is easy to spot who to chase.",
-              "Once a customer is chosen, Worklog shows three totals near the top: Total invoiced, Received and Outstanding. Below that is every invoice, each showing its number, its date, and whether it is paid or still due.",
+              "Once a customer is chosen, Worklog shows three totals near the top: Total invoiced, Received and Outstanding. (If the customer has credit on account, that last total becomes Net outstanding — see below.) Under that is every invoice, each showing its number, its date, and whether it is paid or still due.",
               "Check the figures look right.",
               "Tap Download PDF to save the statement as a PDF you can print or keep.",
               "Or tap Share to send a short summary of the account through your phone's share sheet, for example to WhatsApp."
             ]
+          }
+        ]
+      },
+      {
+        "heading": "Credit notes on the statement",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "If you have raised any credit notes for this customer, they show in their own ↩️ Credit notes list underneath the invoices. Each one shows its number, the invoice it credits, the date, the amount, and a tag: On account, Applied or Refunded."
+          },
+          {
+            "type": "paragraph",
+            "text": "A credit that is still On account is money you owe the customer back. When there is credit on account, the top total changes from Outstanding to Net outstanding — what they owe you less the credit you owe them — and a Credit on account (owed back) line appears so the two are clear."
+          },
+          {
+            "type": "paragraph",
+            "text": "Each credit that is still on account has two buttons so you can settle it:"
+          },
+          {
+            "type": "bullets",
+            "items": [
+              "✓ Applied to invoice — you knocked the credit off one of their invoices. It then shows as Applied.",
+              "💸 Refund paid — you paid the money back. Worklog records the refund as an expense and the credit shows as Refunded."
+            ]
+          },
+          {
+            "type": "tip",
+            "text": "See Credit notes for how to raise a credit note against an invoice in the first place."
           }
         ]
       },
@@ -1431,7 +1497,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
             "type": "bullets",
             "items": [
               "Download PDF gives you the full statement as a PDF document, with every invoice listed. This is the proper document to send or print.",
-              "Share sends a quick text summary — the customer's name, today's date, and the three totals (invoiced, received, outstanding). It is a fast reminder, not the full breakdown."
+              "Share sends a quick text summary — the customer's name, today's date, and the three totals (invoiced, received, outstanding), plus any credit on account and the net outstanding. It is a fast reminder, not the full breakdown."
             ]
           },
           {
@@ -1462,7 +1528,8 @@ export const HELP_ARTICLES: HelpArticle[] = [
       "create-and-send-an-invoice",
       "match-a-payment-to-an-invoice",
       "age-analysis",
-      "add-customers-and-suppliers"
+      "add-customers-and-suppliers",
+      "credit-notes"
     ]
   },
   {
@@ -1699,6 +1766,10 @@ export const HELP_ARTICLES: HelpArticle[] = [
             ]
           },
           {
+            "type": "tip",
+            "text": "While a PO is still Pending you can also fix its contents: open it and tap ✏️ Edit purchase order to change the supplier, the dates or the line items, then save. That button only shows while the PO is Pending — once it is Acknowledged, Fulfilled or Cancelled it falls away. Editing keeps the same PO number."
+          },
+          {
             "type": "warning",
             "text": "There is no undo for status changes. Once a PO is Cancelled or Fulfilled, those buttons fall away, so only change the status once the thing has actually happened."
           },
@@ -1753,11 +1824,11 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "steps",
             "items": [
-              "Open Supplier Invoices under Purchases and tap the New button in the top right.",
-              "If this bill is for a purchase order you already made, tap the \"Link to a purchase order\" button at the top and pick the order. Worklog fills in the supplier and the items for you. This step is optional and only appears if you have purchase orders.",
-              "In the Supplier field, type or pick the supplier you bought from.",
+              "Open Supplier Invoices under Purchases and tap the + New button in the top right.",
+              "If this bill is for a purchase order you already made, tap the 🛒 Link to a purchase order button at the top and pick the order. Worklog fills in the supplier and the items for you. This step is optional and only appears if you have purchase orders.",
+              "In the Supplier field, type or pick the supplier you bought from. If you pick a saved supplier who has payment terms set, Worklog fills in the Due date from those terms for you — you can still change it.",
               "In \"Supplier's invoice / reference number\", type their reference off the bill. This is optional but makes it easy to find later.",
-              "Set the Invoice date to the date on the bill. Add a Due date if there is one, so Worklog can flag the bill as overdue once that date has passed.",
+              "Set the Invoice date to the date on the bill. Add or adjust the Due date if there is one, so Worklog can flag the bill as overdue once that date has passed.",
               "Under Line items, tap + Add line item (or pick one from Add from your items), then type a Description and fill in the Qty and the Unit price (R). Or, for a lump-sum bill, skip the lines and type the figure straight into Total on the invoice.",
               "If you have already paid some or all of it, type that in the \"Amount already paid (R)\" box. Leave it at 0 if you still owe the full amount.",
               "Check the summary box. It shows the subtotal, the input VAT you can claim (with the percentage the app is using), anything already paid, and the balance you owe including VAT.",
@@ -1767,6 +1838,10 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "tip",
             "text": "If you fill in the amount already paid so that nothing is left owing, Worklog saves the bill straight away as paid. Otherwise it is saved as unpaid until you settle it."
+          },
+          {
+            "type": "tip",
+            "text": "When you save, Worklog also gives the bill its own number (like SI-2026-0001). That is separate from the supplier's own reference — it is Worklog's number for the bill, and you can sort your bills by it."
           }
         ]
       },
@@ -1775,14 +1850,14 @@ export const HELP_ARTICLES: HelpArticle[] = [
         "blocks": [
           {
             "type": "paragraph",
-            "text": "On the Supplier Invoices screen each bill shows the supplier, the total including VAT, and a status tag: unpaid, overdue (when the due date has passed), paid, or credited. Tap any bill to open it and see the full details and the balance you still owe."
+            "text": "On the Supplier Invoices screen each bill shows the supplier, its Worklog number (SI-…), the total including VAT, and a status tag: unpaid, overdue (when the due date has passed), paid, or credited. Tap any bill to open it and see the full details and the balance you still owe."
           },
           {
             "type": "bullets",
             "items": [
-              "Search supplier invoices — type any part of the supplier's name or their reference number.",
+              "Search supplier invoices — type any part of the supplier's name, their reference number, or the Worklog number.",
               "Status pills — tap unpaid, overdue, paid or credited to show just those (only the statuses you actually have appear).",
-              "A–Z / Recent — sort by supplier name, or newest first."
+              "A–Z / Number / Recent — sort by supplier name, by the Worklog number, or newest first."
             ]
           }
         ]
@@ -1797,9 +1872,13 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "steps",
             "items": [
-              "The quick way: open the bill from the Supplier Invoices list and tap \"Mark Paid\". This clears the whole balance and stamps today as the paid date.",
+              "The quick way: open the bill from the Supplier Invoices list and tap \"✅ Mark Paid\". This clears the whole balance and stamps today as the paid date.",
               "The bookkeeping way: log the payment as an expense instead, so the money leaving your account is recorded too. See the next section."
             ]
+          },
+          {
+            "type": "tip",
+            "text": "Marked a bill paid by mistake? Open it again and tap \"↩️ Mark unpaid\" to reopen it for the full amount."
           }
         ]
       },
@@ -1813,9 +1892,10 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "steps",
             "items": [
-              "Go to Log Expense (under Money) and enter the Amount you paid and, under \"What for?\", what it was for.",
+              "Go to Log Expense (under Money) and enter the Amount you paid.",
               "In \"Paid to\", put the supplier's name. If you have bills open from that supplier, Worklog highlights them for you.",
-              "Find \"Is this paying a supplier invoice?\" and tap it. You can search by supplier, their reference, or the amount. Pick the bill this payment covers.",
+              "Find \"Is this paying a supplier invoice? - optional\" and tap it. You can search by supplier, their reference, or the amount. Pick the bill this payment covers.",
+              "Once the bill is linked, Worklog hides the \"What for?\" box — the bill is the record of what the money was for, so you do not fill it in again.",
               "If your payment covers the full amount still owed, a tick box appears offering to mark that bill as paid. Tick it to close the bill off.",
               "Tap \"Log expense\" to save."
             ]
@@ -1827,6 +1907,30 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "tip",
             "text": "If you only pay part of what you owe, link the payment anyway. Worklog records the part payment and keeps the bill open for the balance that is still owing."
+          }
+        ]
+      },
+      {
+        "heading": "When a supplier credits you",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "Sometimes a supplier gives money back or knocks an amount off a bill — you returned goods, or they overcharged. Record that against the bill as a credit note so what you owe and your input VAT both come right."
+          },
+          {
+            "type": "steps",
+            "items": [
+              "Open the bill from the Supplier Invoices list.",
+              "Tap ↩️ Supplier credited me.",
+              "Under \"What did they credit?\", tap Whole invoice, or tap Specific lines and tick the lines they credited.",
+              "Add a Reason if you like, such as returned goods or an overcharge. This is optional.",
+              "If the bill still has money owing, choose under \"How to settle it\": Reduce what you owe them, or Hold on account (pay less next / they refund you). If the bill is already paid, the credit is held on account automatically.",
+              "Check the credit amount, then tap Record credit note."
+            ]
+          },
+          {
+            "type": "tip",
+            "text": "The credit note gets its own number (like CN-2026-0001). If you held it on account, it shows up later on a remittance advice for that supplier and nets down what you pay them next."
           }
         ]
       },
@@ -1907,6 +2011,10 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "tip",
             "text": "📤 Share sends a plain text summary of the payment, handy for WhatsApp. 📄 Download PDF gives you a proper printable document to keep or attach."
+          },
+          {
+            "type": "tip",
+            "text": "If the supplier has credit notes sitting on account (from a bill they credited you for), a ↩️ Credit notes section appears under the invoice list, and the dark blue summary adds \"Credit on account (owed to you)\" and a \"Net payable\" figure. The remittance then shows the net — what is left to pay after their credit comes off."
           }
         ]
       }
@@ -2008,7 +2116,8 @@ export const HELP_ARTICLES: HelpArticle[] = [
             "type": "steps",
             "items": [
               "Go down the list and tap any row you don't want, to untick it.",
-              "Look for rows with a small check tag next to them — that means the AI wasn't sure, so double-check the amount and detail.",
+              "When there's more than one transaction, you can tap Select all or Select none at the top of the list to tick or untick everything at once.",
+              "Look for rows with a small ⚠️ check tag — that means the AI wasn't sure, so double-check the amount and detail.",
               "Watch the totals box to confirm the money in and money out look right."
             ]
           },
@@ -2135,11 +2244,15 @@ export const HELP_ARTICLES: HelpArticle[] = [
         "blocks": [
           {
             "type": "paragraph",
-            "text": "Under Recent cash-ups you can see your latest cash-ups, each showing the date, the expected and counted amounts, the difference and any notes. It keeps a running record so you can spot a till that is regularly short."
+            "text": "Under Recent cash-ups you can see your latest cash-ups, each showing the date, the expected and counted amounts, the difference (✅ Exact, or how far off with a + or −) and any notes. It keeps a running record so you can spot a till that is regularly short."
+          },
+          {
+            "type": "paragraph",
+            "text": "If you're allowed to log cash-ups, each row shows a small ✏️ pencil — tap the row to open that cash-up and change it. The form fills in with that day's date, counted cash and notes, a banner reads \"✏️ Editing the cash-up for …\", and the button changes to Update Cash-Up. The difference is worked out again when you save. Tap Cancel edit to back out without changing anything."
           },
           {
             "type": "warning",
-            "text": "If you already saved a cash-up for that date, Worklog shows a note just under the Date with what was counted. Saving again does not replace it, it adds another record for the same day. So only save once per day unless you really mean to add a second count."
+            "text": "Editing a cash-up changes that record in place. But if you start a brand-new cash-up for a date that already has one, Worklog shows a note just under the Date with what was counted, and saving adds another record for the same day rather than replacing the first. So to fix a cash-up, open it from Recent cash-ups instead of saving a fresh one."
           }
         ]
       },
@@ -2479,17 +2592,17 @@ export const HELP_ARTICLES: HelpArticle[] = [
         "blocks": [
           {
             "type": "paragraph",
-            "text": "Tap any appointment in the diary to open it. You will see the status, the date and time, and any details you added."
+            "text": "Tap any appointment in the diary to open it. If you can edit the diary, it opens straight in its editor — titled Edit appointment — with the date, time and every detail ready to change. Teammates with view-only access get a read-only sheet instead: they can see the appointment and send a WhatsApp reminder, but not change it."
           },
           {
             "type": "steps",
             "items": [
-              "Tap the appointment you want.",
-              "To change an appointment that is today or still coming up, tap Edit appointment.",
-              "If it is still Pending and now firmed up, tap Confirm appointment.",
-              "When the job is done, tap Mark Complete.",
+              "Tap the appointment you want — it opens in the Edit appointment editor.",
+              "Change any detail — the customer, the date and time, or anything under Add more details — then tap Save changes.",
+              "If it is still Pending and now firmed up, switch the Status chip to Confirmed and tap Save changes.",
+              "When the job is done, tap Mark complete.",
               "If the customer did not turn up, tap No-show.",
-              "If the appointment fell away, tap Cancel appointment."
+              "If the appointment fell away, tap Cancel appointment — it stays in your diary as a cancelled record."
             ]
           },
           {
@@ -2505,10 +2618,11 @@ export const HELP_ARTICLES: HelpArticle[] = [
             "type": "bullets",
             "items": [
               "Your diary reads like an agenda: appointments are grouped by day under Today, Tomorrow and dated headings, soonest first, with past appointments below under a Past heading as a record.",
-              "When the list gets long, use the search box to find an appointment by customer, service or purpose, and tap a status pill (All, Confirmed, Complete and so on) to show only those. Search and the pills look through past appointments too, so an old record is easy to find.",
+              "When the list gets long, use the search box to find an appointment by customer, service or purpose, and tap a status pill (All, Confirmed, Complete and so on) to show only those. Search and the pills look through past appointments too, so an old record is easy to find. Switch the Date / A–Z toggle to flip between the day-by-day agenda and a flat list sorted by customer name.",
               "The status colours help you scan: confirmed and complete show in blue, pending in amber, no-show in red, and cancelled in grey.",
-              "Past appointments cannot be edited — you can still mark them Complete or No-show, but not reschedule them.",
-              "Once an appointment is Complete, No-show or Cancelled, the Mark Complete, No-show and Cancel appointment buttons fall away. Those appointments stay in your diary as a record."
+              "Past appointments open and change just like upcoming ones — the only thing that falls away is the day-before WhatsApp reminder, which Worklog only offers while the date is still to come.",
+              "To take an appointment off your diary entirely, tap the ✕ on its row and confirm Remove this appointment? This is different from Cancel: cancelling keeps it in your diary as a cancelled record, while removing drops it from the list.",
+              "Once an appointment is Complete, No-show or Cancelled, the Mark complete, No-show and Cancel appointment buttons fall away. Those appointments stay in your diary as a record."
             ]
           },
           {
@@ -2533,14 +2647,14 @@ export const HELP_ARTICLES: HelpArticle[] = [
     "slug": "time-log",
     "category": "Scheduling",
     "title": "Track your time",
-    "summary": "Log the hours you work for each customer or job in the Time Log, so you can see your total time and your billable hours.",
+    "summary": "Log the hours you work for each customer or job in the Time Log, and mark each one billable or not so you know what you can charge for.",
     "sections": [
       {
         "heading": "What the Time Log is for",
         "blocks": [
           {
             "type": "paragraph",
-            "text": "The Time Log keeps a simple record of the hours you work. Each entry has a customer, the hours, whether the work is billable, and an optional description. Worklog adds up your hours for you, and shows how many of them are billable. It tracks hours only — no rand amounts — so you price the work yourself when you invoice."
+            "text": "The Time Log keeps a simple record of the hours you work. Each entry has a customer, the hours, whether the work is billable, and an optional description. It tracks hours only — no rand amounts — so you price the work yourself when you invoice. To see your hours added up against what you quoted, open the Hours vs Estimate tab in Time & Travel Reports."
           },
           {
             "type": "paragraph",
@@ -2565,18 +2679,18 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "steps",
             "items": [
-              "Open the Time Log and tap the + New button in the top corner.",
-              "On the Log time screen, fill in Customer (optional). Start typing to pick someone from your contacts, or just type a name. You can also leave it blank.",
-              "In Hours worked, type the hours. You can use a decimal, for example 2.5 for two and a half hours.",
-              "Fill in Purpose - optional to note what the work was.",
+              "Open the Time Log and tap + New in the top right.",
+              "If the work was for a diary appointment, pick it under Diary appointment — Worklog fills in the customer, date, purpose and any linked quote for you. Otherwise leave it on \"Not from the diary\".",
+              "Check the Customer. Start typing to pick someone from your contacts, or just type a name. You can also leave it blank.",
+              "In Purpose - optional, note what the work was.",
+              "Check the Date (it starts on today, tap to change it) and in Hours worked type the hours. You can use a decimal, for example 2.5 for two and a half hours.",
               "At \"Can you bill this?\", choose Billable if you will charge the customer for it, or Non-billable if you will not. This is just a label on the hours — no amount is recorded.",
-              "Check the Date. It fills in with today, but you can tap it and change it.",
-              "Tap Log time to save."
+              "Tap Log Time to save."
             ]
           },
           {
             "type": "tip",
-            "text": "Link the entry to a quote that has an estimated-hours figure. Those hours then feed the Hours vs Estimate report in Time & Travel Reports, so you can see when a job is running over its quoted time."
+            "text": "If the customer has a quote, a Link to quote picker appears. Link the entry to a quote that carries an estimated-hours figure and those hours feed the Hours vs Estimate report in Time & Travel Reports, so you can see when a job is running over its quoted time."
           }
         ]
       },
@@ -2586,10 +2700,6 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "paragraph",
             "text": "Every entry you save shows in a list, with the customer (or the description if there is no customer), the date, the hours, and a coloured tag for the type. New entries start most-recent-first."
-          },
-          {
-            "type": "paragraph",
-            "text": "When you have entries, a summary bar sits above the list. It shows your total hours logged, and next to Billable, how many of those hours are billable."
           },
           {
             "type": "bullets",
@@ -2670,12 +2780,12 @@ export const HELP_ARTICLES: HelpArticle[] = [
             "type": "steps",
             "items": [
               "On the Travel Log screen, tap + New at the top right. A box titled New trip opens.",
-              "Optionally pick a Diary appointment to auto-fill the date and purpose.",
+              "To log a drive for a diary appointment, pick it under Diary appointment — Worklog fills in the trip type, date and purpose for you.",
               "Under Trip type, tap one of the chips: Customer visit, Supplier visit or Other. Customer visit is chosen for you to start.",
               "In Purpose - optional, add a short note like Site visit in Soweto. You can leave this empty.",
               "In Date, set the day of the trip. It starts on today's date.",
               "In Start odometer type your reading before the trip, and in End odometer your reading after it.",
-              "Once both readings are in, a blue line appears. It shows the kilometres, your SARS deduction, and the rate per kilometre it used.",
+              "Once both readings are in, a blue box appears. It shows the kilometres, your SARS deduction, and the rate per kilometre it used.",
               "Tap Log Trip to save. Your new trip appears in the list."
             ]
           },
@@ -2690,11 +2800,11 @@ export const HELP_ARTICLES: HelpArticle[] = [
         "blocks": [
           {
             "type": "paragraph",
-            "text": "Each trip in the list shows the trip type and purpose on the top line, and below it the date, the kilometres and the deduction for that trip. Search, filter by trip type, and sort the list the same way the other tools work. For the running totals, open Time & Travel Reports and tap the Travel tab."
+            "text": "Each trip in the list shows its purpose on the top line — or the trip type when there is no purpose — with a coloured trip-type tag on the right, and below it the date, the kilometres and the deduction for that trip. Search, filter by trip type, and sort the list the same way the other tools work. For the running totals, open Time & Travel Reports and tap the Travel tab."
           },
           {
             "type": "tip",
-            "text": "The per-kilometre rate is set by SARS and Worklog fills it in for you. You can see the exact rate it used on the blue line inside the trip box. You do not type the rate in yourself."
+            "text": "The per-kilometre rate is set by SARS and Worklog fills it in for you. You can see the exact rate it used on the blue box that appears once both odometer readings are in. You do not type the rate in yourself."
           }
         ]
       },
@@ -2810,17 +2920,31 @@ export const HELP_ARTICLES: HelpArticle[] = [
               "Open the Staff Register under Payroll.",
               "Tap the + Add button in the top right.",
               "Under \"What type of worker is this?\", pick one: Permanent employee, Fixed-term employee, Casual / part-time worker, or Independent contractor. Each option explains in plain words what it means for UIF, PAYE and leave.",
-              "If you picked Fixed-term, fill in the Contract end date.",
               "Type the person's First name and Last name.",
+              "For an employee, set the Start date. This is used to work out their leave, so get it right. (Contractors do not have a start date.)",
+              "If you picked Fixed-term, fill in the Contract end date.",
               "Under Pay type, choose Daily, Hourly or Monthly.",
               "Fill in the rate. The label changes to match your choice: Daily wage / rate, Hourly rate, or Monthly salary / fee. Enter the amount in rand.",
-              "For an employee, set the Start date. This is used to work out their leave, so get it right. (Contractors do not have a start date.)",
+              "For an employee, set Days/week. If they are paid hourly, a Hours/day field appears next to it — set that too. These feed the monthly estimate and the suggested days or hours in Pay Run.",
               "Tap Save Employee (or Save Contractor for a contractor)."
             ]
           },
           {
             "type": "paragraph",
             "text": "Once you enter a rate, Worklog shows a small blue box with the estimated monthly pay. For employees it also previews the UIF, splits it into the employee and employer share, and tells you whether the pay is above or below the PAYE threshold (it shows you the threshold amount). These are estimates to guide you. The real amounts are worked out exactly when you do the Pay Run."
+          }
+        ]
+      },
+      {
+        "heading": "Set a monthly allowance (optional)",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "Just below the rate there is a \"Recurring allowance - optional\" box. Use it for a standing amount you pay on top of the wage every month, like a travel or phone allowance. Fill in Allowance per month (R) and, in \"What it's for\", a short description such as Travel or Phone."
+          },
+          {
+            "type": "tip",
+            "text": "Every Pay Run then pulls this allowance in automatically with its description, so you don't retype it. You can still edit or clear it for a single run, and you can add one-off allowances during the run without touching this standing one."
           }
         ]
       },
@@ -2835,7 +2959,6 @@ export const HELP_ARTICLES: HelpArticle[] = [
             "type": "steps",
             "items": [
               "On the add or edit screen, tap \"More details - optional\" to open it.",
-              "For an employee you can set Days/week; if they are paid hourly you can also set Hours/day. These help the monthly estimate.",
               "Enter the SA ID number (13 digits). The app shows how many digits are still needed as you type.",
               "For an employee, enter the Tax reference (IRP5) from SARS eFiling.",
               "Enter a Contact number.",
@@ -3100,7 +3223,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           },
           {
             "type": "tip",
-            "text": "Once you save, the payslip is given its own sequential number that starts with PS- (like PS-0001) and carries onto the PDF, so every payslip is uniquely numbered for your records."
+            "text": "Once you save, the payslip is given its own number in the form PS-YYYY-NNNN (for example PS-2026-0001) and it carries onto the PDF, so every payslip is uniquely numbered for your records."
           },
           {
             "type": "tip",
@@ -3147,7 +3270,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
             "items": [
               "The employee must already be in your Staff Register. If nobody shows up when you pick an employee, add them there first.",
               "Each employee needs a start date on their record, because that is what the balances are counted from.",
-              "Leave is part of the payroll tools, so it is on plans that include staff and payroll."
+              "Leave is one of the payroll tools, so it is on the Trade and Structured plans. It is not available on the Solo plan."
             ]
           }
         ]
@@ -3188,6 +3311,28 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "paragraph",
             "text": "After you save, the leave shows up under Leave history for that employee, newest first, and their balances update straight away."
+          }
+        ]
+      },
+      {
+        "heading": "Fix a leave entry",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "Recorded the wrong days or dates? You can edit a leave entry you captured here. In Leave history, each entry you can change has a ✏️ pencil on its row."
+          },
+          {
+            "type": "steps",
+            "items": [
+              "In Leave history, tap the ✏️ pencil on the entry you want to change.",
+              "The form heading changes to Edit leave and loads that entry's type, days, dates and note.",
+              "Change whatever is wrong. The balances update as you go.",
+              "Tap Update Leave to save, or Cancel edit to leave it as it was."
+            ]
+          },
+          {
+            "type": "tip",
+            "text": "Leave that came across from a Pay Run shows a \"from Pay Run\" note and has no pencil, so you can't edit it on this screen. If that one is wrong, fix it in the Pay Run it came from."
           }
         ]
       },
@@ -3308,6 +3453,28 @@ export const HELP_ARTICLES: HelpArticle[] = [
         ]
       },
       {
+        "heading": "Fix an advance you got wrong",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "Typed the wrong amount or repay figure? You can edit an advance you recorded. In the worker's history, every \"Advance given\" row has a ✏️ pencil next to it."
+          },
+          {
+            "type": "steps",
+            "items": [
+              "Pick the worker, then find the advance under their history.",
+              "Tap the ✏️ pencil on the \"Advance given\" row. The heading changes to Edit advance and loads the amount, the repay-per-pay-run figure and the reason.",
+              "Change what's wrong. You can even bring the amount down to 0 to cancel one you logged by mistake.",
+              "Tap Update Advance to save, or Cancel edit to back out."
+            ]
+          },
+          {
+            "type": "tip",
+            "text": "Only \"Advance given\" rows can be edited. A \"Repaid from wages\" row comes from a Pay Run and has no pencil — to change one of those, adjust it in the Pay Run."
+          }
+        ]
+      },
+      {
         "heading": "Set up a repayment plan",
         "blocks": [
           {
@@ -3351,7 +3518,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
         "blocks": [
           {
             "type": "warning",
-            "text": "There is no undo or delete for an advance once it is recorded. Enter the amount carefully. If you record one by mistake, the balance only clears once it is deducted through a Pay Run."
+            "text": "There is no delete button for an advance, but you can edit one you recorded — change the amount (even down to zero), the repay figure or the reason. So if you record one by mistake, open it with the ✏️ pencil and fix it. A \"Repaid from wages\" row can't be edited here; those come off through a Pay Run."
           },
           {
             "type": "tip",
@@ -3444,7 +3611,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           },
           {
             "type": "paragraph",
-            "text": "If the card shows nothing and you see \"No pay runs recorded\", it means you have not done a pay run for that month yet."
+            "text": "If the card shows nothing and you see \"No pay runs recorded for [month]\", it means you have not done a pay run for that month yet."
           }
         ]
       },
@@ -3466,6 +3633,15 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "tip",
             "text": "The Mark EMP201 as filed button only shows up once there is a pay run for the month and you have not filed it yet. Filing history keeps a running record of every month you have marked filed, so you can see at a glance which months are done."
+          }
+        ]
+      },
+      {
+        "heading": "Share the month's figures",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "Below the filing note there is a 📤 Share report button. Tap it to share the month's numbers — PAYE, UIF (employee plus employer), SDL if it applies, any ETI claimed, and the Total due to SARS — as a plain-text summary through your phone's share sheet. It's handy for sending the figures to your accountant, or into WhatsApp or email, before you file on eFiling."
           }
         ]
       },
@@ -3507,7 +3683,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
         "blocks": [
           {
             "type": "warning",
-            "text": "Worklog reminds you on this screen that a late EMP201 carries a SARS penalty on the PAYE, so aim to file and pay before the 7th."
+            "text": "Worklog reminds you on this screen that a late EMP201 carries a SARS penalty of 10% of the PAYE, so aim to file and pay before the 7th."
           },
           {
             "type": "paragraph",
@@ -3782,7 +3958,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
     "slug": "vat201",
     "category": "Tax & SARS",
     "title": "Work on your VAT201",
-    "summary": "See what VAT you owe SARS for a period, understand where the figures come from, and mark a return as filed.",
+    "summary": "See what VAT you owe SARS for a period, how your turnover splits by VAT rate, where the figures come from, and mark a return as filed.",
     "sections": [
       {
         "heading": "What the VAT201 screen does",
@@ -3825,11 +4001,33 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "steps",
             "items": [
-              "Open Tax & SARS and tap the VAT201 tile.",
+              "Open Tax & SARS and tap the VAT201 tile. The link at the top of the screen, Compliance & Financials, takes you back.",
               "Use the ‹ and › arrows at the top to move to the period you want. The month, or month-pair, you are looking at shows in the middle.",
               "Read the dark blue card. Output VAT (on sales) is the VAT you charged. Input VAT (on purchases) is the VAT you paid to suppliers.",
               "The bottom line shows VAT payable if you owe SARS, or VAT refund due if SARS owes you. That is Output VAT minus Input VAT."
             ]
+          }
+        ]
+      },
+      {
+        "heading": "Your turnover split (VAT201 fields 1–3)",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "Above the amount card is a white card headed Supplies this period (excl. VAT). It splits your sales turnover, before VAT, into the three lines the VAT201 asks for:"
+          },
+          {
+            "type": "bullets",
+            "items": [
+              "Standard-rated (15%) — the sales you charge 15% VAT on. Only these produce Output VAT.",
+              "Zero-rated (0%) — sales taxed at 0%, like exports or certain basic foods. Declared, but they carry no VAT.",
+              "Exempt — supplies that fall outside VAT altogether.",
+              "Total turnover — the three added together."
+            ]
+          },
+          {
+            "type": "tip",
+            "text": "These are the ex-VAT figures for boxes 1 to 3 of the return. The Zero-rated and Exempt lines only show a figure once you actually have such sales."
           }
         ]
       },
@@ -3845,12 +4043,22 @@ export const HELP_ARTICLES: HelpArticle[] = [
             "items": [
               "Output VAT adds the VAT on your invoices for the period, plus VAT on cash or bank income you logged that was not linked to an invoice, like a till sale or a card tap.",
               "Income that is already matched to an invoice is not counted twice.",
-              "Input VAT is the VAT on the supplier invoices you recorded for the period."
+              "Input VAT is the VAT on the supplier invoices you recorded for the period.",
+              "Credit notes reverse VAT: a customer credit note comes off your Output VAT, a supplier credit note off your Input VAT."
             ]
           },
           {
             "type": "tip",
             "text": "If a number looks low, it usually means something was not captured. Make sure your invoices are up to date and that you have recorded your supplier invoices, then come back and the totals will update."
+          }
+        ]
+      },
+      {
+        "heading": "If you have raised credit notes",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "If you credited a customer, or a supplier credited you, during the period, the blue card shows a Less credit notes line under the side it affects — under Output VAT for a customer credit, under Input VAT for a supplier credit. Your turnover split above is netted the same way, so the whole return moves together and stays honest."
           }
         ]
       },
@@ -3865,13 +4073,22 @@ export const HELP_ARTICLES: HelpArticle[] = [
             "type": "steps",
             "items": [
               "Make sure you are on the right period.",
-              "Tap the Mark VAT201 as filed button.",
+              "Tap the ✔️ Mark VAT201 as filed button.",
               "The screen then shows Marked as filed for that period, and it appears in your Filing history list at the bottom with the amount and the date it was filed."
             ]
           },
           {
             "type": "warning",
             "text": "The number on the blue card is a calculation aid, not the filed return. You must still submit the real VAT201 on SARS eFiling. It is due by the 25th of the month after the period ends. Marking it filed in Worklog does not send anything to SARS."
+          }
+        ]
+      },
+      {
+        "heading": "Share the figures",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "The 📤 Share report button sends the period's figures — your supplies split, Output and Input VAT, any credit-note lines, and the amount payable or refundable — out through your phone's share sheet. It is an easy way to send the summary to your accountant, for example over WhatsApp."
           }
         ]
       },
@@ -3889,6 +4106,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
       "emp201",
       "record-a-supplier-invoice",
       "create-and-send-an-invoice",
+      "credit-notes",
       "tax-jar"
     ]
   },
@@ -3896,18 +4114,18 @@ export const HELP_ARTICLES: HelpArticle[] = [
     "slug": "provisional-tax",
     "category": "Tax & SARS",
     "title": "Estimate your provisional tax (IRP6)",
-    "summary": "Use the Provisional Tax tool to get a rough estimate of what you may owe SARS for a provisional tax period, worked out from the income and expenses you have logged in Worklog.",
+    "summary": "Use the Provisional Tax tool to get a rough estimate of what you may owe SARS for a provisional tax period, worked out from the income and expenses you have logged in Worklog and the way your business is registered with SARS.",
     "sections": [
       {
         "heading": "What this tool does",
         "blocks": [
           {
             "type": "paragraph",
-            "text": "Provisional tax is how sole proprietors, individuals and companies pay income tax during the year, in bites, instead of one lump at the end. Worklog adds up the income and expenses you have logged, works out your profit, and shows you an estimate of what a provisional tax payment might be for the period you pick. The screen is headed Provisional Tax — IRP6."
+            "text": "Provisional tax is how businesses and individuals pay income tax during the year, in bites, instead of one lump at the end. Worklog adds up the income and expenses you have logged, works out your profit, and shows you an estimate of what a provisional tax payment might be for the period you pick. The screen is headed Provisional Tax — IRP6. If your business is registered for Turnover Tax instead, the same screen becomes Turnover Tax — interim payment (TT02) and works on your turnover rather than your profit."
           },
           {
             "type": "paragraph",
-            "text": "Think of it as a planning number, not your real return. It helps you set money aside and know roughly what is coming. Your actual IRP6 return is submitted on SARS eFiling or by your accountant."
+            "text": "Think of it as a planning number, not your real return. It helps you set money aside and know roughly what is coming. Your actual IRP6 (or TT02) return is submitted on SARS eFiling or by your accountant."
           },
           {
             "type": "warning",
@@ -3926,7 +4144,8 @@ export const HELP_ARTICLES: HelpArticle[] = [
             "type": "bullets",
             "items": [
               "Provisional Tax is on the Structured plan.",
-              "You will find it under Tax & SARS. There is a link at the top of the screen that reads Compliance & Financials to take you back.",
+              "You will find it under Tax & SARS, in the Compliance & Financials area. There is a link at the top of the screen that reads Compliance & Financials to take you back.",
+              "Set your Business type in Business Details first — the tool reads it automatically, so your estimate starts on the right tax rules.",
               "Have any allowable deductions in mind (for example a home office or retirement annuity), and if you are doing Period 2, know what you already paid in Period 1."
             ]
           }
@@ -3940,13 +4159,16 @@ export const HELP_ARTICLES: HelpArticle[] = [
             "items": [
               "Open Provisional Tax under Tax & SARS.",
               "Under Tax period, tap the period you are estimating for. Each button shows the year, the months it covers and the due date, for example 2026 Period 1 (Feb–Aug) or 2026 Period 2 (Aug–Feb).",
-              "Under Business type, choose Sole proprietor / Individual or Company (Pty) Ltd.",
-              "If you chose Sole proprietor / Individual, pick Your age: Under 65, 65 – 74, or 75 or older. From 65 SARS gives you a bigger rebate, and bigger again from 75, which lowers what you owe.",
-              "Look at the block headed From your Worklog records (year-to-date). It shows your total income logged, total expenses logged, net profit and an annualised profit. You do not type these in — they come from your records.",
-              "In Allowable deductions - optional, type any deductions you can claim, for example 50000. Leave it blank if you are not sure.",
+              "Check Business type — how you're registered with SARS. It starts on whatever you saved in Business Details, and you can tap a different one to try a what-if: Sole proprietor / Individual, Partnership, Company (Pty) Ltd, Close corporation (CC), Co-operative or Trust.",
+              "If a Turnover Tax (micro business) toggle shows, switch on Registered for Turnover Tax only if you are on that SARS regime. The screen then becomes Turnover Tax — interim payment (TT02) and works on your turnover. Trusts do not see this.",
+              "For a Company, CC or Co-operative, a Small Business Corporation (SBC) toggle appears — switch on Qualifies as an SBC to use the reduced sliding scale instead of the flat company rate.",
+              "If you are taxed as an individual (Sole proprietor or Partnership), pick Your age: Under 65, 65 – 74, or 75 or older. From 65 SARS gives you a bigger rebate, and bigger again from 75, which lowers what you owe.",
+              "For a Partnership, fill in Your share of the partnership (%) — you are taxed only on your slice of the profit.",
+              "Look at the block headed From your Worklog records (year-to-date). It shows your income, expenses, net profit and an annualised profit (or, on Turnover Tax, your turnover). You do not type these in — they come from your records.",
+              "In Allowable deductions - optional, type any deductions you can claim, for example 50000. Leave it blank if you are not sure. Turnover Tax has no deductions box.",
               "If you are an individual, choose your number of Medical aid members from 1 to 5. Worklog works out the medical tax credit for you and shows it just below, as a credit per year applied.",
               "If you picked Period 2, fill in Amount already paid in Period 1 so the tool can subtract it.",
-              "Read the dark blue block headed Estimated IRP6. It shows your taxable income, the tax before credits, any rebates and medical credits taken off, your annual tax liability, and the amount due for that period, with the due date."
+              "Read the dark blue block headed Estimated IRP6 (or Estimated TT02). It shows your taxable income or turnover, the tax before credits, any rebates and medical credits taken off, your annual tax liability, and the amount due for that period, with the due date."
             ]
           }
         ]
@@ -3956,19 +4178,21 @@ export const HELP_ARTICLES: HelpArticle[] = [
         "blocks": [
           {
             "type": "paragraph",
-            "text": "The tool annualises your profit. For Period 1 it takes your profit so far and doubles it, since P1 covers the first six months, then shows half of the year's tax as due. For Period 2 it works on the full year and takes off what you paid in Period 1."
+            "text": "The tool annualises your figures. For Period 1 it takes what you have logged so far and doubles it, since P1 covers the first six months, then shows half of the year's tax as due. For Period 2 it works on the full year and takes off what you paid in Period 1."
           },
           {
             "type": "bullets",
             "items": [
-              "For an individual, it uses the SARS tax tables and subtracts your rebate and medical tax credits.",
-              "For a company, it applies the flat company tax rate — no rebates or medical credits.",
-              "Income is counted after VAT. If you are VAT-registered, the VAT portion of your sales is SARS's money passing through, so it is not treated as your income."
+              "Sole proprietor or partner: your profit (your share, for a partner) is taxed on the SARS individual tables, then your age rebate and medical tax credits come off.",
+              "Company, CC or co-operative: the flat company tax rate, with no rebates or medical credits — unless you marked it as an SBC, which uses a reduced sliding scale instead.",
+              "Trust: the flat trust rate, with no rebates.",
+              "Turnover Tax: the Sixth Schedule scale on your turnover, replacing income and provisional tax — no deductions, rebates or medical credits.",
+              "Income is counted after VAT. If you are VAT-registered, the VAT portion of your sales is SARS's money passing through, so it is not treated as your income. Turnover Tax works on your gross turnover."
             ]
           },
           {
             "type": "tip",
-            "text": "The orange box at the bottom, Key provisional tax facts, lists the period due dates, the small-income threshold and the penalty rule for that tax year. Read the figures there rather than trusting a number from memory — the app keeps them current."
+            "text": "The orange box at the bottom — Key provisional tax facts, or Key Turnover Tax facts on that regime — lists the period due dates, the threshold and the penalty rule for that tax year. Read the figures there rather than trusting a number from memory — the app keeps them current."
           }
         ]
       },
@@ -3977,7 +4201,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
         "blocks": [
           {
             "type": "paragraph",
-            "text": "Worklog does not submit anything to SARS and does not pay for you. Once you have your estimate, submit the actual IRP6 return and pay on SARS eFiling, or hand your figures to your accountant or tax practitioner to do it."
+            "text": "Worklog does not submit anything to SARS and does not pay for you. Once you have your estimate, submit the actual IRP6 return (or the TT02, if you are on Turnover Tax) and pay on SARS eFiling, or hand your figures to your accountant or tax practitioner to do it."
           },
           {
             "type": "warning",
@@ -4108,7 +4332,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           },
           {
             "type": "paragraph",
-            "text": "You will find it in the Tax and SARS area, and it is part of the Structured plan. Open it and you land on a page headed Compliance Dashboard. The link at the very top reads Tax and Compliance, which takes you back."
+            "text": "You will find it in the Compliance & Financials area: open Tax & SARS and tap the Compliance tile. It is part of the Structured plan. The page you land on is headed Compliance Dashboard, and the link at the very top — Compliance & Financials — takes you back."
           }
         ]
       },
@@ -4117,7 +4341,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
         "blocks": [
           {
             "type": "paragraph",
-            "text": "The dashboard is smarter when it knows your business. It looks at whether you have a VAT number, a PAYE reference, staff on your register, your income for the year, and when you last filed VAT201 and EMP201. From that it works out which jobs apply to you and which do not."
+            "text": "The dashboard is smarter when it knows your business. It looks at your business type, whether you have a VAT number and a PAYE reference, staff on your register, your income for the year, and when you last filed VAT201 and EMP201. From that it works out which jobs apply to you and which do not — for instance, only companies, CCs and co-operatives are shown the CIPC returns."
           },
           {
             "type": "tip",
@@ -4142,7 +4366,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           },
           {
             "type": "paragraph",
-            "text": "Under those boxes is a dark banner headed Your business profile. It sums up your setup in one line — VAT registered or not, how many employees you have, whether SDL is registered, and your plan — so you can check the dashboard is working from the right facts."
+            "text": "Under those boxes is a dark banner headed Your business profile. It sums up your setup in one line — your business type, whether you are VAT registered, how many employees you have, whether SDL is registered, and your plan — so you can check the dashboard is working from the right facts."
           }
         ]
       },
@@ -4159,7 +4383,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
               "All obligations — everything",
               "In Worklog — the jobs you can start inside Worklog",
               "External — jobs done on other portals or with your accountant",
-              "Payroll and Labour — the staff-related ones like EMP201, UIF and COIDA"
+              "Payroll & Labour — the staff-related ones like EMP201, UIF and COIDA"
             ]
           }
         ]
@@ -4455,8 +4679,8 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "bullets",
             "items": [
-              "Age Analysis under Sales — what your customers still owe you, from your unpaid invoices.",
-              "Age Analysis under Purchases — what you still owe your suppliers, from your unpaid supplier invoices."
+              "Age Analysis under Sales — headed Age Analysis — Customers, showing what your customers still owe you from your unpaid invoices.",
+              "Age Analysis under Purchases — headed Age Analysis — Suppliers, showing what you still owe your suppliers from your unpaid supplier invoices."
             ]
           },
           {
@@ -4492,9 +4716,9 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "bullets",
             "items": [
-              "0 to 30 days: fresh, still within a normal payment window.",
-              "31 to 60 days: getting late, worth a friendly reminder.",
-              "61 to 90 days: properly overdue, time to follow up.",
+              "0–30 days: fresh, still within a normal payment window.",
+              "31–60 days: getting late, worth a friendly reminder.",
+              "61–90 days: properly overdue, time to follow up.",
               "90+ days: very old, needs your attention."
             ]
           },
@@ -4509,7 +4733,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
         "blocks": [
           {
             "type": "paragraph",
-            "text": "Under the summary bar, each unpaid invoice is listed inside its bucket. The buckets run down the page freshest first — 0 to 30 days at the top, 90+ at the bottom — and within each bucket the most overdue invoice sits at the top. Every bucket also shows its own heading, like 31 to 60 days overdue, with the bucket total next to it. For each invoice you see the customer or supplier name, the document number, the date, how many days old it is, and the amount still owing."
+            "text": "Under the summary bar, each unpaid invoice is listed inside its bucket. The buckets run down the page freshest first — 0–30 days at the top, 90+ at the bottom — and within each bucket the most overdue invoice sits at the top. Every bucket also shows its own heading, like 31–60 days overdue, with the bucket total next to it. For each invoice you see the customer or supplier name, the document number, the date, how many days old it is, and the amount still owing."
           },
           {
             "type": "tip",
@@ -4517,20 +4741,33 @@ export const HELP_ARTICLES: HelpArticle[] = [
           },
           {
             "type": "paragraph",
-            "text": "When there is nothing outstanding, the page simply tells you there are no outstanding invoices, so an empty list is good news."
+            "text": "When there is nothing outstanding, the list is replaced by a friendly note — 🎉 No outstanding client invoices on the customer report, or ✅ No outstanding supplier invoices on the supplier one. An empty list is good news."
           }
         ]
       },
       {
-        "heading": "Acting on what you see",
+        "heading": "Credit held on account",
         "blocks": [
           {
             "type": "paragraph",
-            "text": "Age Analysis is a read-only overview, so you act on it from other parts of Worklog. Once you can see who is behind, a customer statement is an easy way to remind someone what they owe. You can save or share that statement as a PDF, usually over WhatsApp from your phone's share sheet."
+            "text": "If you are holding credit on account for a customer — say from a credit note you put on account instead of refunding — Age Analysis takes it off the total. You will see a Less credit on account line, then a Net owed to you figure showing the real position once that credit is used up. The supplier report works the same way, with a Net you owe figure after any credit a supplier is holding for you. These lines only appear when there is credit sitting on account."
+          }
+        ]
+      },
+      {
+        "heading": "Save or share the report",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "At the bottom of the page are two buttons. 📄 Download PDF saves the whole aged report as a PDF you can file or email. 📤 Share sends the figures — each age bucket, the total, and any credit-on-account net — out through your phone's share sheet, so you can WhatsApp it to your accountant."
           },
           {
             "type": "tip",
-            "text": "When a client pays, match the payment to their invoice so it drops off this report. Age Analysis only counts invoices that are not marked as paid."
+            "text": "To nudge one specific customer, a customer statement is friendlier — it spells out exactly what they owe. You can save or share that as a PDF the same way."
+          },
+          {
+            "type": "tip",
+            "text": "When a customer pays, match the payment to their invoice so it drops off this report. Age Analysis only counts invoices that are not marked paid or fully credited."
           },
           {
             "type": "warning",
@@ -4543,6 +4780,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
       "create-and-send-an-invoice",
       "send-a-customer-statement",
       "match-a-payment-to-an-invoice",
+      "credit-notes",
       "record-a-supplier-invoice"
     ]
   },
@@ -4643,7 +4881,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
         "blocks": [
           {
             "type": "paragraph",
-            "text": "Open Time & Travel Reports and tap the Hours vs Estimate tab. Each job shows the hours logged against the hours quoted with a progress bar and a badge — a red Over when a job has blown its quoted hours, or an OK when it is within them — plus a billable / non-billable split so you can decide whether to bill an over-run or absorb it. Jobs that are most over sort to the top."
+            "text": "Open Time & Travel Reports and tap the Hours vs Estimate tab. Each job shows the hours logged against the hours quoted with a progress bar and a badge — On track while it is comfortably within the quote, Near limit once about 80% of the quoted hours are used, and a red Over once it has passed the quote — plus a billable / non-billable split so you can decide whether to bill an over-run or absorb it. Jobs that are most over sort to the top."
           }
         ]
       }
