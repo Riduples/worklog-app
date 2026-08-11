@@ -12,6 +12,7 @@ import { SaveBtn } from "@/components/ui/SaveBtn";
 import { fmt, todayStr } from "@/lib/format";
 import { canEdit } from "@/lib/permissions";
 import { BackLink } from "@/components/ui/BackLink";
+import { Loggy } from "@/components/ui/Loggy";
 
 export function CashUpView() {
   const { data: income } = useIncome();
@@ -135,12 +136,35 @@ export function CashUpView() {
       </Field>
 
       {variance !== null && varianceStyle && (
-        <div style={{ background: varianceStyle.bg, border: `1.5px solid ${varianceStyle.border}`, borderRadius: 12, padding: "12px 14px", marginBottom: 14, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <span style={{ fontSize: 13, fontWeight: 700, color: varianceStyle.fg }}>
-            {variance === 0 ? "✅ Matches exactly" : variance > 0 ? "Till has more than expected" : "Till has less than expected"}
-          </span>
-          <span style={{ fontSize: 17, fontWeight: 800, color: varianceStyle.fg }}>{fmt(Math.abs(variance))}</span>
-        </div>
+        <>
+          {/* The signature moment: a balanced till (within R1) earns a
+              celebrating Loggy that scales in. Loggy reinforces the win — the
+              headline and the figure below still carry it on their own. */}
+          {Math.abs(variance) < 1 && (
+            <div style={{ textAlign: "center", padding: "6px 0 10px" }}>
+              <Loggy pose="celebrate" size={128} animate="pop" alt="Till balanced successfully" />
+              <div style={{ fontSize: 17, fontWeight: 800, color: "#0369A1", marginTop: 4 }}>Till balanced! Great job.</div>
+            </div>
+          )}
+          {/* A real gap (more than R20) gets a worried Loggy that softens the
+              news and points at the next step — calm, never alarming. */}
+          {Math.abs(variance) > 20 && (
+            <div style={{ display: "flex", alignItems: "center", gap: 12, background: "#fff7ed", border: "1.5px solid #fed7aa", borderRadius: 12, padding: "12px 14px", marginBottom: 14 }}>
+              <Loggy pose="worried" size={56} alt="" style={{ flexShrink: 0 }} />
+              <span style={{ fontSize: 13, fontWeight: 600, color: "#92400e", lineHeight: 1.5 }}>
+                {variance < 0
+                  ? `Hmm, the till is ${fmt(Math.abs(variance))} short. Want to double-check?`
+                  : `The till has ${fmt(Math.abs(variance))} more than expected. Worth a second look.`}
+              </span>
+            </div>
+          )}
+          <div style={{ background: varianceStyle.bg, border: `1.5px solid ${varianceStyle.border}`, borderRadius: 12, padding: "12px 14px", marginBottom: 14, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: varianceStyle.fg }}>
+              {variance === 0 ? "✅ Matches exactly" : variance > 0 ? "Till has more than expected" : "Till has less than expected"}
+            </span>
+            <span style={{ fontSize: 17, fontWeight: 800, color: varianceStyle.fg }}>{fmt(Math.abs(variance))}</span>
+          </div>
+        </>
       )}
 
       <Field label="Notes - optional">

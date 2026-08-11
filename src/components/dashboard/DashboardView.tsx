@@ -25,6 +25,7 @@ import { AllToolsGrid } from "@/components/dashboard/AllToolsGrid";
 import { SetupChecklist } from "@/components/dashboard/SetupChecklist";
 import { computeSetupSteps } from "@/lib/setupChecklist";
 import { BankAccountSelector, ALL_ACCOUNTS, type AccountFilter } from "@/components/ui/BankAccountSelector";
+import { Loggy } from "@/components/ui/Loggy";
 import { fmt, greeting, todayStr } from "@/lib/format";
 import { inPeriod } from "@/lib/period";
 import { computePnl } from "@/lib/pnl";
@@ -355,8 +356,9 @@ export function DashboardView({ businessName }: { businessName: string }) {
               ))}
             </div>
           ) : (
-            <div style={{ background: "#F0FDF4", border: "1px solid #bbf7d0", borderRadius: 16, padding: "16px", fontSize: 13, fontWeight: 700, color: "#166534", textAlign: "center" }}>
-              ✅ Nothing needs you right now
+            <div style={{ background: "#F0FDF4", border: "1px solid #bbf7d0", borderRadius: 16, padding: "16px", display: "flex", alignItems: "center", justifyContent: "center", gap: 12 }}>
+              <Loggy pose="happy" size={48} alt="" style={{ flexShrink: 0 }} />
+              <span style={{ fontSize: 13, fontWeight: 700, color: "#166534" }}>All clear — nothing needs you right now.</span>
             </div>
           )}
         </div>
