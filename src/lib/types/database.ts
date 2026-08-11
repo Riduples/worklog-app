@@ -1,4 +1,4 @@
-﻿export type Json =
+export type Json =
   | string
   | number
   | boolean
@@ -1485,6 +1485,24 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_settings: {
+        Row: {
+          id: boolean
+          signups_enabled: boolean
+          updated_at: string
+        }
+        Insert: {
+          id?: boolean
+          signups_enabled?: boolean
+          updated_at?: string
+        }
+        Update: {
+          id?: boolean
+          signups_enabled?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       purchase_orders: {
         Row: {
           business_id: string
@@ -1556,24 +1574,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      platform_settings: {
-        Row: {
-          id: boolean
-          signups_enabled: boolean
-          updated_at: string
-        }
-        Insert: {
-          id?: boolean
-          signups_enabled?: boolean
-          updated_at?: string
-        }
-        Update: {
-          id?: boolean
-          signups_enabled?: boolean
-          updated_at?: string
-        }
-        Relationships: []
       }
       quotes: {
         Row: {
@@ -2184,7 +2184,6 @@ export type Database = {
       }
       time_entries: {
         Row: {
-          amount_to_bill: number | null
           bill_type: string
           booking_id: string | null
           business_id: string
@@ -2194,7 +2193,6 @@ export type Database = {
           deleted_at: string | null
           description: string | null
           entry_date: string
-          hourly_rate: number | null
           hours_worked: number
           id: string
           ot_hours: number
@@ -2204,7 +2202,6 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          amount_to_bill?: number | null
           bill_type?: string
           booking_id?: string | null
           business_id: string
@@ -2214,7 +2211,6 @@ export type Database = {
           deleted_at?: string | null
           description?: string | null
           entry_date: string
-          hourly_rate?: number | null
           hours_worked: number
           id?: string
           ot_hours?: number
@@ -2224,7 +2220,6 @@ export type Database = {
           user_id: string
         }
         Update: {
-          amount_to_bill?: number | null
           bill_type?: string
           booking_id?: string | null
           business_id?: string
@@ -2234,7 +2229,6 @@ export type Database = {
           deleted_at?: string | null
           description?: string | null
           entry_date?: string
-          hourly_rate?: number | null
           hours_worked?: number
           id?: string
           ot_hours?: number
@@ -2270,6 +2264,50 @@ export type Database = {
             columns: ["quote_id"]
             isOneToOne: false
             referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_links: {
+        Row: {
+          business_id: string
+          created_at: string | null
+          id: string
+          link_code: string | null
+          link_code_expires_at: string | null
+          phone_e164: string | null
+          updated_at: string | null
+          user_id: string
+          verified_at: string | null
+        }
+        Insert: {
+          business_id: string
+          created_at?: string | null
+          id?: string
+          link_code?: string | null
+          link_code_expires_at?: string | null
+          phone_e164?: string | null
+          updated_at?: string | null
+          user_id: string
+          verified_at?: string | null
+        }
+        Update: {
+          business_id?: string
+          created_at?: string | null
+          id?: string
+          link_code?: string | null
+          link_code_expires_at?: string | null
+          phone_e164?: string | null
+          updated_at?: string | null
+          user_id?: string
+          verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_links_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: true
+            referencedRelation: "business_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -2594,6 +2632,10 @@ export type Database = {
         Returns: boolean
       }
       is_business_member: {
+        Args: { target_business_id: string }
+        Returns: boolean
+      }
+      is_business_owner: {
         Args: { target_business_id: string }
         Returns: boolean
       }
