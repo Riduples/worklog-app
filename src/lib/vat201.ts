@@ -1,7 +1,6 @@
 import { incomeNet } from "@/lib/taxRates";
 
-export const SUPPLY_TYPES = ["standard", "zero_rated", "exempt"] as const;
-export type SupplyType = (typeof SUPPLY_TYPES)[number];
+type SupplyType = "standard" | "zero_rated" | "exempt";
 
 // Structural shapes rather than the full DB Row types: only the fields the
 // turnover split reads, so a test can pass plain literals (as incomeNet does).

@@ -1,6 +1,6 @@
 export type SarsCategory = { label: string; sars: string; group: string };
 
-export const SARS_INCOME_CATEGORIES: SarsCategory[] = [
+const SARS_INCOME_CATEGORIES: SarsCategory[] = [
   { label: "Job payment / service rendered", sars: "Trading income — Services rendered", group: "Trading Income" },
   { label: "Product sale", sars: "Trading income — Sale of goods", group: "Trading Income" },
   { label: "Stock sale", sars: "Trading income — Sale of trading stock", group: "Trading Income" },
@@ -26,7 +26,7 @@ export const SARS_INCOME_CATEGORIES: SarsCategory[] = [
   { label: "Other income", sars: "Other income — Sundry income", group: "Other Income" },
 ];
 
-export const SARS_CATEGORIES: SarsCategory[] = [
+const SARS_CATEGORIES: SarsCategory[] = [
   { label: "Materials & supplies", sars: "Cost of sales — Materials", group: "Cost of Sales" },
   { label: "Stock / trading stock", sars: "Cost of sales — Trading stock", group: "Cost of Sales" },
   { label: "Packaging", sars: "Cost of sales — Packaging", group: "Cost of Sales" },
@@ -97,7 +97,7 @@ export const SARS_CATEGORIES: SarsCategory[] = [
 // a customer's behalf and PAYE is employees' tax, so neither is settled out of
 // an income tax provision. Matched exactly on the stored `sars` value, not by
 // searching for "SARS" in free text, which would sweep both of those in.
-export const INCOME_TAX_PAYMENT_CATEGORIES: string[] = [
+const INCOME_TAX_PAYMENT_CATEGORIES: string[] = [
   "Tax — Income tax payable",
   "Tax — Provisional tax payable",
 ];

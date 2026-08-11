@@ -93,7 +93,7 @@ export type Entitlements = {
   hasFundingPack: boolean; // funding application pack (net-new)
 };
 
-export const ENTITLEMENTS: Record<Plan, Entitlements> = {
+const ENTITLEMENTS: Record<Plan, Entitlements> = {
   solo: {
     maxMembers: 1,
     monthlyAiLogs: 150,
@@ -138,12 +138,12 @@ export const ENTITLEMENTS: Record<Plan, Entitlements> = {
 export const entitlementsFor = (plan: Plan): Entitlements => ENTITLEMENTS[plan] ?? ENTITLEMENTS.solo;
 
 // Tools locked below Structured — the tax/compliance suite + accountant pack.
-export const STRUCTURED_ONLY: ToolId[] = ["vat201", "emp201", "provtax", "compliance"];
+const STRUCTURED_ONLY: ToolId[] = ["vat201", "emp201", "provtax", "compliance"];
 
 // Tools locked on Solo — everything that needs Trade or Structured: staff &
 // payroll, buying-side documents, age analysis, recurring invoices, team logins,
 // plus everything Structured-only. This is the inverse of the Solo entitlements.
-export const TRADE_PLUS: (ToolId | "team" | "invoice_recurring")[] = [
+const TRADE_PLUS: (ToolId | "team" | "invoice_recurring")[] = [
   "staffregister",
   "payrun",
   "advances",
@@ -162,7 +162,7 @@ export const TRADE_PLUS: (ToolId | "team" | "invoice_recurring")[] = [
 
 // Recurring invoices are the one soft restriction on Solo (the tool works, the
 // recurrence toggle doesn't). Everything else is a hard lock via isLocked().
-export const SOLO_RESTRICTED: Partial<Record<ToolId, { limit?: number; recurring?: boolean; message: string }>> = {
+const SOLO_RESTRICTED: Partial<Record<ToolId, { limit?: number; recurring?: boolean; message: string }>> = {
   invoice: { recurring: true, message: "Recurring invoices are a Trade feature. Upgrade to auto-invoice your monthly accounts." },
 };
 

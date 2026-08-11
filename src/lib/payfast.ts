@@ -12,7 +12,7 @@ import { PLAN_PRICE_ZAR, TIERS, type Plan } from "@/lib/tiers";
 // setting PAYFAST_MODE=live and the real PAYFAST_MERCHANT_ID / _KEY / _PASSPHRASE
 // in the host environment — nothing in code changes.
 
-export type PayfastMode = "sandbox" | "live";
+type PayfastMode = "sandbox" | "live";
 
 export type PayfastConfig = {
   mode: PayfastMode;

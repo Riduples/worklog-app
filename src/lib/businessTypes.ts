@@ -30,7 +30,7 @@ export const BUSINESS_TYPES: { id: BusinessType; label: string }[] = [
 // Cash Flow, Ledgers and the Compliance Dashboard from EVERY type by default —
 // including trade, despite the build doc's example claiming a contractor sees
 // POs. The prototype disagrees with the doc; the prototype wins.
-export const BUSINESS_TYPE_CORE_TOOLS: Record<BusinessType, ToolId[] | null> = {
+const BUSINESS_TYPE_CORE_TOOLS: Record<BusinessType, ToolId[] | null> = {
   salon: ["income", "expense", "bankstatement", "quote", "invoice", "clients", "stock", "recipe", "booking", "cashup", "staffregister", "advances", "leave", "payrun", "payrollcompliance", "vat201", "emp201", "taxjar", "tax"],
   retail: ["income", "expense", "bankstatement", "clients", "suppliers", "stock", "cashup", "staffregister", "advances", "leave", "payrun", "payrollcompliance", "vat201", "emp201", "taxjar", "tax"],
   food: ["income", "expense", "bankstatement", "clients", "suppliers", "stock", "recipe", "cashup", "staffregister", "advances", "leave", "payrun", "payrollcompliance", "vat201", "emp201", "taxjar", "tax"],

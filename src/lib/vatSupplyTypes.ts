@@ -39,11 +39,6 @@ export const VAT_SUPPLY_TYPES: { id: VatSupplyType; label: string; short: string
   },
 ];
 
-/** Display metadata for a supply type, defaulting to standard when unset. */
-export function vatSupplyTypeMeta(t: VatSupplyType | null | undefined) {
-  return VAT_SUPPLY_TYPES.find((v) => v.id === (t ?? "standard")) ?? VAT_SUPPLY_TYPES[0]!;
-}
-
 // Whether this supply actually carries output VAT. Only standard-rated does —
 // zero-rated is taxed at 0% and exempt is outside VAT — so the VAT amount on a
 // non-standard sale is always zero, however the rest of the form is filled in.

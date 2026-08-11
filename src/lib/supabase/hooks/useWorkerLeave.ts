@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { getCurrentBusinessId } from "@/lib/supabase/currentBusiness";
 import type { Tables, TablesInsert, TablesUpdate } from "@/lib/types/database";
 
-export type WorkerLeaveRecord = Tables<"worker_leave">;
+type WorkerLeaveRecord = Tables<"worker_leave">;
 
 const QUERY_KEY = ["worker_leave"];
 

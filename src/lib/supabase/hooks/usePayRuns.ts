@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { getCurrentBusinessId } from "@/lib/supabase/currentBusiness";
 import type { Tables } from "@/lib/types/database";
 
-export type PayRun = Tables<"pay_runs">;
+type PayRun = Tables<"pay_runs">;
 
 const QUERY_KEY = ["pay_runs"];
 const LOANS_KEY = ["worker_loans"];

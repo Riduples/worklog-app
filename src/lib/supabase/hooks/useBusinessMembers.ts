@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 import type { Permissions } from "@/lib/permissions";
 
-export type BusinessMember = {
+type BusinessMember = {
   id: string;
   user_id: string;
   email: string;

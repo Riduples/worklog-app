@@ -6,7 +6,7 @@ import { getCurrentBusinessId } from "@/lib/supabase/currentBusiness";
 import type { Tables } from "@/lib/types/database";
 import type { Permissions } from "@/lib/permissions";
 
-export type Invite = Tables<"invites">;
+type Invite = Tables<"invites">;
 
 const QUERY_KEY = ["invites"];
 

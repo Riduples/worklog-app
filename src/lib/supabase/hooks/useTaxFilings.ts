@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { getCurrentBusinessId } from "@/lib/supabase/currentBusiness";
 import type { Tables } from "@/lib/types/database";
 
-export type TaxFiling = Tables<"tax_filings">;
+type TaxFiling = Tables<"tax_filings">;
 
 const QUERY_KEY = ["tax_filings"];
 

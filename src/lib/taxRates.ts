@@ -10,7 +10,7 @@ import type { Tables } from "@/lib/types/database";
 // code / tests that run without the DB. Keep the fallback in step with the table's
 // current-year row so it can never be wrong.
 
-export type PayeBracket = { from: number; base: number; rate: number };
+type PayeBracket = { from: number; base: number; rate: number };
 
 export type TaxRateSet = {
   VAT_RATE: number;
@@ -127,7 +127,7 @@ function resolveBrackets(raw: unknown, fallback: PayeBracket[]): PayeBracket[] {
 // Map a tax_rates row to a TaxRateSet, or fall back to the hardcoded set when there
 // is no row. Postgres NUMERIC arrives over the wire as a string, so coerce every
 // figure; a malformed/empty bracket list falls back rather than breaking payroll.
-export function resolveTaxRates(row: Tables<"tax_rates"> | null | undefined): TaxRateSet {
+function resolveTaxRates(row: Tables<"tax_rates"> | null | undefined): TaxRateSet {
   if (!row) return TAX_RATES;
   const num = (v: unknown) => Number(v);
   return {

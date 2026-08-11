@@ -38,7 +38,7 @@ export function monthlyRemunerationOf(
 }
 
 /** Age from the stored date of birth, falling back to the SA ID number. */
-export function ageOf(staff: Pick<Tables<"staff_register">, "date_of_birth" | "id_number">, asOf?: Date): number | null {
+function ageOf(staff: Pick<Tables<"staff_register">, "date_of_birth" | "id_number">, asOf?: Date): number | null {
   if (staff.date_of_birth) {
     const b = new Date(`${staff.date_of_birth}T00:00:00`);
     const n = asOf ?? new Date();

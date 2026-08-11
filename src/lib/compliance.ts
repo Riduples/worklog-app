@@ -42,7 +42,7 @@ export const STATUS_STYLE: Record<ComplianceStatus, { color: string; bg: string;
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-export function isRecent(dateStr: string | null | undefined, withinDays: number): boolean {
+function isRecent(dateStr: string | null | undefined, withinDays: number): boolean {
   if (!dateStr) return false;
   const days = (Date.now() - new Date(dateStr).getTime()) / (1000 * 60 * 60 * 24);
   return days >= 0 && days <= withinDays;

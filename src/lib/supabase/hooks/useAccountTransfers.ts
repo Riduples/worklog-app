@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { getCurrentBusinessId } from "@/lib/supabase/currentBusiness";
 import type { Tables, TablesInsert } from "@/lib/types/database";
 
-export type AccountTransfer = Tables<"account_transfers">;
+type AccountTransfer = Tables<"account_transfers">;
 
 const QUERY_KEY = ["account_transfers"];
 
