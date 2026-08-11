@@ -7,11 +7,13 @@ import { createClient } from "@/lib/supabase/client";
 import { Field } from "@/components/ui/Field";
 import { Input } from "@/components/ui/Input";
 import { SaveBtn } from "@/components/ui/SaveBtn";
+import { safeNextPath } from "@/lib/safeNext";
 
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams.get("next") || "/dashboard";
+  // Same-origin only — an off-site ?next would redirect the user after login.
+  const next = safeNextPath(searchParams.get("next"), "/dashboard");
   const [mode, setMode] = useState<"password" | "magic-link">("password");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

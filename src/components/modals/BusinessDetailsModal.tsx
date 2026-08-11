@@ -45,8 +45,11 @@ export function BusinessDetailsModal({ business, onClose }: { business: Business
   const handleLogoPick = async (file: File | undefined) => {
     if (!file) return;
     setError("");
-    if (!file.type.startsWith("image/")) {
-      setError("That file isn't an image.");
+    // Raster formats only — no SVG (it can carry inline script, and the logo
+    // bucket is public). The bucket's allowed_mime_types is the real gate; this
+    // is a friendlier client-side rejection.
+    if (!["image/png", "image/jpeg", "image/webp"].includes(file.type)) {
+      setError("Please use a PNG, JPG or WebP image.");
       return;
     }
     if (file.size > MAX_LOGO_BYTES) {
@@ -172,7 +175,7 @@ export function BusinessDetailsModal({ business, onClose }: { business: Business
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/png,image/jpeg,image/webp,image/svg+xml"
+              accept="image/png,image/jpeg,image/webp"
               onChange={(e) => handleLogoPick(e.target.files?.[0])}
               style={{ display: "none" }}
             />

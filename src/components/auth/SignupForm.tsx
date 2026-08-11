@@ -8,11 +8,14 @@ import { Field } from "@/components/ui/Field";
 import { Input } from "@/components/ui/Input";
 import { SaveBtn } from "@/components/ui/SaveBtn";
 import { LEGAL_VERSION } from "@/lib/legal/company";
+import { safeNextPath } from "@/lib/safeNext";
 
 export function SignupForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams.get("next");
+  // Same-origin only (empty falls through to /onboarding below); an off-site
+  // ?next would redirect the user after sign-up.
+  const next = safeNextPath(searchParams.get("next"), "");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [agreed, setAgreed] = useState(false);

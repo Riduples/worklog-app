@@ -45,9 +45,6 @@ export async function POST(request: Request) {
   const amountGross = params.get("amount_gross");
   const token = params.get("token") || params.get("pf_payment_id");
 
-  // Record every ITN verbatim before doing anything with it — if money and plan
-  // ever disagree, the answer is here. Best-effort: a logging failure must not
-  // make us NAK a valid payment.
   const admin = (() => {
     try {
       return createAdminClient();
@@ -56,7 +53,15 @@ export async function POST(request: Request) {
       return null;
     }
   })();
-  if (admin) {
+
+  // Record the ITN verbatim — if money and plan ever disagree, the answer is
+  // here. Only once the signature verifies, though: this route is public (no
+  // session, so no per-user rate limiter), and logging every anonymous POST let
+  // an attacker spam multi-MB payloads into payment_events. A forged request
+  // can't reproduce the HMAC, so gating the log on signatureValid drops the
+  // abuse without losing any genuine PayFast event. Best-effort: a logging
+  // failure must not make us NAK a valid payment.
+  if (admin && signatureValid) {
     await admin
       .from("payment_events")
       .insert({
