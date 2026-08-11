@@ -175,7 +175,11 @@ export function PayRunView() {
   // (required over ~R500k annual payroll). Contractors are exempt.
   const sdl = !isContractor && business?.sdl_registered ? grossWages * taxRates.SDL_RATE : 0;
   const monthlyEquiv = payPeriod === "Weekly" ? grossWages * 4.33 : payPeriod === "Fortnightly" ? grossWages * 2.17 : grossWages;
-  const paye = !isContractor ? taxRates.calcMonthlyPAYE(monthlyEquiv, "Monthly") : 0;
+  // PAYE is worked out on the annualised (monthly-equivalent) gross, then scaled
+  // back to THIS run's period — so a weekly/fortnightly run deducts one period's
+  // PAYE, not a whole month's. Passing "Monthly" here subtracted a full month's
+  // PAYE from a single week's wage (worker underpaid, EMP201 overstated ~4.33x).
+  const paye = !isContractor ? taxRates.calcMonthlyPAYE(monthlyEquiv, payPeriod) : 0;
   const loanDeductionAmt = parseFloat(loanDeduction || "0");
   const otherDeductionsAmt = parseFloat(otherDeductions || "0");
   const leaveDaysAmt = parseFloat(leaveDays || "0");

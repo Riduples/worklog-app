@@ -30,8 +30,17 @@ export async function requireBusinessProfile() {
   const supabase = await createClient();
   // No explicit filter — RLS (business membership) scopes this to the
   // caller's own business, so this also works for invited members whose own
-  // user_id doesn't match business_profiles.user_id (the owner's).
-  const { data: profile } = await supabase.from("business_profiles").select("*").maybeSingle();
+  // user_id doesn't match business_profiles.user_id (the owner's). order+limit(1)
+  // keeps it deterministic and non-throwing for a user who belongs to more than
+  // one business (now reachable via accept-invite) — maybeSingle() alone errors
+  // on >1 row. Picks the earliest-joined business until a real current-business
+  // selector exists.
+  const { data: profile } = await supabase
+    .from("business_profiles")
+    .select("*")
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
   if (!profile) redirect("/onboarding");
   return { user, profile };
 }

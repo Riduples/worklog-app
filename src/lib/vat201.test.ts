@@ -40,6 +40,17 @@ describe("suppliesByType — the gross split (no credit notes)", () => {
     expect(s).toEqual({ standard: 200, zero_rated: 100, exempt: 0, total: 300 });
   });
 
+  it("excludes credit-settlement income (e.g. a supplier refund) — it isn't a supply", () => {
+    const s = supplies(
+      [],
+      [
+        { amount: 230, vat_amount: 30, transaction_date: "2026-07-05" }, // real cash sale, net 200
+        { amount: 1150, vat_amount: 0, transaction_date: "2026-07-09", is_credit_settlement: true }, // refund in
+      ]
+    );
+    expect(s).toEqual({ standard: 200, zero_rated: 0, exempt: 0, total: 200 });
+  });
+
   it("excludes transactions outside the period at both ends", () => {
     const s = supplies([
       { id: "in", issue_date: "2026-07-01", invoice_amount: 100, vat_supply_type: "standard" },

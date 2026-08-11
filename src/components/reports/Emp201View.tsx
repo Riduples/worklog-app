@@ -49,12 +49,21 @@ export function Emp201View() {
   const sdl = monthRuns.reduce((s, p) => s + Number(p.sdl ?? 0), 0);
 
   // ETI (Employment Tax Incentive) — reduces PAYE for qualifying 18–29 staff.
-  // Sum each run's ETI from its staff row, then cap the claim at PAYE (ETI can
-  // never make the PAYE line negative — the excess is carried by the accountant).
-  const etiRaw = monthRuns.reduce((s, p) => {
-    const staffRow = (staff ?? []).find((sm) => sm.id === p.staff_id);
+  // ETI is a MONTHLY, per-employee calculation: the amount is a function of the
+  // employee's total remuneration for the month, so aggregate all of an
+  // employee's runs (a weekly worker has ~4–5) into one monthly gross and call
+  // calcETI ONCE — computing it per weekly run would hit the wrong ETI band and
+  // multiply the claim. Then cap the total at PAYE (ETI can never make the PAYE
+  // line negative — the excess is carried by the accountant).
+  const grossByStaff = new Map<string, number>();
+  for (const p of monthRuns) {
+    if (!p.staff_id) continue; // no staff link → can't attribute ETI
+    grossByStaff.set(p.staff_id, (grossByStaff.get(p.staff_id) ?? 0) + Number(p.gross_wages ?? 0));
+  }
+  const etiRaw = [...grossByStaff.entries()].reduce((s, [staffId, monthlyGross]) => {
+    const staffRow = (staff ?? []).find((sm) => sm.id === staffId);
     if (!staffRow) return s;
-    const e = calcETI(staffRow, Number(p.gross_wages), monthsEmployedFrom(staffRow.start_date));
+    const e = calcETI(staffRow, monthlyGross, monthsEmployedFrom(staffRow.start_date));
     return s + (e.eligible ? e.amount : 0);
   }, 0);
   const eti = Math.min(etiRaw, paye);

@@ -17,6 +17,7 @@ type IncomeRow = {
   transaction_date: string;
   matched_invoice_id?: string | null;
   is_personal?: boolean | null;
+  is_credit_settlement?: boolean | null;
   vat_supply_type?: string | null;
 };
 
@@ -73,7 +74,10 @@ export function suppliesByType(
   }
 
   for (const r of income) {
-    if (r.matched_invoice_id || r.is_personal) continue;
+    // is_credit_settlement rows are money received to settle a credit-book entry
+    // (e.g. a supplier refund), not a sale — exclude them exactly as pnl.ts does,
+    // or they inflate standard-rated turnover.
+    if (r.matched_invoice_id || r.is_personal || r.is_credit_settlement) continue;
     if (r.transaction_date < fromDate || r.transaction_date > toDate) continue;
     totals[supplyOf(r.vat_supply_type)] += incomeNet(r);
   }
