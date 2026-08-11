@@ -109,6 +109,15 @@ export function HelpAssistantModal({ onClose }: { onClose: () => void }) {
               </button>
             ))}
           </div>
+          {/* Cross-link to the browsable Help Centre — the assistant answers a
+              question; the centre lets you read the full guides. */}
+          <Link
+            href="/help"
+            onClick={onClose}
+            style={{ display: "block", textAlign: "center", fontSize: 12.5, fontWeight: 700, color: "#0C4A6E", textDecoration: "none", padding: "2px 0 4px" }}
+          >
+            Or browse the full Help Centre →
+          </Link>
         </>
       )}
 

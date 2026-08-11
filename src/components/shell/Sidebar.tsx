@@ -217,9 +217,17 @@ export function Sidebar() {
         </div>
       )}
 
-      <div style={{ padding: "20px 9px 0", fontSize: 10.5, color: "rgba(255,255,255,0.4)" }}>
-        <Link href="/help" style={{ color: "rgba(255,255,255,0.55)", textDecoration: "none" }}>Help</Link>
-        <span style={{ margin: "0 6px" }}>·</span>
+      {/* Help Centre — a real, highlighted destination rather than a dim footer
+          word, so it's actually findable. Terms/Privacy stay as the quiet footer. */}
+      <Link
+        href="/help"
+        style={{ ...linkBase, marginTop: 16, background: "rgba(255,255,255,0.10)", color: "#fff", fontWeight: 700 }}
+      >
+        <span style={{ fontSize: 14 }}>❓</span>
+        <span>Help Centre</span>
+      </Link>
+
+      <div style={{ padding: "16px 9px 0", fontSize: 10.5, color: "rgba(255,255,255,0.4)" }}>
         <Link href="/terms" style={{ color: "rgba(255,255,255,0.55)", textDecoration: "none" }}>Terms</Link>
         <span style={{ margin: "0 6px" }}>·</span>
         <Link href="/privacy" style={{ color: "rgba(255,255,255,0.55)", textDecoration: "none" }}>Privacy</Link>

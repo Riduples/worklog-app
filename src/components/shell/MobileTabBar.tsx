@@ -102,6 +102,15 @@ export function MobileTabBar() {
                 router.push(`/dashboard?upgrade=${t}`);
               }}
             />
+            {/* Phone users had no way to reach the Help Centre — the sidebar it
+                lived in is desktop-only. Give it a clear home in the More sheet. */}
+            <Link
+              href="/help"
+              onClick={() => setMoreOpen(false)}
+              style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 16, padding: "13px 14px", borderRadius: 12, border: "1.5px solid #BAE6FD", background: "#F0F9FF", color: "#0C4A6E", fontWeight: 700, fontSize: 14, textDecoration: "none" }}
+            >
+              <span style={{ fontSize: 18 }}>❓</span> Help Centre — browse all guides
+            </Link>
           </div>
         </div>
       )}
