@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" fill="none">
+  <title>Loggy — wow</title>
+  <line x1="268" y1="604.0" x2="192" y2="534.0" stroke="#1E3C52" stroke-width="16" stroke-linecap="round"/><line x1="756" y1="604.0" x2="832" y2="534.0" stroke="#1E3C52" stroke-width="16" stroke-linecap="round"/>
+  <rect x="262" y="292" width="500" height="600" rx="96" fill="#E8A33D" stroke="#1E3C52" stroke-width="16"/>
+  <ellipse cx="362.0" cy="280" rx="26" ry="30" fill="#FFFFFF" stroke="#1E3C52" stroke-width="12"/>
+<ellipse cx="462.0" cy="280" rx="26" ry="30" fill="#FFFFFF" stroke="#1E3C52" stroke-width="12"/>
+<ellipse cx="562.0" cy="280" rx="26" ry="30" fill="#FFFFFF" stroke="#1E3C52" stroke-width="12"/>
+<ellipse cx="662.0" cy="280" rx="26" ry="30" fill="#FFFFFF" stroke="#1E3C52" stroke-width="12"/>
+  <line x1="334" y1="676.0" x2="690" y2="676.0" stroke="#C48428" stroke-width="13" stroke-linecap="round"/>
+<line x1="334" y1="730.0" x2="690" y2="730.0" stroke="#C48428" stroke-width="13" stroke-linecap="round"/>
+<line x1="334" y1="784.0" x2="690" y2="784.0" stroke="#C48428" stroke-width="13" stroke-linecap="round"/>
+  <ellipse cx="418.0" cy="472.0" rx="44" ry="54" fill="#FFFFFF" stroke="#1E3C52" stroke-width="12"/>
+<ellipse cx="420.0" cy="464.0" rx="20" ry="22" fill="#1E3C52"/>
+<ellipse cx="606.0" cy="472.0" rx="44" ry="54" fill="#FFFFFF" stroke="#1E3C52" stroke-width="12"/>
+<ellipse cx="608.0" cy="464.0" rx="20" ry="22" fill="#1E3C52"/>
+  <ellipse cx="356.0" cy="562.0" rx="40" ry="28" fill="#EE7864"/>
+  <ellipse cx="668.0" cy="562.0" rx="40" ry="28" fill="#EE7864"/>
+  <ellipse cx="512.0" cy="600.0" rx="40" ry="44" fill="#1E3C52"/>
+  
+</svg>

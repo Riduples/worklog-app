@@ -15,7 +15,7 @@ import { useAccountTransfers } from "@/lib/supabase/hooks/useAccountTransfers";
 import { useStaffRegister } from "@/lib/supabase/hooks/useStaffRegister";
 import { QuickLogModal } from "@/components/modals/QuickLogModal";
 import { UpgradeModal } from "@/components/modals/UpgradeModal";
-import { HelpAssistantModal } from "@/components/modals/HelpAssistantModal";
+import { useLoggy } from "@/components/shell/LoggyAssistant";
 import { LogoutButton } from "@/components/auth/LogoutButton";
 import { TrialStatusBar } from "@/components/billing/TrialStatusBar";
 import { useWriteAccess } from "@/lib/writeAccess";
@@ -47,7 +47,8 @@ export function DashboardView({ businessName }: { businessName: string }) {
   const { data: accounts } = useBankAccounts();
   const { data: transfers } = useAccountTransfers();
   const { data: staff } = useStaffRegister();
-  const [modal, setModal] = useState<"quicklog" | "help" | null>(null);
+  const [modal, setModal] = useState<"quicklog" | null>(null);
+  const { open: openLoggy } = useLoggy();
   const [period, setPeriod] = useState<"month" | "year" | "all">("year");
   const [account, setAccount] = useState<AccountFilter>(ALL_ACCOUNTS);
   const [toolsOpen, setToolsOpen] = useState(false);
@@ -256,7 +257,7 @@ export function DashboardView({ businessName }: { businessName: string }) {
                 Business Hub
               </Link>
             )}
-            <button onClick={() => setModal("help")} className="dash-text-btn">
+            <button onClick={openLoggy} className="dash-text-btn">
               Help
             </button>
             <LogoutButton />
@@ -435,7 +436,6 @@ export function DashboardView({ businessName }: { businessName: string }) {
       </div>
 
       {modal === "quicklog" && <QuickLogModal onClose={() => setModal(null)} />}
-      {modal === "help" && <HelpAssistantModal onClose={() => setModal(null)} />}
       {upgradeFeature && business && (
         <UpgradeModal feature={upgradeFeature} currentPlan={plan} isOwner={isOwner} onClose={() => setUpgradeFeature(null)} />
       )}

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { subscribeReadOnlyToast } from "@/lib/readOnlyToast";
+import { useLoggy } from "@/components/shell/LoggyAssistant";
 
 /**
  * Shown for a few seconds when a write is blocked because the business is
@@ -12,6 +13,7 @@ import { subscribeReadOnlyToast } from "@/lib/readOnlyToast";
  */
 export function ReadOnlyToast() {
   const [show, setShow] = useState(false);
+  const { isOpen: loggyOpen } = useLoggy();
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => subscribeReadOnlyToast(() => {
@@ -22,7 +24,8 @@ export function ReadOnlyToast() {
 
   useEffect(() => () => { if (hideTimer.current) clearTimeout(hideTimer.current); }, []);
 
-  if (!show) return null;
+  // While the Loggy chat sheet is open, don't float this over its input.
+  if (!show || loggyOpen) return null;
 
   return (
     <div
