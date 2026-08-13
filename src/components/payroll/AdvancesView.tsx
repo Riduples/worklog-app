@@ -2,107 +2,67 @@
 
 import { useState } from "react";
 import { useStaffRegister } from "@/lib/supabase/hooks/useStaffRegister";
-import { useWorkerLoans, useCreateAdvance, useUpdateAdvance, type WorkerLoan } from "@/lib/supabase/hooks/useWorkerLoans";
-import { Field } from "@/components/ui/Field";
-import { Input } from "@/components/ui/Input";
-import { SaveBtn } from "@/components/ui/SaveBtn";
-import { fmt, todayStr } from "@/lib/format";
+import { useWorkerLoans, type WorkerLoan } from "@/lib/supabase/hooks/useWorkerLoans";
+import { AdvanceModal } from "@/components/modals/AdvanceModal";
+import { ReadOnlyNotice } from "@/components/ui/ReadOnlyNotice";
+import { useToolAccess } from "@/lib/supabase/hooks/useToolAccess";
+import { fmt } from "@/lib/format";
 import { getLoanBalance } from "@/lib/payroll";
 import { BackLink } from "@/components/ui/BackLink";
 
 export function AdvancesView() {
+  const access = useToolAccess("advances");
   const { data: staff } = useStaffRegister();
-  const { data: loans } = useWorkerLoans();
-  const createAdvance = useCreateAdvance();
-  const updateAdvance = useUpdateAdvance();
+  const { data: loans, isLoading } = useWorkerLoans();
 
-  const [staffId, setStaffId] = useState("");
-  const [showPicker, setShowPicker] = useState(false);
-  const [amount, setAmount] = useState("");
-  const [repayPerRun, setRepayPerRun] = useState("");
-  const [note, setNote] = useState("");
-  const [editId, setEditId] = useState<string | null>(null);
-  const [error, setError] = useState("");
+  const [modal, setModal] = useState<{ open: boolean; advance?: WorkerLoan }>({ open: false });
+  const [search, setSearch] = useState("");
+  const [sort, setSort] = useState<"recent" | "az">("recent");
 
-  const selectedWorker = (staff ?? []).find((w) => w.id === staffId) ?? null;
   const balanceFor = (id: string) => getLoanBalance((loans ?? []).filter((l) => l.staff_id === id));
   const repayPlanFor = (id: string) =>
     (loans ?? [])
       .filter((l) => l.staff_id === id && l.loan_type === "advance" && l.repay_per_run != null && l.repay_per_run > 0)
       .sort((a, b) => new Date(b.entry_date).getTime() - new Date(a.entry_date).getTime())[0] ?? null;
   const totalOutstanding = (staff ?? []).reduce((s, w) => s + balanceFor(w.id), 0);
-  const selectedBalance = staffId ? balanceFor(staffId) : 0;
-  const workerHistory = staffId
-    ? (loans ?? []).filter((l) => l.staff_id === staffId).sort((a, b) => new Date(b.entry_date).getTime() - new Date(a.entry_date).getTime())
-    : [];
 
-  const isEdit = editId !== null;
+  // The list is the advances given (repayment rows come from Pay Run and are shown
+  // netted into the outstanding total above, not as their own list rows).
+  const advances = (loans ?? []).filter((l) => l.loan_type === "advance");
 
-  const startEdit = (l: WorkerLoan) => {
-    setEditId(l.id);
-    setStaffId(l.staff_id ?? "");
-    setAmount(String(l.amount));
-    setRepayPerRun(l.repay_per_run != null ? String(l.repay_per_run) : "");
-    setNote(l.note ?? "");
-    setShowPicker(false);
-    setError("");
-  };
+  const filtered = advances.filter((l) => {
+    if (!search) return true;
+    const s = search.toLowerCase();
+    return `${l.worker_name} ${l.note ?? ""}`.toLowerCase().includes(s);
+  });
 
-  const cancelEdit = () => {
-    setEditId(null);
-    setAmount("");
-    setRepayPerRun("");
-    setNote("");
-    setError("");
-  };
-
-  const handleSave = () => {
-    if (!staffId || !amount) {
-      setError("Pick an employee and enter an amount.");
-      return;
-    }
-    setError("");
-    if (editId) {
-      updateAdvance.mutate(
-        { id: editId, changes: { amount: parseFloat(amount), repay_per_run: parseFloat(repayPerRun) || null, note: note || null } },
-        {
-          onSuccess: () => {
-            setEditId(null);
-            setAmount("");
-            setRepayPerRun("");
-            setNote("");
-          },
-          onError: (e) => setError(e instanceof Error ? e.message : "Couldn't update the advance."),
-        }
-      );
-      return;
-    }
-    createAdvance.mutate(
-      { staff_id: staffId, worker_name: selectedWorker!.full_name, amount: parseFloat(amount), repay_per_run: parseFloat(repayPerRun) || null, note: note || null, entry_date: todayStr() },
-      {
-        onSuccess: () => {
-          setAmount("");
-          setRepayPerRun("");
-          setNote("");
-        },
-        onError: (e) => setError(e instanceof Error ? e.message : "Couldn't record the advance."),
-      }
-    );
-  };
+  const sorted = [...filtered].sort((a, b) =>
+    sort === "az"
+      ? a.worker_name.localeCompare(b.worker_name)
+      : new Date(b.entry_date).getTime() - new Date(a.entry_date).getTime()
+  );
 
   return (
     <div style={{ padding: "20px 16px 100px" }}>
-      <div style={{ marginBottom: 18 }}>
-        <BackLink />
-        <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 0" }}>Advances</h1>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
+        <div>
+          <BackLink />
+          <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 0" }}>Advances</h1>
+        </div>
+        {access.canEdit && (
+          <button
+            onClick={() => setModal({ open: true })}
+            style={{ background: "#0C4A6E", color: "#fff", border: "none", borderRadius: 12, padding: "10px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+          >
+            + New
+          </button>
+        )}
       </div>
 
-      <div style={{ background: "#fff7ed", border: "1.5px solid #fed7aa", borderRadius: 12, padding: "10px 14px", marginBottom: 14, fontSize: 12, color: "#92400e", lineHeight: 1.5 }}>
-        <span style={{ fontWeight: 700 }}>💰 Advances</span> — Record cash advances given to employees. Outstanding balances show here and auto-appear in Pay Run for easy deduction.
-      </div>
+      {!access.loading && !access.canEdit && <ReadOnlyNotice level={access.level} what="advances" />}
 
       {totalOutstanding > 0 && (
-        <div style={{ background: "#0C4A6E", borderRadius: 14, padding: "14px 16px", marginBottom: 12 }}>
+        <div style={{ background: "#0C4A6E", borderRadius: 14, padding: "14px 16px", marginBottom: 14 }}>
           <div style={{ fontSize: 11, color: "#38BDF8", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>Outstanding advances</div>
           <div style={{ fontSize: 22, fontWeight: 900, color: "#fff", marginBottom: 8 }}>{fmt(totalOutstanding)} total</div>
           {(staff ?? [])
@@ -127,108 +87,82 @@ export function AdvancesView() {
         </div>
       )}
 
-      <div style={{ fontSize: 12, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 8 }}>{isEdit ? "Edit advance" : "Record new advance"}</div>
-      <Field label="Employee">
-        <div style={{ position: "relative" }}>
-          <Input value={selectedWorker?.full_name ?? ""} onChange={() => {}} placeholder="Select employee" />
-          <button
-            onClick={() => setShowPicker((p) => !p)}
-            style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "#b45309", border: "none", borderRadius: 8, padding: "5px 10px", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
-          >
-            {showPicker ? "✕" : "👤 Pick"}
-          </button>
-        </div>
-        {showPicker && (
-          <div style={{ background: "#fff", border: "1.5px solid #fed7aa", borderRadius: 12, marginTop: 6, overflow: "hidden", boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}>
-            {(staff ?? []).length === 0 && <div style={{ padding: 14, fontSize: 13, color: "#94a3b8", textAlign: "center" }}>No employees registered.</div>}
-            {(staff ?? []).map((w) => {
-              const bal = balanceFor(w.id);
-              return (
-                <button
-                  key={w.id}
-                  onClick={() => {
-                    setStaffId(w.id);
-                    setShowPicker(false);
-                  }}
-                  style={{ width: "100%", padding: "11px 14px", border: "none", borderBottom: "1px solid #fff7ed", background: "#fff", cursor: "pointer", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center" }}
-                >
-                  <span style={{ fontSize: 14, fontWeight: 700 }}>{w.full_name}</span>
-                  {bal > 0 && <span style={{ fontSize: 12, fontWeight: 700, color: "#b45309", background: "#fff7ed", padding: "2px 8px", borderRadius: 8 }}>{fmt(bal)} outstanding</span>}
-                </button>
-              );
-            })}
+      {isLoading && <p style={{ color: "#94a3b8", fontSize: 13 }}>Loading...</p>}
+      {!isLoading && advances.length === 0 && (
+        <div style={{ background: "#f8fafc", borderRadius: 12, padding: 20, textAlign: "center", marginBottom: 14 }}>
+          <div style={{ fontSize: 32, marginBottom: 8 }}>💰</div>
+          <div style={{ fontSize: 14, color: "#64748b" }}>
+            No advances yet.{access.canEdit ? " Tap “+ New” to record one." : ""}
           </div>
-        )}
-      </Field>
-
-      {selectedWorker && selectedBalance > 0 && (
-        <div style={{ background: "#fff7ed", borderRadius: 10, padding: "9px 12px", marginBottom: 10, fontSize: 12, color: "#92400e" }}>
-          {selectedWorker.full_name} already owes <strong>{fmt(selectedBalance)}</strong> — this will be added on top.
         </div>
       )}
 
-      <Field label="Amount (R)">
-        <Input type="number" value={amount} onChange={setAmount} placeholder="0.00" />
-      </Field>
-      <Field label="Repay per pay run (R)">
-        <Input type="number" value={repayPerRun} onChange={setRepayPerRun} placeholder="Leave blank to deduct manually" />
-      </Field>
-      {parseFloat(amount) > 0 && parseFloat(repayPerRun) > 0 && (
-        <div style={{ fontSize: 12, color: "#64748b", margin: "-6px 0 10px" }}>
-          ≈ {Math.ceil(parseFloat(amount) / parseFloat(repayPerRun))} pay runs to repay
+      {!isLoading && advances.length > 0 && (
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search advances..."
+          style={{ width: "100%", padding: "12px 14px", borderRadius: 12, border: "1.5px solid #e2e8f0", fontSize: 14, boxSizing: "border-box", marginBottom: 12, background: "#fff" }}
+        />
+      )}
+
+      {!isLoading && advances.length > 0 && filtered.length === 0 && (
+        <p style={{ color: "#94a3b8", fontSize: 13, textAlign: "center", marginTop: 40 }}>No advances match your search.</p>
+      )}
+
+      {sorted.length > 0 && (
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, margin: "0 0 10px 2px" }}>
+          <span style={{ fontSize: 11, color: "#94a3b8" }}>
+            {sorted.length}
+            {sorted.length !== advances.length ? ` of ${advances.length}` : ""} advance{advances.length === 1 ? "" : "s"}
+          </span>
+          <div style={{ display: "flex", gap: 4, background: "#f1f5f9", borderRadius: 10, padding: 3 }}>
+            {(["recent", "az"] as const).map((s) => (
+              <button
+                key={s}
+                onClick={() => setSort(s)}
+                style={{ padding: "5px 12px", borderRadius: 8, border: "none", background: sort === s ? "#fff" : "transparent", color: sort === s ? "#0C4A6E" : "#64748b", fontSize: 12, fontWeight: 700, cursor: "pointer", boxShadow: sort === s ? "0 1px 3px rgba(0,0,0,0.1)" : "none" }}
+              >
+                {s === "az" ? "A–Z" : "Recent"}
+              </button>
+            ))}
+          </div>
         </div>
       )}
-      <Field label="Reason - optional">
-        <Input value={note} onChange={setNote} placeholder="e.g. Emergency, transport, groceries..." />
-      </Field>
 
-      {error && <p style={{ color: "#dc2626", fontSize: 13, marginBottom: 12 }}>{error}</p>}
-      <SaveBtn
-        label={isEdit ? (updateAdvance.isPending ? "Updating..." : "Update Advance") : createAdvance.isPending ? "Saving..." : "Record Advance"}
-        icon="💰"
-        onClick={handleSave}
-        disabled={createAdvance.isPending || updateAdvance.isPending}
-      />
-      {isEdit && (
-        <button
-          onClick={cancelEdit}
-          style={{ width: "100%", marginTop: 8, padding: "12px", borderRadius: 12, border: "1.5px solid #e2e8f0", background: "#fff", color: "#64748b", fontSize: 14, fontWeight: 700, cursor: "pointer" }}
-        >
-          Cancel edit
-        </button>
-      )}
-
-      {workerHistory.length > 0 && (
-        <div style={{ marginTop: 16 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>{selectedWorker?.full_name} — history</div>
-          {workerHistory.map((l) => (
-            <div key={l.id} style={{ background: l.loan_type === "advance" ? "#fff7ed" : "#F0F9FF", border: `1px solid ${l.loan_type === "advance" ? "#fed7aa" : "#BAE6FD"}`, borderRadius: 10, padding: "9px 12px", marginBottom: 6, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div>
-                <div style={{ fontSize: 12, fontWeight: 700 }}>
-                  {l.entry_date} · {l.loan_type === "advance" ? "Advance given" : "Repaid from wages"}
-                </div>
-                {l.note && <div style={{ fontSize: 11, color: "#64748b" }}>{l.note}</div>}
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                {l.loan_type === "advance" && (
-                  <button
-                    onClick={() => startEdit(l)}
-                    title="Edit advance"
-                    aria-label="Edit advance"
-                    style={{ background: "none", border: "none", cursor: "pointer", fontSize: 15, lineHeight: 1, padding: 2 }}
-                  >
-                    ✏️
-                  </button>
-                )}
-                <span style={{ fontSize: 13, fontWeight: 800, color: l.loan_type === "advance" ? "#b45309" : "#0C4A6E" }}>
-                  {l.loan_type === "advance" ? "+" : "−"}
-                  {fmt(l.amount)}
-                </span>
-              </div>
+      {sorted.map((l) => {
+        const body = (
+          <>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "#111" }}>{l.worker_name}</div>
+            <div style={{ fontSize: 11, color: "#94a3b8" }}>
+              {l.entry_date}
+              {l.note ? ` · ${l.note}` : ""}
+              {l.repay_per_run != null && l.repay_per_run > 0 ? ` · 🔁 ${fmt(l.repay_per_run)}/run` : ""}
             </div>
-          ))}
-        </div>
-      )}
+          </>
+        );
+        return (
+          <div
+            key={l.id}
+            style={{ background: "#fff", borderRadius: 13, padding: "12px 14px", marginBottom: 8, display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}
+          >
+            {access.canEdit ? (
+              <button
+                onClick={() => setModal({ open: true, advance: l })}
+                style={{ background: "none", border: "none", textAlign: "left", cursor: "pointer", flex: 1, padding: 0 }}
+                aria-label="Edit advance"
+              >
+                {body}
+              </button>
+            ) : (
+              <div style={{ flex: 1 }}>{body}</div>
+            )}
+            <span style={{ fontSize: 15, fontWeight: 800, color: "#b45309", marginLeft: 8 }}>{fmt(l.amount)}</span>
+          </div>
+        );
+      })}
+
+      {modal.open && <AdvanceModal advance={modal.advance} onClose={() => setModal({ open: false })} />}
     </div>
   );
 }
