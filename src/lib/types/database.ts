@@ -762,6 +762,7 @@ export type Database = {
           matched_supplier_invoice_id: string | null
           paid_to: string | null
           paid_to_contact_id: string | null
+          pay_run_id: string | null
           payment_method: string | null
           sars_category: string | null
           source: string | null
@@ -785,6 +786,7 @@ export type Database = {
           matched_supplier_invoice_id?: string | null
           paid_to?: string | null
           paid_to_contact_id?: string | null
+          pay_run_id?: string | null
           payment_method?: string | null
           sars_category?: string | null
           source?: string | null
@@ -808,6 +810,7 @@ export type Database = {
           matched_supplier_invoice_id?: string | null
           paid_to?: string | null
           paid_to_contact_id?: string | null
+          pay_run_id?: string | null
           payment_method?: string | null
           sars_category?: string | null
           source?: string | null
@@ -2368,6 +2371,7 @@ export type Database = {
           id: string
           leave_type: string
           note: string | null
+          pay_run_id: string | null
           staff_id: string | null
           start_date: string
           user_id: string
@@ -2381,6 +2385,7 @@ export type Database = {
           id?: string
           leave_type: string
           note?: string | null
+          pay_run_id?: string | null
           staff_id?: string | null
           start_date: string
           user_id: string
@@ -2394,6 +2399,7 @@ export type Database = {
           id?: string
           leave_type?: string
           note?: string | null
+          pay_run_id?: string | null
           staff_id?: string | null
           start_date?: string
           user_id?: string
@@ -2425,6 +2431,7 @@ export type Database = {
           id: string
           loan_type: string
           note: string | null
+          pay_run_id: string | null
           repay_per_run: number | null
           staff_id: string | null
           user_id: string
@@ -2438,6 +2445,7 @@ export type Database = {
           id?: string
           loan_type: string
           note?: string | null
+          pay_run_id?: string | null
           repay_per_run?: number | null
           staff_id?: string | null
           user_id: string
@@ -2451,6 +2459,7 @@ export type Database = {
           id?: string
           loan_type?: string
           note?: string | null
+          pay_run_id?: string | null
           repay_per_run?: number | null
           staff_id?: string | null
           user_id?: string

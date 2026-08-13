@@ -1,9 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { Row } from "@/components/ui/Row";
 import { DocumentActions } from "@/components/ui/DocumentActions";
 import { useStaffRegister } from "@/lib/supabase/hooks/useStaffRegister";
+import { useDeletePayRun } from "@/lib/supabase/hooks/usePayRuns";
+import { useToolAccess } from "@/lib/supabase/hooks/useToolAccess";
 import { fmt } from "@/lib/format";
 import type { Tables } from "@/lib/types/database";
 import type { DocForRender } from "@/lib/docgen/buildDocumentHTML";
@@ -16,6 +19,10 @@ type PayRun = Tables<"pay_runs">;
 // paid, even if the employee's rate has since changed.
 export function PayRunDetailModal({ payRun, onClose }: { payRun: PayRun; onClose: () => void }) {
   const { data: staff } = useStaffRegister();
+  const access = useToolAccess("payrun");
+  const deletePayRun = useDeletePayRun();
+  const [showVoid, setShowVoid] = useState(false);
+  const [error, setError] = useState("");
   const worker = (staff ?? []).find((w) => w.id === payRun.staff_id) ?? null;
   const unitLabel = worker?.pay_type === "Hourly" ? "hrs" : "days";
 
@@ -59,6 +66,21 @@ export function PayRunDetailModal({ payRun, onClose }: { payRun: PayRun; onClose
     due_date: payRun.pay_date,
     valid_until: null,
   };
+
+  const handleVoid = () => {
+    setError("");
+    deletePayRun.mutate(payRun.id, {
+      onSuccess: onClose,
+      onError: (e) => setError(e instanceof Error ? e.message : "Couldn't void the pay run."),
+    });
+  };
+
+  // What this run created, to tell the user exactly what voiding reverses.
+  const reversals = [
+    `the wage${uifEr > 0 ? "/UIF" : ""}${sdl > 0 ? "/SDL" : ""} expense on your books`,
+    loan > 0 ? "the advance repayment — restores the outstanding balance" : null,
+    leaveDays > 0 ? "the leave recorded here — restores the leave balance" : null,
+  ].filter(Boolean) as string[];
 
   return (
     <Modal title={`Payslip ${payRun.payslip_number ?? ""}`.trim()} onClose={onClose}>
@@ -104,6 +126,44 @@ export function PayRunDetailModal({ payRun, onClose }: { payRun: PayRun; onClose
         sourceId={payRun.id}
         shareText={`Payslip for ${payRun.worker_name} — ${payRun.pay_period} ${payRun.pay_date}. Net pay: ${fmt(net)}.`}
       />
+
+      {/* Made a mistake? Voiding removes this run and reverses everything it
+          created, so you can re-issue a corrected one. Approve-level only — the
+          same permission that finalises a run can undo it. */}
+      {access.canApprove && (
+        <div style={{ marginTop: 16 }}>
+          <button
+            onClick={() => setShowVoid((p) => !p)}
+            style={{ width: "100%", background: "#fff1f2", border: "1.5px solid #fecdd3", borderRadius: 12, padding: "11px 16px", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}
+          >
+            <span style={{ fontSize: 13, fontWeight: 700, color: "#be123c" }}>🗑️ Made a mistake? Void this pay run</span>
+            <span style={{ color: "#be123c" }}>{showVoid ? "▲" : "▼"}</span>
+          </button>
+          {showVoid && (
+            <div style={{ background: "#fff1f2", border: "1.5px solid #fecdd3", borderRadius: 12, padding: 14, marginTop: 8 }}>
+              <div style={{ fontSize: 12, color: "#7f1d1d", lineHeight: 1.6, marginBottom: 8 }}>
+                This deletes the pay run and reverses everything it created:
+                <ul style={{ margin: "6px 0 0", paddingLeft: 18 }}>
+                  {reversals.map((r) => (
+                    <li key={r} style={{ marginBottom: 2 }}>{r}</li>
+                  ))}
+                </ul>
+              </div>
+              <div style={{ fontSize: 11, color: "#b45309", lineHeight: 1.5, marginBottom: 10, fontStyle: "italic" }}>
+                To correct a mistake, void this run then create a fresh one with “+ New”. This can&apos;t be undone.
+              </div>
+              {error && <p style={{ color: "#dc2626", fontSize: 13, marginBottom: 10 }}>{error}</p>}
+              <button
+                onClick={handleVoid}
+                disabled={deletePayRun.isPending}
+                style={{ width: "100%", background: "#be123c", color: "#fff", border: "none", borderRadius: 12, padding: 13, fontSize: 13, fontWeight: 700, cursor: deletePayRun.isPending ? "default" : "pointer", opacity: deletePayRun.isPending ? 0.6 : 1 }}
+              >
+                {deletePayRun.isPending ? "Voiding..." : "Confirm — void this pay run"}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
     </Modal>
   );
 }

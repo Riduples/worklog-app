@@ -48,6 +48,28 @@ export type CreatePayRunInput = {
   status: "prepared" | "approved";
 };
 
+// Void a pay run. Deleting the row cascades (via the pay_run_id FKs added in
+// migration 0117) to the wage/UIF/SDL expenses, the advance repayment and the
+// leave row it created — so the expense is reversed and the advance and leave
+// balances are restored. The app then re-issues a corrected run. Invalidates
+// every dataset those side-effects touch.
+export function useDeletePayRun() {
+  const supabase = createClient();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("pay_runs").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: LOANS_KEY });
+      queryClient.invalidateQueries({ queryKey: LEAVE_KEY });
+      queryClient.invalidateQueries({ queryKey: EXPENSES_KEY });
+    },
+  });
+}
+
 export function useCreatePayRun() {
   const supabase = createClient();
   const queryClient = useQueryClient();
