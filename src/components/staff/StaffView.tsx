@@ -80,6 +80,17 @@ function StaffDetailModal({ staff, onClose, onEdit }: { staff: StaffMember; onCl
     );
   };
 
+  // Undo an accidental termination — clears the exit details and returns the
+  // person to active staff. Leave accrual reads from the untouched start date, so
+  // reinstating restores them exactly as they were.
+  const handleReinstate = () => {
+    if (!confirm(`Reinstate ${staff.full_name}? This clears their leaving date and reason and returns them to active staff.`)) return;
+    updateStaff.mutate(
+      { id: staff.id, changes: { terminated: false, term_end_date: null, term_reason: null, term_notice_worked: null } },
+      { onSuccess: onClose }
+    );
+  };
+
   return (
     <Modal title={staff.full_name} onClose={onClose}>
       <div style={{ background: "#0C4A6E", borderRadius: 14, padding: "16px 18px", marginBottom: 12 }}>
@@ -144,6 +155,15 @@ function StaffDetailModal({ staff, onClose, onEdit }: { staff: StaffMember; onCl
           <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 4, lineHeight: 1.5 }}>
             Remember to submit a UI-19 to the Department of Labour and issue a Certificate of Service.
           </div>
+          {access.canEdit && (
+            <button
+              onClick={handleReinstate}
+              disabled={updateStaff.isPending}
+              style={{ width: "100%", marginTop: 10, background: "#fff", border: "1.5px solid #cbd5e1", borderRadius: 10, padding: "10px 12px", fontSize: 12.5, fontWeight: 700, color: "#0C4A6E", cursor: updateStaff.isPending ? "default" : "pointer", opacity: updateStaff.isPending ? 0.6 : 1 }}
+            >
+              ↩️ Reinstate — terminated by mistake
+            </button>
+          )}
         </div>
       )}
 
@@ -318,6 +338,9 @@ export function StaffView() {
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [selected, setSelected] = useState<StaffMember | null>(null);
   const [editing, setEditing] = useState<StaffMember | null>(null);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "left">("all");
+  const [sort, setSort] = useState<"az" | "recent">("az");
 
   const isOwner = (currentMember ?? { role: "owner" }).role === "owner";
   const plan = (business?.plan ?? "solo") as Plan;
@@ -328,10 +351,29 @@ export function StaffView() {
   const staffLimit = restriction?.limit;
   const soloCapped = staffLimit !== undefined && staffCount >= staffLimit;
 
-  // Terminated staff drop to the bottom but are never filtered out — a final pay
-  // run may still be owed. Array.sort is stable, so the query's full_name order
-  // is preserved within the active and left groups.
-  const sortedStaff = [...(staff ?? [])].sort((a, b) => (a.terminated ? 1 : 0) - (b.terminated ? 1 : 0));
+  // Search (name, employee no., ID, contractor trading name) and the status pills
+  // narrow the list the same way the other list tools do.
+  const all = staff ?? [];
+  const anyTerminated = all.some((w) => w.terminated);
+  const filtered = all.filter((w) => {
+    if (statusFilter === "active" && w.terminated) return false;
+    if (statusFilter === "left" && !w.terminated) return false;
+    if (search) {
+      const s = search.toLowerCase();
+      const hay = `${w.full_name} ${w.employee_number ?? ""} ${w.id_number ?? ""} ${w.trading_name ?? ""}`.toLowerCase();
+      if (!hay.includes(s)) return false;
+    }
+    return true;
+  });
+
+  // Terminated staff always sink to the bottom — a final pay run may still be
+  // owed — then the chosen sort orders each group: A–Z by name, or most recently
+  // added first.
+  const sortedStaff = [...filtered].sort((a, b) => {
+    const term = (a.terminated ? 1 : 0) - (b.terminated ? 1 : 0);
+    if (term !== 0) return term;
+    return sort === "recent" ? (b.created_at ?? "").localeCompare(a.created_at ?? "") : a.full_name.localeCompare(b.full_name);
+  });
 
   const handleAddClick = () => {
     if (soloCapped) setShowUpgrade(true);
@@ -353,15 +395,63 @@ export function StaffView() {
         </button>
       </div>
 
-      <div style={{ background: "#F0F9FF", border: "1.5px solid #7DD3FC", borderRadius: 12, padding: "10px 14px", marginBottom: 14, fontSize: 12, color: "#0369A1", lineHeight: 1.5 }}>
-        <span style={{ fontWeight: 700 }}>👤 Staff Register</span> — Register each employee once. Their rate auto-loads in Pay Run. Leave balances track automatically from their start date.
-      </div>
-
       {isLoading && <p style={{ color: "#94a3b8", fontSize: 13 }}>Loading...</p>}
-      {!isLoading && (staff ?? []).length === 0 && (
+      {!isLoading && all.length === 0 && (
         <div style={{ background: "#f8fafc", borderRadius: 12, padding: 20, textAlign: "center", marginBottom: 14 }}>
           <div style={{ fontSize: 32, marginBottom: 8 }}>👤</div>
-          <div style={{ fontSize: 14, color: "#64748b" }}>No employees yet. Add your first one below.</div>
+          <div style={{ fontSize: 14, color: "#64748b" }}>No employees yet. Add your first one above.</div>
+        </div>
+      )}
+
+      {!isLoading && all.length > 0 && (
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search staff..."
+          style={{ width: "100%", padding: "12px 14px", borderRadius: 12, border: "1.5px solid #e2e8f0", fontSize: 14, boxSizing: "border-box", marginBottom: 12, background: "#fff" }}
+        />
+      )}
+
+      {/* Status pills only appear once someone has left — until then everyone is
+          active and a filter would be noise. */}
+      {anyTerminated && (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
+          {(["all", "active", "left"] as const).map((s) => {
+            const active = statusFilter === s;
+            return (
+              <button
+                key={s}
+                onClick={() => setStatusFilter(s)}
+                style={{ padding: "8px 14px", borderRadius: 20, border: `1.5px solid ${active ? "#0C4A6E" : "#e2e8f0"}`, background: active ? "#0C4A6E" : "#fff", color: active ? "#fff" : "#374151", fontSize: 12, fontWeight: 700, cursor: "pointer", textTransform: "capitalize" }}
+              >
+                {s === "all" ? "All" : s === "active" ? "Active" : "Left"}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {!isLoading && all.length > 0 && sortedStaff.length === 0 && (
+        <p style={{ color: "#94a3b8", fontSize: 13, textAlign: "center", marginTop: 40 }}>No staff match your search.</p>
+      )}
+
+      {sortedStaff.length > 0 && (
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, margin: "0 0 10px 2px" }}>
+          <span style={{ fontSize: 11, color: "#94a3b8" }}>
+            {sortedStaff.length}
+            {sortedStaff.length !== all.length ? ` of ${all.length}` : ""} {all.length === 1 ? "person" : "people"}
+          </span>
+          <div style={{ display: "flex", gap: 4, background: "#f1f5f9", borderRadius: 10, padding: 3 }}>
+            {(["az", "recent"] as const).map((s) => (
+              <button
+                key={s}
+                onClick={() => setSort(s)}
+                style={{ padding: "5px 12px", borderRadius: 8, border: "none", background: sort === s ? "#fff" : "transparent", color: sort === s ? "#0C4A6E" : "#64748b", fontSize: 12, fontWeight: 700, cursor: "pointer", boxShadow: sort === s ? "0 1px 3px rgba(0,0,0,0.1)" : "none" }}
+              >
+                {s === "az" ? "A–Z" : "Recent"}
+              </button>
+            ))}
+          </div>
         </div>
       )}
 

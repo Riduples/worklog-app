@@ -245,21 +245,6 @@ export function StaffModal({ staff, onClose }: { staff?: StaffMember; onClose: (
         />
       </Field>
 
-      <div style={{ background: "#f8fafc", borderRadius: 12, padding: 14, marginBottom: 12 }}>
-        <div style={{ fontSize: 12, fontWeight: 700, color: "#374151", marginBottom: 8 }}>Recurring allowance - optional</div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-          <Field label="Allowance per month (R)">
-            <Input type="number" value={recurringAllowance} onChange={setRecurringAllowance} placeholder="e.g. 500" />
-          </Field>
-          <Field label="What it's for">
-            <Input value={recurringAllowanceDesc} onChange={setRecurringAllowanceDesc} placeholder="e.g. Travel, Phone" />
-          </Field>
-        </div>
-        <div style={{ fontSize: 11, color: "#64748b", lineHeight: 1.5 }}>
-          A standing allowance added to every pay run — the Pay Run pulls it in automatically; you can still add one-off allowances there.
-        </div>
-      </div>
-
       {!isContractor && (
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
           <Field label="Days/week">
@@ -300,6 +285,23 @@ export function StaffModal({ staff, onClose }: { staff?: StaffMember; onClose: (
           )}
         </div>
       )}
+
+      {/* Optional recurring allowance sits after the core pay figure and its
+          estimate — an add-on to the wage, entered once the essentials are set. */}
+      <div style={{ background: "#f8fafc", borderRadius: 12, padding: 14, marginBottom: 12 }}>
+        <div style={{ fontSize: 12, fontWeight: 700, color: "#374151", marginBottom: 8 }}>Recurring allowance - optional</div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+          <Field label="Allowance per month (R)">
+            <Input type="number" value={recurringAllowance} onChange={setRecurringAllowance} placeholder="e.g. 500" />
+          </Field>
+          <Field label="What it's for">
+            <Input value={recurringAllowanceDesc} onChange={setRecurringAllowanceDesc} placeholder="e.g. Travel, Phone" />
+          </Field>
+        </div>
+        <div style={{ fontSize: 11, color: "#64748b", lineHeight: 1.5 }}>
+          A standing allowance added to every pay run — the Pay Run pulls it in automatically; you can still add one-off allowances there.
+        </div>
+      </div>
 
       <button
         onClick={() => setShowExtras((p) => !p)}
