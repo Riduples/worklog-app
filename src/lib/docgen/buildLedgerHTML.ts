@@ -406,7 +406,7 @@ export function buildActualVsEstimateHTML(
     ? `<div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.6px;margin:8px 0 10px;">Other logged time — no estimate</div>
   <table>
     <thead>
-      <tr><th>Client</th><th style="text-align:right;">Logged</th><th style="text-align:right;">Billable</th><th style="text-align:right;">Non-billable</th></tr>
+      <tr><th>Customer</th><th style="text-align:right;">Logged</th><th style="text-align:right;">Billable</th><th style="text-align:right;">Non-billable</th></tr>
     </thead>
     <tbody>${other
       .map(
@@ -463,7 +463,7 @@ export function buildActualVsEstimateHTML(
 
 // Travel report — the business's own record of kilometres driven for work and the
 // SARS deduction claimed, for tax records. Heads with their letterhead.
-export type TravelReportRow = { date: string; type: string; purpose: string; km: number; deduction: number };
+export type TravelReportRow = { date: string; type: string; purpose: string; odoStart: number; odoEnd: number; km: number; deduction: number };
 
 export function buildTravelReportHTML(
   business: BusinessProfile,
@@ -481,12 +481,14 @@ export function buildTravelReportHTML(
         <td>${esc(r.date)}</td>
         <td>${esc(r.type)}</td>
         <td>${esc(r.purpose || "—")}</td>
+        <td style="text-align:right;">${r.odoStart.toFixed(0)}</td>
+        <td style="text-align:right;">${r.odoEnd.toFixed(0)}</td>
         <td style="text-align:right;">${r.km.toFixed(1)} km</td>
         <td style="text-align:right;font-weight:700;">${fmt(r.deduction)}</td>
       </tr>`
         )
         .join("")
-    : `<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:16px;">No trips logged.</td></tr>`;
+    : `<tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:16px;">No trips logged.</td></tr>`;
 
   return `<!DOCTYPE html>
 <html>
@@ -514,7 +516,7 @@ export function buildTravelReportHTML(
   <div style="font-size:11px;font-weight:700;color:#0C4A6E;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;">Trips</div>
   <table>
     <thead>
-      <tr><th>Date</th><th>Type</th><th>Purpose</th><th style="text-align:right;">Distance</th><th style="text-align:right;">Deduction</th></tr>
+      <tr><th>Date</th><th>Type</th><th>Purpose</th><th style="text-align:right;">Opening km</th><th style="text-align:right;">Closing km</th><th style="text-align:right;">Distance</th><th style="text-align:right;">Deduction</th></tr>
     </thead>
     <tbody>${detailRows}</tbody>
   </table>

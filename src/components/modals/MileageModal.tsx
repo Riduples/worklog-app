@@ -167,7 +167,7 @@ export function MileageModal({ trip, onClose }: { trip?: MileageTrip; onClose: (
             <span style={{ fontSize: 13, color: "#38BDF8" }}>SARS deduction @ R{MILEAGE_RATE.toFixed(2)}/km</span>
             <span style={{ fontSize: 18, color: "#F59E0B", fontWeight: 900 }}>{fmt(deduction)}</span>
           </div>
-          <div style={{ fontSize: 10, color: "#7DD3FC", marginTop: 6 }}>Auto-logged as expense for tax records</div>
+          <div style={{ fontSize: 10, color: "#7DD3FC", marginTop: 6 }}>Recorded as a SARS travel deduction — shows on your Travel Report</div>
         </div>
       )}
 

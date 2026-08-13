@@ -52,6 +52,10 @@ export function TravelReport() {
     date: t.trip_date ?? "",
     type: t.trip_type || "Other",
     purpose: t.purpose ?? "",
+    // Opening/closing odometer readings — SARS's logbook wants both, and they're
+    // captured on every trip, so the printable record carries them through.
+    odoStart: Number(t.odometer_start || 0),
+    odoEnd: Number(t.odometer_end || 0),
     km: Number(t.km_travelled || 0),
     deduction: Number(t.sars_deduction || 0),
   }));
@@ -130,7 +134,9 @@ export function TravelReport() {
             <div key={t.id} style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 10, padding: "10px 12px", marginBottom: 6, display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
               <div>
                 <div style={{ fontSize: 13, fontWeight: 700, color: "#111" }}>{t.purpose || t.trip_type || "Trip"}</div>
-                <div style={{ fontSize: 11, color: "#94a3b8" }}>{t.trip_date} · {Number(t.km_travelled).toFixed(1)} km</div>
+                <div style={{ fontSize: 11, color: "#94a3b8" }}>
+                  {t.trip_date} · odo {Number(t.odometer_start).toFixed(0)}→{Number(t.odometer_end).toFixed(0)} · {Number(t.km_travelled).toFixed(1)} km
+                </div>
               </div>
               <div style={{ fontSize: 14, fontWeight: 800, color: "#92400e", flexShrink: 0, marginLeft: 8 }}>{fmt(t.sars_deduction)}</div>
             </div>

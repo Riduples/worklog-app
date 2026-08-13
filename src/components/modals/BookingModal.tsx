@@ -376,6 +376,22 @@ export function BookingModal({ booking, onClose }: { booking?: Booking; onClose:
             <Input value={purpose} onChange={setPurpose} placeholder={apptType === "supplier" ? "e.g. Collect materials, Price discussion…" : "e.g. Quote walkthrough, Site visit…"} />
           </Field>
 
+          {/* Quote link sits with the "what's this about" fields — right under
+              Purpose — since attaching the job's quote belongs with the subject of
+              the appointment, not down among the logistics. Customer visits only. */}
+          {apptType === "customer" && clientQuotes.length > 0 && (
+            <Field label="Link to a quote - optional">
+              <select value={linkedQuoteId ?? ""} onChange={(e) => setLinkedQuoteId(e.target.value || null)} style={selectStyle}>
+                <option value="">— None —</option>
+                {clientQuotes.map((q) => (
+                  <option key={q.id} value={q.id}>
+                    {q.doc_number} · {q.client_name}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          )}
+
           <Field label="Duration">
             <select value={durationMin ?? ""} onChange={(e) => setDurationMin(e.target.value ? Number(e.target.value) : null)} style={selectStyle}>
               {DURATIONS.map((d) => (
@@ -411,19 +427,6 @@ export function BookingModal({ booking, onClose }: { booking?: Booking; onClose:
                 </div>
               )}
             </div>
-          )}
-
-          {apptType === "customer" && clientQuotes.length > 0 && (
-            <Field label="Link to a quote - optional">
-              <select value={linkedQuoteId ?? ""} onChange={(e) => setLinkedQuoteId(e.target.value || null)} style={selectStyle}>
-                <option value="">— None —</option>
-                {clientQuotes.map((q) => (
-                  <option key={q.id} value={q.id}>
-                    {q.doc_number} · {q.client_name}
-                  </option>
-                ))}
-              </select>
-            </Field>
           )}
 
           <Field label="Notes - optional">
