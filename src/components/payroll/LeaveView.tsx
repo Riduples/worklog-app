@@ -1,273 +1,198 @@
 "use client";
 
 import { useState } from "react";
-import { useStaffRegister } from "@/lib/supabase/hooks/useStaffRegister";
-import { useWorkerLeave, useCreateWorkerLeave, useUpdateWorkerLeave } from "@/lib/supabase/hooks/useWorkerLeave";
+import { useWorkerLeave, type WorkerLeaveRecord } from "@/lib/supabase/hooks/useWorkerLeave";
 import { usePayRuns } from "@/lib/supabase/hooks/usePayRuns";
-import { Field } from "@/components/ui/Field";
-import { Input } from "@/components/ui/Input";
-import { SaveBtn } from "@/components/ui/SaveBtn";
-import { todayStr } from "@/lib/format";
-import { calcLeaveBalances } from "@/lib/payroll";
+import { LeaveModal } from "@/components/modals/LeaveModal";
+import { ReadOnlyNotice } from "@/components/ui/ReadOnlyNotice";
+import { useToolAccess } from "@/lib/supabase/hooks/useToolAccess";
 import { BackLink } from "@/components/ui/BackLink";
 
+// Known leave types in display order; anything else falls to the end under its
+// own pill, matching how the other list tools order their type filters.
+const LEAVE_TYPE_ORDER = ["Annual", "Sick", "Family", "Unpaid", "Maternity", "Parental"];
+
+type LeaveRow = {
+  key: string;
+  record?: WorkerLeaveRecord; // present (and editable) for manual entries only
+  worker_name: string;
+  leave_type: string;
+  days: number;
+  start_date: string;
+  end_date: string | null;
+  note: string | null;
+};
+
 export function LeaveView() {
-  const { data: staff } = useStaffRegister();
-  const { data: leaveRecords } = useWorkerLeave();
+  const access = useToolAccess("leave");
+  const { data: leaveRecords, isLoading } = useWorkerLeave();
   const { data: payRuns } = usePayRuns();
-  const createLeave = useCreateWorkerLeave();
-  const updateLeave = useUpdateWorkerLeave();
 
-  const [staffId, setStaffId] = useState("");
-  const [showPicker, setShowPicker] = useState(false);
-  const [leaveType, setLeaveType] = useState("Annual");
-  const [leaveDays, setLeaveDays] = useState("");
-  const [startDate, setStartDate] = useState(todayStr());
-  const [endDate, setEndDate] = useState("");
-  const [note, setNote] = useState("");
-  const [editId, setEditId] = useState<string | null>(null);
-  const [error, setError] = useState("");
+  const [modal, setModal] = useState<{ open: boolean; leave?: WorkerLeaveRecord }>({ open: false });
+  const [search, setSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [sort, setSort] = useState<"recent" | "az">("recent");
 
-  const selectedWorker = (staff ?? []).find((w) => w.id === staffId) ?? null;
-
-  const leaveEntriesFor = (id: string) => [
-    ...(leaveRecords ?? []).filter((l) => l.staff_id === id).map((l) => ({ leave_type: l.leave_type, days: l.days, date: l.start_date })),
-    ...(payRuns ?? []).filter((p) => p.staff_id === id && (p.leave_days ?? 0) > 0).map((p) => ({ leave_type: p.leave_type ?? "Annual", days: p.leave_days ?? 0, date: p.pay_date })),
+  // The list interleaves manually-recorded leave (editable) with the leave Pay Run
+  // has booked (read-only — those rows are synthesized from pay runs).
+  const rows: LeaveRow[] = [
+    ...(leaveRecords ?? []).map((l) => ({
+      key: `leave-${l.id}`,
+      record: l,
+      worker_name: l.worker_name,
+      leave_type: l.leave_type,
+      days: l.days,
+      start_date: l.start_date,
+      end_date: l.end_date,
+      note: l.note,
+    })),
+    ...(payRuns ?? [])
+      .filter((p) => (p.leave_days ?? 0) > 0)
+      .map((p) => ({
+        key: `payrun-${p.id}`,
+        record: undefined,
+        worker_name: p.worker_name,
+        leave_type: p.leave_type || "Annual",
+        days: p.leave_days ?? 0,
+        start_date: p.pay_date,
+        end_date: null,
+        note: "from Pay Run",
+      })),
   ];
-  const lb = selectedWorker ? calcLeaveBalances(selectedWorker.start_date, leaveEntriesFor(selectedWorker.id)) : null;
 
-  const history = staffId
-    ? [
-        ...(leaveRecords ?? [])
-          .filter((l) => l.staff_id === staffId)
-          .map((l) => ({ id: l.id as string | null, date: l.start_date, end_date: l.end_date as string | null, leave_type: l.leave_type, days: l.days, note: l.note, editable: true })),
-        ...(payRuns ?? [])
-          .filter((p) => p.staff_id === staffId && (p.leave_days ?? 0) > 0)
-          .map((p) => ({ id: null as string | null, date: p.pay_date, end_date: null as string | null, leave_type: p.leave_type ?? "Annual", days: p.leave_days ?? 0, note: "from Pay Run", editable: false })),
-      ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    : [];
+  const presentTypes = [
+    ...LEAVE_TYPE_ORDER.filter((t) => rows.some((r) => r.leave_type === t)),
+    ...[...new Set(rows.map((r) => r.leave_type))].filter((t) => !LEAVE_TYPE_ORDER.includes(t)),
+  ];
 
-  const leaveDaysNum = parseFloat(leaveDays || "0");
-  const overEntitlement = leaveType === "Annual" && lb && leaveDaysNum > lb.annualBalance;
-
-  const isEdit = editId !== null;
-
-  const startEdit = (item: { id: string | null; date: string; end_date: string | null; leave_type: string; days: number; note: string | null }) => {
-    if (!item.id) return;
-    setEditId(item.id);
-    setLeaveType(item.leave_type);
-    setLeaveDays(String(item.days));
-    setStartDate(item.date);
-    setEndDate(item.end_date ?? "");
-    setNote(item.note ?? "");
-    setShowPicker(false);
-    setError("");
-  };
-
-  const cancelEdit = () => {
-    setEditId(null);
-    setLeaveDays("");
-    setNote("");
-    setStartDate(todayStr());
-    setEndDate("");
-    setError("");
-  };
-
-  const handleSave = () => {
-    if (!staffId || !leaveDays) {
-      setError("Pick an employee and enter days taken.");
-      return;
+  const filtered = rows.filter((r) => {
+    if (typeFilter !== "all" && r.leave_type !== typeFilter) return false;
+    if (search) {
+      const s = search.toLowerCase();
+      if (!`${r.worker_name} ${r.leave_type} ${r.note ?? ""}`.toLowerCase().includes(s)) return false;
     }
-    setError("");
-    if (editId) {
-      updateLeave.mutate(
-        { id: editId, changes: { leave_type: leaveType, days: leaveDaysNum, start_date: startDate, end_date: endDate || null, note: note || null } },
-        {
-          onSuccess: () => {
-            setEditId(null);
-            setLeaveDays("");
-            setNote("");
-            setStartDate(todayStr());
-            setEndDate("");
-          },
-          onError: (e) => setError(e instanceof Error ? e.message : "Couldn't update leave."),
-        }
-      );
-      return;
-    }
-    createLeave.mutate(
-      { staff_id: staffId, worker_name: selectedWorker!.full_name, leave_type: leaveType, days: leaveDaysNum, start_date: startDate, end_date: endDate || null, note: note || null },
-      {
-        onSuccess: () => {
-          setLeaveDays("");
-          setNote("");
-          setStartDate(todayStr());
-          setEndDate("");
-        },
-        onError: (e) => setError(e instanceof Error ? e.message : "Couldn't record leave."),
-      }
-    );
-  };
+    return true;
+  });
+
+  const sorted = [...filtered].sort((a, b) =>
+    sort === "az"
+      ? a.worker_name.localeCompare(b.worker_name) || new Date(b.start_date).getTime() - new Date(a.start_date).getTime()
+      : new Date(b.start_date).getTime() - new Date(a.start_date).getTime()
+  );
 
   return (
     <div style={{ padding: "20px 16px 100px" }}>
-      <div style={{ marginBottom: 18 }}>
-        <BackLink />
-        <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 0" }}>Leave</h1>
-      </div>
-
-      <div style={{ background: "#F0F9FF", border: "1.5px solid #7DD3FC", borderRadius: 12, padding: "10px 14px", marginBottom: 14, fontSize: 12, color: "#0369A1", lineHeight: 1.5 }}>
-        <span style={{ fontWeight: 700 }}>🏖️ Leave</span> — Record leave per employee. Balances calculate automatically from their start date per BCEA. Leave here and in Pay Run both count toward the balance.
-      </div>
-
-      <Field label="Employee">
-        <div style={{ position: "relative" }}>
-          <Input value={selectedWorker?.full_name ?? ""} onChange={() => {}} placeholder="Select employee to see balances" />
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
+        <div>
+          <BackLink />
+          <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 0" }}>Leave</h1>
+        </div>
+        {access.canEdit && (
           <button
-            onClick={() => setShowPicker((p) => !p)}
-            style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "#0C4A6E", border: "none", borderRadius: 8, padding: "5px 10px", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
+            onClick={() => setModal({ open: true })}
+            style={{ background: "#0C4A6E", color: "#fff", border: "none", borderRadius: 12, padding: "10px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
           >
-            {showPicker ? "✕" : "👤 Pick"}
+            + New
           </button>
-        </div>
-        {showPicker && (
-          <div style={{ background: "#fff", border: "1.5px solid #BAE6FD", borderRadius: 12, marginTop: 6, overflow: "hidden", boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}>
-            {(staff ?? []).length === 0 && <div style={{ padding: 14, fontSize: 13, color: "#94a3b8", textAlign: "center" }}>No employees in Staff Register yet.</div>}
-            {(staff ?? []).map((w) => {
-              const wlb = calcLeaveBalances(w.start_date, leaveEntriesFor(w.id));
-              return (
-                <button
-                  key={w.id}
-                  onClick={() => {
-                    setStaffId(w.id);
-                    setShowPicker(false);
-                  }}
-                  style={{ width: "100%", padding: "12px 14px", border: "none", borderBottom: "1px solid #F0F9FF", background: "#fff", cursor: "pointer", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center" }}
-                >
-                  <span style={{ fontSize: 14, fontWeight: 700, color: "#111" }}>{w.full_name}</span>
-                  {wlb && (
-                    <span style={{ fontSize: 11, color: "#64748b" }}>
-                      Annual {wlb.annualBalance}d · Sick {wlb.sickBalance}d
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
         )}
-      </Field>
-
-      {lb && (
-        <div style={{ background: "#0C4A6E", borderRadius: 12, padding: "14px 16px", marginBottom: 14 }}>
-          <div style={{ fontSize: 11, color: "#38BDF8", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 10 }}>Leave balances — {selectedWorker?.full_name}</div>
-          {[
-            ["Annual leave", lb.annualBalance, `1.25d/month · ${lb.annualTaken}d taken`, lb.annualBalance === 0],
-            ["Sick leave", lb.sickBalance, `3-yr cycle · ${lb.sickTaken}d taken`, lb.sickBalance < 5],
-            ["Family responsibility", lb.familyBalance, `Per year · ${lb.familyTaken}d taken`, lb.familyBalance === 0],
-          ].map(([type, bal, sub, warn]) => (
-            <div key={type as string} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", paddingBottom: 8, marginBottom: 8, borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
-              <div>
-                <div style={{ fontSize: 13, color: "#fff", fontWeight: 600 }}>{type}</div>
-                <div style={{ fontSize: 10, color: "#7DD3FC" }}>{sub}</div>
-              </div>
-              <div style={{ textAlign: "right" }}>
-                <div style={{ fontSize: 15, fontWeight: 800, color: warn ? "#FCA5A5" : "#7DD3FC" }}>{bal}d remaining</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      <div style={{ fontSize: 12, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 8 }}>{isEdit ? "Edit leave" : "Record leave taken"}</div>
-
-      <Field label="Leave type">
-        <select value={leaveType} onChange={(e) => setLeaveType(e.target.value)} style={{ width: "100%", padding: "13px 14px", borderRadius: 12, border: "1.5px solid #e2e8f0", fontSize: 14, background: "#f8fafc", color: "#111" }}>
-          <option value="Annual">Annual leave — BCEA (15 working days/year)</option>
-          <option value="Sick">Sick leave — BCEA (30 days per 3-yr cycle)</option>
-          <option value="Family">Family responsibility — BCEA (3 days/year)</option>
-          <option value="Unpaid">Unpaid leave</option>
-          <option value="Maternity">Maternity leave (4 months — UIF claim)</option>
-          <option value="Parental">Parental leave (10 days)</option>
-        </select>
-      </Field>
-
-      <Field label="Days taken">
-        <Input type="number" value={leaveDays} onChange={setLeaveDays} placeholder="e.g. 3" />
-      </Field>
-
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-        <Field label="Start date">
-          <Input type="date" value={startDate} onChange={setStartDate} />
-        </Field>
-        <Field label="End date">
-          <Input type="date" value={endDate} onChange={setEndDate} />
-        </Field>
       </div>
 
-      {endDate && endDate < startDate && (
-        <p style={{ color: "#dc2626", fontSize: 12, marginTop: -2, marginBottom: 10 }}>End date is before the start date — check the dates.</p>
-      )}
+      {!access.loading && !access.canEdit && <ReadOnlyNotice level={access.level} what="leave" />}
 
-      <Field label="Note - optional">
-        <Input value={note} onChange={setNote} placeholder="e.g. Medical certificate provided" />
-      </Field>
-
-      {leaveType === "Maternity" && (
-        <div style={{ background: "#fff7ed", border: "1.5px solid #fed7aa", borderRadius: 10, padding: "10px 12px", marginBottom: 10, fontSize: 12, color: "#92400e" }}>
-          💡 Employee can claim UIF maternity benefits — refer to nearest Labour Centre or uFiling.gov.za
+      {isLoading && <p style={{ color: "#94a3b8", fontSize: 13 }}>Loading...</p>}
+      {!isLoading && rows.length === 0 && (
+        <div style={{ background: "#f8fafc", borderRadius: 12, padding: 20, textAlign: "center", marginBottom: 14 }}>
+          <div style={{ fontSize: 32, marginBottom: 8 }}>🏖️</div>
+          <div style={{ fontSize: 14, color: "#64748b" }}>
+            No leave recorded yet.{access.canEdit ? " Tap “+ New” to record some." : ""}
+          </div>
         </div>
       )}
 
-      {overEntitlement && lb && (
-        <div style={{ background: "#fff1f2", border: "1.5px solid #fecdd3", borderRadius: 10, padding: "10px 12px", marginBottom: 10, fontSize: 12, color: "#be123c" }}>
-          ⚠️ {selectedWorker?.full_name} only has {lb.annualBalance} day{lb.annualBalance !== 1 ? "s" : ""} annual leave remaining. Recording this will exceed their entitlement.
+      {!isLoading && rows.length > 0 && (
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search leave..."
+          style={{ width: "100%", padding: "12px 14px", borderRadius: 12, border: "1.5px solid #e2e8f0", fontSize: 14, boxSizing: "border-box", marginBottom: 12, background: "#fff" }}
+        />
+      )}
+
+      {presentTypes.length > 1 && (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
+          {["all", ...presentTypes].map((t) => {
+            const active = typeFilter === t;
+            return (
+              <button
+                key={t}
+                onClick={() => setTypeFilter(t)}
+                style={{ padding: "8px 14px", borderRadius: 20, border: `1.5px solid ${active ? "#0C4A6E" : "#e2e8f0"}`, background: active ? "#0C4A6E" : "#fff", color: active ? "#fff" : "#374151", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
+              >
+                {t === "all" ? "All" : t}
+              </button>
+            );
+          })}
         </div>
       )}
 
-      {error && <p style={{ color: "#dc2626", fontSize: 13, marginBottom: 12 }}>{error}</p>}
-      <SaveBtn
-        label={isEdit ? (updateLeave.isPending ? "Updating..." : "Update Leave") : createLeave.isPending ? "Saving..." : "Record Leave"}
-        icon="🏖️"
-        onClick={handleSave}
-        disabled={createLeave.isPending || updateLeave.isPending}
-      />
-      {isEdit && (
-        <button
-          onClick={cancelEdit}
-          style={{ width: "100%", marginTop: 8, padding: "12px", borderRadius: 12, border: "1.5px solid #e2e8f0", background: "#fff", color: "#64748b", fontSize: 14, fontWeight: 700, cursor: "pointer" }}
-        >
-          Cancel edit
-        </button>
+      {!isLoading && rows.length > 0 && filtered.length === 0 && (
+        <p style={{ color: "#94a3b8", fontSize: 13, textAlign: "center", marginTop: 40 }}>No leave matches your search.</p>
       )}
 
-      {history.length > 0 && (
-        <div style={{ marginTop: 16 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>Leave history — {selectedWorker?.full_name}</div>
-          {history.slice(0, 12).map((l, i) => (
-            <div key={i} style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 10, padding: "9px 12px", marginBottom: 6, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>
-                  {l.end_date ? `${l.date} → ${l.end_date}` : l.date} · {l.leave_type} leave
-                </div>
-                {l.note && <div style={{ fontSize: 11, color: "#94a3b8" }}>{l.note}</div>}
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                {l.editable && (
-                  <button
-                    onClick={() => startEdit(l)}
-                    title="Edit leave"
-                    aria-label="Edit leave"
-                    style={{ background: "none", border: "none", cursor: "pointer", fontSize: 15, lineHeight: 1, padding: 2 }}
-                  >
-                    ✏️
-                  </button>
-                )}
-                <span style={{ fontSize: 13, fontWeight: 800, color: "#0C4A6E" }}>{l.days}d</span>
-              </div>
+      {sorted.length > 0 && (
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, margin: "0 0 10px 2px" }}>
+          <span style={{ fontSize: 11, color: "#94a3b8" }}>
+            {sorted.length}
+            {sorted.length !== rows.length ? ` of ${rows.length}` : ""} entr{rows.length === 1 ? "y" : "ies"}
+          </span>
+          <div style={{ display: "flex", gap: 4, background: "#f1f5f9", borderRadius: 10, padding: 3 }}>
+            {(["recent", "az"] as const).map((s) => (
+              <button
+                key={s}
+                onClick={() => setSort(s)}
+                style={{ padding: "5px 12px", borderRadius: 8, border: "none", background: sort === s ? "#fff" : "transparent", color: sort === s ? "#0C4A6E" : "#64748b", fontSize: 12, fontWeight: 700, cursor: "pointer", boxShadow: sort === s ? "0 1px 3px rgba(0,0,0,0.1)" : "none" }}
+              >
+                {s === "az" ? "A–Z" : "Recent"}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {sorted.map((r) => {
+        const body = (
+          <>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "#111" }}>{r.worker_name}</div>
+            <div style={{ fontSize: 11, color: "#94a3b8" }}>
+              {r.end_date ? `${r.start_date} → ${r.end_date}` : r.start_date} · {r.leave_type} leave
+              {r.note ? ` · ${r.note}` : ""}
             </div>
-          ))}
-        </div>
-      )}
+          </>
+        );
+        // Only manually-recorded leave is editable; Pay Run leave is a pay-run record.
+        const tappable = access.canEdit && !!r.record;
+        return (
+          <div
+            key={r.key}
+            style={{ background: "#fff", borderRadius: 13, padding: "12px 14px", marginBottom: 8, display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}
+          >
+            {tappable ? (
+              <button
+                onClick={() => setModal({ open: true, leave: r.record })}
+                style={{ background: "none", border: "none", textAlign: "left", cursor: "pointer", flex: 1, padding: 0 }}
+                aria-label="Edit leave"
+              >
+                {body}
+              </button>
+            ) : (
+              <div style={{ flex: 1 }}>{body}</div>
+            )}
+            <span style={{ fontSize: 15, fontWeight: 800, color: "#0C4A6E", marginLeft: 8, whiteSpace: "nowrap" }}>{r.days}d</span>
+          </div>
+        );
+      })}
+
+      {modal.open && <LeaveModal leave={modal.leave} onClose={() => setModal({ open: false })} />}
     </div>
   );
 }
