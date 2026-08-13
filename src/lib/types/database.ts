@@ -393,6 +393,8 @@ export type Database = {
           user_id: string
           vat_number: string | null
           vat_period: string
+          vehicle_description: string | null
+          vehicle_registration: string | null
         }
         Insert: {
           address?: string | null
@@ -420,6 +422,8 @@ export type Database = {
           user_id: string
           vat_number?: string | null
           vat_period?: string
+          vehicle_description?: string | null
+          vehicle_registration?: string | null
         }
         Update: {
           address?: string | null
@@ -447,6 +451,8 @@ export type Database = {
           user_id?: string
           vat_number?: string | null
           vat_period?: string
+          vehicle_description?: string | null
+          vehicle_registration?: string | null
         }
         Relationships: []
       }
@@ -1235,6 +1241,47 @@ export type Database = {
             columns: ["party_contact_id"]
             isOneToOne: false
             referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mileage_logbook_years: {
+        Row: {
+          business_id: string
+          closing_odometer: number | null
+          created_at: string | null
+          id: string
+          opening_odometer: number | null
+          tax_year_start: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          business_id: string
+          closing_odometer?: number | null
+          created_at?: string | null
+          id?: string
+          opening_odometer?: number | null
+          tax_year_start: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          business_id?: string
+          closing_odometer?: number | null
+          created_at?: string | null
+          id?: string
+          opening_odometer?: number | null
+          tax_year_start?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mileage_logbook_years_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_profiles"
             referencedColumns: ["id"]
           },
         ]

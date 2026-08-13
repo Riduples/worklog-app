@@ -66,3 +66,47 @@ export function inPeriod(period: Period): (dateStr: string) => boolean {
   const to = toLocalIsoDate(new Date(now.getFullYear(), now.getMonth() + 1, 0));
   return (d) => d >= from && d <= to;
 }
+
+// ── SA tax year (1 March – 28/29 February) ──────────────────────────────────
+// The SARS travel logbook is kept per tax year, which is NOT the calendar year
+// inPeriod("year") uses. A tax year is identified by the calendar year it STARTS
+// in: 2025 = 1 Mar 2025 → 28/29 Feb 2026. These helpers stay out of the Period
+// enum on purpose — adding a value there would sprout a "Tax year" pill on every
+// PeriodSelector (Profit & Loss, Cash Flow…), where it doesn't belong. The Travel
+// Report drives its tax-year filter from these directly instead.
+
+/** The start-year of the tax year a YYYY-MM-DD date falls in. Jan/Feb belong to
+ *  the tax year that opened the previous calendar year. */
+export function taxYearStartYearOf(dateStr: string): number {
+  const [y, m] = dateStr.split("-").map(Number);
+  return m <= 2 ? y - 1 : y;
+}
+
+/** The start-year of the tax year we're currently in. */
+export function currentTaxYearStartYear(): number {
+  const now = new Date();
+  return now.getMonth() + 1 <= 2 ? now.getFullYear() - 1 : now.getFullYear();
+}
+
+/** The [from, to] YYYY-MM-DD span of the tax year starting in `startYear`. */
+export function taxYearRange(startYear: number): { from: string; to: string } {
+  return {
+    from: toLocalIsoDate(new Date(startYear, 2, 1)), // 1 March
+    to: toLocalIsoDate(new Date(startYear + 1, 2, 0)), // last day of Feb next year
+  };
+}
+
+/** Short "2025/26" label for the tax year starting in `startYear`. */
+export function taxYearLabel(startYear: number): string {
+  return `${startYear}/${String((startYear + 1) % 100).padStart(2, "0")}`;
+}
+
+/** Full "1 Mar 2025 – 28 Feb 2026" span for the tax year starting in `startYear`. */
+export function taxYearDateLabel(startYear: number): string {
+  const fmtD = (iso: string) => {
+    const [y, m, d] = iso.split("-").map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString("en-ZA", { day: "numeric", month: "short", year: "numeric" });
+  };
+  const { from, to } = taxYearRange(startYear);
+  return `${fmtD(from)} – ${fmtD(to)}`;
+}

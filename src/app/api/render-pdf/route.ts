@@ -19,6 +19,7 @@ import {
   type JobHoursRow,
   type OtherJobHoursRow,
   type TravelReportRow,
+  type TravelLogbook,
 } from "@/lib/docgen/buildLedgerHTML";
 import type { BusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 
@@ -60,6 +61,7 @@ type RenderRequest =
       totals: { trips: number; km: number; deduction: number };
       asAt: string;
       periodLabel?: string;
+      logbook?: TravelLogbook | null;
     };
 
 function buildHtml(body: RenderRequest, business: BusinessProfile, watermark: boolean): string | null {
@@ -79,7 +81,7 @@ function buildHtml(body: RenderRequest, business: BusinessProfile, watermark: bo
     case "actualvsestimate":
       return buildActualVsEstimateHTML(business, body.rows, body.other, body.totals, body.asAt, watermark);
     case "travelreport":
-      return buildTravelReportHTML(business, body.rows, body.totals, body.asAt, watermark, body.periodLabel);
+      return buildTravelReportHTML(business, body.rows, body.totals, body.asAt, watermark, body.periodLabel, body.logbook);
     default:
       return null;
   }

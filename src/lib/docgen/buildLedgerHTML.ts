@@ -465,13 +465,30 @@ export function buildActualVsEstimateHTML(
 // SARS deduction claimed, for tax records. Heads with their letterhead.
 export type TravelReportRow = { date: string; type: string; purpose: string; odoStart: number; odoEnd: number; km: number; deduction: number };
 
+// The annual logbook summary for a tax year — the piece SARS needs on top of the
+// per-trip list: the vehicle, the year's opening/closing odometer, and the
+// business-vs-private split read from them. Null fields print as "—" (not yet
+// entered) so a half-filled logbook still renders.
+export type TravelLogbook = {
+  vehicle: string;
+  registration: string;
+  taxYearLabel: string;
+  openingOdo: number | null;
+  closingOdo: number | null;
+  totalKm: number | null;
+  businessKm: number;
+  privateKm: number | null;
+  businessPct: number | null;
+};
+
 export function buildTravelReportHTML(
   business: BusinessProfile,
   rows: TravelReportRow[],
   totals: { trips: number; km: number; deduction: number },
   asAt: string,
   watermark = false,
-  periodLabel?: string
+  periodLabel?: string,
+  logbook?: TravelLogbook | null
 ): string {
   const detailRows = rows.length
     ? rows
@@ -489,6 +506,26 @@ export function buildTravelReportHTML(
         )
         .join("")
     : `<tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:16px;">No trips logged.</td></tr>`;
+
+  // Annual logbook summary — only when the report is scoped to a tax year and the
+  // vehicle/odometer have been set up. Half-filled readings still print ("—").
+  const odo = (n: number | null) => (n == null ? "—" : n.toFixed(0));
+  const km1 = (n: number | null) => (n == null ? "—" : `${n.toFixed(1)} km`);
+  const logbookBlock = logbook
+    ? `<div style="font-size:11px;font-weight:700;color:#0C4A6E;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;">Logbook — ${esc(logbook.taxYearLabel)}</div>
+  <table>
+    <tbody>
+      <tr><td>Vehicle</td><td style="text-align:right;font-weight:700;">${esc(logbook.vehicle || "—")}${logbook.registration ? ` · ${esc(logbook.registration)}` : ""}</td></tr>
+      <tr><td>Opening odometer</td><td style="text-align:right;">${odo(logbook.openingOdo)}</td></tr>
+      <tr><td>Closing odometer</td><td style="text-align:right;">${odo(logbook.closingOdo)}</td></tr>
+      <tr><td>Total distance (year)</td><td style="text-align:right;font-weight:700;">${km1(logbook.totalKm)}</td></tr>
+      <tr><td>Business distance</td><td style="text-align:right;">${km1(logbook.businessKm)}</td></tr>
+      <tr><td>Private distance</td><td style="text-align:right;">${km1(logbook.privateKm)}</td></tr>
+      <tr><td>Business use</td><td style="text-align:right;font-weight:700;">${logbook.businessPct == null ? "—" : `${logbook.businessPct.toFixed(0)}%`}</td></tr>
+    </tbody>
+  </table>
+  `
+    : "";
 
   return `<!DOCTYPE html>
 <html>
@@ -513,7 +550,7 @@ export function buildTravelReportHTML(
       <td style="text-align:center;font-weight:700;color:#92400e;">${fmt(totals.deduction)}</td>
     </tr></tbody>
   </table>
-  <div style="font-size:11px;font-weight:700;color:#0C4A6E;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;">Trips</div>
+  ${logbookBlock}<div style="font-size:11px;font-weight:700;color:#0C4A6E;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;">Trips</div>
   <table>
     <thead>
       <tr><th>Date</th><th>Type</th><th>Purpose</th><th style="text-align:right;">Opening km</th><th style="text-align:right;">Closing km</th><th style="text-align:right;">Distance</th><th style="text-align:right;">Deduction</th></tr>
