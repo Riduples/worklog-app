@@ -17,6 +17,7 @@ export function AdvancesView() {
 
   const [modal, setModal] = useState<{ open: boolean; advance?: WorkerLoan }>({ open: false });
   const [search, setSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState<"all" | "advance" | "repayment">("all");
   const [sort, setSort] = useState<"recent" | "az">("recent");
 
   const balanceFor = (id: string) => getLoanBalance((loans ?? []).filter((l) => l.staff_id === id));
@@ -26,19 +27,26 @@ export function AdvancesView() {
       .sort((a, b) => new Date(b.entry_date).getTime() - new Date(a.entry_date).getTime())[0] ?? null;
   const totalOutstanding = (staff ?? []).reduce((s, w) => s + balanceFor(w.id), 0);
 
-  // The list is the advances given (repayment rows come from Pay Run and are shown
-  // netted into the outstanding total above, not as their own list rows).
-  const advances = (loans ?? []).filter((l) => l.loan_type === "advance");
+  // The list interleaves advances given with the repayments Pay Run books against
+  // them. Advances are editable here; repayment rows are created only by Pay Run,
+  // so they show for the record but aren't tappable.
+  const entries = loans ?? [];
+  const presentTypes = (["advance", "repayment"] as const).filter((t) => entries.some((l) => l.loan_type === t));
 
-  const filtered = advances.filter((l) => {
-    if (!search) return true;
-    const s = search.toLowerCase();
-    return `${l.worker_name} ${l.note ?? ""}`.toLowerCase().includes(s);
+  const filtered = entries.filter((l) => {
+    if (typeFilter !== "all" && l.loan_type !== typeFilter) return false;
+    if (search) {
+      const s = search.toLowerCase();
+      if (!`${l.worker_name} ${l.note ?? ""}`.toLowerCase().includes(s)) return false;
+    }
+    return true;
   });
 
+  // Recent is newest-first by date; A–Z is by employee, with date breaking the tie
+  // so one person's entries still read newest-first.
   const sorted = [...filtered].sort((a, b) =>
     sort === "az"
-      ? a.worker_name.localeCompare(b.worker_name)
+      ? a.worker_name.localeCompare(b.worker_name) || new Date(b.entry_date).getTime() - new Date(a.entry_date).getTime()
       : new Date(b.entry_date).getTime() - new Date(a.entry_date).getTime()
   );
 
@@ -88,7 +96,7 @@ export function AdvancesView() {
       )}
 
       {isLoading && <p style={{ color: "#94a3b8", fontSize: 13 }}>Loading...</p>}
-      {!isLoading && advances.length === 0 && (
+      {!isLoading && entries.length === 0 && (
         <div style={{ background: "#f8fafc", borderRadius: 12, padding: 20, textAlign: "center", marginBottom: 14 }}>
           <div style={{ fontSize: 32, marginBottom: 8 }}>💰</div>
           <div style={{ fontSize: 14, color: "#64748b" }}>
@@ -97,7 +105,7 @@ export function AdvancesView() {
         </div>
       )}
 
-      {!isLoading && advances.length > 0 && (
+      {!isLoading && entries.length > 0 && (
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -106,15 +114,34 @@ export function AdvancesView() {
         />
       )}
 
-      {!isLoading && advances.length > 0 && filtered.length === 0 && (
-        <p style={{ color: "#94a3b8", fontSize: 13, textAlign: "center", marginTop: 40 }}>No advances match your search.</p>
+      {/* Type pills appear once repayments exist, so the advances-only view still
+          stays clean until Pay Run has booked its first deduction. */}
+      {presentTypes.length > 1 && (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
+          {(["all", "advance", "repayment"] as const).map((t) => {
+            const active = typeFilter === t;
+            return (
+              <button
+                key={t}
+                onClick={() => setTypeFilter(t)}
+                style={{ padding: "8px 14px", borderRadius: 20, border: `1.5px solid ${active ? "#0C4A6E" : "#e2e8f0"}`, background: active ? "#0C4A6E" : "#fff", color: active ? "#fff" : "#374151", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
+              >
+                {t === "all" ? "All" : t === "advance" ? "Advances" : "Repayments"}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {!isLoading && entries.length > 0 && filtered.length === 0 && (
+        <p style={{ color: "#94a3b8", fontSize: 13, textAlign: "center", marginTop: 40 }}>No entries match your search.</p>
       )}
 
       {sorted.length > 0 && (
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, margin: "0 0 10px 2px" }}>
           <span style={{ fontSize: 11, color: "#94a3b8" }}>
             {sorted.length}
-            {sorted.length !== advances.length ? ` of ${advances.length}` : ""} advance{advances.length === 1 ? "" : "s"}
+            {sorted.length !== entries.length ? ` of ${entries.length}` : ""} entr{entries.length === 1 ? "y" : "ies"}
           </span>
           <div style={{ display: "flex", gap: 4, background: "#f1f5f9", borderRadius: 10, padding: 3 }}>
             {(["recent", "az"] as const).map((s) => (
@@ -131,22 +158,31 @@ export function AdvancesView() {
       )}
 
       {sorted.map((l) => {
+        const isAdvance = l.loan_type === "advance";
         const body = (
           <>
             <div style={{ fontSize: 14, fontWeight: 700, color: "#111" }}>{l.worker_name}</div>
             <div style={{ fontSize: 11, color: "#94a3b8" }}>
-              {l.entry_date}
+              {l.entry_date} · {isAdvance ? "Advance given" : "Repaid from wages"}
               {l.note ? ` · ${l.note}` : ""}
-              {l.repay_per_run != null && l.repay_per_run > 0 ? ` · 🔁 ${fmt(l.repay_per_run)}/run` : ""}
+              {isAdvance && l.repay_per_run != null && l.repay_per_run > 0 ? ` · 🔁 ${fmt(l.repay_per_run)}/run` : ""}
             </div>
           </>
+        );
+        // Only advances are editable here; a repayment is a Pay Run record.
+        const tappable = access.canEdit && isAdvance;
+        const amountEl = (
+          <span style={{ fontSize: 15, fontWeight: 800, color: isAdvance ? "#b45309" : "#0C4A6E", marginLeft: 8, whiteSpace: "nowrap" }}>
+            {isAdvance ? "+" : "−"}
+            {fmt(l.amount)}
+          </span>
         );
         return (
           <div
             key={l.id}
             style={{ background: "#fff", borderRadius: 13, padding: "12px 14px", marginBottom: 8, display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}
           >
-            {access.canEdit ? (
+            {tappable ? (
               <button
                 onClick={() => setModal({ open: true, advance: l })}
                 style={{ background: "none", border: "none", textAlign: "left", cursor: "pointer", flex: 1, padding: 0 }}
@@ -157,7 +193,7 @@ export function AdvancesView() {
             ) : (
               <div style={{ flex: 1 }}>{body}</div>
             )}
-            <span style={{ fontSize: 15, fontWeight: 800, color: "#b45309", marginLeft: 8 }}>{fmt(l.amount)}</span>
+            {amountEl}
           </div>
         );
       })}
