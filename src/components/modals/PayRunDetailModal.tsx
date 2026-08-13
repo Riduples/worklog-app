@@ -1,0 +1,109 @@
+"use client";
+
+import { Modal } from "@/components/ui/Modal";
+import { Row } from "@/components/ui/Row";
+import { DocumentActions } from "@/components/ui/DocumentActions";
+import { useStaffRegister } from "@/lib/supabase/hooks/useStaffRegister";
+import { fmt } from "@/lib/format";
+import type { Tables } from "@/lib/types/database";
+import type { DocForRender } from "@/lib/docgen/buildDocumentHTML";
+
+type PayRun = Tables<"pay_runs">;
+
+// A read-only view of everything a saved pay run holds — the full earnings and
+// deductions breakdown, the employer cost, and the payslip to share/download. All
+// figures are the snapshot the run was saved with, so this shows exactly what was
+// paid, even if the employee's rate has since changed.
+export function PayRunDetailModal({ payRun, onClose }: { payRun: PayRun; onClose: () => void }) {
+  const { data: staff } = useStaffRegister();
+  const worker = (staff ?? []).find((w) => w.id === payRun.staff_id) ?? null;
+  const unitLabel = worker?.pay_type === "Hourly" ? "hrs" : "days";
+
+  const units = Number(payRun.units_worked || 0);
+  const baseRate = Number(payRun.base_rate || 0);
+  const basic = baseRate * units;
+  const overtime = Number(payRun.overtime_amount || 0);
+  const allowances = Number(payRun.allowances_amount || 0);
+  const gross = Number(payRun.gross_wages || 0);
+  const uifEmp = Number(payRun.uif_employee || 0);
+  const uifEr = Number(payRun.uif_employer || 0);
+  const paye = Number(payRun.paye || 0);
+  const sdl = Number(payRun.sdl || 0);
+  const loan = Number(payRun.loan_deducted || 0);
+  const other = Number(payRun.other_deductions || 0);
+  const leaveDays = Number(payRun.leave_days || 0);
+  const unpaidLeave = Number(payRun.unpaid_leave_amount || 0);
+  const net = Number(payRun.net_pay || 0);
+  const isApproved = payRun.status === "approved";
+
+  const payslipDoc: DocForRender = {
+    doc_number: payRun.payslip_number ?? `PAY-${payRun.pay_date}`,
+    issue_date: payRun.pay_date,
+    recipient_name: payRun.worker_name,
+    line_items: [
+      { desc: `Basic pay — ${units} ${unitLabel} × ${fmt(baseRate)}`, labour: basic, materials: 0, qty: 1 },
+      overtime > 0 ? { desc: "Overtime", labour: overtime, materials: 0, qty: 1 } : null,
+      allowances > 0 ? { desc: "Allowance", labour: allowances, materials: 0, qty: 1 } : null,
+      leaveDays > 0 && payRun.leave_type !== "Unpaid" ? { desc: `${payRun.leave_type ?? "Annual"} leave — ${leaveDays} day${leaveDays !== 1 ? "s" : ""} (noted)`, labour: 0, materials: 0, qty: leaveDays } : null,
+      unpaidLeave > 0 ? { desc: `Unpaid leave — ${leaveDays} day${leaveDays !== 1 ? "s" : ""}`, labour: -unpaidLeave, materials: 0, qty: leaveDays } : null,
+      { desc: "UIF deduction (employee 1%)", labour: -uifEmp, materials: 0, qty: 1 },
+      paye > 0 ? { desc: "PAYE income tax", labour: -paye, materials: 0, qty: 1 } : null,
+      loan > 0 ? { desc: "Loan / advance repayment", labour: -loan, materials: 0, qty: 1 } : null,
+      other > 0 ? { desc: payRun.other_deduction_desc || "Other deduction", labour: -other, materials: 0, qty: 1 } : null,
+    ].filter((i): i is NonNullable<typeof i> => i !== null),
+    subtotal: net,
+    vat_rate: null,
+    vat_amount: 0,
+    deposit: 0,
+    balance_due: null,
+    due_date: payRun.pay_date,
+    valid_until: null,
+  };
+
+  return (
+    <Modal title={`Payslip ${payRun.payslip_number ?? ""}`.trim()} onClose={onClose}>
+      <div style={{ background: "#0C4A6E", borderRadius: 16, padding: "16px 18px", marginBottom: 14 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
+          <div>
+            <div style={{ fontSize: 17, fontWeight: 900, color: "#fff" }}>{payRun.worker_name}</div>
+            <div style={{ fontSize: 12, color: "#7DD3FC", marginTop: 2 }}>{payRun.pay_period} · {payRun.pay_date}</div>
+          </div>
+          <span style={{ fontSize: 10, fontWeight: 700, padding: "3px 9px", borderRadius: 8, background: isApproved ? "rgba(56,189,248,0.25)" : "rgba(245,158,11,0.25)", color: isApproved ? "#7DD3FC" : "#FCD34D" }}>
+            {isApproved ? "✔️ Approved" : "Prepared"}
+          </span>
+        </div>
+        <Row label={`Basic (${units} ${unitLabel} × ${fmt(baseRate)})`} value={fmt(basic)} />
+        {overtime > 0 && <Row label="Overtime" value={fmt(overtime)} />}
+        {allowances > 0 && <Row label="Allowance" value={fmt(allowances)} />}
+        <Row label="Gross wages" value={fmt(gross)} bold />
+        <div style={{ borderTop: "1px solid rgba(255,255,255,0.15)", marginTop: 8, paddingTop: 8 }}>
+          <Row label="UIF (employee 1%)" value={`−${fmt(uifEmp)}`} />
+          {paye > 0 && <Row label="PAYE" value={`−${fmt(paye)}`} />}
+          {loan > 0 && <Row label="Loan repayment" value={`−${fmt(loan)}`} />}
+          {other > 0 && <Row label={payRun.other_deduction_desc || "Other deduction"} value={`−${fmt(other)}`} />}
+          {leaveDays > 0 && payRun.leave_type !== "Unpaid" && <Row label={`${payRun.leave_type ?? "Annual"} leave (${leaveDays}d)`} value="noted" />}
+          {unpaidLeave > 0 && <Row label={`Unpaid leave (${leaveDays}d)`} value={`−${fmt(unpaidLeave)}`} />}
+        </div>
+        <div style={{ borderTop: "1px solid rgba(255,255,255,0.2)", marginTop: 10, paddingTop: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <span style={{ fontSize: 14, color: "#38BDF8", fontWeight: 700 }}>NET PAY (take-home)</span>
+          <span style={{ fontSize: 24, color: "#fff", fontWeight: 900 }}>{fmt(net)}</span>
+        </div>
+      </div>
+
+      <div style={{ background: "#f8fafc", border: "1.5px solid #e2e8f0", borderRadius: 12, padding: "11px 14px", marginBottom: 14 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>Employer cost (SARS)</div>
+        <Row label="UIF employer (1%)" value={fmt(uifEr)} />
+        {sdl > 0 && <Row label="SDL (1%)" value={fmt(sdl)} />}
+        <Row label="Total" value={fmt(uifEr + sdl)} bold />
+      </div>
+
+      <div style={{ fontSize: 13, fontWeight: 700, color: "#111", marginBottom: 8 }}>Payslip</div>
+      <DocumentActions
+        doc={payslipDoc}
+        kind="payslip"
+        sourceId={payRun.id}
+        shareText={`Payslip for ${payRun.worker_name} — ${payRun.pay_period} ${payRun.pay_date}. Net pay: ${fmt(net)}.`}
+      />
+    </Modal>
+  );
+}
