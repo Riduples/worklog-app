@@ -60,8 +60,11 @@ CREATE POLICY delete_member ON public.pay_runs FOR DELETE
   USING (has_tool_access(business_id, 'payrun', 'approve'));
 
 -- ── Stamp pay_run_id on every side-effect the RPC writes ──
--- Same signature and behaviour as 0091; the only change is pay_run_id = the new
--- run's id on each child insert, so a later delete cascades to exactly these rows.
+-- Same signature and behaviour as the current version (0091 + the 0113 UIF fix);
+-- the only change is pay_run_id = the new run's id on each child insert, so a
+-- later delete cascades to exactly these rows. NOTE: the UIF expense books
+-- p_uif_employer ALONE (0113) — the employee's 1% is already inside gross wages,
+-- so booking both double-counts it. Do not revert to p_uif_employee + p_uif_employer.
 CREATE OR REPLACE FUNCTION create_pay_run(
   p_business_id uuid,
   p_staff_id uuid,
@@ -130,9 +133,10 @@ BEGIN
   INSERT INTO public.expenses (business_id, user_id, amount, sars_category, what_for, paid_to, payment_method, transaction_date, source, pay_run_id)
   VALUES (p_business_id, v_user_id, p_gross_wages, 'Employee costs — Salaries & wages', 'Wages — ' || p_worker_name, p_worker_name, 'Cash', p_pay_date, 'payroll', v_pay_run.id);
 
-  IF p_uif_employee + p_uif_employer > 0 THEN
+  -- Employer UIF only — the employee's 1% is already inside gross wages above (0113).
+  IF p_uif_employer > 0 THEN
     INSERT INTO public.expenses (business_id, user_id, amount, sars_category, what_for, paid_to, payment_method, transaction_date, source, pay_run_id)
-    VALUES (p_business_id, v_user_id, p_uif_employee + p_uif_employer, 'Employee costs — UIF employer contribution', 'UIF — ' || p_worker_name, 'SARS', 'EFT / Bank transfer', p_pay_date, 'payroll', v_pay_run.id);
+    VALUES (p_business_id, v_user_id, p_uif_employer, 'Employee costs — UIF employer contribution', 'UIF — ' || p_worker_name, 'SARS', 'EFT / Bank transfer', p_pay_date, 'payroll', v_pay_run.id);
   END IF;
 
   IF p_sdl > 0 THEN
