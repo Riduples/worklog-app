@@ -58,8 +58,14 @@ export function useDeletePayRun() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("pay_runs").delete().eq("id", id);
+      // .select() so we can tell an RLS-blocked / already-gone delete (0 rows, no
+      // error) from a real one — otherwise a no-op void would falsely report
+      // success and the user might re-issue, double-booking the payroll expense.
+      const { data, error } = await supabase.from("pay_runs").delete().eq("id", id).select("id");
       if (error) throw error;
+      if (!data || data.length === 0) {
+        throw new Error("Couldn't void this pay run — it may already be voided, or you no longer have permission.");
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });

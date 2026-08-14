@@ -91,7 +91,12 @@ export function TravelReport() {
   const yearTotalKm = openingOdo != null && closingOdo != null ? closingOdo - openingOdo : null;
   const businessKm = totalKm; // in the tax-year view, `all` already scopes to this tax year
   const privateKm = yearTotalKm != null ? Math.max(0, yearTotalKm - businessKm) : null;
-  const businessPct = yearTotalKm && yearTotalKm > 0 ? (businessKm / yearTotalKm) * 100 : null;
+  // Cap at 100%: if the odometer delta is under-recorded, logged business km can
+  // exceed it — never show >100% business use or a Business figure above Total.
+  const businessPct = yearTotalKm && yearTotalKm > 0 ? Math.min(100, (businessKm / yearTotalKm) * 100) : null;
+  // Logged trips exceed the odometer distance for the year — the readings look
+  // under-recorded, so flag it rather than print a self-contradictory logbook.
+  const odoUnderRecorded = yearTotalKm != null && businessKm > yearTotalKm + 0.5;
   const hasLogbookSetup = !!(business?.vehicle_description || business?.vehicle_registration) || openingOdo != null || closingOdo != null;
 
   // The logbook block only rides along on the tax-year view (it's a tax-year
@@ -226,6 +231,11 @@ export function TravelReport() {
                 Add the opening &amp; closing odometer in Travel Log → 🚗 Vehicle &amp; logbook to complete the year.
               </div>
             )}
+            {odoUnderRecorded && (
+              <div style={{ fontSize: 11, color: "#b45309", marginTop: 10 }}>
+                Your logged business trips ({businessKm.toFixed(0)} km) exceed the odometer distance for the year ({yearTotalKm?.toFixed(0)} km) — check your opening &amp; closing readings.
+              </div>
+            )}
           </div>
         ) : (
           <div style={{ background: "#fff", border: "1.5px dashed #cbd5e1", borderRadius: 14, padding: "16px", marginBottom: 16, fontSize: 13, color: "#64748b", textAlign: "center", lineHeight: 1.6 }}>
@@ -266,7 +276,13 @@ export function TravelReport() {
               <div>
                 <div style={{ fontSize: 13, fontWeight: 700, color: "#111" }}>{t.purpose || t.trip_type || "Trip"}</div>
                 <div style={{ fontSize: 11, color: "#94a3b8" }}>
-                  {t.trip_date} · odo {Number(t.odometer_start).toFixed(0)}→{Number(t.odometer_end).toFixed(0)} · {Number(t.km_travelled).toFixed(1)} km
+                  {/* On-site / Quick Log trips are auto-logged with no real odometer
+                      (start 0, end = distance); show an em-dash, not a fake 0→N read. */}
+                  {t.trip_date} · odo{" "}
+                  {Number(t.odometer_start) === 0 && Number(t.odometer_end) === Number(t.km_travelled)
+                    ? "—"
+                    : `${Number(t.odometer_start).toFixed(0)}→${Number(t.odometer_end).toFixed(0)}`}{" "}
+                  · {Number(t.km_travelled).toFixed(1)} km
                 </div>
               </div>
               <div style={{ fontSize: 14, fontWeight: 800, color: "#92400e", flexShrink: 0, marginLeft: 8 }}>{fmt(t.sars_deduction)}</div>

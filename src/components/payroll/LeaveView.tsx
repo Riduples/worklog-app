@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useWorkerLeave, type WorkerLeaveRecord } from "@/lib/supabase/hooks/useWorkerLeave";
-import { usePayRuns } from "@/lib/supabase/hooks/usePayRuns";
 import { LeaveModal } from "@/components/modals/LeaveModal";
 import { ReadOnlyNotice } from "@/components/ui/ReadOnlyNotice";
 import { useToolAccess } from "@/lib/supabase/hooks/useToolAccess";
@@ -26,39 +25,27 @@ type LeaveRow = {
 export function LeaveView() {
   const access = useToolAccess("leave");
   const { data: leaveRecords, isLoading } = useWorkerLeave();
-  const { data: payRuns } = usePayRuns();
 
   const [modal, setModal] = useState<{ open: boolean; leave?: WorkerLeaveRecord }>({ open: false });
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [sort, setSort] = useState<"recent" | "az">("recent");
 
-  // The list interleaves manually-recorded leave (editable) with the leave Pay Run
-  // has booked (read-only — those rows are synthesized from pay runs).
-  const rows: LeaveRow[] = [
-    ...(leaveRecords ?? []).map((l) => ({
-      key: `leave-${l.id}`,
-      record: l,
-      worker_name: l.worker_name,
-      leave_type: l.leave_type,
-      days: l.days,
-      start_date: l.start_date,
-      end_date: l.end_date,
-      note: l.note,
-    })),
-    ...(payRuns ?? [])
-      .filter((p) => (p.leave_days ?? 0) > 0)
-      .map((p) => ({
-        key: `payrun-${p.id}`,
-        record: undefined,
-        worker_name: p.worker_name,
-        leave_type: p.leave_type || "Annual",
-        days: p.leave_days ?? 0,
-        start_date: p.pay_date,
-        end_date: null,
-        note: "from Pay Run",
-      })),
-  ];
+  // worker_leave is the single source of truth. create_pay_run already writes a
+  // real leave row for the leave a pay run books, so we render those directly and
+  // mark them read-only (record undefined) — rather than synthesizing a second
+  // copy from the pay runs, which double-listed the leave here and double-counted
+  // it in the balance (see LeaveModal).
+  const rows: LeaveRow[] = (leaveRecords ?? []).map((l) => ({
+    key: `leave-${l.id}`,
+    record: l.pay_run_id ? undefined : l, // leave booked by Pay Run is read-only here
+    worker_name: l.worker_name,
+    leave_type: l.leave_type,
+    days: l.days,
+    start_date: l.start_date,
+    end_date: l.end_date,
+    note: l.pay_run_id ? "from Pay Run" : l.note,
+  }));
 
   const presentTypes = [
     ...LEAVE_TYPE_ORDER.filter((t) => rows.some((r) => r.leave_type === t)),

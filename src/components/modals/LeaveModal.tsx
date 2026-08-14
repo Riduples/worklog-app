@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/Input";
 import { SaveBtn } from "@/components/ui/SaveBtn";
 import { useStaffRegister } from "@/lib/supabase/hooks/useStaffRegister";
 import { useWorkerLeave, useCreateWorkerLeave, useUpdateWorkerLeave, type WorkerLeaveRecord } from "@/lib/supabase/hooks/useWorkerLeave";
-import { usePayRuns } from "@/lib/supabase/hooks/usePayRuns";
 import { todayStr } from "@/lib/format";
 import { calcLeaveBalances } from "@/lib/payroll";
 
@@ -30,7 +29,6 @@ export function LeaveModal({ leave, onClose }: { leave?: WorkerLeaveRecord; onCl
   const isEdit = !!leave;
   const { data: staff } = useStaffRegister();
   const { data: leaveRecords } = useWorkerLeave();
-  const { data: payRuns } = usePayRuns();
   const createLeave = useCreateWorkerLeave();
   const updateLeave = useUpdateWorkerLeave();
   const saving = createLeave.isPending || updateLeave.isPending;
@@ -45,12 +43,12 @@ export function LeaveModal({ leave, onClose }: { leave?: WorkerLeaveRecord; onCl
 
   const selectedWorker = (staff ?? []).find((w) => w.id === staffId) ?? null;
 
-  // Every leave entry for the worker — manual records plus what Pay Run booked —
-  // is what the BCEA balance is read from.
-  const leaveEntriesFor = (id: string) => [
-    ...(leaveRecords ?? []).filter((l) => l.staff_id === id).map((l) => ({ leave_type: l.leave_type, days: l.days, date: l.start_date })),
-    ...(payRuns ?? []).filter((p) => p.staff_id === id && (p.leave_days ?? 0) > 0).map((p) => ({ leave_type: p.leave_type ?? "Annual", days: p.leave_days ?? 0, date: p.pay_date })),
-  ];
+  // Every leave entry for the worker is read from worker_leave, which already
+  // includes the leave Pay Run books (create_pay_run writes a real row). It is the
+  // sole source — adding the pay runs on top counted that leave twice, shifting
+  // the BCEA balance by the pay-run days.
+  const leaveEntriesFor = (id: string) =>
+    (leaveRecords ?? []).filter((l) => l.staff_id === id).map((l) => ({ leave_type: l.leave_type, days: l.days, date: l.start_date }));
   const lb = selectedWorker ? calcLeaveBalances(selectedWorker.start_date, leaveEntriesFor(selectedWorker.id)) : null;
 
   const leaveDaysNum = parseFloat(leaveDays || "0");

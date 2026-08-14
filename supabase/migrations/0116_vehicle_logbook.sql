@@ -41,12 +41,16 @@ CREATE INDEX idx_mileage_logbook_years_business ON mileage_logbook_years(busines
 
 ALTER TABLE mileage_logbook_years ENABLE ROW LEVEL SECURITY;
 
--- Same access shape as the trips they summarise (mileage_trips): any member reads;
--- create/edit require a writable (non-read-only / non-trial-expired) business.
+-- Same access shape as the trips they summarise (mileage_trips post-0047): gated
+-- on the per-tool 'mileage' permission, not just tenancy. has_tool_access already
+-- folds in writability at 'edit'+, so no separate business_is_writable is needed.
+-- Using is_business_member here would let a member without 'mileage' access read
+-- or overwrite the logbook odometer that mileage_trips denies them — an
+-- intra-tenant per-tool bypass. There is no deleted_at column, so no 'full' branch.
 CREATE POLICY "select_member" ON mileage_logbook_years FOR SELECT
-  USING (is_business_member(business_id));
+  USING (has_tool_access(business_id, 'mileage', 'view'));
 CREATE POLICY "insert_member" ON mileage_logbook_years FOR INSERT
-  WITH CHECK (is_business_member(business_id) AND business_is_writable(business_id));
+  WITH CHECK (has_tool_access(business_id, 'mileage', 'edit'));
 CREATE POLICY "update_member" ON mileage_logbook_years FOR UPDATE
-  USING (is_business_member(business_id))
-  WITH CHECK (is_business_member(business_id) AND business_is_writable(business_id));
+  USING (has_tool_access(business_id, 'mileage', 'edit'))
+  WITH CHECK (has_tool_access(business_id, 'mileage', 'edit'));

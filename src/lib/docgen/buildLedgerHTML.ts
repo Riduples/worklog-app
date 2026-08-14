@@ -492,18 +492,22 @@ export function buildTravelReportHTML(
 ): string {
   const detailRows = rows.length
     ? rows
-        .map(
-          (r) => `
+        .map((r) => {
+          // On-site / Quick Log trips are auto-logged with no real odometer
+          // (start 0, end = distance); print an em-dash rather than a fabricated
+          // 0→N reading sitting among the real ones on the SARS logbook.
+          const noOdo = r.odoStart === 0 && r.odoEnd === r.km;
+          return `
       <tr>
         <td>${esc(r.date)}</td>
         <td>${esc(r.type)}</td>
         <td>${esc(r.purpose || "—")}</td>
-        <td style="text-align:right;">${r.odoStart.toFixed(0)}</td>
-        <td style="text-align:right;">${r.odoEnd.toFixed(0)}</td>
+        <td style="text-align:right;">${noOdo ? "—" : r.odoStart.toFixed(0)}</td>
+        <td style="text-align:right;">${noOdo ? "—" : r.odoEnd.toFixed(0)}</td>
         <td style="text-align:right;">${r.km.toFixed(1)} km</td>
         <td style="text-align:right;font-weight:700;">${fmt(r.deduction)}</td>
-      </tr>`
-        )
+      </tr>`;
+        })
         .join("")
     : `<tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:16px;">No trips logged.</td></tr>`;
 

@@ -79,7 +79,13 @@ export function PayRunDetailModal({ payRun, onClose }: { payRun: PayRun; onClose
   const reversals = [
     `the wage${uifEr > 0 ? "/UIF" : ""}${sdl > 0 ? "/SDL" : ""} expense on your books`,
     loan > 0 ? "the advance repayment — restores the outstanding balance" : null,
-    leaveDays > 0 ? "the leave recorded here — restores the leave balance" : null,
+    // Unpaid leave consumes no balance, so don't claim voiding restores one — it
+    // just removes the record (matching how the payslip/wizard gate on Unpaid).
+    leaveDays > 0
+      ? payRun.leave_type === "Unpaid"
+        ? "the unpaid-leave record for this run"
+        : "the leave recorded here — restores the leave balance"
+      : null,
   ].filter(Boolean) as string[];
 
   return (
