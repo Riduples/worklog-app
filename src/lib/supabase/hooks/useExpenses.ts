@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { captureWrite } from "@/lib/offline/capture";
 import type { Tables, TablesInsert } from "@/lib/types/database";
 
-type Expense = Tables<"expenses">;
+export type Expense = Tables<"expenses">;
 
 const QUERY_KEY = ["expenses"];
 

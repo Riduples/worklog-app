@@ -22,6 +22,10 @@ import {
   buildMarginsHTML,
   buildReorderHTML,
   buildCostingDriftHTML,
+  buildSupplierSpendHTML,
+  buildCategorySpendHTML,
+  buildCommittedHTML,
+  buildBillsDueHTML,
   type StatementLine,
   type RemittanceLine,
   type StatementCredits,
@@ -47,6 +51,10 @@ import {
   type MarginPdfRow,
   type ReorderPdfRow,
   type CostingDriftPdfRow,
+  type SupplierSpendPdfRow,
+  type CategorySpendPdfRow,
+  type CommittedPdfRow,
+  type BillDuePdfRow,
 } from "@/lib/docgen/buildLedgerHTML";
 import type { BusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 
@@ -180,6 +188,32 @@ type RenderRequest =
       rows: CostingDriftPdfRow[];
       totals: { costings: number; linked: number; under: number; shortfall: number };
       asAt: string;
+    }
+  | {
+      kind: "supplierspend";
+      rows: SupplierSpendPdfRow[];
+      totals: { suppliers: number; billed: number; paid: number; outstanding: number };
+      asAt: string;
+      periodLabel?: string;
+    }
+  | {
+      kind: "categoryspend";
+      rows: CategorySpendPdfRow[];
+      totals: { total: number; count: number; categories: number; uncategorised: number };
+      asAt: string;
+      periodLabel?: string;
+    }
+  | {
+      kind: "committedonorder";
+      rows: CommittedPdfRow[];
+      totals: { orders: number; amount: number; overdue: number; overdueAmount: number };
+      asAt: string;
+    }
+  | {
+      kind: "billsdue";
+      rows: BillDuePdfRow[];
+      totals: { overdue: number; week: number; month: number; later: number; undated: number; total: number; count: number };
+      asAt: string;
     };
 
 function buildHtml(body: RenderRequest, business: BusinessProfile, watermark: boolean): string | null {
@@ -224,6 +258,14 @@ function buildHtml(body: RenderRequest, business: BusinessProfile, watermark: bo
       return buildReorderHTML(business, body.rows, body.totals, body.asAt, watermark);
     case "costingdrift":
       return buildCostingDriftHTML(business, body.rows, body.totals, body.asAt, watermark);
+    case "supplierspend":
+      return buildSupplierSpendHTML(business, body.rows, body.totals, body.asAt, watermark, body.periodLabel);
+    case "categoryspend":
+      return buildCategorySpendHTML(business, body.rows, body.totals, body.asAt, watermark, body.periodLabel);
+    case "committedonorder":
+      return buildCommittedHTML(business, body.rows, body.totals, body.asAt, watermark);
+    case "billsdue":
+      return buildBillsDueHTML(business, body.rows, body.totals, body.asAt, watermark);
     default:
       return null;
   }

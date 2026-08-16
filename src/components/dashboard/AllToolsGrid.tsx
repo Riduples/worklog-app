@@ -72,6 +72,7 @@ const NAV_CATEGORIES: { id: string; items: NavItem[] }[] = [
       { href: "/supplier-invoices", icon: "📥", label: "Supplier Invoices", toolId: "supplierinvoice", lockId: "supplierinvoice" },
       { href: "/remittance", icon: "🧾", label: "Remittance", toolId: "remittance", lockId: "remittance" },
       { href: "/age-analysis-payables", icon: "⏳", label: "Age Analysis", toolId: "payables", lockId: "payables" },
+      { href: "/purchases-reports", icon: "📊", label: "Purchases Reports", anyOf: ["supplierinvoice", "purchaseorder", "expense"], desc: "Who you buy from, what it goes on, what you\u2019ve committed to and what falls due next — printable reports" },
     ],
   },
   {

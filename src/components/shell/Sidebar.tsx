@@ -44,6 +44,7 @@ const GROUPS: Group[] = [
       { tool: "supplierinvoice", href: "/supplier-invoices", icon: "📥", label: "Supplier Invoices" },
       { tool: "remittance", href: "/remittance", icon: "🧾", label: "Remittance" },
       { tool: "payables", href: "/age-analysis-payables", icon: "⏳", label: "Age Analysis" },
+      { tool: "supplierinvoice", anyOf: ["supplierinvoice", "purchaseorder", "expense"], href: "/purchases-reports", icon: "📊", label: "Purchases Reports" },
     ],
   },
   {

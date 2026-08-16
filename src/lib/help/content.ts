@@ -1787,7 +1787,8 @@ export const HELP_ARTICLES: HelpArticle[] = [
     "related": [
       "record-a-supplier-invoice",
       "send-a-remittance",
-      "add-customers-and-suppliers"
+      "add-customers-and-suppliers",
+      "purchases-reports"
     ]
   },
   {
@@ -1952,7 +1953,8 @@ export const HELP_ARTICLES: HelpArticle[] = [
       "create-a-purchase-order",
       "send-a-remittance",
       "log-money-in-and-out",
-      "vat201"
+      "vat201",
+      "purchases-reports"
     ]
   },
   {
@@ -5346,6 +5348,81 @@ export const HELP_ARTICLES: HelpArticle[] = [
       "manage-your-stock",
       "cost-a-job",
       "sales-reports"
+    ]
+  },
+  {
+    "slug": "purchases-reports",
+    "category": "Purchases",
+    "title": "Purchases Reports",
+    "summary": "Four printable reports over your buying: what each supplier costs you, what your spend goes on, what you have on order, and what falls due next.",
+    "sections": [
+      {
+        "heading": "What it is",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "Age Analysis tells you what is overdue and Remittance helps you pay it. Purchases Reports covers everything around that: who you buy from, what the money goes on, what you have committed to that has not arrived yet, and what has to be paid in the coming weeks. You will find it under Purchases, with four tabs."
+          }
+        ]
+      },
+      {
+        "heading": "By supplier",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "Each supplier with the bills you captured from them, what you have paid out to them, and what is still owed. Their payment terms show underneath the name so you can see who expects what."
+          },
+          {
+            "type": "warning",
+            "text": "Billed and paid are shown side by side, not added together. They are two views of the same relationship: money paid straight to a supplier may never have gone through a supplier invoice, and a bill you captured may not be paid yet. Adding them would count the same spend twice."
+          }
+        ]
+      },
+      {
+        "heading": "By category",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "Every SARS category you have used, with the total, the number of entries and the share of your spend. This is the deduction schedule an accountant works from — Profit & Loss shows the top eight categories for a period, this shows all of them."
+          },
+          {
+            "type": "tip",
+            "text": "Anything logged without a category is gathered under \"Uncategorised\" and shown in the tiles at the top. If that figure is large, it is worth going back and categorising those expenses before you file."
+          }
+        ]
+      },
+      {
+        "heading": "On order",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "Purchase orders you have raised that have not been billed yet — money you have committed to that is not on your books. Each shows how long ago it was ordered, when you asked for delivery, and what it is worth including VAT."
+          },
+          {
+            "type": "paragraph",
+            "text": "An order drops off this list as soon as you capture a supplier invoice against it, so what remains is genuinely still outstanding. Anything past the delivery date you asked for is marked, which makes it the list to chase from."
+          }
+        ]
+      },
+      {
+        "heading": "Bills due",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "Everything still owed, grouped by when it falls due: overdue, within 7 days, within 30 days, later, and anything with no due date on it. The total at the top is what you owe altogether."
+          },
+          {
+            "type": "tip",
+            "text": "Age Analysis looks backwards at what is already late. This looks forwards at what is coming, so use it when you are working out what money needs to be available."
+          }
+        ]
+      }
+    ],
+    "related": [
+      "record-a-supplier-invoice",
+      "create-a-purchase-order",
+      "send-a-remittance",
+      "age-analysis"
     ]
   }
 ];

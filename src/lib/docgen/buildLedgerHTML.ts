@@ -1467,3 +1467,238 @@ export function buildCostingDriftHTML(
 </body>
 </html>`;
 }
+
+// ── Purchases Reports ────────────────────────────────────────────────────────
+
+export type SupplierSpendPdfRow = { name: string; billed: number; paid: number; outstanding: number; invoices: number; terms: string };
+export type CategorySpendPdfRow = { category: string; amount: number; count: number; sharePct: number };
+export type CommittedPdfRow = { supplier: string; docNumber: string; issueDate: string; requestedDelivery: string; status: string; amount: number; ageDays: number };
+export type BillDuePdfRow = { supplier: string; docNumber: string; dueDate: string; amount: number; bucketLabel: string };
+
+export function buildSupplierSpendHTML(
+  business: BusinessProfile,
+  rows: SupplierSpendPdfRow[],
+  totals: { suppliers: number; billed: number; paid: number; outstanding: number },
+  asAt: string,
+  watermark = false,
+  periodLabel?: string
+): string {
+  const body = rows.length
+    ? rows
+        .map(
+          (r) => `
+      <tr>
+        <td>${esc(r.name)}${r.terms ? `<br/><span style="font-size:10px;color:#94a3b8;">${esc(r.terms)}</span>` : ""}</td>
+        <td style="text-align:center;">${r.invoices || "—"}</td>
+        <td style="text-align:right;">${fmt(r.billed)}</td>
+        <td style="text-align:right;">${fmt(r.paid)}</td>
+        <td style="text-align:right;font-weight:700;color:${r.outstanding > 0 ? "#92400e" : "#111"};">${fmt(r.outstanding)}</td>
+      </tr>`
+        )
+        .join("")
+    : `<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:16px;">No supplier spend in this period.</td></tr>`;
+
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" /><title>Spend by Supplier</title><style>${SHARED_CSS}</style></head>
+<body>
+  ${watermark ? `<div class="wm">TRIAL — NOT FINAL</div>` : ""}
+  ${header(business, "SPEND BY SUPPLIER", periodLabel ? `${periodLabel} · as at ${asAt}` : `As at ${asAt}`)}
+  <div class="meta-row">
+    ${fromBlock(business, "Prepared by")}
+    <div style="text-align:right;">
+      <div class="meta-label">Report</div>
+      <div style="font-size:20px;font-weight:800;">Who you buy from</div>
+      ${periodLabel ? `<div style="font-size:12px;color:#64748b;margin-top:2px;">${esc(periodLabel)}</div>` : ""}
+    </div>
+  </div>
+  <table>
+    <thead><tr><th>Supplier</th><th style="text-align:center;">Bills</th><th style="text-align:right;">Billed</th><th style="text-align:right;">Paid out</th><th style="text-align:right;">Still owed</th></tr></thead>
+    <tbody>${body}</tbody>
+  </table>
+  <div class="totals">
+    <div class="totals-box">
+      <div class="totals-row"><span>Suppliers</span><span>${totals.suppliers}</span></div>
+      <div class="totals-row"><span>Billed on supplier invoices</span><span>${fmt(totals.billed)}</span></div>
+      <div class="totals-row"><span>Paid out of the expense ledger</span><span>${fmt(totals.paid)}</span></div>
+      <div class="totals-row final"><span>Still owed</span><span>${fmt(totals.outstanding)}</span></div>
+    </div>
+  </div>
+  <div class="footer">
+    Supplier spend as at ${esc(asAt)}. Billed and paid are two views of the same relationship, not two halves of one total — an expense paid straight to a supplier may never have been billed, so they are shown side by side rather than added.<br/>Generated via Worklog — worklog.co.za${
+      watermark ? `<br/><strong style="color:#dc2626;">Draft — made on a free Worklog trial.</strong>` : ""
+    }
+  </div>
+</body>
+</html>`;
+}
+
+export function buildCategorySpendHTML(
+  business: BusinessProfile,
+  rows: CategorySpendPdfRow[],
+  totals: { total: number; count: number; categories: number; uncategorised: number },
+  asAt: string,
+  watermark = false,
+  periodLabel?: string
+): string {
+  const body = rows.length
+    ? rows
+        .map(
+          (r) => `
+      <tr>
+        <td>${esc(r.category)}</td>
+        <td style="text-align:center;">${r.count}</td>
+        <td style="text-align:center;">${r.sharePct.toFixed(1)}%</td>
+        <td style="text-align:right;font-weight:700;">${fmt(r.amount)}</td>
+      </tr>`
+        )
+        .join("")
+    : `<tr><td colspan="4" style="text-align:center;color:#94a3b8;padding:16px;">No expenses in this period.</td></tr>`;
+
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" /><title>Spend by Category</title><style>${SHARED_CSS}</style></head>
+<body>
+  ${watermark ? `<div class="wm">TRIAL — NOT FINAL</div>` : ""}
+  ${header(business, "SPEND BY CATEGORY", periodLabel ? `${periodLabel} · as at ${asAt}` : `As at ${asAt}`)}
+  <div class="meta-row">
+    ${fromBlock(business, "Prepared by")}
+    <div style="text-align:right;">
+      <div class="meta-label">Report</div>
+      <div style="font-size:20px;font-weight:800;">The deduction schedule</div>
+      ${periodLabel ? `<div style="font-size:12px;color:#64748b;margin-top:2px;">${esc(periodLabel)}</div>` : ""}
+    </div>
+  </div>
+  <table>
+    <thead><tr><th>SARS category</th><th style="text-align:center;">Entries</th><th style="text-align:center;">Share</th><th style="text-align:right;">Amount</th></tr></thead>
+    <tbody>${body}</tbody>
+  </table>
+  <div class="totals">
+    <div class="totals-box">
+      <div class="totals-row"><span>Categories used</span><span>${totals.categories}</span></div>
+      <div class="totals-row"><span>Entries</span><span>${totals.count}</span></div>
+      ${totals.uncategorised > 0 ? `<div class="totals-row"><span>Uncategorised</span><span style="color:#b45309;">${fmt(totals.uncategorised)}</span></div>` : ""}
+      <div class="totals-row final"><span>Total spend</span><span>${fmt(totals.total)}</span></div>
+    </div>
+  </div>
+  <div class="footer">
+    Business expenses by SARS category as at ${esc(asAt)}. Personal spend and credit-note settlements are excluded — neither is a deduction. Confirm the treatment of any category with your accountant.<br/>Generated via Worklog — worklog.co.za${
+      watermark ? `<br/><strong style="color:#dc2626;">Draft — made on a free Worklog trial.</strong>` : ""
+    }
+  </div>
+</body>
+</html>`;
+}
+
+export function buildCommittedHTML(
+  business: BusinessProfile,
+  rows: CommittedPdfRow[],
+  totals: { orders: number; amount: number; overdue: number; overdueAmount: number },
+  asAt: string,
+  watermark = false
+): string {
+  const body = rows.length
+    ? rows
+        .map(
+          (r) => `
+      <tr>
+        <td>${esc(r.supplier)}${r.docNumber ? `<br/><span style="font-size:10px;color:#94a3b8;">${esc(r.docNumber)}</span>` : ""}</td>
+        <td>${esc(r.issueDate || "—")}</td>
+        <td style="text-align:center;">${r.ageDays}d</td>
+        <td>${esc(r.requestedDelivery || "—")}</td>
+        <td>${esc(r.status)}</td>
+        <td style="text-align:right;font-weight:700;">${fmt(r.amount)}</td>
+      </tr>`
+        )
+        .join("")
+    : `<tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:16px;">Nothing on order.</td></tr>`;
+
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" /><title>Committed on Order</title><style>${SHARED_CSS}</style></head>
+<body>
+  ${watermark ? `<div class="wm">TRIAL — NOT FINAL</div>` : ""}
+  ${header(business, "COMMITTED ON ORDER", `As at ${asAt}`)}
+  <div class="meta-row">
+    ${fromBlock(business, "Prepared by")}
+    <div style="text-align:right;">
+      <div class="meta-label">Report</div>
+      <div style="font-size:20px;font-weight:800;">Money promised, not yet billed</div>
+    </div>
+  </div>
+  <table>
+    <thead><tr><th>Supplier</th><th>Ordered</th><th style="text-align:center;">Age</th><th>Wanted by</th><th>Status</th><th style="text-align:right;">Value</th></tr></thead>
+    <tbody>${body}</tbody>
+  </table>
+  <div class="totals">
+    <div class="totals-box">
+      <div class="totals-row"><span>Open orders</span><span>${totals.orders}</span></div>
+      <div class="totals-row"><span>Past their delivery date</span><span style="color:${totals.overdue > 0 ? "#be123c" : "#111"};">${totals.overdue} · ${fmt(totals.overdueAmount)}</span></div>
+      <div class="totals-row final"><span>Committed on order</span><span>${fmt(totals.amount)}</span></div>
+    </div>
+  </div>
+  <div class="footer">
+    Purchase orders raised but not yet billed as at ${esc(asAt)}, VAT included — spend you have committed to that hasn't reached your books. An order drops off this list as soon as a supplier invoice links back to it.<br/>Generated via Worklog — worklog.co.za${
+      watermark ? `<br/><strong style="color:#dc2626;">Draft — made on a free Worklog trial.</strong>` : ""
+    }
+  </div>
+</body>
+</html>`;
+}
+
+export function buildBillsDueHTML(
+  business: BusinessProfile,
+  rows: BillDuePdfRow[],
+  totals: { overdue: number; week: number; month: number; later: number; undated: number; total: number; count: number },
+  asAt: string,
+  watermark = false
+): string {
+  const body = rows.length
+    ? rows
+        .map(
+          (r) => `
+      <tr>
+        <td>${esc(r.supplier)}${r.docNumber ? `<br/><span style="font-size:10px;color:#94a3b8;">${esc(r.docNumber)}</span>` : ""}</td>
+        <td>${esc(r.dueDate || "—")}</td>
+        <td style="color:${r.bucketLabel === "Overdue" ? "#be123c" : "#64748b"};">${esc(r.bucketLabel)}</td>
+        <td style="text-align:right;font-weight:700;">${fmt(r.amount)}</td>
+      </tr>`
+        )
+        .join("")
+    : `<tr><td colspan="4" style="text-align:center;color:#94a3b8;padding:16px;">Nothing outstanding.</td></tr>`;
+
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" /><title>Bills Due</title><style>${SHARED_CSS}</style></head>
+<body>
+  ${watermark ? `<div class="wm">TRIAL — NOT FINAL</div>` : ""}
+  ${header(business, "BILLS DUE", `As at ${asAt}`)}
+  <div class="meta-row">
+    ${fromBlock(business, "Prepared by")}
+    <div style="text-align:right;">
+      <div class="meta-label">Report</div>
+      <div style="font-size:20px;font-weight:800;">What to have ready</div>
+    </div>
+  </div>
+  <table>
+    <thead><tr><th>Supplier</th><th>Due</th><th>When</th><th style="text-align:right;">Amount</th></tr></thead>
+    <tbody>${body}</tbody>
+  </table>
+  <div class="totals">
+    <div class="totals-box">
+      <div class="totals-row"><span>Overdue</span><span style="color:${totals.overdue > 0 ? "#be123c" : "#111"};">${fmt(totals.overdue)}</span></div>
+      <div class="totals-row"><span>Within 7 days</span><span>${fmt(totals.week)}</span></div>
+      <div class="totals-row"><span>Within 30 days</span><span>${fmt(totals.month)}</span></div>
+      <div class="totals-row"><span>Later</span><span>${fmt(totals.later)}</span></div>
+      ${totals.undated > 0 ? `<div class="totals-row"><span>No due date set</span><span>${fmt(totals.undated)}</span></div>` : ""}
+      <div class="totals-row final"><span>Owed in total</span><span>${fmt(totals.total)}</span></div>
+    </div>
+  </div>
+  <div class="footer">
+    Supplier bills with a balance still owing as at ${esc(asAt)}, soonest first. Paid and credited bills are excluded — there is nothing left to plan for on them.<br/>Generated via Worklog — worklog.co.za${
+      watermark ? `<br/><strong style="color:#dc2626;">Draft — made on a free Worklog trial.</strong>` : ""
+    }
+  </div>
+</body>
+</html>`;
+}
