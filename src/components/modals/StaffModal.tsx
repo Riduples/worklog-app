@@ -205,12 +205,6 @@ export function StaffModal({ staff, onClose }: { staff?: StaffMember; onClose: (
         </div>
       </div>
 
-      {isContractor && (
-        <div style={{ background: "#fff7ed", border: "1.5px solid #fed7aa", borderRadius: 12, padding: "12px 14px", marginBottom: 14, fontSize: 12, color: "#92400e", lineHeight: 1.6 }}>
-          <span style={{ fontWeight: 700 }}>🧾 Independent contractor</span> — You pay them an agreed amount and they invoice you. Log their payment as an <strong>expense</strong> under &quot;Subcontractor / contract labour.&quot; They handle their own UIF and tax. No leave tracking needed.
-        </div>
-      )}
-
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
         <Field label="First name">
           <Input value={firstName} onChange={setFirstName} placeholder="e.g. Sipho" />
@@ -245,16 +239,18 @@ export function StaffModal({ staff, onClose }: { staff?: StaffMember; onClose: (
         />
       </Field>
 
+      {/* Hours/day is asked for on every pay type, not just Hourly. A daily or
+          monthly worker's ordinary hours are what overtime, short time and a
+          final-pay hourly equivalent are all measured against — and BCEA caps
+          them at 9/day (45/week) regardless of how the person is paid. */}
       {!isContractor && (
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
           <Field label="Days/week">
             <Input type="number" value={daysPerWeek} onChange={setDaysPerWeek} placeholder="5" />
           </Field>
-          {payType === "Hourly" && (
-            <Field label="Hours/day">
-              <Input type="number" value={hoursPerDay} onChange={setHoursPerDay} placeholder="8" />
-            </Field>
-          )}
+          <Field label="Hours/day">
+            <Input type="number" value={hoursPerDay} onChange={setHoursPerDay} placeholder="8" />
+          </Field>
         </div>
       )}
 
@@ -327,10 +323,27 @@ export function StaffModal({ staff, onClose }: { staff?: StaffMember; onClose: (
           <Field label="Contact number">
             <Input type="tel" value={contactNumber} onChange={setContactNumber} placeholder="082 123 4567" />
           </Field>
+          {/* A contractor never sees the SARS / UIF section — they file their own
+              — but you still need somewhere to pay them and an address for their
+              invoices, so those two fields live here instead of going missing. */}
           {isContractor && (
-            <Field label="Their business / trading name - optional">
-              <Input value={tradingName} onChange={setTradingName} placeholder="e.g. ABC Plumbing cc" />
-            </Field>
+            <>
+              <Field label="Their business / trading name - optional">
+                <Input value={tradingName} onChange={setTradingName} placeholder="e.g. ABC Plumbing cc" />
+              </Field>
+              <Field label="Residential / business address">
+                <Input value={address} onChange={setAddress} placeholder="Street, suburb, city, code" />
+              </Field>
+              <Field label="Bank & account number">
+                <div style={{ background: "#fff7ed", border: "1px solid #fed7aa", borderRadius: 8, padding: "7px 10px", marginBottom: 6, fontSize: 11, color: "#92400e", lineHeight: 1.5 }}>
+                  🔒 <span style={{ fontWeight: 700 }}>POPIA:</span> Banking details are sensitive personal data — capture them only with the contractor&apos;s knowledge and use them for payment purposes only.
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  <Input value={bankName} onChange={setBankName} placeholder="Bank name" />
+                  <Input value={bankAccount} onChange={setBankAccount} placeholder="Account number" />
+                </div>
+              </Field>
+            </>
           )}
         </div>
       )}

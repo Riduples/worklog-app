@@ -27,6 +27,18 @@ const EMPLOYMENT_BADGE: Record<string, { label: string; bg: string; fg: string; 
   casual: { label: "🔁 Casual", bg: "#F0F9FF", fg: "#0369A1", border: "#BAE6FD" },
 };
 
+// The worker types the register can hold, in the order the Add form offers them.
+// Permanent has no badge (it's the unremarkable default) but still needs a label
+// here so it can be filtered for.
+const WORKER_TYPES = [
+  { value: "permanent", label: "👔 Permanent" },
+  { value: "fixed_term", label: "📅 Fixed-term" },
+  { value: "casual", label: "🔁 Casual" },
+  { value: "contractor", label: "🧾 Contractor" },
+] as const;
+
+type WorkerTypeFilter = "all" | (typeof WORKER_TYPES)[number]["value"];
+
 // The UI-19 needs a reason for every departure, so it's captured on exit.
 const TERM_REASONS = ["Resignation", "Dismissal", "Retrenchment", "Contract ended", "Retirement", "Death", "Other"];
 
@@ -340,6 +352,7 @@ export function StaffView() {
   const [editing, setEditing] = useState<StaffMember | null>(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "left">("all");
+  const [typeFilter, setTypeFilter] = useState<WorkerTypeFilter>("all");
   const [sort, setSort] = useState<"az" | "recent">("az");
 
   const isOwner = (currentMember ?? { role: "owner" }).role === "owner";
@@ -351,13 +364,18 @@ export function StaffView() {
   const staffLimit = restriction?.limit;
   const soloCapped = staffLimit !== undefined && staffCount >= staffLimit;
 
-  // Search (name, employee no., ID, contractor trading name) and the status pills
-  // narrow the list the same way the other list tools do.
+  // Search (name, employee no., ID, contractor trading name), the status pills and
+  // the worker-type pills narrow the list the same way the other list tools do.
   const all = staff ?? [];
   const anyTerminated = all.some((w) => w.terminated);
+  // Only offer a type pill for a type someone actually is — a register of five
+  // permanent employees doesn't need three empty filters. The row disappears
+  // entirely below two types, where filtering can't tell you anything new.
+  const presentTypes = WORKER_TYPES.filter((t) => all.some((w) => w.employment_type === t.value));
   const filtered = all.filter((w) => {
     if (statusFilter === "active" && w.terminated) return false;
     if (statusFilter === "left" && !w.terminated) return false;
+    if (typeFilter !== "all" && w.employment_type !== typeFilter) return false;
     if (search) {
       const s = search.toLowerCase();
       const hay = `${w.full_name} ${w.employee_number ?? ""} ${w.id_number ?? ""} ${w.trading_name ?? ""}`.toLowerCase();
@@ -431,8 +449,30 @@ export function StaffView() {
         </div>
       )}
 
+      {/* Worker type sits on its own row under the status pills and stacks with
+          them, so "left contractors" is two taps. Each pill carries its own count
+          so the split is readable before you filter by it. */}
+      {presentTypes.length > 1 && (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
+          {([{ value: "all", label: "All types" }, ...presentTypes] as { value: WorkerTypeFilter; label: string }[]).map((t) => {
+            const active = typeFilter === t.value;
+            const count = t.value === "all" ? all.length : all.filter((w) => w.employment_type === t.value).length;
+            return (
+              <button
+                key={t.value}
+                onClick={() => setTypeFilter(t.value)}
+                style={{ padding: "8px 14px", borderRadius: 20, border: `1.5px solid ${active ? "#0C4A6E" : "#e2e8f0"}`, background: active ? "#0C4A6E" : "#fff", color: active ? "#fff" : "#374151", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
+              >
+                {t.label}{" "}
+                <span style={{ fontWeight: 600, color: active ? "#7DD3FC" : "#94a3b8" }}>{count}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {!isLoading && all.length > 0 && sortedStaff.length === 0 && (
-        <p style={{ color: "#94a3b8", fontSize: 13, textAlign: "center", marginTop: 40 }}>No staff match your search.</p>
+        <p style={{ color: "#94a3b8", fontSize: 13, textAlign: "center", marginTop: 40 }}>No staff match your search or filters.</p>
       )}
 
       {sortedStaff.length > 0 && (
