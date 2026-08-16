@@ -9,22 +9,32 @@ import {
   buildTemplateCsv,
   PAYMENT_BEHAVIOURS,
   PAYMENT_TERMS,
+  CSV_EMPLOYMENT_TYPE_HINT,
+  CSV_PAY_TYPE_HINT,
   type CsvImportType,
 } from "@/lib/csvTemplates";
 import { useCsvImport, fetchExistingNames } from "@/lib/supabase/hooks/useCsvImport";
 import { normaliseItemType, ITEM_TYPE_META } from "@/lib/itemTypes";
+import { parseStaffCsvRow, type StaffCsvRow } from "@/lib/staffCsv";
 import type { TablesInsert } from "@/lib/types/database";
 
 type StockRow = Omit<TablesInsert<"stock_items">, "user_id" | "business_id">;
 type ContactRow = Omit<TablesInsert<"contacts">, "user_id" | "business_id">;
-type ParsedRow = { row: StockRow | ContactRow; name: string; issues: string[]; duplicate: boolean };
+type ParsedRow = { row: StockRow | ContactRow | StaffCsvRow; name: string; issues: string[]; duplicate: boolean };
 
 const num = (v: unknown) => {
   const n = parseFloat(String(v ?? "").trim());
   return Number.isFinite(n) ? n : 0;
 };
 
-export function CSVImportModal({ type, onClose }: { type: CsvImportType; onClose: () => void }) {
+/**
+ * `slotsLeft` is for a tool whose plan caps how many rows may exist — the Staff
+ * Register on Solo. The database checks the cap per inserted row against the
+ * count it can see, and every row of one batch sees the same count, so a bulk
+ * insert would sail past a limit that stops the Add form dead. The import holds
+ * the line itself: only that many rows go, and the screen says which ones didn't.
+ */
+export function CSVImportModal({ type, slotsLeft, onClose }: { type: CsvImportType; slotsLeft?: number; onClose: () => void }) {
   const template = CSV_TEMPLATES[type];
   const requiredCol = template.columns.find((c) => c.required)?.csvHeader ?? "name";
   const [step, setStep] = useState<"upload" | "preview" | "done">("upload");
@@ -56,6 +66,19 @@ export function CSVImportModal({ type, onClose }: { type: CsvImportType; onClose
       complete: (results) => {
         const rows: ParsedRow[] = [];
         for (const raw of results.data) {
+          // Staff has its own parser: the mapping onto the register (three rate
+          // columns behind one "rate", is_contractor, date of birth from the ID)
+          // is enough work to be worth testing on its own.
+          if (type === "staff") {
+            const parsedStaff = parseStaffCsvRow(raw);
+            if (!parsedStaff) continue;
+            const staffKey = parsedStaff.name.toLowerCase();
+            const dup = existing.has(staffKey) || seenInFile.has(staffKey);
+            seenInFile.add(staffKey);
+            rows.push({ row: parsedStaff.row, name: parsedStaff.name, issues: parsedStaff.issues, duplicate: dup });
+            continue;
+          }
+
           // Stock templates ship a "description" column now; older files (and
           // contacts) still use "name". Accept either, name wins as fallback.
           const name = ((type === "stock" ? raw.description ?? raw.name : raw.name) ?? "").trim();
@@ -120,8 +143,16 @@ export function CSVImportModal({ type, onClose }: { type: CsvImportType; onClose
     });
   };
 
+  const importable = parsed.filter((p) => !p.duplicate);
+  // Rows past the plan's cap. They stay visible in the preview, marked, rather
+  // than disappearing — being told what won't import beats wondering later.
+  const overCap = slotsLeft !== undefined ? Math.max(0, importable.length - slotsLeft) : 0;
+  const newCount = importable.length - overCap;
+  const dupCount = parsed.filter((p) => p.duplicate).length;
+  const isOverCap = (p: ParsedRow) => overCap > 0 && importable.indexOf(p) >= newCount;
+
   const doImport = () => {
-    const toImport = parsed.filter((p) => !p.duplicate).map((p) => p.row);
+    const toImport = importable.slice(0, newCount).map((p) => p.row);
     if (toImport.length === 0) {
       setImportedCount(0);
       setStep("done");
@@ -130,7 +161,9 @@ export function CSVImportModal({ type, onClose }: { type: CsvImportType; onClose
     const payload =
       type === "stock"
         ? ({ type: "stock", rows: toImport as StockRow[] } as const)
-        : ({ type, rows: toImport as ContactRow[] } as const);
+        : type === "staff"
+          ? ({ type: "staff", rows: toImport as StaffCsvRow[] } as const)
+          : ({ type, rows: toImport as ContactRow[] } as const);
     csvImport.mutate(payload, {
       onSuccess: (count) => {
         setImportedCount(count);
@@ -138,9 +171,6 @@ export function CSVImportModal({ type, onClose }: { type: CsvImportType; onClose
       },
     });
   };
-
-  const newCount = parsed.filter((p) => !p.duplicate).length;
-  const dupCount = parsed.filter((p) => p.duplicate).length;
 
   return (
     <Modal title={`Import ${template.label.toLowerCase()}`} onClose={onClose}>
@@ -150,6 +180,28 @@ export function CSVImportModal({ type, onClose }: { type: CsvImportType; onClose
             Upload a CSV with columns: <strong>{template.columns.map((c) => c.csvHeader).join(", ")}</strong>. Only{" "}
             <strong>{requiredCol}</strong> is required. Rows matching an existing name are skipped.
           </div>
+
+          {/* The two columns that only accept certain words, spelled out — the
+              rest are free text and speak for themselves. */}
+          {type === "staff" && (
+            <div style={{ background: "#f8fafc", border: "1.5px solid #e2e8f0", borderRadius: 12, padding: "12px 14px", marginBottom: 12, fontSize: 12, color: "#64748b", lineHeight: 1.6 }}>
+              <div>
+                <strong style={{ color: "#374151" }}>employment_type:</strong> {CSV_EMPLOYMENT_TYPE_HINT}
+              </div>
+              <div>
+                <strong style={{ color: "#374151" }}>pay_type:</strong> {CSV_PAY_TYPE_HINT}
+              </div>
+              <div>
+                <strong style={{ color: "#374151" }}>rate:</strong> the amount for that pay type — a daily wage, an hourly rate or a monthly salary
+              </div>
+              <div>
+                <strong style={{ color: "#374151" }}>dates:</strong> YYYY-MM-DD, e.g. 2026-01-15
+              </div>
+              <div style={{ marginTop: 6 }}>
+                Anything it can&apos;t read is flagged before you import, never guessed at silently. Employee numbers are assigned on save, the same as adding someone by hand.
+              </div>
+            </div>
+          )}
 
           <button
             onClick={downloadTemplate}
@@ -189,12 +241,20 @@ export function CSVImportModal({ type, onClose }: { type: CsvImportType; onClose
             </div>
           </div>
 
+          {overCap > 0 && (
+            <div style={{ background: "#fff1f2", border: "1.5px solid #fecdd3", borderRadius: 12, padding: "12px 14px", marginBottom: 16, fontSize: 12.5, color: "#be123c", lineHeight: 1.6 }}>
+              Your plan has room for <strong>{slotsLeft}</strong> more, so the last <strong>{overCap}</strong> {overCap === 1 ? "row" : "rows"} won&apos;t
+              import. Upgrade and run the same file again — the ones already in are skipped as duplicates.
+            </div>
+          )}
+
           <div style={{ maxHeight: 260, overflowY: "auto", marginBottom: 16 }}>
             {parsed.map((p, i) => (
-              <div key={i} style={{ padding: "8px 10px", borderBottom: "1px solid #f1f5f9", fontSize: 13, opacity: p.duplicate ? 0.5 : 1 }}>
+              <div key={i} style={{ padding: "8px 10px", borderBottom: "1px solid #f1f5f9", fontSize: 13, opacity: p.duplicate || isOverCap(p) ? 0.5 : 1 }}>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
                   <span style={{ fontWeight: 600, color: "#111" }}>{p.name}</span>
                   {p.duplicate && <span style={{ fontSize: 11, color: "#b45309" }}>duplicate — skip</span>}
+                  {!p.duplicate && isOverCap(p) && <span style={{ fontSize: 11, color: "#be123c", whiteSpace: "nowrap" }}>over your plan — skip</span>}
                 </div>
                 {p.issues.map((iss, j) => (
                   <div key={j} style={{ fontSize: 11, color: "#b45309" }}>

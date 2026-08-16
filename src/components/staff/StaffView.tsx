@@ -9,6 +9,7 @@ import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 import { useCurrentMember } from "@/lib/supabase/hooks/useCurrentMember";
 import { useToolAccess } from "@/lib/supabase/hooks/useToolAccess";
 import { StaffModal } from "@/components/modals/StaffModal";
+import { CSVImportModal } from "@/components/modals/CSVImportModal";
 import { UpgradeModal } from "@/components/modals/UpgradeModal";
 import { Modal } from "@/components/ui/Modal";
 import { Row } from "@/components/ui/Row";
@@ -350,6 +351,7 @@ export function StaffView() {
   // other view asks before offering a write.
   const access = useToolAccess("staffregister");
   const [showAdd, setShowAdd] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [selected, setSelected] = useState<StaffMember | null>(null);
   const [editing, setEditing] = useState<StaffMember | null>(null);
@@ -401,6 +403,15 @@ export function StaffView() {
     else setShowAdd(true);
   };
 
+  // How many more the plan will take. Undefined on a plan with no cap, which is
+  // what the import expects for "as many as they've got".
+  const slotsLeft = staffLimit !== undefined ? Math.max(0, staffLimit - staffCount) : undefined;
+
+  const handleImportClick = () => {
+    if (soloCapped) setShowUpgrade(true);
+    else setShowImport(true);
+  };
+
   // Removing someone typed in by mistake, the same soft delete the other list
   // tools use. Not the way to record a departure — that's "mark as left", which
   // keeps the person, their leave accrual and their exit details on file — so the
@@ -427,12 +438,24 @@ export function StaffView() {
           <BackLink />
           <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 0" }}>Staff Register</h1>
         </div>
+        {/* Import sits beside Add exactly as it does on Customers — and only for
+            someone who may write, since it is a write. */}
+        <div style={{ display: "flex", gap: 8 }}>
+        {access.canEdit && (
+          <button
+            onClick={handleImportClick}
+            style={{ background: "#F0F9FF", color: "#0369A1", border: "1.5px solid #BAE6FD", borderRadius: 12, padding: "10px 14px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+          >
+            ⬆ Import
+          </button>
+        )}
         <button
           onClick={handleAddClick}
           style={{ background: "#0C4A6E", color: "#fff", border: "none", borderRadius: 12, padding: "10px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
         >
           {soloCapped ? "🔒 Add" : "+ Add"}
         </button>
+        </div>
       </div>
 
       {isLoading && <p style={{ color: "#94a3b8", fontSize: 13 }}>Loading...</p>}
@@ -605,6 +628,7 @@ export function StaffView() {
       )}
 
       {showAdd && <StaffModal onClose={() => setShowAdd(false)} />}
+      {showImport && <CSVImportModal type="staff" slotsLeft={slotsLeft} onClose={() => setShowImport(false)} />}
       {showUpgrade && business && (
         <UpgradeModal feature="staffregister" currentPlan={plan} isOwner={isOwner} onClose={() => setShowUpgrade(false)} />
       )}

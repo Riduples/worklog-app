@@ -2936,6 +2936,44 @@ export const HELP_ARTICLES: HelpArticle[] = [
         ]
       },
       {
+        "heading": "Import a list of staff from a spreadsheet",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "If you already keep your people in a spreadsheet, you do not have to retype them. The Staff Register has an \u2b06 Import button next to + Add that takes a CSV file, the same way Customers and Suppliers do."
+          },
+          {
+            "type": "steps",
+            "items": [
+              "Open the Staff Register and tap \u2b06 Import.",
+              "Tap \"Download template CSV\". It comes with every column the Add Staff form has, and one filled-in example row to copy.",
+              "Open it in Excel or Google Sheets, replace the example row with your people, and save it as CSV.",
+              "Tap \"Choose CSV file\u2026\" and pick your file.",
+              "Check the preview. It shows how many will import, how many are duplicates, and a warning against any row it could not read cleanly.",
+              "Tap Import."
+            ]
+          },
+          {
+            "type": "bullets",
+            "items": [
+              "first_name is the only column you must fill in. If your spreadsheet has one \"name\" column instead, that works too \u2014 the first word becomes the first name and the rest the surname.",
+              "employment_type takes permanent, fixed_term, casual or contractor.",
+              "pay_type takes Daily, Hourly or Monthly, and rate is the amount for whichever you chose \u2014 a daily wage, an hourly rate or a monthly salary.",
+              "Dates go in as YYYY-MM-DD, for example 2026-01-15.",
+              "Anyone whose name already appears on the register is skipped, so running the same file twice will not create everybody again."
+            ]
+          },
+          {
+            "type": "tip",
+            "text": "Employee numbers are given out on import exactly as they are when you add someone by hand, so an imported employee is no different from a typed-in one. Contractors do not get one, because they file their own tax."
+          },
+          {
+            "type": "warning",
+            "text": "Nothing is guessed at silently. A worker type or pay type it does not recognise falls back to permanent or Daily and says so in the preview, a date in the wrong format is left blank and flagged, and a missing start date is called out because leave accrues from it. Read the warnings before you tap Import \u2014 you can fix the file and upload it again."
+          }
+        ]
+      },
+      {
         "heading": "Set a monthly allowance (optional)",
         "blocks": [
           {

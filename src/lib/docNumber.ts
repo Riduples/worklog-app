@@ -21,6 +21,23 @@ export async function getNextDocNumber(
   businessId: string,
   prefix: keyof typeof SERIES
 ): Promise<string> {
+  return (await getNextDocNumbers(supabase, businessId, prefix, 1))[0];
+}
+
+/**
+ * The next `count` numbers in a series, in order.
+ *
+ * A CSV import inserts everyone in one statement, so it can't call the
+ * single-number version per row — each call would read the same maximum back and
+ * hand out the same number to all of them. Reading the maximum once and counting
+ * up from it keeps the batch sequential.
+ */
+export async function getNextDocNumbers(
+  supabase: SupabaseClient,
+  businessId: string,
+  prefix: keyof typeof SERIES,
+  count: number
+): Promise<string[]> {
   const year = new Date().getFullYear();
   const { table, column } = SERIES[prefix];
   const yearPrefix = `${prefix}-${year}-`;
@@ -42,5 +59,5 @@ export async function getNextDocNumber(
     return n > max ? n : max;
   }, 0);
 
-  return `${yearPrefix}${String(maxNum + 1).padStart(4, "0")}`;
+  return Array.from({ length: count }, (_, i) => `${yearPrefix}${String(maxNum + 1 + i).padStart(4, "0")}`);
 }
