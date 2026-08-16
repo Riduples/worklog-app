@@ -47,11 +47,15 @@ export function aggregateSupplierSpend(
 ): { rows: SupplierSpendRow[]; totals: SupplierSpendTotals } {
   const byName = new Map<string, SupplierSpendRow>();
   const row = (name: string) => {
-    const key = name.trim() || "—";
+    const display = name.trim() || "—";
+    // Key case-insensitively so a supplier billed as "ACME" and paid as "Acme"
+    // reconciles onto one row instead of splitting into a billed-only and a
+    // paid-only line; keep the first-seen spelling for display.
+    const key = display.toLowerCase();
     let r = byName.get(key);
     if (!r) {
-      const contact = contacts.find((c) => c.contact_type === "supplier" && c.name.trim().toLowerCase() === key.toLowerCase());
-      r = { name: key, billed: 0, paid: 0, outstanding: 0, invoices: 0, terms: contact?.payment_terms ?? "" };
+      const contact = contacts.find((c) => c.contact_type === "supplier" && c.name.trim().toLowerCase() === key);
+      r = { name: display, billed: 0, paid: 0, outstanding: 0, invoices: 0, terms: contact?.payment_terms ?? "" };
       byName.set(key, r);
     }
     return r;
@@ -66,9 +70,10 @@ export function aggregateSupplierSpend(
   }
 
   for (const e of expenses) {
-    // A personal expense isn't business spend, and a payroll expense belongs to
-    // the pay run that wrote it rather than to a supplier.
-    if (e.is_personal || e.source === "payroll") continue;
+    // A personal expense isn't business spend, a payroll expense belongs to the
+    // pay run that wrote it, and a credit-note settlement (a customer refund) is
+    // not money paid to a supplier — exclude all three, matching aggregateCategorySpend and pnl.ts.
+    if (e.is_personal || e.source === "payroll" || e.is_credit_settlement) continue;
     if (!within(e.transaction_date ?? "")) continue;
     const name = (e.paid_to ?? "").trim();
     if (!name) continue;

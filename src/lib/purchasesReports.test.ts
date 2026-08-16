@@ -54,6 +54,28 @@ describe("aggregateSupplierSpend", () => {
     expect(totals.paid).toBe(50);
   });
 
+  it("leaves out credit-note settlements (a customer refund is not supplier spend)", () => {
+    const { totals } = aggregateSupplierSpend(
+      [],
+      [expense({ id: "1", amount: 1000, is_credit_settlement: true, paid_to: "A Customer" }), expense({ id: "2", amount: 50 })],
+      [],
+      always
+    );
+    expect(totals.paid).toBe(50);
+  });
+
+  it("reconciles billed and paid for one supplier despite name casing", () => {
+    const { rows, totals } = aggregateSupplierSpend(
+      [si({ supplier_name: "ACME", invoice_amount: 1000, vat_amount: 0, balance_due: 1000 })],
+      [expense({ paid_to: "acme", amount: 400 })],
+      [],
+      always
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ billed: 1000, paid: 400 });
+    expect(totals.suppliers).toBe(1);
+  });
+
   it("ranks by the larger of what was billed or paid", () => {
     const { rows } = aggregateSupplierSpend(
       [si({ supplier_name: "Billed big", invoice_amount: 5000 })],

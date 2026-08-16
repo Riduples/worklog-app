@@ -218,16 +218,21 @@ export function aggregateLeave(
     .sort((a, b) => a.name.localeCompare(b.name));
 
   const all = rows.flatMap((r) => r.entries);
-  const daysOf = (type: string) => all.filter((e) => e.type === type).reduce((s, e) => s + e.days, 0);
+  // Sum the SAME scoped per-person figures the cards show (annual = current
+  // period, sick = 3-year cycle, family = current year), so the tiles reconcile
+  // with the cards instead of summing every entry all-time — which mixed windows
+  // and could read a team total that no card explained.
+  const sumScoped = (pick: (b: NonNullable<LeaveReportRow["balances"]>) => number) =>
+    rows.reduce((s, r) => s + (r.balances ? pick(r.balances) : 0), 0);
+  const annual = sumScoped((b) => b.annualTaken);
+  const sick = sumScoped((b) => b.sickTaken);
+  const family = sumScoped((b) => b.familyTaken);
+  // "Other" leave types (Maternity/Parental/Unpaid) carry no statutory cycle, so
+  // they stay all-time recorded. Total = the parts shown, so it reconciles too.
+  const other = all.filter((e) => !["Annual", "Sick", "Family"].includes(e.type)).reduce((s, e) => s + e.days, 0);
 
   return {
     rows,
-    totals: {
-      annual: daysOf("Annual"),
-      sick: daysOf("Sick"),
-      family: daysOf("Family"),
-      other: all.filter((e) => !["Annual", "Sick", "Family"].includes(e.type)).reduce((s, e) => s + e.days, 0),
-      days: all.reduce((s, e) => s + e.days, 0),
-    },
+    totals: { annual, sick, family, other, days: annual + sick + family + other },
   };
 }

@@ -7,6 +7,7 @@ import { SaveBtn } from "@/components/ui/SaveBtn";
 import {
   CSV_TEMPLATES,
   buildTemplateCsv,
+  parseCsvNumber,
   PAYMENT_BEHAVIOURS,
   PAYMENT_TERMS,
   CSV_EMPLOYMENT_TYPE_HINT,
@@ -22,10 +23,10 @@ type StockRow = Omit<TablesInsert<"stock_items">, "user_id" | "business_id">;
 type ContactRow = Omit<TablesInsert<"contacts">, "user_id" | "business_id">;
 type ParsedRow = { row: StockRow | ContactRow | StaffCsvRow; name: string; issues: string[]; duplicate: boolean };
 
-const num = (v: unknown) => {
-  const n = parseFloat(String(v ?? "").trim());
-  return Number.isFinite(n) ? n : 0;
-};
+// SA/continental-tolerant number parsing (currency marks, space/comma thousands,
+// comma-or-dot decimal), shared with the staff importer so "R120", "1 200,00" and
+// "8.500,00" all import right instead of truncating at the first non-digit.
+const num = (v: unknown) => parseCsvNumber(v);
 
 /**
  * `slotsLeft` is for a tool whose plan caps how many rows may exist — the Staff

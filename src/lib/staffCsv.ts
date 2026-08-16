@@ -7,6 +7,7 @@
 // wrong writes a staff member who then pays out wrong, so it's unit-tested.
 
 import { dobFromSaId } from "@/lib/saId";
+import { parseCsvNumber } from "@/lib/csvTemplates";
 import type { TablesInsert } from "@/lib/types/database";
 
 export type StaffCsvRow = Omit<TablesInsert<"staff_register">, "user_id" | "business_id">;
@@ -14,16 +15,7 @@ export type StaffCsvRow = Omit<TablesInsert<"staff_register">, "user_id" | "busi
 export const CSV_EMPLOYMENT_TYPES = ["permanent", "fixed_term", "casual", "contractor"] as const;
 export const CSV_PAY_TYPES = ["Daily", "Hourly", "Monthly"] as const;
 
-const num = (v: unknown) => {
-  // Spreadsheets export money with thousands separators and stray currency
-  // marks — "R 8 500,00" is a perfectly ordinary cell here.
-  const cleaned = String(v ?? "")
-    .replace(/[Rr\s ]/g, "")
-    .replace(/,(\d{1,2})$/, ".$1")
-    .replace(/,/g, "");
-  const n = parseFloat(cleaned);
-  return Number.isFinite(n) ? n : 0;
-};
+const num = (v: unknown) => parseCsvNumber(v);
 
 const text = (v: unknown) => String(v ?? "").trim();
 

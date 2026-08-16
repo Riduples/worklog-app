@@ -68,6 +68,30 @@ describe("aggregateSalesSummary", () => {
     expect(totals.net).toBe(1000);
   });
 
+  it("nets credit notes on the ex-VAT basis, not their VAT-inclusive amount", () => {
+    // invoice_amount is ex-VAT (1000); a R230 credit is R200 ex-VAT + R30 VAT.
+    // Net sales must drop by R200, not R230 — matching pnl.ts.
+    const { totals } = aggregateSalesSummary(
+      [invoice({ invoice_amount: 1000, vat_amount: 150 })],
+      [credit({ amount: 230, vat_amount: 30 })],
+      always
+    );
+    expect(totals.credited).toBe(200);
+    expect(totals.net).toBe(800);
+  });
+
+  it("never shows 100% collected while money is still outstanding", () => {
+    // R1000 ex + R150 VAT billed, R1000 deposit in, still unpaid → R150 owed.
+    const { totals } = aggregateSalesSummary(
+      [invoice({ invoice_amount: 1000, vat_amount: 150, deposit_received: 1000 })],
+      [],
+      always
+    );
+    expect(totals.outstanding).toBe(150);
+    expect(totals.collectedPct).toBeLessThan(100);
+    expect(Math.round(totals.collectedPct)).toBe(87); // 1000 / 1150
+  });
+
   it("respects the period filter", () => {
     const { totals } = aggregateSalesSummary(
       [invoice({ id: "1", issue_date: "2026-05-10", invoice_amount: 1000 }), invoice({ id: "2", issue_date: "2025-01-01", invoice_amount: 999 })],

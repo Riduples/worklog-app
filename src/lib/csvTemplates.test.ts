@@ -1,7 +1,25 @@
 import { describe, expect, it } from "vitest";
 import Papa from "papaparse";
-import { CSV_TEMPLATES, buildTemplateCsv, type CsvImportType } from "./csvTemplates";
+import { CSV_TEMPLATES, buildTemplateCsv, parseCsvNumber, type CsvImportType } from "./csvTemplates";
 import { parseStaffCsvRow } from "./staffCsv";
+
+describe("parseCsvNumber", () => {
+  it.each([
+    ["1200", 1200],
+    ["1200.50", 1200.5],
+    ["R120", 120],
+    ["R 8 500,00", 8500], // SA: space thousands, comma decimal
+    ["8 500,00", 8500],
+    ["1,200", 1200], // comma thousands, no decimal
+    ["1,200.50", 1200.5], // comma thousands, dot decimal
+    ["8.500,00", 8500], // continental: dot thousands, comma decimal (was truncated to 8.5)
+    ["1.234.567,89", 1234567.89],
+    ["", 0],
+    ["not a number", 0],
+  ])("parses %s → %s", (input, expected) => {
+    expect(parseCsvNumber(input)).toBe(expected);
+  });
+});
 
 const TYPES: CsvImportType[] = ["stock", "client", "supplier", "staff"];
 

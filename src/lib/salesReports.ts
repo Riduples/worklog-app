@@ -9,6 +9,7 @@ import type { Quote } from "@/lib/supabase/hooks/useQuotes";
 import type { CreditNote } from "@/lib/supabase/hooks/useCreditNotes";
 import { salesLineTotal, type SalesLineItem } from "@/lib/lineItems";
 import { RECURRENCE_LABEL, recurrenceNext, type Recurrence } from "@/lib/recurrence";
+import { addDays } from "@/lib/format";
 
 const num = (v: unknown) => Number(v || 0);
 
@@ -82,7 +83,11 @@ export function aggregateSalesSummary(
     r.outstanding += Math.max(0, amount + num(inv.vat_amount) - received);
   }
   for (const c of scopedCredits) {
-    row((c.issue_date ?? "").slice(0, 7)).credited += num(c.amount);
+    // Ex-VAT, to net against the ex-VAT invoiced total: c.amount is VAT-inclusive
+    // and c.vat_amount is the SARS portion, so amount − vat_amount is the ex-VAT
+    // credit (matches pnl.ts). Netting the inclusive amount understated Net sales
+    // by the VAT within each credit note.
+    row((c.issue_date ?? "").slice(0, 7)).credited += num(c.amount) - num(c.vat_amount);
   }
 
   const months = [...byMonth.values()]
@@ -92,6 +97,7 @@ export function aggregateSalesSummary(
   const sum = (pick: (r: SalesMonthRow) => number) => months.reduce((s, r) => s + pick(r), 0);
   const net = sum((r) => r.net);
   const received = sum((r) => r.received);
+  const outstanding = sum((r) => r.outstanding);
 
   return {
     months,
@@ -102,8 +108,12 @@ export function aggregateSalesSummary(
       credited: sum((r) => r.credited),
       net,
       received,
-      outstanding: sum((r) => r.outstanding),
-      collectedPct: net > 0 ? Math.min(100, (received / net) * 100) : 0,
+      outstanding,
+      // Received and outstanding are both gross cash figures, so collected% is the
+      // fraction of billed invoices collected — and reads 100% only when nothing is
+      // outstanding. (received / net mixed gross over ex-VAT, so it could show 100%
+      // collected while money was still owed.)
+      collectedPct: received + outstanding > 0 ? Math.min(100, (received / (received + outstanding)) * 100) : 0,
     },
   };
 }
@@ -282,9 +292,9 @@ export function aggregateRecurring(invoices: Invoice[], today: string): { rows: 
     .sort((a, b) => (a.nextRun || "9999").localeCompare(b.nextRun || "9999") || a.client.localeCompare(b.client));
 
   // "Due soon" is the next 30 days — the window a cash-flow question asks about.
-  const horizon = new Date(`${today}T00:00:00`);
-  horizon.setDate(horizon.getDate() + 30);
-  const horizonStr = horizon.toISOString().slice(0, 10);
+  // Local-date arithmetic (addDays), not new Date()+toISOString which lands a day
+  // early in UTC+2 and would drop a run billing exactly 30 days out.
+  const horizonStr = addDays(today, 30);
 
   return {
     rows,

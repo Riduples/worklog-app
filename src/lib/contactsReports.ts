@@ -9,6 +9,7 @@ import type { Contact } from "@/lib/supabase/hooks/useContacts";
 import type { Invoice } from "@/lib/supabase/hooks/useInvoices";
 import type { Quote } from "@/lib/supabase/hooks/useQuotes";
 import type { Booking } from "@/lib/supabase/hooks/useBookings";
+import { toLocalIsoDate } from "@/lib/format";
 
 const text = (v: unknown) => String(v ?? "").trim();
 
@@ -175,7 +176,9 @@ export function aggregateDormant(
 ): { rows: DormantRow[]; totals: { dormant: number; never: number; customers: number } } {
   const cutoff = new Date(`${today}T00:00:00`);
   cutoff.setMonth(cutoff.getMonth() - months);
-  const cutoffStr = cutoff.toISOString().slice(0, 10);
+  // Read back in local time — toISOString() would land a day early in UTC+2 and
+  // shorten each dormancy window by a day.
+  const cutoffStr = toLocalIsoDate(cutoff);
 
   const customers = contacts.filter((c) => c.contact_type !== "supplier");
 

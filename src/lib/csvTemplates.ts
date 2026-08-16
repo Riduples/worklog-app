@@ -15,6 +15,27 @@ export type CsvTemplate = {
 export const PAYMENT_BEHAVIOURS = ["Good payer", "Slow payer", "Problem payer"];
 export const PAYMENT_TERMS = ["On delivery", "7 days", "30 days", "60 days", "Cash only", "Pre-payment"];
 
+// Parse a numeric cell from an imported spreadsheet, tolerant of how South
+// African (and continental) money is written: a currency mark, thousands
+// separators (spaces, or whichever of . / , isn't the decimal), and a comma OR a
+// dot decimal — "R 8 500,00", "8,500.00", "8.500,00", "1 200,50", "R120" all read
+// right. The rightmost of , or . is taken as the decimal. Returns 0 for anything
+// unparseable, so an import never silently divides a wage by ~1000.
+export function parseCsvNumber(v: unknown): number {
+  let s = String(v ?? "").trim().replace(/[Rr\s ]/g, "");
+  if (!s) return 0;
+  const hasComma = s.includes(",");
+  const hasDot = s.includes(".");
+  if (hasComma && hasDot) {
+    if (s.lastIndexOf(",") > s.lastIndexOf(".")) s = s.replace(/\./g, "").replace(",", ".");
+    else s = s.replace(/,/g, "");
+  } else if (hasComma) {
+    s = /,\d{1,2}$/.test(s) ? s.replace(",", ".") : s.replace(/,/g, "");
+  }
+  const n = parseFloat(s);
+  return Number.isFinite(n) ? n : 0;
+}
+
 export const CSV_TEMPLATES: Record<CsvImportType, CsvTemplate> = {
   stock: {
     label: "Items",
