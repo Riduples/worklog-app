@@ -6,7 +6,7 @@ import type { HelpArticle } from "@/lib/help/types";
 // browse at /help — so the bot's answers and the published guides can never
 // drift apart: regenerate the guides and Loggy re-learns automatically.
 //
-// Kept deliberately simple (no embeddings / retrieval): 41 guides is small
+// Kept deliberately simple (no embeddings / retrieval): 42 guides is small
 // enough to hand the model the whole thing every call, and the system prompt is
 // marked cacheable at the call site so the repeat cost is a tenth of the first.
 

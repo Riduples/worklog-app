@@ -3087,7 +3087,8 @@ export const HELP_ARTICLES: HelpArticle[] = [
       "run-a-pay-run",
       "manage-leave",
       "staff-advances",
-      "emp201"
+      "emp201",
+      "payroll-reports"
     ]
   },
   {
@@ -3240,7 +3241,8 @@ export const HELP_ARTICLES: HelpArticle[] = [
       "add-staff",
       "emp201",
       "staff-advances",
-      "manage-leave"
+      "manage-leave",
+      "payroll-reports"
     ]
   },
   {
@@ -3388,7 +3390,8 @@ export const HELP_ARTICLES: HelpArticle[] = [
       "add-staff",
       "run-a-pay-run",
       "staff-advances",
-      "emp201"
+      "emp201",
+      "payroll-reports"
     ]
   },
   {
@@ -3531,7 +3534,8 @@ export const HELP_ARTICLES: HelpArticle[] = [
       "run-a-pay-run",
       "add-staff",
       "manage-leave",
-      "emp201"
+      "emp201",
+      "payroll-reports"
     ]
   },
   {
@@ -4983,6 +4987,131 @@ export const HELP_ARTICLES: HelpArticle[] = [
       "emp201",
       "run-a-pay-run",
       "add-staff"
+    ]
+  },
+  {
+    "slug": "payroll-reports",
+    "category": "Payroll & HR",
+    "title": "Payroll Reports",
+    "summary": "Three printable reports in one place: everyone on the staff register with your monthly wage bill, what each person still owes on an advance, and every employee's leave balance.",
+    "sections": [
+      {
+        "heading": "What it is",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "Payroll Reports is where you read your payroll back. The Staff Register, Advances and Leave tools are for keeping the records day to day; this is for answering a question about them \u2014 what does payroll cost a month, who still owes me money, how much leave does everyone have left. It sits under Payroll, called Payroll Reports."
+          },
+          {
+            "type": "paragraph",
+            "text": "It has three tabs \u2014 Staff, Advances and Leave \u2014 and each one has its own Download PDF and Share buttons at the bottom. The PDF comes out on your letterhead, so it is the copy to send to your accountant or keep for your records."
+          },
+          {
+            "type": "tip",
+            "text": "You only see the tabs for the tools you have access to. If someone on your team can view Leave but not Advances, they open Payroll Reports and see the Leave tab only."
+          }
+        ]
+      },
+      {
+        "heading": "Staff \u2014 everyone on the books",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "The Staff tab lists everyone on your register grouped by worker type \u2014 Permanent, Fixed-term, Casual and Contractor \u2014 with a count next to each group. For each person it shows their pay type and rate, their days and hours a week, when they started and how many months that is, and an estimated cost per month."
+          },
+          {
+            "type": "paragraph",
+            "text": "Three tiles across the top count who is employed, how many are contractors, and how many have left. Below them, in the dark blue band, is your estimated monthly wage bill \u2014 what payroll costs you a month. It counts only people still employed, so someone who has left stops adding to it."
+          },
+          {
+            "type": "bullets",
+            "items": [
+              "Tap \"Including people who have left\" to switch between everyone and only the people currently employed. The counts and the wage bill follow whichever you pick.",
+              "Someone on a fixed-term contract shows their contract end date, so you can see who needs a decision soon.",
+              "Anyone who has left shows the date they left and the reason you recorded."
+            ]
+          },
+          {
+            "type": "warning",
+            "text": "The monthly figure is an estimate worked out from each person's pay type, rate and standing allowance. It is not what you actually paid \u2014 a pay run's real gross is, and that is what SARS sees. Use this to budget, not to file."
+          }
+        ]
+      },
+      {
+        "heading": "Advances \u2014 who still owes you",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "The Advances tab has a card per person showing what they were advanced in total, what Pay Run has already deducted from their wages, and what is still outstanding. Where you set up a repayment plan, it also shows the amount coming off each pay run and roughly how many runs are left before it is settled."
+          },
+          {
+            "type": "paragraph",
+            "text": "The three tiles across the top total the advances given, the repayments taken back, and the amount still outstanding across everybody. The band underneath counts how many people still owe you something."
+          },
+          {
+            "type": "bullets",
+            "items": [
+              "Under each person, the last few entries are listed \u2014 an advance given, or an amount repaid from wages \u2014 so you can check a balance without opening the Advances tool.",
+              "Where somebody has more entries than fit, the report says so. The PDF has every one of them.",
+              "Tap \"Including people who have repaid in full\" to hide anyone whose balance is back to zero."
+            ]
+          }
+        ]
+      },
+      {
+        "heading": "Leave \u2014 where everyone stands",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "The Leave tab gives each employee a card with their three BCEA balances: annual leave, sick leave and family responsibility leave. Each one shows the days left and the days already taken. Annual also shows how many days have accrued so far."
+          },
+          {
+            "type": "bullets",
+            "items": [
+              "Annual leave builds up at 1.25 days a month from the person's start date.",
+              "Sick leave is 30 days over a three-year cycle that starts when they do.",
+              "Family responsibility leave is 3 days a year.",
+              "A balance that has reached zero is shown in red."
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "The three tiles at the top total the days taken across everybody, split by annual, sick and family. By default the report covers the people currently employed \u2014 tap \"Currently employed only\" to include anyone who has left, which is useful when you are working out a final payout."
+          },
+          {
+            "type": "tip",
+            "text": "Contractors are not in this report. They are self-employed, so no leave accrues to them and there is nothing to show."
+          },
+          {
+            "type": "warning",
+            "text": "Leave only calculates from a start date. If someone has none on the Staff Register, their card says so instead of showing a balance \u2014 add the date and the balance appears."
+          }
+        ]
+      },
+      {
+        "heading": "Print it or send it",
+        "blocks": [
+          {
+            "type": "steps",
+            "items": [
+              "Open Payroll Reports under Payroll and pick the tab you want.",
+              "Set the toggle the way you need it \u2014 for example, include the people who have left before working out a final payout.",
+              "Tap \"Download PDF\" for a letterheaded copy with the full detail, including every advance entry or leave entry behind the balances.",
+              "Or tap \"Share\" for a short text summary you can paste into WhatsApp or an email."
+            ]
+          },
+          {
+            "type": "tip",
+            "text": "The figures on the screen and the figures in the PDF are worked out from the same place, so the printed copy always matches what you were looking at."
+          }
+        ]
+      }
+    ],
+    "related": [
+      "add-staff",
+      "staff-advances",
+      "manage-leave",
+      "run-a-pay-run"
     ]
   }
 ];
