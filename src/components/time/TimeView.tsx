@@ -26,7 +26,7 @@ export function TimeView() {
   const [modalState, setModalState] = useState<{ open: boolean; entry?: TimeEntry }>({ open: false });
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
-  const [sort, setSort] = useState<"az" | "recent">("recent");
+  const [sort, setSort] = useState<"az" | "recent">("az");
 
   const all = entries ?? [];
 
@@ -117,7 +117,7 @@ export function TimeView() {
             {filtered.length !== all.length ? ` of ${all.length}` : ""} entr{all.length === 1 ? "y" : "ies"}
           </span>
           <div style={{ display: "flex", gap: 4, background: "#f1f5f9", borderRadius: 10, padding: 3 }}>
-            {(["recent", "az"] as const).map((s) => (
+            {(["az", "recent"] as const).map((s) => (
               <button
                 key={s}
                 onClick={() => setSort(s)}

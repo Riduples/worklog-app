@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { usePayRuns } from "@/lib/supabase/hooks/usePayRuns";
+import { usePayRuns, useDeletePayRun } from "@/lib/supabase/hooks/usePayRuns";
 import { PayRunWizard } from "@/components/payroll/PayRunWizard";
 import { PayRunDetailModal } from "@/components/modals/PayRunDetailModal";
 import { ReadOnlyNotice } from "@/components/ui/ReadOnlyNotice";
@@ -37,6 +37,7 @@ type Sort = (typeof SORTS)[number]["id"];
 export function PayRunView() {
   const access = useToolAccess("payrun");
   const { data: payRuns, isLoading } = usePayRuns();
+  const deletePayRun = useDeletePayRun();
 
   const [view, setView] = useState<"list" | "new">("list");
   const [selected, setSelected] = useState<PayRun | null>(null);
@@ -78,6 +79,29 @@ export function PayRunView() {
         ? Number(b.net_pay || 0) - Number(a.net_pay || 0) || byDate(a, b)
         : byDate(a, b)
   );
+
+  // Voiding from the row, so the register behaves like every other list. Voiding a
+  // pay run does more than remove a row — it deletes the run and cascades to the
+  // expense, advance repayment and leave it created — so unlike the other ✕s this
+  // one names what it reverses before it does it. Approve-level, matching the
+  // detail modal and the RLS policy behind it: whoever can finalise a run can
+  // undo one.
+  const handleVoid = (p: PayRun) => {
+    const reverses = [
+      "the wage expense on your books",
+      Number(p.loan_deducted || 0) > 0 ? "the advance repayment (their balance goes back up)" : null,
+      Number(p.leave_days || 0) > 0 ? `the ${p.leave_days} day(s) of leave (the days go back into their balance)` : null,
+    ].filter(Boolean);
+    if (
+      !confirm(
+        `Void ${p.worker_name}'s pay run of ${fmt(Number(p.net_pay || 0))} on ${p.pay_date}?\n\nThis also reverses:\n• ${reverses.join("\n• ")}\n\nTo correct a mistake, void this run then create a fresh one. This can't be undone.`
+      )
+    )
+      return;
+    deletePayRun.mutate(p.id, {
+      onError: (e) => alert(e instanceof Error ? e.message : "Couldn't void the pay run."),
+    });
+  };
 
   return (
     <div style={{ padding: "20px 16px 100px" }}>
@@ -183,24 +207,40 @@ export function PayRunView() {
       {sorted.map((p) => {
         const badge = STATUS_BADGE[p.status] ?? STATUS_BADGE.approved;
         return (
-          <button
+          // The Customers row: tap the body to open, ✕ to remove.
+          <div
             key={p.id}
-            onClick={() => setSelected(p)}
-            style={{ width: "100%", background: "#fff", borderRadius: 13, padding: "12px 14px", marginBottom: 8, display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: "0 1px 4px rgba(0,0,0,0.05)", border: "none", cursor: "pointer", textAlign: "left" }}
-            aria-label="View pay run"
+            style={{ background: "#fff", borderRadius: 13, padding: "12px 14px", marginBottom: 8, display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}
           >
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 14, fontWeight: 700, color: "#111" }}>{p.worker_name}</div>
-              <div style={{ fontSize: 11, color: "#94a3b8" }}>
-                {p.pay_date} · {p.pay_period}
-                {p.payslip_number ? ` · ${p.payslip_number}` : ""}
+            <button
+              onClick={() => setSelected(p)}
+              style={{ flex: 1, minWidth: 0, background: "none", border: "none", padding: 0, display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", textAlign: "left" }}
+              aria-label="View pay run"
+            >
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: "#111" }}>{p.worker_name}</div>
+                <div style={{ fontSize: 11, color: "#94a3b8" }}>
+                  {p.pay_date} · {p.pay_period}
+                  {p.payslip_number ? ` · ${p.payslip_number}` : ""}
+                </div>
               </div>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: badge.bg, color: badge.fg }}>{badge.label}</span>
-              <span style={{ fontSize: 15, fontWeight: 800, color: "#0C4A6E", whiteSpace: "nowrap" }}>{fmt(Number(p.net_pay || 0))}</span>
-            </div>
-          </button>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: badge.bg, color: badge.fg }}>{badge.label}</span>
+                <span style={{ fontSize: 15, fontWeight: 800, color: "#0C4A6E", whiteSpace: "nowrap" }}>{fmt(Number(p.net_pay || 0))}</span>
+              </div>
+            </button>
+            {/* Approve-level, not delete-level: 0117 puts voiding behind the same
+                permission that finalises a run. */}
+            {access.canApprove && (
+              <button
+                onClick={() => handleVoid(p)}
+                style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer", fontSize: 14, padding: 4, marginLeft: 4 }}
+                aria-label="Void pay run"
+              >
+                ✕
+              </button>
+            )}
+          </div>
         );
       })}
 

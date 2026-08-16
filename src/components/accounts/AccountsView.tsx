@@ -45,6 +45,7 @@ export function AccountsView() {
   const { data: expenses } = useExpenses();
   const { data: transfers } = useAccountTransfers();
   const deleteTransfer = useDeleteTransfer();
+  const closeAccount = useDeleteBankAccount();
   const [editing, setEditing] = useState<BankAccount | "new" | null>(null);
   const [showTransfer, setShowTransfer] = useState(false);
 
@@ -72,10 +73,16 @@ export function AccountsView() {
       {list.map((a) => {
         const balance = accountBalance(a, inc, exp, tfs);
         return (
-          <button
+          // The Customers row: tap the body to open, ✕ to remove. "Remove" here
+          // means closing the account — the same soft delete the edit modal's
+          // "Close this account" performs, phrased the same way.
+          <div
             key={a.id}
+            style={{ background: "#fff", border: "1.5px solid #e2e8f0", borderRadius: 12, padding: "12px 14px", marginBottom: 8, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}
+          >
+          <button
             onClick={() => setEditing(a)}
-            style={{ width: "100%", background: "#fff", border: "1.5px solid #e2e8f0", borderRadius: 12, padding: "12px 14px", marginBottom: 8, cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}
+            style={{ background: "none", border: "none", padding: 0, cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}
           >
             <div style={{ minWidth: 0, flex: 1, textAlign: "left" }}>
               <div style={{ fontSize: 14, fontWeight: 700, color: "#111" }}>
@@ -96,6 +103,17 @@ export function AccountsView() {
               <div style={{ fontSize: 15, fontWeight: 800, color: balance >= 0 ? "#0C4A6E" : "#dc2626" }}>{fmt(balance)}</div>
             </div>
           </button>
+          <button
+            onClick={() => {
+              if (!confirm(`Close ${a.name}? It's hidden from every picker, but its transactions stay in your records and still count under “All accounts”.`)) return;
+              closeAccount.mutate(a.id);
+            }}
+            style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer", fontSize: 14, padding: 4 }}
+            aria-label={`Close ${a.name}`}
+          >
+            ✕
+          </button>
+          </div>
         );
       })}
 

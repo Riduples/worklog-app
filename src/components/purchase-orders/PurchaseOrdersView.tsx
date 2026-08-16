@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { usePurchaseOrders, type PurchaseOrder } from "@/lib/supabase/hooks/usePurchaseOrders";
+import { usePurchaseOrders, useUpdatePurchaseOrder, type PurchaseOrder } from "@/lib/supabase/hooks/usePurchaseOrders";
 import { PurchaseOrderModal } from "@/components/modals/PurchaseOrderModal";
 import { PurchaseOrderActionsModal, PO_STATUS_COLORS } from "@/components/modals/PurchaseOrderActionsModal";
 import { fmt } from "@/lib/format";
@@ -17,12 +17,13 @@ const poNo = (po: PurchaseOrder) => parseInt((po.doc_number ?? "").replace(/\D/g
 export function PurchaseOrdersView() {
   const access = useToolAccess("purchaseorder");
   const { data: pos, isLoading } = usePurchaseOrders();
+  const updatePO = useUpdatePurchaseOrder();
   const [showNew, setShowNew] = useState(false);
   const [selected, setSelected] = useState<PurchaseOrder | null>(null);
   const [editing, setEditing] = useState<PurchaseOrder | null>(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [sort, setSort] = useState<"az" | "number" | "recent">("recent");
+  const [sort, setSort] = useState<"az" | "number" | "recent">("az");
 
   const presentStatuses = STATUS_ORDER.filter((s) => (pos ?? []).some((p) => p.status === s));
 
@@ -40,6 +41,14 @@ export function PurchaseOrdersView() {
       if (sort === "number") return poNo(a) - poNo(b);
       return (b.created_at ?? b.issue_date ?? "").localeCompare(a.created_at ?? a.issue_date ?? "");
     });
+
+  // The soft delete the other list tools have. "Cancel PO" in the actions modal
+  // is the other thing you might want and stays where it is: cancelling keeps the
+  // order on file with a cancelled status, this takes the row away entirely.
+  const handleSoftDelete = (po: PurchaseOrder) => {
+    if (!confirm(`Remove purchase order ${po.doc_number ?? ""} to ${po.supplier_name}?\n\nTo keep it on file as cancelled, open it and use “✕ Cancel PO” instead.`)) return;
+    updatePO.mutate({ id: po.id, changes: { deleted_at: new Date().toISOString() } });
+  };
 
   return (
     <div style={{ padding: "20px 16px 100px" }}>
@@ -120,11 +129,10 @@ export function PurchaseOrdersView() {
         const color = PO_STATUS_COLORS[po.status] ?? PO_STATUS_COLORS.pending;
         const totalInclVat = Number(po.total_amount) + Number(po.vat_amount ?? 0);
         return (
-          <button
+          // The Customers row: tap the body to open, ✕ to remove.
+          <div
             key={po.id}
-            onClick={() => setSelected(po)}
             style={{
-              width: "100%",
               background: "#fff",
               borderRadius: 13,
               padding: "12px 14px",
@@ -133,24 +141,46 @@ export function PurchaseOrdersView() {
               justifyContent: "space-between",
               alignItems: "center",
               boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
-              border: "none",
-              cursor: "pointer",
-              textAlign: "left",
             }}
           >
-            <div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: "#111" }}>{po.supplier_name}</div>
-              <div style={{ fontSize: 11, color: "#94a3b8" }}>
-                {po.doc_number} · {po.issue_date}
+            <button
+              onClick={() => setSelected(po)}
+              style={{
+                flex: 1,
+                minWidth: 0,
+                background: "none",
+                border: "none",
+                padding: 0,
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                cursor: "pointer",
+                textAlign: "left",
+              }}
+            >
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: "#111" }}>{po.supplier_name}</div>
+                <div style={{ fontSize: 11, color: "#94a3b8" }}>
+                  {po.doc_number} · {po.issue_date}
+                </div>
               </div>
-            </div>
-            <div style={{ textAlign: "right" }}>
-              <div style={{ fontWeight: 800, fontSize: 15, color: "#0C4A6E" }}>{fmt(totalInclVat)}</div>
-              <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: color.bg, color: color.fg, textTransform: "uppercase" }}>
-                {po.status}
-              </span>
-            </div>
-          </button>
+              <div style={{ textAlign: "right" }}>
+                <div style={{ fontWeight: 800, fontSize: 15, color: "#0C4A6E" }}>{fmt(totalInclVat)}</div>
+                <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: color.bg, color: color.fg, textTransform: "uppercase" }}>
+                  {po.status}
+                </span>
+              </div>
+            </button>
+            {access.canDelete && (
+              <button
+                onClick={() => handleSoftDelete(po)}
+                style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer", fontSize: 14, padding: 4, marginLeft: 4 }}
+                aria-label="Remove purchase order"
+              >
+                ✕
+              </button>
+            )}
+          </div>
         );
       })}
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useSupplierInvoices, type SupplierInvoice } from "@/lib/supabase/hooks/useSupplierInvoices";
+import { useSupplierInvoices, useUpdateSupplierInvoice, type SupplierInvoice } from "@/lib/supabase/hooks/useSupplierInvoices";
 import { SupplierInvoiceModal } from "@/components/modals/SupplierInvoiceModal";
 import { SupplierInvoiceActionsModal, supplierInvoiceDisplayStatus } from "@/components/modals/SupplierInvoiceActionsModal";
 import { fmt } from "@/lib/format";
@@ -20,11 +20,12 @@ const docNo = (si: SupplierInvoice) => parseInt((si.doc_number ?? "").replace(/\
 export function SupplierInvoicesView() {
   const access = useToolAccess("supplierinvoice");
   const { data: invoices, isLoading } = useSupplierInvoices();
+  const updateSupplierInvoice = useUpdateSupplierInvoice();
   const [showNew, setShowNew] = useState(false);
   const [selected, setSelected] = useState<SupplierInvoice | null>(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [sort, setSort] = useState<"az" | "number" | "recent">("recent");
+  const [sort, setSort] = useState<"az" | "number" | "recent">("az");
 
   const presentStatuses = STATUS_ORDER.filter((s) => (invoices ?? []).some((si) => supplierInvoiceDisplayStatus(si).label === s));
 
@@ -47,6 +48,14 @@ export function SupplierInvoicesView() {
       if (sort === "number") return docNo(a) - docNo(b);
       return (b.created_at ?? b.issue_date ?? "").localeCompare(a.created_at ?? a.issue_date ?? "");
     });
+
+  // The soft delete the other list tools have. A supplier invoice is a bill you
+  // owe, so removing one changes what Payables says is outstanding — worth saying
+  // out loud before it happens.
+  const handleSoftDelete = (si: SupplierInvoice) => {
+    if (!confirm(`Remove the bill from ${si.supplier_name}${si.doc_number ? ` (${si.doc_number})` : ""}? It comes off your payables and out of the reports that read supplier invoices.`)) return;
+    updateSupplierInvoice.mutate({ id: si.id, changes: { deleted_at: new Date().toISOString() } });
+  };
 
   return (
     <div style={{ padding: "20px 16px 100px" }}>
@@ -127,11 +136,10 @@ export function SupplierInvoicesView() {
         const status = supplierInvoiceDisplayStatus(si);
         const totalInclVat = Number(si.invoice_amount) + Number(si.vat_amount ?? 0);
         return (
-          <button
+          // The Customers row: tap the body to open, ✕ to remove.
+          <div
             key={si.id}
-            onClick={() => setSelected(si)}
             style={{
-              width: "100%",
               background: "#fff",
               borderRadius: 13,
               padding: "12px 14px",
@@ -140,26 +148,48 @@ export function SupplierInvoicesView() {
               justifyContent: "space-between",
               alignItems: "center",
               boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
-              border: "none",
-              cursor: "pointer",
-              textAlign: "left",
             }}
           >
-            <div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: "#111" }}>{si.supplier_name}</div>
-              <div style={{ fontSize: 11, color: "#94a3b8" }}>
-                {si.doc_number ? `${si.doc_number} · ` : ""}
-                {si.supplier_ref_number ? `Ref ${si.supplier_ref_number} · ` : ""}
-                {si.issue_date}
+            <button
+              onClick={() => setSelected(si)}
+              style={{
+                flex: 1,
+                minWidth: 0,
+                background: "none",
+                border: "none",
+                padding: 0,
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                cursor: "pointer",
+                textAlign: "left",
+              }}
+            >
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: "#111" }}>{si.supplier_name}</div>
+                <div style={{ fontSize: 11, color: "#94a3b8" }}>
+                  {si.doc_number ? `${si.doc_number} · ` : ""}
+                  {si.supplier_ref_number ? `Ref ${si.supplier_ref_number} · ` : ""}
+                  {si.issue_date}
+                </div>
               </div>
-            </div>
-            <div style={{ textAlign: "right" }}>
-              <div style={{ fontWeight: 800, fontSize: 15, color: "#0C4A6E" }}>{fmt(totalInclVat)}</div>
-              <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: status.bg, color: status.fg, textTransform: "uppercase" }}>
-                {status.label}
-              </span>
-            </div>
-          </button>
+              <div style={{ textAlign: "right" }}>
+                <div style={{ fontWeight: 800, fontSize: 15, color: "#0C4A6E" }}>{fmt(totalInclVat)}</div>
+                <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: status.bg, color: status.fg, textTransform: "uppercase" }}>
+                  {status.label}
+                </span>
+              </div>
+            </button>
+            {access.canDelete && (
+              <button
+                onClick={() => handleSoftDelete(si)}
+                style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer", fontSize: 14, padding: 4, marginLeft: 4 }}
+                aria-label="Remove supplier invoice"
+              >
+                ✕
+              </button>
+            )}
+          </div>
         );
       })}
 

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useInvoices, type Invoice } from "@/lib/supabase/hooks/useInvoices";
+import { useInvoices, useUpdateInvoice, type Invoice } from "@/lib/supabase/hooks/useInvoices";
 import { useQuotes } from "@/lib/supabase/hooks/useQuotes";
 import { InvoiceModal } from "@/components/modals/InvoiceModal";
 import { InvoiceActionsModal, displayStatus } from "@/components/modals/InvoiceActionsModal";
@@ -20,12 +20,13 @@ const invoiceNo = (inv: Invoice) => parseInt((inv.doc_number ?? "").replace(/\D/
 export function InvoicesView() {
   const { data: invoices, isLoading } = useInvoices();
   const { data: quotes } = useQuotes();
+  const updateInvoice = useUpdateInvoice();
   const access = useToolAccess("invoice");
   const [showNew, setShowNew] = useState(false);
   const [selected, setSelected] = useState<Invoice | null>(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [sort, setSort] = useState<"az" | "number" | "recent">("recent");
+  const [sort, setSort] = useState<"az" | "number" | "recent">("az");
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -50,6 +51,14 @@ export function InvoicesView() {
       if (sort === "number") return invoiceNo(a) - invoiceNo(b);
       return (b.created_at ?? b.issue_date ?? "").localeCompare(a.created_at ?? a.issue_date ?? "");
     });
+
+  // The soft delete the other list tools have. An invoice is a document a customer
+  // has seen, so the prompt says plainly what leaving the books means — the figure
+  // stops counting as revenue, which is a bigger deal than removing a row.
+  const handleSoftDelete = (inv: Invoice) => {
+    if (!confirm(`Remove invoice ${inv.doc_number ?? ""} for ${inv.client_name}? It comes off your invoice list and out of the reports that read invoices, including your revenue and VAT figures.`)) return;
+    updateInvoice.mutate({ id: inv.id, changes: { deleted_at: new Date().toISOString() } });
+  };
 
   return (
     <div style={{ padding: "20px 16px 100px" }}>
@@ -159,11 +168,10 @@ export function InvoicesView() {
         const status = displayStatus(inv);
         const totalInclVat = Number(inv.invoice_amount) + Number(inv.vat_amount ?? 0);
         return (
-          <button
+          // The Customers row: tap the body to open, ✕ to remove.
+          <div
             key={inv.id}
-            onClick={() => setSelected(inv)}
             style={{
-              width: "100%",
               background: "#fff",
               borderRadius: 13,
               padding: "12px 14px",
@@ -172,7 +180,19 @@ export function InvoicesView() {
               justifyContent: "space-between",
               alignItems: "center",
               boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
+            }}
+          >
+          <button
+            onClick={() => setSelected(inv)}
+            style={{
+              flex: 1,
+              minWidth: 0,
+              background: "none",
               border: "none",
+              padding: 0,
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
               cursor: "pointer",
               textAlign: "left",
             }}
@@ -199,6 +219,16 @@ export function InvoicesView() {
               </span>
             </div>
           </button>
+          {access.canDelete && (
+            <button
+              onClick={() => handleSoftDelete(inv)}
+              style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer", fontSize: 14, padding: 4, marginLeft: 4 }}
+              aria-label="Remove invoice"
+            >
+              ✕
+            </button>
+          )}
+          </div>
         );
       })}
 

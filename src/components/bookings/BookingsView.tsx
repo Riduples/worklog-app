@@ -34,6 +34,9 @@ export function BookingsView() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   // "date" keeps the diary agenda (upcoming grouped by day, then past); "az" is a
   // flat list by client name — the same count + sort pattern the other list tools use.
+  // A–Z is listed first for consistency with every other dashboard, but the agenda
+  // stays the default here: "date" isn't a sort direction on this screen, it's the
+  // day-grouped diary the tool exists to be.
   const [sort, setSort] = useState<"date" | "az">("date");
 
   // Deep link from the dashboard's "Needs you today" card: /diary?open=<id> opens
@@ -255,7 +258,7 @@ export function BookingsView() {
             {filtered.length !== all.length ? ` of ${all.length}` : ""} appointment{all.length === 1 ? "" : "s"}
           </span>
           <div style={{ display: "flex", gap: 4, background: "#f1f5f9", borderRadius: 10, padding: 3 }}>
-            {(["date", "az"] as const).map((s) => (
+            {(["az", "date"] as const).map((s) => (
               <button
                 key={s}
                 onClick={() => setSort(s)}

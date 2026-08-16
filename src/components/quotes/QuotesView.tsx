@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useQuotes, type Quote } from "@/lib/supabase/hooks/useQuotes";
+import { useQuotes, useUpdateQuote, type Quote } from "@/lib/supabase/hooks/useQuotes";
 import { QuoteModal } from "@/components/modals/QuoteModal";
 import { QuoteActionsModal } from "@/components/modals/QuoteActionsModal";
 import { fmt } from "@/lib/format";
@@ -24,11 +24,12 @@ const quoteNo = (q: Quote) => parseInt((q.doc_number ?? "").replace(/\D/g, ""), 
 export function QuotesView() {
   const access = useToolAccess("quote");
   const { data: quotes, isLoading } = useQuotes();
+  const updateQuote = useUpdateQuote();
   const [showNew, setShowNew] = useState(false);
   const [selected, setSelected] = useState<Quote | null>(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [sort, setSort] = useState<"az" | "number" | "recent">("recent");
+  const [sort, setSort] = useState<"az" | "number" | "recent">("az");
 
   const presentStatuses = STATUS_ORDER.filter((s) => (quotes ?? []).some((q) => q.status === s));
 
@@ -46,6 +47,20 @@ export function QuotesView() {
       if (sort === "number") return quoteNo(a) - quoteNo(b);
       return (b.created_at ?? b.issue_date ?? "").localeCompare(a.created_at ?? a.issue_date ?? "");
     });
+
+  // The soft delete the other list tools have. A converted quote is the one worth
+  // pausing over: its invoice lives on regardless, so say so rather than leave
+  // someone wondering whether they just removed the sale too.
+  const handleSoftDelete = (q: Quote) => {
+    const converted = q.status === "converted";
+    if (
+      !confirm(
+        `Remove quote ${q.doc_number ?? ""} for ${q.client_name}?${converted ? "\n\nThe invoice it was converted into is not affected." : ""}`
+      )
+    )
+      return;
+    updateQuote.mutate({ id: q.id, changes: { deleted_at: new Date().toISOString() } });
+  };
 
   return (
     <div style={{ padding: "20px 16px 100px" }}>
@@ -155,11 +170,10 @@ export function QuotesView() {
         const color = STATUS_COLORS[q.status] ?? STATUS_COLORS.pending;
         const totalInclVat = Number(q.total_amount) + Number(q.vat_amount ?? 0);
         return (
-          <button
+          // The Customers row: tap the body to open, ✕ to remove.
+          <div
             key={q.id}
-            onClick={() => setSelected(q)}
             style={{
-              width: "100%",
               background: "#fff",
               borderRadius: 13,
               padding: "12px 14px",
@@ -168,24 +182,46 @@ export function QuotesView() {
               justifyContent: "space-between",
               alignItems: "center",
               boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
-              border: "none",
-              cursor: "pointer",
-              textAlign: "left",
             }}
           >
-            <div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: "#111" }}>{q.client_name}</div>
-              <div style={{ fontSize: 11, color: "#94a3b8" }}>
-                {q.doc_number} · {q.issue_date}
+            <button
+              onClick={() => setSelected(q)}
+              style={{
+                flex: 1,
+                minWidth: 0,
+                background: "none",
+                border: "none",
+                padding: 0,
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                cursor: "pointer",
+                textAlign: "left",
+              }}
+            >
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: "#111" }}>{q.client_name}</div>
+                <div style={{ fontSize: 11, color: "#94a3b8" }}>
+                  {q.doc_number} · {q.issue_date}
+                </div>
               </div>
-            </div>
-            <div style={{ textAlign: "right" }}>
-              <div style={{ fontWeight: 800, fontSize: 15, color: "#0C4A6E" }}>{fmt(totalInclVat)}</div>
-              <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: color.bg, color: color.fg, textTransform: "uppercase" }}>
-                {q.status}
-              </span>
-            </div>
-          </button>
+              <div style={{ textAlign: "right" }}>
+                <div style={{ fontWeight: 800, fontSize: 15, color: "#0C4A6E" }}>{fmt(totalInclVat)}</div>
+                <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: color.bg, color: color.fg, textTransform: "uppercase" }}>
+                  {q.status}
+                </span>
+              </div>
+            </button>
+            {access.canDelete && (
+              <button
+                onClick={() => handleSoftDelete(q)}
+                style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer", fontSize: 14, padding: 4, marginLeft: 4 }}
+                aria-label="Remove quote"
+              >
+                ✕
+              </button>
+            )}
+          </div>
         );
       })}
 
