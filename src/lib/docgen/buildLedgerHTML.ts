@@ -575,3 +575,289 @@ export function buildTravelReportHTML(
 </body>
 </html>`;
 }
+
+// ── Payroll Reports ──────────────────────────────────────────────────────────
+// The three tabs of the Payroll Reports tool, printed. Each is the summarised,
+// hand-to-your-accountant version of a payroll dashboard: who works here, what
+// has been advanced and what is still owed, and where every employee's BCEA
+// leave balance stands.
+
+export type StaffRegisterReportRow = {
+  name: string;
+  employeeNumber: string;
+  employmentType: string;
+  payType: string;
+  rate: number;
+  daysPerWeek: number;
+  hoursPerDay: number;
+  startDate: string;
+  monthsEmployed: number;
+  monthlyCost: number;
+  status: string; // "Active" | "Left 2026-03-31 · Resignation"
+};
+
+export function buildStaffRegisterHTML(
+  business: BusinessProfile,
+  rows: StaffRegisterReportRow[],
+  totals: { people: number; employees: number; contractors: number; active: number; left: number; monthlyWageBill: number },
+  asAt: string,
+  watermark = false
+): string {
+  const detailRows = rows.length
+    ? rows
+        .map(
+          (r) => `
+      <tr>
+        <td>${esc(r.name)}${r.employeeNumber ? `<br/><span style="font-size:10px;color:#94a3b8;">${esc(r.employeeNumber)}</span>` : ""}</td>
+        <td>${esc(r.employmentType)}</td>
+        <td>${esc(r.payType)} · ${fmt(r.rate)}</td>
+        <td style="text-align:center;">${r.daysPerWeek || "—"}${r.daysPerWeek ? `d × ${r.hoursPerDay || 0}h` : ""}</td>
+        <td>${esc(r.startDate || "—")}${r.startDate ? `<br/><span style="font-size:10px;color:#94a3b8;">${r.monthsEmployed} months</span>` : ""}</td>
+        <td>${esc(r.status)}</td>
+        <td style="text-align:right;font-weight:700;">${fmt(r.monthlyCost)}</td>
+      </tr>`
+        )
+        .join("")
+    : `<tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:16px;">Nobody on the register yet.</td></tr>`;
+
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" /><title>Staff Register</title><style>${SHARED_CSS}</style></head>
+<body>
+  ${watermark ? `<div class="wm">TRIAL — NOT FINAL</div>` : ""}
+  ${header(business, "STAFF REGISTER", `As at ${asAt}`)}
+  <div class="meta-row">
+    ${fromBlock(business, "Prepared by")}
+    <div style="text-align:right;">
+      <div class="meta-label">Report</div>
+      <div style="font-size:20px;font-weight:800;">Everyone on the books</div>
+    </div>
+  </div>
+  <div style="font-size:11px;font-weight:700;color:#0C4A6E;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;">Summary</div>
+  <table>
+    <thead><tr><th style="text-align:center;">People</th><th style="text-align:center;">Employees</th><th style="text-align:center;">Contractors</th><th style="text-align:center;">Currently employed</th><th style="text-align:center;">Left</th></tr></thead>
+    <tbody><tr>
+      <td style="text-align:center;font-weight:700;">${totals.people}</td>
+      <td style="text-align:center;font-weight:700;">${totals.employees}</td>
+      <td style="text-align:center;font-weight:700;">${totals.contractors}</td>
+      <td style="text-align:center;font-weight:700;">${totals.active}</td>
+      <td style="text-align:center;font-weight:700;">${totals.left}</td>
+    </tr></tbody>
+  </table>
+  <div style="font-size:11px;font-weight:700;color:#0C4A6E;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;">People</div>
+  <table>
+    <thead>
+      <tr><th>Name</th><th>Type</th><th>Pay</th><th style="text-align:center;">Per week</th><th>Started</th><th>Status</th><th style="text-align:right;">Est. per month</th></tr>
+    </thead>
+    <tbody>${detailRows}</tbody>
+  </table>
+  <div class="totals">
+    <div class="totals-box">
+      <div class="totals-row"><span>Currently employed</span><span>${totals.active}</span></div>
+      <div class="totals-row final"><span>Est. monthly wage bill</span><span>${fmt(totals.monthlyWageBill)}</span></div>
+    </div>
+  </div>
+  <div class="footer">
+    The people on the register as at ${esc(asAt)}. The monthly figure is an estimate from each person's pay type, rate and standing allowance — a pay run's actual gross is what gets paid and filed.<br/>Generated via Worklog — worklog.co.za${
+      watermark ? `<br/><strong style="color:#dc2626;">Draft — made on a free Worklog trial.</strong>` : ""
+    }
+  </div>
+</body>
+</html>`;
+}
+
+export type AdvancesReportRow = {
+  name: string;
+  advanced: number;
+  repaid: number;
+  balance: number;
+  repayPerRun: number;
+  runsLeft: number | null;
+};
+export type AdvancesReportEntry = { name: string; date: string; type: string; amount: number; note: string };
+
+export function buildAdvancesReportHTML(
+  business: BusinessProfile,
+  rows: AdvancesReportRow[],
+  entries: AdvancesReportEntry[],
+  totals: { advanced: number; repaid: number; outstanding: number; people: number },
+  asAt: string,
+  watermark = false
+): string {
+  const balanceRows = rows.length
+    ? rows
+        .map(
+          (r) => `
+      <tr>
+        <td>${esc(r.name)}</td>
+        <td style="text-align:right;">${fmt(r.advanced)}</td>
+        <td style="text-align:right;">${fmt(r.repaid)}</td>
+        <td>${r.repayPerRun > 0 ? `${fmt(r.repayPerRun)}/run${r.runsLeft ? ` · ~${r.runsLeft} left` : ""}` : "—"}</td>
+        <td style="text-align:right;font-weight:700;color:${r.balance > 0 ? "#92400e" : "#111"};">${fmt(r.balance)}</td>
+      </tr>`
+        )
+        .join("")
+    : `<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:16px;">No advances recorded.</td></tr>`;
+
+  const entryRows = entries.length
+    ? entries
+        .map(
+          (e) => `
+      <tr>
+        <td>${esc(e.date)}</td>
+        <td>${esc(e.name)}</td>
+        <td>${esc(e.type)}</td>
+        <td>${esc(e.note || "—")}</td>
+        <td style="text-align:right;font-weight:700;">${fmt(e.amount)}</td>
+      </tr>`
+        )
+        .join("")
+    : "";
+
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" /><title>Advances Report</title><style>${SHARED_CSS}</style></head>
+<body>
+  ${watermark ? `<div class="wm">TRIAL — NOT FINAL</div>` : ""}
+  ${header(business, "ADVANCES", `As at ${asAt}`)}
+  <div class="meta-row">
+    ${fromBlock(business, "Prepared by")}
+    <div style="text-align:right;">
+      <div class="meta-label">Report</div>
+      <div style="font-size:20px;font-weight:800;">Advances &amp; what is still owed</div>
+    </div>
+  </div>
+  <div style="font-size:11px;font-weight:700;color:#0C4A6E;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;">Balances</div>
+  <table>
+    <thead>
+      <tr><th>Employee</th><th style="text-align:right;">Advanced</th><th style="text-align:right;">Repaid</th><th>Deduction plan</th><th style="text-align:right;">Outstanding</th></tr>
+    </thead>
+    <tbody>${balanceRows}</tbody>
+  </table>
+  ${
+    entryRows
+      ? `<div style="font-size:11px;font-weight:700;color:#0C4A6E;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;">Every entry</div>
+  <table>
+    <thead><tr><th>Date</th><th>Employee</th><th>Entry</th><th>Note</th><th style="text-align:right;">Amount</th></tr></thead>
+    <tbody>${entryRows}</tbody>
+  </table>`
+      : ""
+  }
+  <div class="totals">
+    <div class="totals-box">
+      <div class="totals-row"><span>Total advanced</span><span>${fmt(totals.advanced)}</span></div>
+      <div class="totals-row"><span>Total repaid</span><span>${fmt(totals.repaid)}</span></div>
+      <div class="totals-row final"><span>Still owed by ${totals.people} ${totals.people === 1 ? "person" : "people"}</span><span>${fmt(totals.outstanding)}</span></div>
+    </div>
+  </div>
+  <div class="footer">
+    Advances given to staff and the repayments Pay Run has deducted from wages, as at ${esc(asAt)}.<br/>Generated via Worklog — worklog.co.za${
+      watermark ? `<br/><strong style="color:#dc2626;">Draft — made on a free Worklog trial.</strong>` : ""
+    }
+  </div>
+</body>
+</html>`;
+}
+
+export type LeaveReportRowOut = {
+  name: string;
+  startDate: string;
+  months: number;
+  annualAccrued: number;
+  annualTaken: number;
+  annualBalance: number;
+  sickTaken: number;
+  sickBalance: number;
+  familyTaken: number;
+  familyBalance: number;
+  status: string;
+};
+export type LeaveReportEntry = { name: string; date: string; endDate: string; type: string; days: number; note: string };
+
+export function buildLeaveReportHTML(
+  business: BusinessProfile,
+  rows: LeaveReportRowOut[],
+  entries: LeaveReportEntry[],
+  totals: { annual: number; sick: number; family: number; other: number; days: number },
+  asAt: string,
+  watermark = false
+): string {
+  const d = (n: number) => `${n}d`;
+  const balanceRows = rows.length
+    ? rows
+        .map(
+          (r) => `
+      <tr>
+        <td>${esc(r.name)}${r.startDate ? `<br/><span style="font-size:10px;color:#94a3b8;">from ${esc(r.startDate)} · ${r.months} months</span>` : ""}</td>
+        <td style="text-align:center;">${d(r.annualAccrued)}</td>
+        <td style="text-align:center;">${d(r.annualTaken)}</td>
+        <td style="text-align:center;font-weight:700;color:#0C4A6E;">${d(r.annualBalance)}</td>
+        <td style="text-align:center;">${d(r.sickTaken)} / ${d(r.sickBalance)}</td>
+        <td style="text-align:center;">${d(r.familyTaken)} / ${d(r.familyBalance)}</td>
+        <td>${esc(r.status)}</td>
+      </tr>`
+        )
+        .join("")
+    : `<tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:16px;">No employees to report on.</td></tr>`;
+
+  const entryRows = entries.length
+    ? entries
+        .map(
+          (e) => `
+      <tr>
+        <td>${esc(e.date)}${e.endDate ? ` → ${esc(e.endDate)}` : ""}</td>
+        <td>${esc(e.name)}</td>
+        <td>${esc(e.type)}</td>
+        <td>${esc(e.note || "—")}</td>
+        <td style="text-align:right;font-weight:700;">${d(e.days)}</td>
+      </tr>`
+        )
+        .join("")
+    : "";
+
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" /><title>Leave Report</title><style>${SHARED_CSS}</style></head>
+<body>
+  ${watermark ? `<div class="wm">TRIAL — NOT FINAL</div>` : ""}
+  ${header(business, "LEAVE", `As at ${asAt}`)}
+  <div class="meta-row">
+    ${fromBlock(business, "Prepared by")}
+    <div style="text-align:right;">
+      <div class="meta-label">Report</div>
+      <div style="font-size:20px;font-weight:800;">Leave taken &amp; BCEA balances</div>
+    </div>
+  </div>
+  <div style="font-size:11px;font-weight:700;color:#0C4A6E;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;">Balances per employee</div>
+  <table>
+    <thead>
+      <tr><th>Employee</th><th style="text-align:center;">Annual accrued</th><th style="text-align:center;">Annual taken</th><th style="text-align:center;">Annual left</th><th style="text-align:center;">Sick taken / left</th><th style="text-align:center;">Family taken / left</th><th>Status</th></tr>
+    </thead>
+    <tbody>${balanceRows}</tbody>
+  </table>
+  ${
+    entryRows
+      ? `<div style="font-size:11px;font-weight:700;color:#0C4A6E;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;">Every leave entry</div>
+  <table>
+    <thead><tr><th>Dates</th><th>Employee</th><th>Type</th><th>Note</th><th style="text-align:right;">Days</th></tr></thead>
+    <tbody>${entryRows}</tbody>
+  </table>`
+      : ""
+  }
+  <div class="totals">
+    <div class="totals-box">
+      <div class="totals-row"><span>Annual leave taken</span><span>${d(totals.annual)}</span></div>
+      <div class="totals-row"><span>Sick leave taken</span><span>${d(totals.sick)}</span></div>
+      <div class="totals-row"><span>Family responsibility taken</span><span>${d(totals.family)}</span></div>
+      ${totals.other > 0 ? `<div class="totals-row"><span>Other leave taken</span><span>${d(totals.other)}</span></div>` : ""}
+      <div class="totals-row final"><span>Total days taken</span><span>${d(totals.days)}</span></div>
+    </div>
+  </div>
+  <div class="footer">
+    BCEA leave balances as at ${esc(asAt)}: annual accrues at 1.25 days a month, sick leave runs on a 30-day three-year cycle, and family responsibility leave is 3 days a year. Confirm any payout figure with your accountant.<br/>Generated via Worklog — worklog.co.za${
+      watermark ? `<br/><strong style="color:#dc2626;">Draft — made on a free Worklog trial.</strong>` : ""
+    }
+  </div>
+</body>
+</html>`;
+}

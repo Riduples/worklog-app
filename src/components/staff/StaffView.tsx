@@ -60,10 +60,12 @@ function StaffDetailModal({ staff, onClose, onEdit }: { staff: StaffMember; onCl
   const loanBalance = getLoanBalance(staffLoans);
   const totalPaid = staffPayRuns.reduce((s, p) => s + p.net_pay, 0);
 
-  const leaveEntries = [
-    ...staffLeave.map((l) => ({ leave_type: l.leave_type, days: l.days, date: l.start_date })),
-    ...staffPayRuns.filter((p) => (p.leave_days ?? 0) > 0).map((p) => ({ leave_type: p.leave_type ?? "Annual", days: p.leave_days ?? 0, date: p.pay_date })),
-  ];
+  // worker_leave alone. create_pay_run has written a real leave row for the leave
+  // a pay run books since 0085, so reading the pay runs as well — as this did —
+  // counted that leave twice: 3 days taken through a pay run came off the balance
+  // as 6, and the offboarding payout was calculated from the wrong figure. The
+  // Leave dashboard already worked this way and was right.
+  const leaveEntries = staffLeave.map((l) => ({ leave_type: l.leave_type, days: l.days, date: l.start_date }));
   const lb = staff.is_contractor ? null : calcLeaveBalances(staff.start_date, leaveEntries);
   const badge = EMPLOYMENT_BADGE[staff.employment_type];
   const rate = rateLabel(fmt, staff.pay_type, staff.daily_wage ?? 0, staff.hourly_rate ?? 0, staff.monthly_salary ?? 0);
@@ -520,10 +522,8 @@ export function StaffView() {
         const staffLeave = (leave ?? []).filter((l) => l.staff_id === w.id);
         const staffPayRuns = (payRuns ?? []).filter((p) => p.staff_id === w.id);
         const loanBal = getLoanBalance(staffLoans);
-        const leaveEntries = [
-          ...staffLeave.map((l) => ({ leave_type: l.leave_type, days: l.days, date: l.start_date })),
-          ...staffPayRuns.filter((p) => (p.leave_days ?? 0) > 0).map((p) => ({ leave_type: p.leave_type ?? "Annual", days: p.leave_days ?? 0, date: p.pay_date })),
-        ];
+        // worker_leave alone — pay-run leave is already a row in it (see above).
+        const leaveEntries = staffLeave.map((l) => ({ leave_type: l.leave_type, days: l.days, date: l.start_date }));
         const lb = w.is_contractor ? null : calcLeaveBalances(w.start_date, leaveEntries);
         const lastWage = staffPayRuns[0];
         const rate = rateLabel(fmt, w.pay_type, w.daily_wage ?? 0, w.hourly_rate ?? 0, w.monthly_salary ?? 0);

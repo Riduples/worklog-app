@@ -10,6 +10,9 @@ import {
   buildAgeAnalysisHTML,
   buildActualVsEstimateHTML,
   buildTravelReportHTML,
+  buildStaffRegisterHTML,
+  buildAdvancesReportHTML,
+  buildLeaveReportHTML,
   type StatementLine,
   type RemittanceLine,
   type StatementCredits,
@@ -20,6 +23,11 @@ import {
   type OtherJobHoursRow,
   type TravelReportRow,
   type TravelLogbook,
+  type StaffRegisterReportRow,
+  type AdvancesReportRow,
+  type AdvancesReportEntry,
+  type LeaveReportRowOut,
+  type LeaveReportEntry,
 } from "@/lib/docgen/buildLedgerHTML";
 import type { BusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 
@@ -62,6 +70,26 @@ type RenderRequest =
       asAt: string;
       periodLabel?: string;
       logbook?: TravelLogbook | null;
+    }
+  | {
+      kind: "staffregisterreport";
+      rows: StaffRegisterReportRow[];
+      totals: { people: number; employees: number; contractors: number; active: number; left: number; monthlyWageBill: number };
+      asAt: string;
+    }
+  | {
+      kind: "advancesreport";
+      rows: AdvancesReportRow[];
+      entries: AdvancesReportEntry[];
+      totals: { advanced: number; repaid: number; outstanding: number; people: number };
+      asAt: string;
+    }
+  | {
+      kind: "leavereport";
+      rows: LeaveReportRowOut[];
+      entries: LeaveReportEntry[];
+      totals: { annual: number; sick: number; family: number; other: number; days: number };
+      asAt: string;
     };
 
 function buildHtml(body: RenderRequest, business: BusinessProfile, watermark: boolean): string | null {
@@ -82,6 +110,12 @@ function buildHtml(body: RenderRequest, business: BusinessProfile, watermark: bo
       return buildActualVsEstimateHTML(business, body.rows, body.other, body.totals, body.asAt, watermark);
     case "travelreport":
       return buildTravelReportHTML(business, body.rows, body.totals, body.asAt, watermark, body.periodLabel, body.logbook);
+    case "staffregisterreport":
+      return buildStaffRegisterHTML(business, body.rows, body.totals, body.asAt, watermark);
+    case "advancesreport":
+      return buildAdvancesReportHTML(business, body.rows, body.entries, body.totals, body.asAt, watermark);
+    case "leavereport":
+      return buildLeaveReportHTML(business, body.rows, body.entries, body.totals, body.asAt, watermark);
     default:
       return null;
   }
