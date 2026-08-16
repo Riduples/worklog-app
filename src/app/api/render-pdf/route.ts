@@ -14,6 +14,10 @@ import {
   buildAdvancesReportHTML,
   buildLeaveReportHTML,
   buildDiaryReportHTML,
+  buildSalesSummaryHTML,
+  buildQuoteConversionHTML,
+  buildWhatSellsHTML,
+  buildRecurringRevenueHTML,
   type StatementLine,
   type RemittanceLine,
   type StatementCredits,
@@ -31,6 +35,10 @@ import {
   type LeaveReportEntry,
   type DiaryReportStatusRow,
   type DiaryReportClientRow,
+  type SalesSummaryPdfRow,
+  type QuoteConversionPdfRow,
+  type SoldItemPdfRow,
+  type RecurringPdfRow,
 } from "@/lib/docgen/buildLedgerHTML";
 import type { BusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 
@@ -113,6 +121,33 @@ type RenderRequest =
       };
       asAt: string;
       periodLabel?: string;
+    }
+  | {
+      kind: "salessummary";
+      rows: SalesSummaryPdfRow[];
+      totals: { invoices: number; invoiced: number; vat: number; credited: number; net: number; received: number; outstanding: number; collectedPct: number };
+      asAt: string;
+      periodLabel?: string;
+    }
+  | {
+      kind: "quoteconversion";
+      rows: QuoteConversionPdfRow[];
+      totals: { quotes: number; value: number; won: number; wonValue: number; lost: number; lostValue: number; open: number; openValue: number; conversionRate: number };
+      asAt: string;
+      periodLabel?: string;
+    }
+  | {
+      kind: "whatsells";
+      rows: SoldItemPdfRow[];
+      totals: { lines: number; value: number };
+      asAt: string;
+      periodLabel?: string;
+    }
+  | {
+      kind: "recurringrevenue";
+      rows: RecurringPdfRow[];
+      totals: { count: number; perMonth: number; dueSoon: number };
+      asAt: string;
     };
 
 function buildHtml(body: RenderRequest, business: BusinessProfile, watermark: boolean): string | null {
@@ -141,6 +176,14 @@ function buildHtml(body: RenderRequest, business: BusinessProfile, watermark: bo
       return buildLeaveReportHTML(business, body.rows, body.entries, body.totals, body.asAt, watermark);
     case "diaryreport":
       return buildDiaryReportHTML(business, body.statuses, body.clients, body.totals, body.asAt, watermark, body.periodLabel);
+    case "salessummary":
+      return buildSalesSummaryHTML(business, body.rows, body.totals, body.asAt, watermark, body.periodLabel);
+    case "quoteconversion":
+      return buildQuoteConversionHTML(business, body.rows, body.totals, body.asAt, watermark, body.periodLabel);
+    case "whatsells":
+      return buildWhatSellsHTML(business, body.rows, body.totals, body.asAt, watermark, body.periodLabel);
+    case "recurringrevenue":
+      return buildRecurringRevenueHTML(business, body.rows, body.totals, body.asAt, watermark);
     default:
       return null;
   }

@@ -973,3 +973,255 @@ export function buildDiaryReportHTML(
 </body>
 </html>`;
 }
+
+// ── Sales Reports ────────────────────────────────────────────────────────────
+
+export type SalesSummaryPdfRow = { month: string; invoices: number; invoiced: number; vat: number; credited: number; net: number; received: number; outstanding: number };
+export type QuoteConversionPdfRow = { label: string; count: number; value: number };
+export type SoldItemPdfRow = { description: string; qty: number; value: number; invoices: number };
+export type RecurringPdfRow = { client: string; docNumber: string; recurrenceLabel: string; nextRun: string; amount: number; perMonth: number };
+
+export function buildSalesSummaryHTML(
+  business: BusinessProfile,
+  rows: SalesSummaryPdfRow[],
+  totals: { invoices: number; invoiced: number; vat: number; credited: number; net: number; received: number; outstanding: number; collectedPct: number },
+  asAt: string,
+  watermark = false,
+  periodLabel?: string
+): string {
+  const body = rows.length
+    ? rows
+        .map(
+          (r) => `
+      <tr>
+        <td>${esc(r.month)}</td>
+        <td style="text-align:center;">${r.invoices}</td>
+        <td style="text-align:right;">${fmt(r.invoiced)}</td>
+        <td style="text-align:right;">${fmt(r.vat)}</td>
+        <td style="text-align:right;color:${r.credited > 0 ? "#be123c" : "#94a3b8"};">${r.credited > 0 ? `−${fmt(r.credited)}` : "—"}</td>
+        <td style="text-align:right;font-weight:700;">${fmt(r.net)}</td>
+        <td style="text-align:right;">${fmt(r.received)}</td>
+        <td style="text-align:right;color:${r.outstanding > 0 ? "#92400e" : "#111"};">${fmt(r.outstanding)}</td>
+      </tr>`
+        )
+        .join("")
+    : `<tr><td colspan="8" style="text-align:center;color:#94a3b8;padding:16px;">No invoices in this period.</td></tr>`;
+
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" /><title>Sales Summary</title><style>${SHARED_CSS}</style></head>
+<body>
+  ${watermark ? `<div class="wm">TRIAL — NOT FINAL</div>` : ""}
+  ${header(business, "SALES SUMMARY", periodLabel ? `${periodLabel} · as at ${asAt}` : `As at ${asAt}`)}
+  <div class="meta-row">
+    ${fromBlock(business, "Prepared by")}
+    <div style="text-align:right;">
+      <div class="meta-label">Report</div>
+      <div style="font-size:20px;font-weight:800;">Invoiced against collected</div>
+      ${periodLabel ? `<div style="font-size:12px;color:#64748b;margin-top:2px;">${esc(periodLabel)}</div>` : ""}
+    </div>
+  </div>
+  <table>
+    <thead>
+      <tr><th>Month</th><th style="text-align:center;">Invoices</th><th style="text-align:right;">Invoiced</th><th style="text-align:right;">VAT</th><th style="text-align:right;">Credit notes</th><th style="text-align:right;">Net sales</th><th style="text-align:right;">Received</th><th style="text-align:right;">Outstanding</th></tr>
+    </thead>
+    <tbody>${body}</tbody>
+  </table>
+  <div class="totals">
+    <div class="totals-box">
+      <div class="totals-row"><span>Invoiced (excl. VAT)</span><span>${fmt(totals.invoiced)}</span></div>
+      <div class="totals-row"><span>VAT</span><span>${fmt(totals.vat)}</span></div>
+      <div class="totals-row"><span>Credit notes</span><span>−${fmt(totals.credited)}</span></div>
+      <div class="totals-row"><span>Received</span><span>${fmt(totals.received)} (${totals.collectedPct.toFixed(0)}%)</span></div>
+      <div class="totals-row"><span>Still outstanding</span><span>${fmt(totals.outstanding)}</span></div>
+      <div class="totals-row final"><span>Net sales</span><span>${fmt(totals.net)}</span></div>
+    </div>
+  </div>
+  <div class="footer">
+    Sales by month as at ${esc(asAt)}. Net sales is what was invoiced excluding VAT, less credit notes. Received counts a paid invoice in full and a part-paid one at its deposit.<br/>Generated via Worklog — worklog.co.za${
+      watermark ? `<br/><strong style="color:#dc2626;">Draft — made on a free Worklog trial.</strong>` : ""
+    }
+  </div>
+</body>
+</html>`;
+}
+
+export function buildQuoteConversionHTML(
+  business: BusinessProfile,
+  rows: QuoteConversionPdfRow[],
+  totals: { quotes: number; value: number; won: number; wonValue: number; lost: number; lostValue: number; open: number; openValue: number; conversionRate: number },
+  asAt: string,
+  watermark = false,
+  periodLabel?: string
+): string {
+  const body = rows.length
+    ? rows
+        .map(
+          (r) => `
+      <tr>
+        <td>${esc(r.label)}</td>
+        <td style="text-align:center;">${r.count}</td>
+        <td style="text-align:center;">${totals.quotes ? ((r.count / totals.quotes) * 100).toFixed(0) : 0}%</td>
+        <td style="text-align:right;font-weight:700;">${fmt(r.value)}</td>
+      </tr>`
+        )
+        .join("")
+    : `<tr><td colspan="4" style="text-align:center;color:#94a3b8;padding:16px;">No quotes in this period.</td></tr>`;
+
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" /><title>Quote Conversion</title><style>${SHARED_CSS}</style></head>
+<body>
+  ${watermark ? `<div class="wm">TRIAL — NOT FINAL</div>` : ""}
+  ${header(business, "QUOTE CONVERSION", periodLabel ? `${periodLabel} · as at ${asAt}` : `As at ${asAt}`)}
+  <div class="meta-row">
+    ${fromBlock(business, "Prepared by")}
+    <div style="text-align:right;">
+      <div class="meta-label">Report</div>
+      <div style="font-size:20px;font-weight:800;">What became of every quote</div>
+      ${periodLabel ? `<div style="font-size:12px;color:#64748b;margin-top:2px;">${esc(periodLabel)}</div>` : ""}
+    </div>
+  </div>
+  <div style="font-size:11px;font-weight:700;color:#0C4A6E;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;">Summary</div>
+  <table>
+    <thead><tr><th style="text-align:center;">Quotes</th><th style="text-align:center;">Won</th><th style="text-align:center;">Lost</th><th style="text-align:center;">Still open</th><th style="text-align:center;">Conversion</th></tr></thead>
+    <tbody><tr>
+      <td style="text-align:center;font-weight:700;">${totals.quotes}</td>
+      <td style="text-align:center;font-weight:700;color:#0369A1;">${totals.won}</td>
+      <td style="text-align:center;font-weight:700;color:#be123c;">${totals.lost}</td>
+      <td style="text-align:center;font-weight:700;">${totals.open}</td>
+      <td style="text-align:center;font-weight:700;">${totals.conversionRate.toFixed(0)}%</td>
+    </tr></tbody>
+  </table>
+  <div style="font-size:11px;font-weight:700;color:#0C4A6E;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;">Outcomes</div>
+  <table>
+    <thead><tr><th>Outcome</th><th style="text-align:center;">Quotes</th><th style="text-align:center;">Share</th><th style="text-align:right;">Value</th></tr></thead>
+    <tbody>${body}</tbody>
+  </table>
+  <div class="totals">
+    <div class="totals-box">
+      <div class="totals-row"><span>Value won</span><span>${fmt(totals.wonValue)}</span></div>
+      <div class="totals-row"><span>Value lost</span><span>${fmt(totals.lostValue)}</span></div>
+      <div class="totals-row"><span>Still open</span><span>${fmt(totals.openValue)}</span></div>
+      <div class="totals-row final"><span>Quoted in total</span><span>${fmt(totals.value)}</span></div>
+    </div>
+  </div>
+  <div class="footer">
+    Quotes issued${periodLabel ? ` in ${esc(periodLabel.toLowerCase())}` : ""}, as at ${esc(asAt)}. Conversion is quotes won as a share of those decided — quotes still open aren't counted against you. A quote past its valid-until date with no decision is counted as expired.<br/>Generated via Worklog — worklog.co.za${
+      watermark ? `<br/><strong style="color:#dc2626;">Draft — made on a free Worklog trial.</strong>` : ""
+    }
+  </div>
+</body>
+</html>`;
+}
+
+export function buildWhatSellsHTML(
+  business: BusinessProfile,
+  rows: SoldItemPdfRow[],
+  totals: { lines: number; value: number },
+  asAt: string,
+  watermark = false,
+  periodLabel?: string
+): string {
+  const body = rows.length
+    ? rows
+        .map(
+          (r) => `
+      <tr>
+        <td>${esc(r.description)}</td>
+        <td style="text-align:center;">${r.qty % 1 === 0 ? r.qty : r.qty.toFixed(2)}</td>
+        <td style="text-align:center;">${r.invoices}</td>
+        <td style="text-align:center;">${totals.value > 0 ? ((r.value / totals.value) * 100).toFixed(0) : 0}%</td>
+        <td style="text-align:right;font-weight:700;">${fmt(r.value)}</td>
+      </tr>`
+        )
+        .join("")
+    : `<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:16px;">No invoice lines in this period.</td></tr>`;
+
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" /><title>What Sells</title><style>${SHARED_CSS}</style></head>
+<body>
+  ${watermark ? `<div class="wm">TRIAL — NOT FINAL</div>` : ""}
+  ${header(business, "WHAT SELLS", periodLabel ? `${periodLabel} · as at ${asAt}` : `As at ${asAt}`)}
+  <div class="meta-row">
+    ${fromBlock(business, "Prepared by")}
+    <div style="text-align:right;">
+      <div class="meta-label">Report</div>
+      <div style="font-size:20px;font-weight:800;">Invoice lines, best first</div>
+      ${periodLabel ? `<div style="font-size:12px;color:#64748b;margin-top:2px;">${esc(periodLabel)}</div>` : ""}
+    </div>
+  </div>
+  <table>
+    <thead><tr><th>Line</th><th style="text-align:center;">Qty</th><th style="text-align:center;">Invoices</th><th style="text-align:center;">Share</th><th style="text-align:right;">Value</th></tr></thead>
+    <tbody>${body}</tbody>
+  </table>
+  <div class="totals">
+    <div class="totals-box">
+      <div class="totals-row"><span>Distinct lines</span><span>${totals.lines}</span></div>
+      <div class="totals-row final"><span>Total invoiced on lines</span><span>${fmt(totals.value)}</span></div>
+    </div>
+  </div>
+  <div class="footer">
+    Invoice lines grouped by description as at ${esc(asAt)}, excluding VAT. Lines are matched on the words typed on them, so consistent naming makes this report sharper.<br/>Generated via Worklog — worklog.co.za${
+      watermark ? `<br/><strong style="color:#dc2626;">Draft — made on a free Worklog trial.</strong>` : ""
+    }
+  </div>
+</body>
+</html>`;
+}
+
+export function buildRecurringRevenueHTML(
+  business: BusinessProfile,
+  rows: RecurringPdfRow[],
+  totals: { count: number; perMonth: number; dueSoon: number },
+  asAt: string,
+  watermark = false
+): string {
+  const body = rows.length
+    ? rows
+        .map(
+          (r) => `
+      <tr>
+        <td>${esc(r.client)}${r.docNumber ? `<br/><span style="font-size:10px;color:#94a3b8;">${esc(r.docNumber)}</span>` : ""}</td>
+        <td>${esc(r.recurrenceLabel)}</td>
+        <td>${esc(r.nextRun || "—")}</td>
+        <td style="text-align:right;">${fmt(r.amount)}</td>
+        <td style="text-align:right;font-weight:700;">${fmt(r.perMonth)}</td>
+      </tr>`
+        )
+        .join("")
+    : `<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:16px;">No recurring invoices set up.</td></tr>`;
+
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" /><title>Recurring Revenue</title><style>${SHARED_CSS}</style></head>
+<body>
+  ${watermark ? `<div class="wm">TRIAL — NOT FINAL</div>` : ""}
+  ${header(business, "RECURRING REVENUE", `As at ${asAt}`)}
+  <div class="meta-row">
+    ${fromBlock(business, "Prepared by")}
+    <div style="text-align:right;">
+      <div class="meta-label">Report</div>
+      <div style="font-size:20px;font-weight:800;">What bills itself every month</div>
+    </div>
+  </div>
+  <table>
+    <thead><tr><th>Customer</th><th>Every</th><th>Next run</th><th style="text-align:right;">Per run</th><th style="text-align:right;">Per month</th></tr></thead>
+    <tbody>${body}</tbody>
+  </table>
+  <div class="totals">
+    <div class="totals-box">
+      <div class="totals-row"><span>Recurring invoices</span><span>${totals.count}</span></div>
+      <div class="totals-row"><span>Billing in the next 30 days</span><span>${fmt(totals.dueSoon)}</span></div>
+      <div class="totals-row final"><span>Committed per month</span><span>${fmt(totals.perMonth)}</span></div>
+    </div>
+  </div>
+  <div class="footer">
+    Live recurring invoices as at ${esc(asAt)}, VAT included. Weekly, quarterly and annual schedules are stated as a monthly equivalent so they can be added together — an annual invoice is a twelfth of itself each month, not a monthly commitment.<br/>Generated via Worklog — worklog.co.za${
+      watermark ? `<br/><strong style="color:#dc2626;">Draft — made on a free Worklog trial.</strong>` : ""
+    }
+  </div>
+</body>
+</html>`;
+}

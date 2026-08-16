@@ -61,6 +61,7 @@ const NAV_CATEGORIES: { id: string; items: NavItem[] }[] = [
       { href: "/invoices", icon: "📤", label: "Invoices", toolId: "invoice" },
       { href: "/statement", icon: "📃", label: "Statements", toolId: "statement", lockId: "statement" },
       { href: "/age-analysis", icon: "⏳", label: "Age Analysis", toolId: "ageanalysis", lockId: "ageanalysis" },
+      { href: "/sales-reports", icon: "📊", label: "Sales Reports", anyOf: ["invoice", "quote"], desc: "Sales month by month, quote conversion, what sells and what bills itself — printable reports" },
     ],
   },
   {

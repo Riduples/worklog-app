@@ -1227,7 +1227,8 @@ export const HELP_ARTICLES: HelpArticle[] = [
       "send-a-customer-statement",
       "vat201",
       "credit-notes",
-      "manage-your-stock"
+      "manage-your-stock",
+      "sales-reports"
     ]
   },
   {
@@ -1410,7 +1411,8 @@ export const HELP_ARTICLES: HelpArticle[] = [
       "cost-a-job",
       "send-a-customer-statement",
       "job-profitability",
-      "manage-your-stock"
+      "manage-your-stock",
+      "sales-reports"
     ]
   },
   {
@@ -5173,6 +5175,93 @@ export const HELP_ARTICLES: HelpArticle[] = [
       "staff-advances",
       "manage-leave",
       "run-a-pay-run"
+    ]
+  },
+  {
+    "slug": "sales-reports",
+    "category": "Sales",
+    "title": "Sales Reports",
+    "summary": "Four printable reports over your sales: month-by-month invoiced against collected, how many quotes turn into work, what sells best, and what bills itself every month.",
+    "sections": [
+      {
+        "heading": "What it is",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "Sales Reports reads your quotes and invoices back to you. Quotes and Invoices are where you do the work; this is where you see how it is going. You will find it under Sales, called Sales Reports."
+          },
+          {
+            "type": "paragraph",
+            "text": "It has four tabs — Sales summary, Quote conversion, What sells and Recurring — and each has its own Download PDF and Share buttons. Most tabs also have a period picker across the top: this month, this year or all time."
+          }
+        ]
+      },
+      {
+        "heading": "Sales summary",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "One line per month: how many invoices you issued, what they came to excluding VAT, the VAT, any credit notes, and then the net sales figure those add up to. Alongside it, what you have actually received and what is still outstanding."
+          },
+          {
+            "type": "tip",
+            "text": "The \"Received\" tile is a percentage — how much of your net sales has actually come in. It is the quickest way to see whether a good month on paper turned into money in the bank."
+          }
+        ]
+      },
+      {
+        "heading": "Quote conversion",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "What became of every quote you sent: converted to an invoice, accepted but not yet invoiced, still open, declined, or expired. The conversion percentage is the quotes you won as a share of those that have been decided — quotes still sitting open are not counted against you."
+          },
+          {
+            "type": "bullets",
+            "items": [
+              "Value won: what the converted and accepted quotes are worth.",
+              "Value lost: declined and expired quotes together.",
+              "Still open: quotes nobody has answered yet, and what they would be worth."
+            ]
+          },
+          {
+            "type": "warning",
+            "text": "A quote past its valid-until date that was never accepted or declined counts as expired, not open. Leaving it in \"open\" would make your conversion rate look better than it is, forever."
+          }
+        ]
+      },
+      {
+        "heading": "What sells",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "Every line off your invoices, added up by what the line says, ranked by value. It shows the quantity sold, how many invoices it appeared on, and what share of your sales it makes up."
+          },
+          {
+            "type": "tip",
+            "text": "Lines are matched on the words typed on them, so \"Call-out\" and \"Call out fee\" count as two different things. Picking items from your price list rather than retyping them keeps this report sharp."
+          }
+        ]
+      },
+      {
+        "heading": "Recurring",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "The invoices you have set to repeat, when each one next runs, and what they commit to in total. Weekly, quarterly and annual schedules are all shown as a monthly equivalent as well, so they can be added together into one \"per month\" figure."
+          },
+          {
+            "type": "tip",
+            "text": "The \"Next 30 days\" figure is what will bill itself in the coming month — useful when you are working out what money is already on its way."
+          }
+        ]
+      }
+    ],
+    "related": [
+      "create-and-send-an-invoice",
+      "send-a-quote",
+      "age-analysis",
+      "send-a-customer-statement"
     ]
   }
 ];

@@ -31,6 +31,7 @@ const GROUPS: Group[] = [
       { tool: "invoice", href: "/invoices", icon: "📤", label: "Invoices" },
       { tool: "statement", href: "/statement", icon: "📃", label: "Statements" },
       { tool: "ageanalysis", href: "/age-analysis", icon: "⏳", label: "Age Analysis" },
+      { tool: "invoice", anyOf: ["invoice", "quote"], href: "/sales-reports", icon: "📊", label: "Sales Reports" },
       { tool: "stock", href: "/stock", icon: "📦", label: "Items" },
       { tool: "recipe", href: "/recipes", icon: "🍳", label: "Cost Calculator" },
     ],
