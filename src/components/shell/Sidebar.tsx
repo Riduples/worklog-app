@@ -32,6 +32,15 @@ const GROUPS: Group[] = [
       { tool: "statement", href: "/statement", icon: "📃", label: "Statements" },
       { tool: "ageanalysis", href: "/age-analysis", icon: "⏳", label: "Age Analysis" },
       { tool: "invoice", anyOf: ["invoice", "quote"], href: "/sales-reports", icon: "📊", label: "Sales Reports" },
+    ],
+  },
+  {
+    // Its own group, matching the dashboard's Price List card. These two used to
+    // ride along under Sales because that is where you reach for a price — but
+    // they are what you sell, not the selling, and the group now has a report of
+    // its own to sit with them.
+    title: "Price List",
+    items: [
       { tool: "stock", href: "/stock", icon: "📦", label: "Items" },
       { tool: "recipe", href: "/recipes", icon: "🍳", label: "Cost Calculator" },
       { tool: "stock", anyOf: ["stock", "recipe"], href: "/price-list-reports", icon: "📊", label: "Price List Reports" },
