@@ -53,6 +53,7 @@ const NAV_CATEGORIES: { id: string; items: NavItem[] }[] = [
     items: [
       { href: "/customers", icon: "👤", label: "Customers", toolId: "clients" },
       { href: "/suppliers", icon: "🏬", label: "Suppliers", toolId: "suppliers" },
+      { href: "/contacts-reports", icon: "📊", label: "Contacts Reports", anyOf: ["clients", "suppliers"], desc: "Your directory, who actually pays late, who has gone quiet, and whose details are missing — printable reports" },
     ],
   },
   {

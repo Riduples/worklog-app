@@ -26,6 +26,10 @@ import {
   buildCategorySpendHTML,
   buildCommittedHTML,
   buildBillsDueHTML,
+  buildDirectoryHTML,
+  buildPayersHTML,
+  buildDormantHTML,
+  buildMissingDetailsHTML,
   type StatementLine,
   type RemittanceLine,
   type StatementCredits,
@@ -55,6 +59,10 @@ import {
   type CategorySpendPdfRow,
   type CommittedPdfRow,
   type BillDuePdfRow,
+  type DirectoryPdfRow,
+  type PayerPdfRow,
+  type DormantPdfRow,
+  type MissingPdfRow,
 } from "@/lib/docgen/buildLedgerHTML";
 import type { BusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 
@@ -214,6 +222,31 @@ type RenderRequest =
       rows: BillDuePdfRow[];
       totals: { overdue: number; week: number; month: number; later: number; undated: number; total: number; count: number };
       asAt: string;
+    }
+  | {
+      kind: "contactdirectory";
+      rows: DirectoryPdfRow[];
+      totals: { customers: number; suppliers: number };
+      asAt: string;
+    }
+  | {
+      kind: "payers";
+      rows: PayerPdfRow[];
+      totals: { customers: number; measured: number; disagree: number; overdueAmount: number };
+      asAt: string;
+    }
+  | {
+      kind: "dormantcustomers";
+      rows: DormantPdfRow[];
+      totals: { dormant: number; never: number; customers: number };
+      asAt: string;
+      monthsLabel?: string;
+    }
+  | {
+      kind: "missingdetails";
+      rows: MissingPdfRow[];
+      totals: { contacts: number; incomplete: number; blocking: number };
+      asAt: string;
     };
 
 function buildHtml(body: RenderRequest, business: BusinessProfile, watermark: boolean): string | null {
@@ -266,6 +299,14 @@ function buildHtml(body: RenderRequest, business: BusinessProfile, watermark: bo
       return buildCommittedHTML(business, body.rows, body.totals, body.asAt, watermark);
     case "billsdue":
       return buildBillsDueHTML(business, body.rows, body.totals, body.asAt, watermark);
+    case "contactdirectory":
+      return buildDirectoryHTML(business, body.rows, body.totals, body.asAt, watermark);
+    case "payers":
+      return buildPayersHTML(business, body.rows, body.totals, body.asAt, watermark);
+    case "dormantcustomers":
+      return buildDormantHTML(business, body.rows, body.totals, body.asAt, watermark, body.monthsLabel);
+    case "missingdetails":
+      return buildMissingDetailsHTML(business, body.rows, body.totals, body.asAt, watermark);
     default:
       return null;
   }

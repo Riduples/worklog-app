@@ -155,6 +155,7 @@ export function Sidebar() {
           matters now the grid is hidden on desktop. */}
       {gate("clients") && navLink("/customers", "👤", "Customers", isActive("/customers"))}
       {gate("suppliers") && navLink("/suppliers", "🏬", "Suppliers", isActive("/suppliers"))}
+      {(gate("clients") || gate("suppliers")) && navLink("/contacts-reports", "📊", "Contacts Reports", isActive("/contacts-reports"))}
 
       {GROUPS.map((group) => {
         const visible = group.items.filter((i) => (i.anyOf ? i.anyOf.some(gate) : gate(i.tool)));

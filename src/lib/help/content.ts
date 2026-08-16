@@ -345,7 +345,8 @@ export const HELP_ARTICLES: HelpArticle[] = [
       "set-up-your-business",
       "create-and-send-an-invoice",
       "send-a-quote",
-      "log-money-in-and-out"
+      "log-money-in-and-out",
+      "contacts-reports"
     ]
   },
   {
@@ -5423,6 +5424,97 @@ export const HELP_ARTICLES: HelpArticle[] = [
       "create-a-purchase-order",
       "send-a-remittance",
       "age-analysis"
+    ]
+  },
+  {
+    "slug": "contacts-reports",
+    "category": "Getting started",
+    "title": "Contacts Reports",
+    "summary": "Four printable reports over your customers and suppliers: the full directory, who actually pays late, who has gone quiet, and whose details are too thin to work with.",
+    "sections": [
+      {
+        "heading": "What it is",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "Contacts Reports reads your customer and supplier list back to you. It sits with Customers and Suppliers, and has four tabs — Directory, Who pays late, Dormant and Missing details — each with its own Download PDF and Share buttons."
+          },
+          {
+            "type": "tip",
+            "text": "Money per customer lives in Sales Reports and money per supplier in Purchases Reports. This tool is about the people rather than the totals, so the same figures are not cut three different ways."
+          }
+        ]
+      },
+      {
+        "heading": "Directory",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "Everyone you deal with, customers and suppliers separately, with phone, email, address and their payment behaviour or terms. Suppliers show their banking details too. It is the plain list to print or hand over."
+          },
+          {
+            "type": "warning",
+            "text": "This list is other people's personal information. POPIA applies to how you store and share it, so treat the PDF the same way you would treat the records themselves."
+          }
+        ]
+      },
+      {
+        "heading": "Who pays late",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "When you add a customer you can mark them a good, slow or problem payer. This tab checks that against what they actually do: it measures the average days from invoice date to paid date on every invoice they have settled, and gives them a measured label using the same three bands — 30 days or under is a good payer, up to 60 is slow, beyond that is a problem."
+          },
+          {
+            "type": "bullets",
+            "items": [
+              "Where the label you typed and the measurement disagree, the row is flagged with what they are currently marked as.",
+              "Slowest payers are listed first.",
+              "Each row also shows what they have overdue right now."
+            ]
+          },
+          {
+            "type": "warning",
+            "text": "A customer with no settled invoices shows \"Not enough history\" rather than a flattering zero. It takes a paid invoice or two before the measurement means anything."
+          }
+        ]
+      },
+      {
+        "heading": "Dormant",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "Customers with no invoice, no quote and no appointment in the last while. Choose the quiet period across the top — 3, 6 or 12 months — and the list shows who has gone quiet, what the last thing was, and how long ago."
+          },
+          {
+            "type": "tip",
+            "text": "Customers you captured but never invoiced, quoted or booked appear at the end, marked \"never used\". They are worth a different kind of call."
+          }
+        ]
+      },
+      {
+        "heading": "Missing details",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "Which contacts are missing a phone, an email, an address, banking details or a payment behaviour. Anything that actually stops a document going out is flagged with a warning triangle and sorted to the top."
+          },
+          {
+            "type": "bullets",
+            "items": [
+              "No email means you cannot send them a statement or a remittance.",
+              "A supplier with no banking details cannot be paid off a remittance advice.",
+              "A missing address is untidy rather than blocking, so it is listed without a flag."
+            ]
+          }
+        ]
+      }
+    ],
+    "related": [
+      "add-customers-and-suppliers",
+      "send-a-customer-statement",
+      "sales-reports",
+      "purchases-reports"
     ]
   }
 ];

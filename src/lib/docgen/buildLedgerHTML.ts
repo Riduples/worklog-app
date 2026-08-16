@@ -1702,3 +1702,232 @@ export function buildBillsDueHTML(
 </body>
 </html>`;
 }
+
+// ── Contacts Reports ─────────────────────────────────────────────────────────
+
+export type DirectoryPdfRow = { name: string; typeLabel: string; phone: string; email: string; address: string; paymentNote: string; bank: string };
+export type PayerPdfRow = { name: string; behaviour: string; averageDays: number | null; paidInvoices: number; overdueCount: number; overdueAmount: number; measured: string; disagrees: boolean };
+export type DormantPdfRow = { name: string; phone: string; lastSeen: string; lastSeenWhat: string; daysQuiet: number | null; never: boolean };
+export type MissingPdfRow = { name: string; typeLabel: string; missing: string[]; blocking: boolean };
+
+export function buildDirectoryHTML(
+  business: BusinessProfile,
+  rows: DirectoryPdfRow[],
+  totals: { customers: number; suppliers: number },
+  asAt: string,
+  watermark = false
+): string {
+  const body = rows.length
+    ? rows
+        .map(
+          (r) => `
+      <tr>
+        <td>${esc(r.name)}</td>
+        <td>${esc(r.typeLabel)}</td>
+        <td>${esc(r.phone || "—")}</td>
+        <td>${esc(r.email || "—")}</td>
+        <td>${esc(r.address || "—")}</td>
+        <td>${esc(r.paymentNote || "—")}${r.bank ? `<br/><span style="font-size:10px;color:#94a3b8;">${esc(r.bank)}</span>` : ""}</td>
+      </tr>`
+        )
+        .join("")
+    : `<tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:16px;">No contacts yet.</td></tr>`;
+
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" /><title>Contact Directory</title><style>${SHARED_CSS}</style></head>
+<body>
+  ${watermark ? `<div class="wm">TRIAL — NOT FINAL</div>` : ""}
+  ${header(business, "CONTACT DIRECTORY", `As at ${asAt}`)}
+  <div class="meta-row">
+    ${fromBlock(business, "Prepared by")}
+    <div style="text-align:right;">
+      <div class="meta-label">Report</div>
+      <div style="font-size:20px;font-weight:800;">Everyone you deal with</div>
+    </div>
+  </div>
+  <table>
+    <thead><tr><th>Name</th><th>Type</th><th>Phone</th><th>Email</th><th>Address</th><th>Payment</th></tr></thead>
+    <tbody>${body}</tbody>
+  </table>
+  <div class="totals">
+    <div class="totals-box">
+      <div class="totals-row"><span>Customers</span><span>${totals.customers}</span></div>
+      <div class="totals-row"><span>Suppliers</span><span>${totals.suppliers}</span></div>
+      <div class="totals-row final"><span>Contacts</span><span>${totals.customers + totals.suppliers}</span></div>
+    </div>
+  </div>
+  <div class="footer">
+    Your contacts as at ${esc(asAt)}. Handle this list carefully — it is other people's personal information, and POPIA applies to how it is stored and shared.<br/>Generated via Worklog — worklog.co.za${
+      watermark ? `<br/><strong style="color:#dc2626;">Draft — made on a free Worklog trial.</strong>` : ""
+    }
+  </div>
+</body>
+</html>`;
+}
+
+export function buildPayersHTML(
+  business: BusinessProfile,
+  rows: PayerPdfRow[],
+  totals: { customers: number; measured: number; disagree: number; overdueAmount: number },
+  asAt: string,
+  watermark = false
+): string {
+  const body = rows.length
+    ? rows
+        .map(
+          (r) => `
+      <tr>
+        <td>${esc(r.name)}</td>
+        <td>${esc(r.behaviour || "—")}</td>
+        <td style="text-align:center;">${r.averageDays == null ? "—" : `${r.averageDays.toFixed(0)}d`}</td>
+        <td style="text-align:center;">${r.paidInvoices || "—"}</td>
+        <td style="color:${r.disagrees ? "#be123c" : "#111"};">${esc(r.measured)}${r.disagrees ? " ⚠" : ""}</td>
+        <td style="text-align:right;font-weight:700;color:${r.overdueAmount > 0 ? "#be123c" : "#111"};">${r.overdueAmount > 0 ? fmt(r.overdueAmount) : "—"}</td>
+      </tr>`
+        )
+        .join("")
+    : `<tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:16px;">No customers yet.</td></tr>`;
+
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" /><title>Who Pays Late</title><style>${SHARED_CSS}</style></head>
+<body>
+  ${watermark ? `<div class="wm">TRIAL — NOT FINAL</div>` : ""}
+  ${header(business, "WHO PAYS LATE", `As at ${asAt}`)}
+  <div class="meta-row">
+    ${fromBlock(business, "Prepared by")}
+    <div style="text-align:right;">
+      <div class="meta-label">Report</div>
+      <div style="font-size:20px;font-weight:800;">What the record says, against what they do</div>
+    </div>
+  </div>
+  <table>
+    <thead><tr><th>Customer</th><th>Marked as</th><th style="text-align:center;">Avg days to pay</th><th style="text-align:center;">Paid invoices</th><th>Measured</th><th style="text-align:right;">Overdue now</th></tr></thead>
+    <tbody>${body}</tbody>
+  </table>
+  <div class="totals">
+    <div class="totals-box">
+      <div class="totals-row"><span>Customers</span><span>${totals.customers}</span></div>
+      <div class="totals-row"><span>With enough history to measure</span><span>${totals.measured}</span></div>
+      <div class="totals-row"><span>Record disagrees with the measurement</span><span style="color:${totals.disagree > 0 ? "#be123c" : "#111"};">${totals.disagree}</span></div>
+      <div class="totals-row final"><span>Overdue right now</span><span>${fmt(totals.overdueAmount)}</span></div>
+    </div>
+  </div>
+  <div class="footer">
+    Average days to pay, measured from issue date to paid date on settled invoices, as at ${esc(asAt)}. Under 30 days reads as a good payer, under 60 as slow, beyond that as a problem — the same three labels the customer form offers. A customer with no settled invoices can't be measured.<br/>Generated via Worklog — worklog.co.za${
+      watermark ? `<br/><strong style="color:#dc2626;">Draft — made on a free Worklog trial.</strong>` : ""
+    }
+  </div>
+</body>
+</html>`;
+}
+
+export function buildDormantHTML(
+  business: BusinessProfile,
+  rows: DormantPdfRow[],
+  totals: { dormant: number; never: number; customers: number },
+  asAt: string,
+  watermark = false,
+  monthsLabel = "6 months"
+): string {
+  const body = rows.length
+    ? rows
+        .map(
+          (r) => `
+      <tr>
+        <td>${esc(r.name)}</td>
+        <td>${esc(r.phone || "—")}</td>
+        <td>${r.never ? "—" : esc(r.lastSeen)}</td>
+        <td>${r.never ? "never invoiced, quoted or booked" : esc(r.lastSeenWhat)}</td>
+        <td style="text-align:right;font-weight:700;">${r.daysQuiet == null ? "—" : `${r.daysQuiet}d`}</td>
+      </tr>`
+        )
+        .join("")
+    : `<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:16px;">Nobody has gone quiet.</td></tr>`;
+
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" /><title>Dormant Customers</title><style>${SHARED_CSS}</style></head>
+<body>
+  ${watermark ? `<div class="wm">TRIAL — NOT FINAL</div>` : ""}
+  ${header(business, "DORMANT CUSTOMERS", `Quiet ${monthsLabel}+ · as at ${asAt}`)}
+  <div class="meta-row">
+    ${fromBlock(business, "Prepared by")}
+    <div style="text-align:right;">
+      <div class="meta-label">Report</div>
+      <div style="font-size:20px;font-weight:800;">Who to call</div>
+    </div>
+  </div>
+  <table>
+    <thead><tr><th>Customer</th><th>Phone</th><th>Last seen</th><th>What</th><th style="text-align:right;">Quiet for</th></tr></thead>
+    <tbody>${body}</tbody>
+  </table>
+  <div class="totals">
+    <div class="totals-box">
+      <div class="totals-row"><span>Customers in total</span><span>${totals.customers}</span></div>
+      <div class="totals-row"><span>Never invoiced, quoted or booked</span><span>${totals.never}</span></div>
+      <div class="totals-row final"><span>Gone quiet</span><span>${totals.dormant}</span></div>
+    </div>
+  </div>
+  <div class="footer">
+    Customers with no invoice, quote or appointment in ${esc(monthsLabel)}, as at ${esc(asAt)}, longest quiet first.<br/>Generated via Worklog — worklog.co.za${
+      watermark ? `<br/><strong style="color:#dc2626;">Draft — made on a free Worklog trial.</strong>` : ""
+    }
+  </div>
+</body>
+</html>`;
+}
+
+export function buildMissingDetailsHTML(
+  business: BusinessProfile,
+  rows: MissingPdfRow[],
+  totals: { contacts: number; incomplete: number; blocking: number },
+  asAt: string,
+  watermark = false
+): string {
+  const body = rows.length
+    ? rows
+        .map(
+          (r) => `
+      <tr>
+        <td>${esc(r.name)}${r.blocking ? ` <span style="color:#be123c;font-weight:700;">⚠</span>` : ""}</td>
+        <td>${esc(r.typeLabel)}</td>
+        <td>${esc(r.missing.join(", "))}</td>
+      </tr>`
+        )
+        .join("")
+    : `<tr><td colspan="3" style="text-align:center;color:#94a3b8;padding:16px;">Every contact is complete.</td></tr>`;
+
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" /><title>Missing Details</title><style>${SHARED_CSS}</style></head>
+<body>
+  ${watermark ? `<div class="wm">TRIAL — NOT FINAL</div>` : ""}
+  ${header(business, "MISSING DETAILS", `As at ${asAt}`)}
+  <div class="meta-row">
+    ${fromBlock(business, "Prepared by")}
+    <div style="text-align:right;">
+      <div class="meta-label">Report</div>
+      <div style="font-size:20px;font-weight:800;">Records too thin to work with</div>
+    </div>
+  </div>
+  <table>
+    <thead><tr><th>Contact</th><th>Type</th><th>Missing</th></tr></thead>
+    <tbody>${body}</tbody>
+  </table>
+  <div class="totals">
+    <div class="totals-box">
+      <div class="totals-row"><span>Contacts</span><span>${totals.contacts}</span></div>
+      <div class="totals-row"><span>Missing something</span><span>${totals.incomplete}</span></div>
+      <div class="totals-row final"><span>Blocking a document</span><span>${totals.blocking}</span></div>
+    </div>
+  </div>
+  <div class="footer">
+    Contacts with details missing as at ${esc(asAt)}. The ⚠ ones block something concrete: no email means no statement or remittance can be sent, and a supplier with no banking details can't be paid off a remittance.<br/>Generated via Worklog — worklog.co.za${
+      watermark ? `<br/><strong style="color:#dc2626;">Draft — made on a free Worklog trial.</strong>` : ""
+    }
+  </div>
+</body>
+</html>`;
+}
