@@ -173,7 +173,7 @@ function StaffDetailModal({ staff, onClose, onEdit }: { staff: StaffMember; onCl
               disabled={updateStaff.isPending}
               style={{ width: "100%", marginTop: 10, background: "#fff", border: "1.5px solid #cbd5e1", borderRadius: 10, padding: "10px 12px", fontSize: 12.5, fontWeight: 700, color: "#0C4A6E", cursor: updateStaff.isPending ? "default" : "pointer", opacity: updateStaff.isPending ? 0.6 : 1 }}
             >
-              ↩️ Reinstate — terminated by mistake
+              ↩️ Reinstate
             </button>
           )}
         </div>
