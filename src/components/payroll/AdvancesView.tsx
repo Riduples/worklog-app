@@ -1,18 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { useStaffRegister } from "@/lib/supabase/hooks/useStaffRegister";
 import { useWorkerLoans, useDeleteAdvance, type WorkerLoan } from "@/lib/supabase/hooks/useWorkerLoans";
 import { AdvanceModal } from "@/components/modals/AdvanceModal";
 import { ReadOnlyNotice } from "@/components/ui/ReadOnlyNotice";
 import { useToolAccess } from "@/lib/supabase/hooks/useToolAccess";
 import { fmt } from "@/lib/format";
-import { getLoanBalance } from "@/lib/payroll";
 import { BackLink } from "@/components/ui/BackLink";
 
 export function AdvancesView() {
   const access = useToolAccess("advances");
-  const { data: staff } = useStaffRegister();
   const { data: loans, isLoading } = useWorkerLoans();
   const deleteAdvance = useDeleteAdvance();
 
@@ -20,13 +17,6 @@ export function AdvancesView() {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<"all" | "advance" | "repayment">("all");
   const [sort, setSort] = useState<"az" | "recent">("az");
-
-  const balanceFor = (id: string) => getLoanBalance((loans ?? []).filter((l) => l.staff_id === id));
-  const repayPlanFor = (id: string) =>
-    (loans ?? [])
-      .filter((l) => l.staff_id === id && l.loan_type === "advance" && l.repay_per_run != null && l.repay_per_run > 0)
-      .sort((a, b) => new Date(b.entry_date).getTime() - new Date(a.entry_date).getTime())[0] ?? null;
-  const totalOutstanding = (staff ?? []).reduce((s, w) => s + balanceFor(w.id), 0);
 
   // The list interleaves advances given with the repayments Pay Run books against
   // them. Advances are editable here; repayment rows are created only by Pay Run,
@@ -85,32 +75,6 @@ export function AdvancesView() {
       </div>
 
       {!access.loading && !access.canEdit && <ReadOnlyNotice level={access.level} what="advances" />}
-
-      {totalOutstanding > 0 && (
-        <div style={{ background: "#0C4A6E", borderRadius: 14, padding: "14px 16px", marginBottom: 14 }}>
-          <div style={{ fontSize: 11, color: "#38BDF8", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>Outstanding advances</div>
-          <div style={{ fontSize: 22, fontWeight: 900, color: "#fff", marginBottom: 8 }}>{fmt(totalOutstanding)} total</div>
-          {(staff ?? [])
-            .filter((w) => balanceFor(w.id) > 0)
-            .map((w) => {
-              const bal = balanceFor(w.id);
-              const plan = repayPlanFor(w.id);
-              return (
-                <div key={w.id} style={{ borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: 6, marginTop: 6 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <span style={{ fontSize: 13, color: "#7DD3FC" }}>{w.full_name}</span>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: "#F59E0B" }}>{fmt(bal)}</span>
-                  </div>
-                  {plan && plan.repay_per_run != null && (
-                    <div style={{ fontSize: 11, color: "#7DD3FC", marginTop: 2, textAlign: "right" }}>
-                      🔁 {fmt(plan.repay_per_run)}/pay run · ~{Math.ceil(bal / plan.repay_per_run)} runs left
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-        </div>
-      )}
 
       {isLoading && <p style={{ color: "#94a3b8", fontSize: 13 }}>Loading...</p>}
       {!isLoading && entries.length === 0 && (
