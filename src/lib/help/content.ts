@@ -2841,15 +2841,37 @@ export const HELP_ARTICLES: HelpArticle[] = [
   {
     "slug": "time-travel-reports",
     "category": "Scheduling",
-    "title": "Time & Travel Reports",
-    "summary": "Two printable reports in one place: the hours you logged versus what you quoted, and your business travel with the SARS deduction.",
+    "title": "Scheduling Reports",
+    "summary": "Three printable reports in one place: what your diary did, the hours you logged versus what you quoted, and your business travel with the SARS deduction.",
     "sections": [
       {
         "heading": "What it is",
         "blocks": [
           {
             "type": "paragraph",
-            "text": "Time & Travel Reports sits under the \"Scheduling System\" tools card, or the \"Work\" group on the desktop sidebar. It has two tabs — Hours vs Estimate and Travel — and each has its own Download PDF and Share buttons."
+            "text": "Scheduling Reports sits under the \"Scheduling System\" tools card, or the \"Work\" group on the desktop sidebar. It has three tabs — Diary, Hours vs Estimate and Travel — and each has its own Download PDF and Share buttons. You only see the tabs for the tools you have access to."
+          }
+        ]
+      },
+      {
+        "heading": "Diary",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "Pick a period — this week, this month, this year or all time — and the Diary tab reads your appointments back. Three tiles across the top count the appointments, the hours booked and your no-show rate, and the dark blue band shows what you actually completed against everything that was booked."
+          },
+          {
+            "type": "bullets",
+            "items": [
+              "Lost to no-shows and cancellations: what those appointments were worth, so you can see the cost of people not arriving.",
+              "Deposits taken, and what is still to collect on work you have completed.",
+              "By status: confirmed, pending, complete, no-show and cancelled, each with its count, hours and value.",
+              "By client: who books the most, what they are worth, and how many times they did not turn up."
+            ]
+          },
+          {
+            "type": "tip",
+            "text": "Marking appointments complete, no-show or cancelled as you go is what makes this report worth reading. A diary left on \"confirmed\" can only tell you what was booked, never what happened."
           }
         ]
       },
@@ -2873,6 +2895,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
       }
     ],
     "related": [
+      "diary-bookings",
       "time-log",
       "trip-log-mileage",
       "job-profitability"

@@ -78,7 +78,7 @@ const NAV_CATEGORIES: { id: string; items: NavItem[] }[] = [
       { href: "/diary", icon: "📅", label: "Diary", toolId: "booking" },
       { href: "/time", icon: "⏱️", label: "Time Log", toolId: "timetrack" },
       { href: "/mileage", icon: "🚗", label: "Travel Log", toolId: "mileage" },
-      { href: "/time-travel-reports", icon: "📊", label: "Time & Travel Reports", anyOf: ["timetrack", "mileage"], desc: "Hours logged vs quoted, and business travel with SARS deduction — printable reports" },
+      { href: "/time-travel-reports", icon: "📊", label: "Scheduling Reports", anyOf: ["booking", "timetrack", "mileage"], desc: "What the diary did, hours logged vs quoted, and business travel with SARS deduction — printable reports" },
     ],
   },
   {

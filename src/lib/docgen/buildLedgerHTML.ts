@@ -861,3 +861,115 @@ export function buildLeaveReportHTML(
 </body>
 </html>`;
 }
+
+// ── Scheduling Reports: Diary ────────────────────────────────────────────────
+
+export type DiaryReportStatusRow = { label: string; count: number; value: number; hours: number };
+export type DiaryReportClientRow = { name: string; appointments: number; value: number; noShows: number };
+
+export function buildDiaryReportHTML(
+  business: BusinessProfile,
+  statuses: DiaryReportStatusRow[],
+  clients: DiaryReportClientRow[],
+  totals: {
+    appointments: number;
+    booked: number;
+    completed: number;
+    lost: number;
+    deposits: number;
+    outstanding: number;
+    hours: number;
+    onsite: number;
+    inHouse: number;
+    noShowRate: number;
+    cancelRate: number;
+  },
+  asAt: string,
+  watermark = false,
+  periodLabel?: string
+): string {
+  const pct = (n: number) => `${n.toFixed(0)}%`;
+  const statusRows = statuses.length
+    ? statuses
+        .map(
+          (s) => `
+      <tr>
+        <td>${esc(s.label)}</td>
+        <td style="text-align:center;">${s.count}</td>
+        <td style="text-align:right;">${s.hours.toFixed(1)}h</td>
+        <td style="text-align:right;font-weight:700;">${fmt(s.value)}</td>
+      </tr>`
+        )
+        .join("")
+    : `<tr><td colspan="4" style="text-align:center;color:#94a3b8;padding:16px;">No appointments in this period.</td></tr>`;
+
+  const clientRows = clients.length
+    ? clients
+        .map(
+          (c) => `
+      <tr>
+        <td>${esc(c.name)}</td>
+        <td style="text-align:center;">${c.appointments}</td>
+        <td style="text-align:center;color:${c.noShows > 0 ? "#be123c" : "#94a3b8"};">${c.noShows || "—"}</td>
+        <td style="text-align:right;font-weight:700;">${fmt(c.value)}</td>
+      </tr>`
+        )
+        .join("")
+    : "";
+
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" /><title>Diary Report</title><style>${SHARED_CSS}</style></head>
+<body>
+  ${watermark ? `<div class="wm">TRIAL — NOT FINAL</div>` : ""}
+  ${header(business, "DIARY REPORT", periodLabel ? `${periodLabel} · as at ${asAt}` : `As at ${asAt}`)}
+  <div class="meta-row">
+    ${fromBlock(business, "Prepared by")}
+    <div style="text-align:right;">
+      <div class="meta-label">Report</div>
+      <div style="font-size:20px;font-weight:800;">Appointments &amp; what came of them</div>
+      ${periodLabel ? `<div style="font-size:12px;color:#64748b;margin-top:2px;">${esc(periodLabel)}</div>` : ""}
+    </div>
+  </div>
+  <div style="font-size:11px;font-weight:700;color:#0C4A6E;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;">Summary</div>
+  <table>
+    <thead><tr><th style="text-align:center;">Appointments</th><th style="text-align:center;">Hours booked</th><th style="text-align:center;">No-show rate</th><th style="text-align:center;">Cancelled</th><th style="text-align:center;">On-site / in-house</th></tr></thead>
+    <tbody><tr>
+      <td style="text-align:center;font-weight:700;">${totals.appointments}</td>
+      <td style="text-align:center;font-weight:700;">${totals.hours.toFixed(1)}h</td>
+      <td style="text-align:center;font-weight:700;color:${totals.noShowRate > 0 ? "#be123c" : "#111"};">${pct(totals.noShowRate)}</td>
+      <td style="text-align:center;font-weight:700;">${pct(totals.cancelRate)}</td>
+      <td style="text-align:center;font-weight:700;">${totals.onsite} / ${totals.inHouse}</td>
+    </tr></tbody>
+  </table>
+  <div style="font-size:11px;font-weight:700;color:#0C4A6E;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;">By status</div>
+  <table>
+    <thead><tr><th>Status</th><th style="text-align:center;">Appointments</th><th style="text-align:right;">Hours</th><th style="text-align:right;">Value</th></tr></thead>
+    <tbody>${statusRows}</tbody>
+  </table>
+  ${
+    clientRows
+      ? `<div style="font-size:11px;font-weight:700;color:#0C4A6E;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;">By client</div>
+  <table>
+    <thead><tr><th>Client</th><th style="text-align:center;">Appointments</th><th style="text-align:center;">No-shows</th><th style="text-align:right;">Value</th></tr></thead>
+    <tbody>${clientRows}</tbody>
+  </table>`
+      : ""
+  }
+  <div class="totals">
+    <div class="totals-box">
+      <div class="totals-row"><span>Booked</span><span>${fmt(totals.booked)}</span></div>
+      <div class="totals-row"><span>Lost to no-shows &amp; cancellations</span><span>${fmt(totals.lost)}</span></div>
+      <div class="totals-row"><span>Deposits taken</span><span>${fmt(totals.deposits)}</span></div>
+      <div class="totals-row"><span>Still to collect on completed work</span><span>${fmt(totals.outstanding)}</span></div>
+      <div class="totals-row final"><span>Completed</span><span>${fmt(totals.completed)}</span></div>
+    </div>
+  </div>
+  <div class="footer">
+    Appointments in the diary${periodLabel ? ` for ${esc(periodLabel.toLowerCase())}` : ""}, as at ${esc(asAt)}. "Completed" counts only appointments marked complete — booked value includes work that has not happened yet.<br/>Generated via Worklog — worklog.co.za${
+      watermark ? `<br/><strong style="color:#dc2626;">Draft — made on a free Worklog trial.</strong>` : ""
+    }
+  </div>
+</body>
+</html>`;
+}

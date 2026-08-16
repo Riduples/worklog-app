@@ -58,7 +58,7 @@ const GROUPS: Group[] = [
       { tool: "booking", href: "/diary", icon: "📅", label: "Diary" },
       { tool: "timetrack", href: "/time", icon: "⏱️", label: "Time Log" },
       { tool: "mileage", href: "/mileage", icon: "🚗", label: "Travel Log" },
-      { tool: "timetrack", anyOf: ["timetrack", "mileage"], href: "/time-travel-reports", icon: "📊", label: "Time & Travel Reports" },
+      { tool: "booking", anyOf: ["booking", "timetrack", "mileage"], href: "/time-travel-reports", icon: "📊", label: "Scheduling Reports" },
     ],
   },
   {

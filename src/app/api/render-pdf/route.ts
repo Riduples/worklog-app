@@ -13,6 +13,7 @@ import {
   buildStaffRegisterHTML,
   buildAdvancesReportHTML,
   buildLeaveReportHTML,
+  buildDiaryReportHTML,
   type StatementLine,
   type RemittanceLine,
   type StatementCredits,
@@ -28,6 +29,8 @@ import {
   type AdvancesReportEntry,
   type LeaveReportRowOut,
   type LeaveReportEntry,
+  type DiaryReportStatusRow,
+  type DiaryReportClientRow,
 } from "@/lib/docgen/buildLedgerHTML";
 import type { BusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 
@@ -90,6 +93,26 @@ type RenderRequest =
       entries: LeaveReportEntry[];
       totals: { annual: number; sick: number; family: number; other: number; days: number };
       asAt: string;
+    }
+  | {
+      kind: "diaryreport";
+      statuses: DiaryReportStatusRow[];
+      clients: DiaryReportClientRow[];
+      totals: {
+        appointments: number;
+        booked: number;
+        completed: number;
+        lost: number;
+        deposits: number;
+        outstanding: number;
+        hours: number;
+        onsite: number;
+        inHouse: number;
+        noShowRate: number;
+        cancelRate: number;
+      };
+      asAt: string;
+      periodLabel?: string;
     };
 
 function buildHtml(body: RenderRequest, business: BusinessProfile, watermark: boolean): string | null {
@@ -116,6 +139,8 @@ function buildHtml(body: RenderRequest, business: BusinessProfile, watermark: bo
       return buildAdvancesReportHTML(business, body.rows, body.entries, body.totals, body.asAt, watermark);
     case "leavereport":
       return buildLeaveReportHTML(business, body.rows, body.entries, body.totals, body.asAt, watermark);
+    case "diaryreport":
+      return buildDiaryReportHTML(business, body.statuses, body.clients, body.totals, body.asAt, watermark, body.periodLabel);
     default:
       return null;
   }

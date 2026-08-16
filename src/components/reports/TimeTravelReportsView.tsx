@@ -1,47 +1,31 @@
 "use client";
 
-import { useState } from "react";
 import { HoursVsEstimateReport } from "@/components/time/HoursVsEstimateReport";
 import { TravelReport } from "@/components/mileage/TravelReport";
-import { BackLink } from "@/components/ui/BackLink";
+import { DiaryReport } from "@/components/reports/DiaryReport";
+import { ReportsTool } from "@/components/reports/ReportShell";
+import { useToolAccess } from "@/lib/supabase/hooks/useToolAccess";
 
-type Tab = "hours" | "travel";
-
-// Time & Travel Reports — one Scheduling tool holding the two summaries: hours
-// logged vs quoted (from the Time Log) and business travel (from the Travel Log).
+// Scheduling Reports — one tool over the three Scheduling dashboards: what the
+// diary did, hours logged against hours quoted, and business travel for SARS.
+// The Diary was the last dashboard in the app with no report behind it.
+//
+// The route is still /time-travel-reports: renaming it would break anyone's
+// bookmark for nothing, and the tool's name is what users read.
 export function TimeTravelReportsView() {
-  const [tab, setTab] = useState<Tab>("hours");
-
-  const tabBtn = (id: Tab, label: string) => (
-    <button
-      key={id}
-      onClick={() => setTab(id)}
-      style={{
-        padding: "8px 14px",
-        borderRadius: 20,
-        border: `1.5px solid ${tab === id ? "#0C4A6E" : "#e2e8f0"}`,
-        background: tab === id ? "#0C4A6E" : "#fff",
-        color: tab === id ? "#fff" : "#374151",
-        fontSize: 12,
-        fontWeight: 700,
-        cursor: "pointer",
-      }}
-    >
-      {label}
-    </button>
-  );
+  const booking = useToolAccess("booking");
+  const time = useToolAccess("timetrack");
+  const mileage = useToolAccess("mileage");
 
   return (
-    <div style={{ padding: "20px 16px 100px" }}>
-      <BackLink />
-      <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 16px" }}>Time &amp; Travel Reports</h1>
-
-      <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-        {tabBtn("hours", "⏱️ Hours vs Estimate")}
-        {tabBtn("travel", "🚗 Travel")}
-      </div>
-
-      {tab === "hours" ? <HoursVsEstimateReport /> : <TravelReport />}
-    </div>
+    <ReportsTool
+      title="Scheduling Reports"
+      loading={booking.loading || time.loading || mileage.loading}
+      tabs={[
+        { id: "diary", label: "📅 Diary", show: booking.canView, render: () => <DiaryReport /> },
+        { id: "hours", label: "⏱️ Hours vs Estimate", show: time.canView, render: () => <HoursVsEstimateReport /> },
+        { id: "travel", label: "🚗 Travel", show: mileage.canView, render: () => <TravelReport /> },
+      ]}
+    />
   );
 }
