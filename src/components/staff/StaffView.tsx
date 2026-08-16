@@ -338,6 +338,7 @@ function StaffDetailModal({ staff, onClose, onEdit }: { staff: StaffMember; onCl
 
 export function StaffView() {
   const { data: staff, isLoading } = useStaffRegister();
+  const updateStaff = useUpdateStaffMember();
   const { data: loans } = useWorkerLoans();
   const { data: leave } = useWorkerLeave();
   const { data: payRuns } = usePayRuns();
@@ -396,6 +397,25 @@ export function StaffView() {
   const handleAddClick = () => {
     if (soloCapped) setShowUpgrade(true);
     else setShowAdd(true);
+  };
+
+  // Removing someone typed in by mistake, the same soft delete the other list
+  // tools use. Not the way to record a departure — that's "mark as left", which
+  // keeps the person, their leave accrual and their exit details on file — so the
+  // prompt points anyone who is here for that at the right door. Pay runs snapshot
+  // the worker's name and figures, so pay history and payslips survive either way.
+  const handleSoftDelete = (w: StaffMember) => {
+    const stillEmployed = !w.terminated;
+    if (
+      !confirm(
+        `Remove ${w.full_name} from the staff register?${stillEmployed ? "\n\nIf they have left, use “Mark as left / terminate” instead — that keeps their record and leave balance for the UI-19 and Certificate of Service." : ""}\n\nPast pay runs and payslips are unaffected.`
+      )
+    )
+      return;
+    updateStaff.mutate(
+      { id: w.id, changes: { deleted_at: new Date().toISOString() } },
+      { onError: (e) => alert(e instanceof Error ? e.message : "Couldn't remove this person.") }
+    );
   };
 
   return (
@@ -509,10 +529,17 @@ export function StaffView() {
         const rate = rateLabel(fmt, w.pay_type, w.daily_wage ?? 0, w.hourly_rate ?? 0, w.monthly_salary ?? 0);
         const badge = EMPLOYMENT_BADGE[w.employment_type];
         return (
-          <button
+          // Same shape as Customers: the card body opens the record, a ✕ on the
+          // right removes it. The two are separate buttons so the delete can be
+          // hidden for a member without delete rights without changing the row.
+          <div
             key={w.id}
+            style={{ background: "#fff", border: "1.5px solid #e2e8f0", borderRadius: 14, padding: "14px 16px", marginBottom: 10, display: "flex", alignItems: "flex-start", gap: 4, opacity: w.terminated ? 0.6 : 1 }}
+          >
+          <button
             onClick={() => setSelected(w)}
-            style={{ width: "100%", background: "#fff", border: "1.5px solid #e2e8f0", borderRadius: 14, padding: "14px 16px", marginBottom: 10, cursor: "pointer", textAlign: "left", opacity: w.terminated ? 0.6 : 1 }}
+            style={{ flex: 1, minWidth: 0, background: "none", border: "none", padding: 0, cursor: "pointer", textAlign: "left" }}
+            aria-label={`Open ${w.full_name}`}
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
               <div>
@@ -540,10 +567,13 @@ export function StaffView() {
                   w.contract_end_date && <div style={{ fontSize: 11, color: "#6d28d9", marginTop: 2 }}>Contract ends {w.contract_end_date}</div>
                 )}
               </div>
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
-                {loanBal > 0 && <span style={{ fontSize: 11, fontWeight: 700, color: "#b45309", background: "#fff7ed", padding: "2px 8px", borderRadius: 8 }}>Loan {fmt(loanBal)}</span>}
-                <span style={{ fontSize: 16, color: "#94a3b8" }}>›</span>
-              </div>
+              {/* No chevron here any more — the ✕ now occupies the row's right
+                  edge, and two markers competing for it read as clutter. */}
+              {loanBal > 0 && (
+                <span style={{ fontSize: 11, fontWeight: 700, color: "#b45309", background: "#fff7ed", padding: "2px 8px", borderRadius: 8, whiteSpace: "nowrap", marginLeft: 8 }}>
+                  Loan {fmt(loanBal)}
+                </span>
+              )}
             </div>
             <div style={{ display: "flex", gap: 6 }}>
               {lastWage && <span style={{ fontSize: 11, color: "#64748b", background: "#f8fafc", padding: "3px 8px", borderRadius: 8 }}>Last paid {lastWage.pay_date}</span>}
@@ -555,6 +585,16 @@ export function StaffView() {
               {w.is_contractor && <span style={{ fontSize: 11, color: "#92400e", background: "#fff7ed", padding: "3px 8px", borderRadius: 8 }}>No UIF / no leave</span>}
             </div>
           </button>
+          {access.canDelete && (
+            <button
+              onClick={() => handleSoftDelete(w)}
+              style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer", fontSize: 14, padding: 4 }}
+              aria-label={`Remove ${w.full_name}`}
+            >
+              ✕
+            </button>
+          )}
+          </div>
         );
       })}
 

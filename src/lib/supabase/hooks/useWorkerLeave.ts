@@ -43,6 +43,27 @@ export function useCreateWorkerLeave() {
   });
 }
 
+// Manually-recorded leave only — leave booked by a pay run belongs to that run and
+// is reversed by voiding it (RLS in 0118 holds the same line). Hard delete:
+// worker_leave has no deleted_at, and the BCEA balances are recomputed from the
+// rows that remain, so removing one simply takes those days back out.
+export function useDeleteWorkerLeave() {
+  const supabase = createClient();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      // .select() so an RLS-blocked delete (0 rows, no error) is reported rather
+      // than passing silently as a success the list would then contradict.
+      const { data, error } = await supabase.from("worker_leave").delete().eq("id", id).select("id");
+      if (error) throw error;
+      if (!data || data.length === 0) {
+        throw new Error("Couldn't delete this leave entry — it may already be gone, or you no longer have permission.");
+      }
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEY }),
+  });
+}
+
 // Manually-recorded leave only — "from Pay Run" entries are synthesized and never edited here.
 export function useUpdateWorkerLeave() {
   const supabase = createClient();

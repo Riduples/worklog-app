@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useStaffRegister } from "@/lib/supabase/hooks/useStaffRegister";
-import { useWorkerLoans, type WorkerLoan } from "@/lib/supabase/hooks/useWorkerLoans";
+import { useWorkerLoans, useDeleteAdvance, type WorkerLoan } from "@/lib/supabase/hooks/useWorkerLoans";
 import { AdvanceModal } from "@/components/modals/AdvanceModal";
 import { ReadOnlyNotice } from "@/components/ui/ReadOnlyNotice";
 import { useToolAccess } from "@/lib/supabase/hooks/useToolAccess";
@@ -14,11 +14,12 @@ export function AdvancesView() {
   const access = useToolAccess("advances");
   const { data: staff } = useStaffRegister();
   const { data: loans, isLoading } = useWorkerLoans();
+  const deleteAdvance = useDeleteAdvance();
 
   const [modal, setModal] = useState<{ open: boolean; advance?: WorkerLoan }>({ open: false });
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<"all" | "advance" | "repayment">("all");
-  const [sort, setSort] = useState<"recent" | "az">("recent");
+  const [sort, setSort] = useState<"az" | "recent">("az");
 
   const balanceFor = (id: string) => getLoanBalance((loans ?? []).filter((l) => l.staff_id === id));
   const repayPlanFor = (id: string) =>
@@ -42,13 +43,29 @@ export function AdvancesView() {
     return true;
   });
 
-  // Recent is newest-first by date; A–Z is by employee, with date breaking the tie
-  // so one person's entries still read newest-first.
+  // A–Z is by employee, with date breaking the tie so one person's entries still
+  // read newest-first; Recent is newest-first by date across everyone.
   const sorted = [...filtered].sort((a, b) =>
     sort === "az"
       ? a.worker_name.localeCompare(b.worker_name) || new Date(b.entry_date).getTime() - new Date(a.entry_date).getTime()
       : new Date(b.entry_date).getTime() - new Date(a.entry_date).getTime()
   );
+
+  // Removing a mis-typed advance. Hard delete — worker_loans keeps no deleted_at
+  // and the balance is recomputed from the rows that remain, so the advance simply
+  // leaves the outstanding total. If Pay Run has already deducted against this
+  // person, those repayment rows stay put (they belong to their pay runs), so say
+  // so rather than let someone quietly under-state what is still owed.
+  const handleDelete = (l: WorkerLoan) => {
+    const repaid = (loans ?? []).some((x) => x.staff_id === l.staff_id && x.loan_type === "repayment");
+    const warning = repaid
+      ? `\n\n${l.worker_name} already has repayments deducted in Pay Run. Those stay as they are — if the wrong amount was deducted, void that pay run instead.`
+      : "";
+    if (!confirm(`Delete this ${fmt(l.amount)} advance for ${l.worker_name}? Their outstanding balance is recalculated without it.${warning}`)) return;
+    deleteAdvance.mutate(l.id, {
+      onError: (e) => alert(e instanceof Error ? e.message : "Couldn't delete this advance."),
+    });
+  };
 
   return (
     <div style={{ padding: "20px 16px 100px" }}>
@@ -144,7 +161,7 @@ export function AdvancesView() {
             {sorted.length !== entries.length ? ` of ${entries.length}` : ""} entr{entries.length === 1 ? "y" : "ies"}
           </span>
           <div style={{ display: "flex", gap: 4, background: "#f1f5f9", borderRadius: 10, padding: 3 }}>
-            {(["recent", "az"] as const).map((s) => (
+            {(["az", "recent"] as const).map((s) => (
               <button
                 key={s}
                 onClick={() => setSort(s)}
@@ -194,6 +211,18 @@ export function AdvancesView() {
               <div style={{ flex: 1 }}>{body}</div>
             )}
             {amountEl}
+            {/* Same row shape as Customers: tap the body to edit, ✕ to remove.
+                Advances only — a repayment is its pay run's record, undone by
+                voiding that run (RLS refuses it here either way). */}
+            {access.canDelete && isAdvance && (
+              <button
+                onClick={() => handleDelete(l)}
+                style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer", fontSize: 14, padding: 4, marginLeft: 4 }}
+                aria-label="Remove advance"
+              >
+                ✕
+              </button>
+            )}
           </div>
         );
       })}

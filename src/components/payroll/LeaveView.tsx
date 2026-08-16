@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useWorkerLeave, type WorkerLeaveRecord } from "@/lib/supabase/hooks/useWorkerLeave";
+import { useWorkerLeave, useDeleteWorkerLeave, type WorkerLeaveRecord } from "@/lib/supabase/hooks/useWorkerLeave";
 import { LeaveModal } from "@/components/modals/LeaveModal";
 import { ReadOnlyNotice } from "@/components/ui/ReadOnlyNotice";
 import { useToolAccess } from "@/lib/supabase/hooks/useToolAccess";
@@ -25,11 +25,12 @@ type LeaveRow = {
 export function LeaveView() {
   const access = useToolAccess("leave");
   const { data: leaveRecords, isLoading } = useWorkerLeave();
+  const deleteLeave = useDeleteWorkerLeave();
 
   const [modal, setModal] = useState<{ open: boolean; leave?: WorkerLeaveRecord }>({ open: false });
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
-  const [sort, setSort] = useState<"recent" | "az">("recent");
+  const [sort, setSort] = useState<"az" | "recent">("az");
 
   // worker_leave is the single source of truth. create_pay_run already writes a
   // real leave row for the leave a pay run books, so we render those directly and
@@ -66,6 +67,17 @@ export function LeaveView() {
       ? a.worker_name.localeCompare(b.worker_name) || new Date(b.start_date).getTime() - new Date(a.start_date).getTime()
       : new Date(b.start_date).getTime() - new Date(a.start_date).getTime()
   );
+
+  // Removing a mis-typed leave entry. Hard delete — worker_leave keeps no
+  // deleted_at and the BCEA balances are recomputed from the rows that remain, so
+  // the days go straight back into the employee's balance.
+  const handleDelete = (r: LeaveRow) => {
+    if (!r.record) return;
+    if (!confirm(`Delete ${r.days} day${r.days === 1 ? "" : "s"} of ${r.leave_type.toLowerCase()} leave for ${r.worker_name}? The days go back into their balance.`)) return;
+    deleteLeave.mutate(r.record.id, {
+      onError: (e) => alert(e instanceof Error ? e.message : "Couldn't delete this leave entry."),
+    });
+  };
 
   return (
     <div style={{ padding: "20px 16px 100px" }}>
@@ -133,7 +145,7 @@ export function LeaveView() {
             {sorted.length !== rows.length ? ` of ${rows.length}` : ""} entr{rows.length === 1 ? "y" : "ies"}
           </span>
           <div style={{ display: "flex", gap: 4, background: "#f1f5f9", borderRadius: 10, padding: 3 }}>
-            {(["recent", "az"] as const).map((s) => (
+            {(["az", "recent"] as const).map((s) => (
               <button
                 key={s}
                 onClick={() => setSort(s)}
@@ -175,6 +187,18 @@ export function LeaveView() {
               <div style={{ flex: 1 }}>{body}</div>
             )}
             <span style={{ fontSize: 15, fontWeight: 800, color: "#0C4A6E", marginLeft: 8, whiteSpace: "nowrap" }}>{r.days}d</span>
+            {/* Same row shape as Customers: tap the body to edit, ✕ to remove.
+                Manual entries only — leave booked by Pay Run is that run's record
+                and is reversed by voiding it (RLS refuses it here either way). */}
+            {access.canDelete && !!r.record && (
+              <button
+                onClick={() => handleDelete(r)}
+                style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer", fontSize: 14, padding: 4, marginLeft: 4 }}
+                aria-label="Remove leave entry"
+              >
+                ✕
+              </button>
+            )}
           </div>
         );
       })}

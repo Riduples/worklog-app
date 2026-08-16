@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useMileageTrips, useUpdateMileageTrip, type MileageTrip } from "@/lib/supabase/hooks/useMileage";
 import { MileageModal } from "@/components/modals/MileageModal";
-import { VehicleLogbookModal } from "@/components/modals/VehicleLogbookModal";
 import { fmt } from "@/lib/format";
 import { ReadOnlyNotice } from "@/components/ui/ReadOnlyNotice";
 import { useToolAccess } from "@/lib/supabase/hooks/useToolAccess";
@@ -23,7 +22,6 @@ export function MileageView() {
   const { data: trips, isLoading } = useMileageTrips();
   const updateTrip = useUpdateMileageTrip();
   const [modalState, setModalState] = useState<{ open: boolean; trip?: MileageTrip }>({ open: false });
-  const [showLogbook, setShowLogbook] = useState(false);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [sort, setSort] = useState<"az" | "recent">("recent");
@@ -67,16 +65,6 @@ export function MileageView() {
           </button>
         )}
       </div>
-
-      {access.canEdit && (
-        <button
-          onClick={() => setShowLogbook(true)}
-          style={{ width: "100%", background: "#f8fafc", border: "1.5px solid #e2e8f0", borderRadius: 12, padding: "11px 16px", marginBottom: 12, display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}
-        >
-          <span style={{ fontSize: 13, fontWeight: 700, color: "#0C4A6E" }}>🚗 Vehicle &amp; logbook</span>
-          <span style={{ fontSize: 11, color: "#94a3b8" }}>for the SARS travel report ›</span>
-        </button>
-      )}
 
       {!access.loading && !access.canEdit && <ReadOnlyNotice level={access.level} what="trips" />}
 
@@ -180,7 +168,6 @@ export function MileageView() {
       })}
 
       {modalState.open && <MileageModal trip={modalState.trip} onClose={() => setModalState({ open: false })} />}
-      {showLogbook && <VehicleLogbookModal onClose={() => setShowLogbook(false)} />}
     </div>
   );
 }

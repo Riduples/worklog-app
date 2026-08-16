@@ -47,6 +47,27 @@ export function useCreateAdvance() {
   });
 }
 
+// Advances only — a repayment belongs to the pay run that created it and is
+// removed by voiding that run, not from here (RLS in 0118 holds the same line).
+// Hard delete: worker_loans has no deleted_at, and the outstanding balance is
+// recomputed from the rows that remain, so removing one simply takes it out.
+export function useDeleteAdvance() {
+  const supabase = createClient();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      // .select() so an RLS-blocked delete (0 rows, no error) is reported rather
+      // than passing silently as a success the list would then contradict.
+      const { data, error } = await supabase.from("worker_loans").delete().eq("id", id).select("id");
+      if (error) throw error;
+      if (!data || data.length === 0) {
+        throw new Error("Couldn't delete this advance — it may already be gone, or you no longer have permission.");
+      }
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEY }),
+  });
+}
+
 // Advances only — repayment rows come from Pay Run and are never edited here.
 export function useUpdateAdvance() {
   const supabase = createClient();

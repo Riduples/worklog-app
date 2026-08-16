@@ -5,6 +5,8 @@ import { useMileageTrips } from "@/lib/supabase/hooks/useMileage";
 import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 import { useLogbookYears } from "@/lib/supabase/hooks/useLogbook";
 import { useTrialState } from "@/lib/supabase/hooks/useSubscription";
+import { useToolAccess } from "@/lib/supabase/hooks/useToolAccess";
+import { VehicleLogbookModal } from "@/components/modals/VehicleLogbookModal";
 import { shareReport } from "@/lib/docgen/shareReport";
 import { buildTravelReportHTML, type TravelLogbook } from "@/lib/docgen/buildLedgerHTML";
 import { openDocumentForPrinting } from "@/lib/docgen/shareDocument";
@@ -55,8 +57,10 @@ export function TravelReport() {
   const { data: business } = useBusinessProfile();
   const { data: logbookYears } = useLogbookYears();
   const { isTrialing, isReadOnly } = useTrialState();
+  const access = useToolAccess("mileage");
   const watermark = isTrialing || isReadOnly;
   const [busy, setBusy] = useState(false);
+  const [showLogbook, setShowLogbook] = useState(false);
   const [period, setPeriod] = useState<TravelPeriod>("taxyear");
   // null = follow the default (latest tax year that has trips); a number is the
   // user's explicit pick.
@@ -190,6 +194,19 @@ export function TravelReport() {
         ))}
       </div>
 
+      {/* Vehicle & logbook — the odometer readings this report prints. It used to
+          sit in the Travel Log, one screen away from the only place its numbers
+          are ever shown; here it opens directly above the tax year it fills in. */}
+      {access.canEdit && (
+        <button
+          onClick={() => setShowLogbook(true)}
+          style={{ width: "100%", background: "#f8fafc", border: "1.5px solid #e2e8f0", borderRadius: 12, padding: "11px 16px", marginBottom: 14, display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}
+        >
+          <span style={{ fontSize: 13, fontWeight: 700, color: "#0C4A6E" }}>🚗 Vehicle &amp; logbook</span>
+          <span style={{ fontSize: 11, color: "#94a3b8" }}>opening &amp; closing odometer ›</span>
+        </button>
+      )}
+
       {/* Which tax year — only in the logbook view; drives both the trip filter
           and the annual odometer shown below. */}
       {period === "taxyear" && (
@@ -228,7 +245,7 @@ export function TravelReport() {
             </div>
             {(openingOdo == null || closingOdo == null) && (
               <div style={{ fontSize: 11, color: "#b45309", marginTop: 10 }}>
-                Add the opening &amp; closing odometer in Travel Log → 🚗 Vehicle &amp; logbook to complete the year.
+                Add the opening &amp; closing odometer under 🚗 Vehicle &amp; logbook above to complete the year.
               </div>
             )}
             {odoUnderRecorded && (
@@ -240,7 +257,7 @@ export function TravelReport() {
         ) : (
           <div style={{ background: "#fff", border: "1.5px dashed #cbd5e1", borderRadius: 14, padding: "16px", marginBottom: 16, fontSize: 13, color: "#64748b", textAlign: "center", lineHeight: 1.6 }}>
             <div style={{ fontWeight: 700, color: "#0C4A6E", marginBottom: 4 }}>Complete your SARS logbook</div>
-            In the Travel Log, tap <strong>🚗 Vehicle &amp; logbook</strong> to add your vehicle and this year&apos;s opening &amp; closing odometer. It then prints on this report.
+            Tap <strong>🚗 Vehicle &amp; logbook</strong> above to add your vehicle and this year&apos;s opening &amp; closing odometer. It then prints on this report.
           </div>
         ))}
 
@@ -308,6 +325,8 @@ export function TravelReport() {
       </div>
         </>
       )}
+
+      {showLogbook && <VehicleLogbookModal onClose={() => setShowLogbook(false)} />}
     </>
   );
 }
