@@ -18,6 +18,10 @@ import {
   buildQuoteConversionHTML,
   buildWhatSellsHTML,
   buildRecurringRevenueHTML,
+  buildStockOnHandHTML,
+  buildMarginsHTML,
+  buildReorderHTML,
+  buildCostingDriftHTML,
   type StatementLine,
   type RemittanceLine,
   type StatementCredits,
@@ -39,6 +43,10 @@ import {
   type QuoteConversionPdfRow,
   type SoldItemPdfRow,
   type RecurringPdfRow,
+  type StockValuePdfRow,
+  type MarginPdfRow,
+  type ReorderPdfRow,
+  type CostingDriftPdfRow,
 } from "@/lib/docgen/buildLedgerHTML";
 import type { BusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 
@@ -148,6 +156,30 @@ type RenderRequest =
       rows: RecurringPdfRow[];
       totals: { count: number; perMonth: number; dueSoon: number };
       asAt: string;
+    }
+  | {
+      kind: "stockonhand";
+      rows: StockValuePdfRow[];
+      totals: { items: number; units: number; atCost: number; atSell: number; potential: number };
+      asAt: string;
+    }
+  | {
+      kind: "margins";
+      rows: MarginPdfRow[];
+      totals: { items: number; priced: number; atRisk: number; unpriced: number; averageMargin: number };
+      asAt: string;
+    }
+  | {
+      kind: "reorderlist";
+      rows: ReorderPdfRow[];
+      totals: { items: number; outOfStock: number; costToRestock: number };
+      asAt: string;
+    }
+  | {
+      kind: "costingdrift";
+      rows: CostingDriftPdfRow[];
+      totals: { costings: number; linked: number; under: number; shortfall: number };
+      asAt: string;
     };
 
 function buildHtml(body: RenderRequest, business: BusinessProfile, watermark: boolean): string | null {
@@ -184,6 +216,14 @@ function buildHtml(body: RenderRequest, business: BusinessProfile, watermark: bo
       return buildWhatSellsHTML(business, body.rows, body.totals, body.asAt, watermark, body.periodLabel);
     case "recurringrevenue":
       return buildRecurringRevenueHTML(business, body.rows, body.totals, body.asAt, watermark);
+    case "stockonhand":
+      return buildStockOnHandHTML(business, body.rows, body.totals, body.asAt, watermark);
+    case "margins":
+      return buildMarginsHTML(business, body.rows, body.totals, body.asAt, watermark);
+    case "reorderlist":
+      return buildReorderHTML(business, body.rows, body.totals, body.asAt, watermark);
+    case "costingdrift":
+      return buildCostingDriftHTML(business, body.rows, body.totals, body.asAt, watermark);
     default:
       return null;
   }

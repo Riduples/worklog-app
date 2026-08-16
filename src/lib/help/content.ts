@@ -983,7 +983,8 @@ export const HELP_ARTICLES: HelpArticle[] = [
       "cost-a-job",
       "send-a-quote",
       "create-and-send-an-invoice",
-      "add-customers-and-suppliers"
+      "add-customers-and-suppliers",
+      "price-list-reports"
     ]
   },
   {
@@ -1075,7 +1076,8 @@ export const HELP_ARTICLES: HelpArticle[] = [
     "related": [
       "manage-your-stock",
       "send-a-quote",
-      "create-and-send-an-invoice"
+      "create-and-send-an-invoice",
+      "price-list-reports"
     ]
   },
   {
@@ -5262,6 +5264,88 @@ export const HELP_ARTICLES: HelpArticle[] = [
       "send-a-quote",
       "age-analysis",
       "send-a-customer-statement"
+    ]
+  },
+  {
+    "slug": "price-list-reports",
+    "category": "Price list & pricing",
+    "title": "Price List Reports",
+    "summary": "Four printable reports over your price list: what stock you hold and what it is worth, what you make on every item, what needs reordering, and whether your prices still match your costings.",
+    "sections": [
+      {
+        "heading": "What it is",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "Items and the Cost Calculator are where you set your prices. Price List Reports is where you check them. You will find it under Price List, called Price List Reports, with four tabs — Stock on hand, Margins, Reorder and Costings — each with its own Download PDF and Share buttons."
+          }
+        ]
+      },
+      {
+        "heading": "Stock on hand",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "Every item you hold, valued twice: at what it cost you and at what it sells for. The difference is the profit sitting on your shelves. The total at cost is your closing stock figure — the number an accountant asks for at year-end."
+          },
+          {
+            "type": "tip",
+            "text": "Only products and materials appear here. Services, labour and packages have no stock to count, so they are left out rather than listed as zero."
+          }
+        ]
+      },
+      {
+        "heading": "Margins",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "Every item with its cost, its sell price, the profit and two percentages. Margin is the profit as a share of what you charge; markup is the same profit as a share of what it cost you. The list is ordered worst first, so whatever needs attention is at the top."
+          },
+          {
+            "type": "bullets",
+            "items": [
+              "Anything selling at or below what it cost you is flagged with a warning triangle.",
+              "Items with no sell price set are counted separately — they are not a bad margin, they are an unfinished one.",
+              "The average margin is the average of each item's margin, so one expensive line does not drown out the rest of the list."
+            ]
+          }
+        ]
+      },
+      {
+        "heading": "Reorder",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "Everything at or under its reorder level, with how many units short you are and what it will cost to restock. Anything that has run out completely is marked and sorted to the top. It is a shopping list you can hand to whoever does the buying."
+          },
+          {
+            "type": "warning",
+            "text": "An item can only appear here if it has a reorder level set on it. If nothing shows up and you expected something to, check that the item has a reorder level rather than zero."
+          }
+        ]
+      },
+      {
+        "heading": "Costings",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "When you save a costing to your price list, the item stays linked to the costing behind it. This tab puts the two side by side: what the costing says you should charge, against what you are actually charging."
+          },
+          {
+            "type": "paragraph",
+            "text": "A price that has drifted below its costing shows in red, and the total at the bottom is what you are giving away on every sale across all of them. Costings never saved to the price list are listed too, marked \"not on the price list\"."
+          },
+          {
+            "type": "tip",
+            "text": "This is the tab to check after a supplier puts their prices up. Re-do the costing, and anything you are now charging too little for appears here."
+          }
+        ]
+      }
+    ],
+    "related": [
+      "manage-your-stock",
+      "cost-a-job",
+      "sales-reports"
     ]
   }
 ];

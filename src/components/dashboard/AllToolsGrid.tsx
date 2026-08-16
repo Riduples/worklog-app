@@ -45,6 +45,7 @@ const NAV_CATEGORIES: { id: string; items: NavItem[] }[] = [
     items: [
       { href: "/stock", icon: "📦", label: "Items", toolId: "stock" },
       { href: "/recipes", icon: "🍳", label: "Cost Calculator", toolId: "recipe" },
+      { href: "/price-list-reports", icon: "📊", label: "Price List Reports", anyOf: ["stock", "recipe"], desc: "Stock on hand, margins, what to reorder, and whether your prices still match your costings — printable reports" },
     ],
   },
   {

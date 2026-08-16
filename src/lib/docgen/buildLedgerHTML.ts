@@ -1225,3 +1225,245 @@ export function buildRecurringRevenueHTML(
 </body>
 </html>`;
 }
+
+// ── Price List Reports ───────────────────────────────────────────────────────
+
+export type StockValuePdfRow = { name: string; typeLabel: string; qty: number; costPrice: number; sellPrice: number; atCost: number; atSell: number };
+export type MarginPdfRow = { name: string; typeLabel: string; costPrice: number; sellPrice: number; marginPct: number; markupPct: number; profit: number; atRisk: boolean; unpriced: boolean };
+export type ReorderPdfRow = { name: string; typeLabel: string; qty: number; reorderLevel: number; shortBy: number; costPrice: number; costToRestock: number; outOfStock: boolean };
+export type CostingDriftPdfRow = { name: string; totalCost: number; markupPct: number; suggestedPrice: number; itemName: string; listedPrice: number | null; difference: number; linked: boolean; under: boolean };
+
+const qtyText = (n: number) => (n % 1 === 0 ? String(n) : n.toFixed(2));
+
+export function buildStockOnHandHTML(
+  business: BusinessProfile,
+  rows: StockValuePdfRow[],
+  totals: { items: number; units: number; atCost: number; atSell: number; potential: number },
+  asAt: string,
+  watermark = false
+): string {
+  const body = rows.length
+    ? rows
+        .map(
+          (r) => `
+      <tr>
+        <td>${esc(r.name)}</td>
+        <td>${esc(r.typeLabel)}</td>
+        <td style="text-align:center;">${qtyText(r.qty)}</td>
+        <td style="text-align:right;">${fmt(r.costPrice)}</td>
+        <td style="text-align:right;">${fmt(r.sellPrice)}</td>
+        <td style="text-align:right;font-weight:700;">${fmt(r.atCost)}</td>
+        <td style="text-align:right;">${fmt(r.atSell)}</td>
+      </tr>`
+        )
+        .join("")
+    : `<tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:16px;">Nothing on the price list carries stock.</td></tr>`;
+
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" /><title>Stock on Hand</title><style>${SHARED_CSS}</style></head>
+<body>
+  ${watermark ? `<div class="wm">TRIAL — NOT FINAL</div>` : ""}
+  ${header(business, "STOCK ON HAND", `As at ${asAt}`)}
+  <div class="meta-row">
+    ${fromBlock(business, "Prepared by")}
+    <div style="text-align:right;">
+      <div class="meta-label">Report</div>
+      <div style="font-size:20px;font-weight:800;">What you hold, and what it's worth</div>
+    </div>
+  </div>
+  <table>
+    <thead><tr><th>Item</th><th>Type</th><th style="text-align:center;">Qty</th><th style="text-align:right;">Cost each</th><th style="text-align:right;">Sells for</th><th style="text-align:right;">Value at cost</th><th style="text-align:right;">Value at sell</th></tr></thead>
+    <tbody>${body}</tbody>
+  </table>
+  <div class="totals">
+    <div class="totals-box">
+      <div class="totals-row"><span>Items carrying stock</span><span>${totals.items}</span></div>
+      <div class="totals-row"><span>Units held</span><span>${qtyText(totals.units)}</span></div>
+      <div class="totals-row"><span>Value at sell price</span><span>${fmt(totals.atSell)}</span></div>
+      <div class="totals-row"><span>Profit if it all sells</span><span>${fmt(totals.potential)}</span></div>
+      <div class="totals-row final"><span>Closing stock at cost</span><span>${fmt(totals.atCost)}</span></div>
+    </div>
+  </div>
+  <div class="footer">
+    Stock held as at ${esc(asAt)}, valued at cost — the figure an accountant asks for as closing stock. Services, labour and packages carry no stock and are not listed.<br/>Generated via Worklog — worklog.co.za${
+      watermark ? `<br/><strong style="color:#dc2626;">Draft — made on a free Worklog trial.</strong>` : ""
+    }
+  </div>
+</body>
+</html>`;
+}
+
+export function buildMarginsHTML(
+  business: BusinessProfile,
+  rows: MarginPdfRow[],
+  totals: { items: number; priced: number; atRisk: number; unpriced: number; averageMargin: number },
+  asAt: string,
+  watermark = false
+): string {
+  const body = rows.length
+    ? rows
+        .map(
+          (r) => `
+      <tr>
+        <td>${esc(r.name)}${r.atRisk ? ` <span style="color:#be123c;font-weight:700;">⚠</span>` : ""}</td>
+        <td>${esc(r.typeLabel)}</td>
+        <td style="text-align:right;">${fmt(r.costPrice)}</td>
+        <td style="text-align:right;">${r.unpriced ? "—" : fmt(r.sellPrice)}</td>
+        <td style="text-align:right;">${r.unpriced ? "—" : fmt(r.profit)}</td>
+        <td style="text-align:center;">${r.unpriced ? "—" : `${r.markupPct.toFixed(0)}%`}</td>
+        <td style="text-align:center;font-weight:700;color:${r.unpriced ? "#94a3b8" : r.atRisk ? "#be123c" : "#111"};">${r.unpriced ? "No price" : `${r.marginPct.toFixed(0)}%`}</td>
+      </tr>`
+        )
+        .join("")
+    : `<tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:16px;">Nothing on the price list yet.</td></tr>`;
+
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" /><title>Margins</title><style>${SHARED_CSS}</style></head>
+<body>
+  ${watermark ? `<div class="wm">TRIAL — NOT FINAL</div>` : ""}
+  ${header(business, "MARGINS", `As at ${asAt}`)}
+  <div class="meta-row">
+    ${fromBlock(business, "Prepared by")}
+    <div style="text-align:right;">
+      <div class="meta-label">Report</div>
+      <div style="font-size:20px;font-weight:800;">What you make on every item</div>
+    </div>
+  </div>
+  <table>
+    <thead><tr><th>Item</th><th>Type</th><th style="text-align:right;">Cost</th><th style="text-align:right;">Sells for</th><th style="text-align:right;">Profit</th><th style="text-align:center;">Markup</th><th style="text-align:center;">Margin</th></tr></thead>
+    <tbody>${body}</tbody>
+  </table>
+  <div class="totals">
+    <div class="totals-box">
+      <div class="totals-row"><span>Items priced</span><span>${totals.priced} of ${totals.items}</span></div>
+      <div class="totals-row"><span>Selling at or below cost</span><span style="color:${totals.atRisk > 0 ? "#be123c" : "#111"};">${totals.atRisk}</span></div>
+      <div class="totals-row"><span>No sell price set</span><span>${totals.unpriced}</span></div>
+      <div class="totals-row final"><span>Average margin</span><span>${totals.averageMargin.toFixed(0)}%</span></div>
+    </div>
+  </div>
+  <div class="footer">
+    Worst margin first, as at ${esc(asAt)}. Margin is profit as a share of what you charge; markup is the same profit as a share of what it cost you. The average is of each item's margin, so one expensive line doesn't drown out the rest.<br/>Generated via Worklog — worklog.co.za${
+      watermark ? `<br/><strong style="color:#dc2626;">Draft — made on a free Worklog trial.</strong>` : ""
+    }
+  </div>
+</body>
+</html>`;
+}
+
+export function buildReorderHTML(
+  business: BusinessProfile,
+  rows: ReorderPdfRow[],
+  totals: { items: number; outOfStock: number; costToRestock: number },
+  asAt: string,
+  watermark = false
+): string {
+  const body = rows.length
+    ? rows
+        .map(
+          (r) => `
+      <tr>
+        <td>${esc(r.name)}${r.outOfStock ? ` <span style="color:#be123c;font-weight:700;">out</span>` : ""}</td>
+        <td>${esc(r.typeLabel)}</td>
+        <td style="text-align:center;">${qtyText(r.qty)}</td>
+        <td style="text-align:center;">${qtyText(r.reorderLevel)}</td>
+        <td style="text-align:center;font-weight:700;">${qtyText(r.shortBy)}</td>
+        <td style="text-align:right;">${fmt(r.costPrice)}</td>
+        <td style="text-align:right;font-weight:700;">${fmt(r.costToRestock)}</td>
+      </tr>`
+        )
+        .join("")
+    : `<tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:16px;">Nothing needs reordering.</td></tr>`;
+
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" /><title>Reorder List</title><style>${SHARED_CSS}</style></head>
+<body>
+  ${watermark ? `<div class="wm">TRIAL — NOT FINAL</div>` : ""}
+  ${header(business, "REORDER LIST", `As at ${asAt}`)}
+  <div class="meta-row">
+    ${fromBlock(business, "Prepared by")}
+    <div style="text-align:right;">
+      <div class="meta-label">Report</div>
+      <div style="font-size:20px;font-weight:800;">What to buy</div>
+    </div>
+  </div>
+  <table>
+    <thead><tr><th>Item</th><th>Type</th><th style="text-align:center;">On hand</th><th style="text-align:center;">Reorder at</th><th style="text-align:center;">Short by</th><th style="text-align:right;">Cost each</th><th style="text-align:right;">To restock</th></tr></thead>
+    <tbody>${body}</tbody>
+  </table>
+  <div class="totals">
+    <div class="totals-box">
+      <div class="totals-row"><span>Items to reorder</span><span>${totals.items}</span></div>
+      <div class="totals-row"><span>Already out of stock</span><span style="color:${totals.outOfStock > 0 ? "#be123c" : "#111"};">${totals.outOfStock}</span></div>
+      <div class="totals-row final"><span>Cost to restock</span><span>${fmt(totals.costToRestock)}</span></div>
+    </div>
+  </div>
+  <div class="footer">
+    Items at or under their reorder level as at ${esc(asAt)}, out-of-stock first. Only items with a reorder level set can appear here.<br/>Generated via Worklog — worklog.co.za${
+      watermark ? `<br/><strong style="color:#dc2626;">Draft — made on a free Worklog trial.</strong>` : ""
+    }
+  </div>
+</body>
+</html>`;
+}
+
+export function buildCostingDriftHTML(
+  business: BusinessProfile,
+  rows: CostingDriftPdfRow[],
+  totals: { costings: number; linked: number; under: number; shortfall: number },
+  asAt: string,
+  watermark = false
+): string {
+  const body = rows.length
+    ? rows
+        .map(
+          (r) => `
+      <tr>
+        <td>${esc(r.name)}${r.itemName && r.itemName !== r.name ? `<br/><span style="font-size:10px;color:#94a3b8;">listed as ${esc(r.itemName)}</span>` : ""}</td>
+        <td style="text-align:right;">${fmt(r.totalCost)}</td>
+        <td style="text-align:center;">${r.markupPct.toFixed(0)}%</td>
+        <td style="text-align:right;">${fmt(r.suggestedPrice)}</td>
+        <td style="text-align:right;">${r.linked ? fmt(r.listedPrice ?? 0) : "—"}</td>
+        <td style="text-align:right;font-weight:700;color:${r.under ? "#be123c" : r.linked ? "#111" : "#94a3b8"};">${
+          r.linked ? `${r.difference >= 0 ? "+" : "−"}${fmt(Math.abs(r.difference))}` : "not on the list"
+        }</td>
+      </tr>`
+        )
+        .join("")
+    : `<tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:16px;">No costings saved yet.</td></tr>`;
+
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" /><title>Costings vs Price List</title><style>${SHARED_CSS}</style></head>
+<body>
+  ${watermark ? `<div class="wm">TRIAL — NOT FINAL</div>` : ""}
+  ${header(business, "COSTINGS VS PRICE LIST", `As at ${asAt}`)}
+  <div class="meta-row">
+    ${fromBlock(business, "Prepared by")}
+    <div style="text-align:right;">
+      <div class="meta-label">Report</div>
+      <div style="font-size:20px;font-weight:800;">Are you charging what you worked out?</div>
+    </div>
+  </div>
+  <table>
+    <thead><tr><th>Costing</th><th style="text-align:right;">Costs you</th><th style="text-align:center;">Markup</th><th style="text-align:right;">Should charge</th><th style="text-align:right;">Actually charging</th><th style="text-align:right;">Difference</th></tr></thead>
+    <tbody>${body}</tbody>
+  </table>
+  <div class="totals">
+    <div class="totals-box">
+      <div class="totals-row"><span>Costings</span><span>${totals.costings}</span></div>
+      <div class="totals-row"><span>On the price list</span><span>${totals.linked}</span></div>
+      <div class="totals-row"><span>Priced under the costing</span><span style="color:${totals.under > 0 ? "#be123c" : "#111"};">${totals.under}</span></div>
+      <div class="totals-row final"><span>Given away per sale</span><span>${fmt(totals.shortfall)}</span></div>
+    </div>
+  </div>
+  <div class="footer">
+    Each costing's suggested price against what the linked price-list item actually sells for, as at ${esc(asAt)}. A costing saved to the price list stays linked, so a price changed afterwards shows up here as a difference.<br/>Generated via Worklog — worklog.co.za${
+      watermark ? `<br/><strong style="color:#dc2626;">Draft — made on a free Worklog trial.</strong>` : ""
+    }
+  </div>
+</body>
+</html>`;
+}
