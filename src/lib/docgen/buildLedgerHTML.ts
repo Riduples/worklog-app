@@ -1931,3 +1931,78 @@ export function buildMissingDetailsHTML(
 </body>
 </html>`;
 }
+
+// ── EMP201 ───────────────────────────────────────────────────────────────────
+// The monthly PAYE/UIF/SDL declaration, as a printable working. Like the payslip
+// it's an internal aid, not the SARS submission — the footer says so — but it's
+// the number the business hands its accountant, so it gets a real document.
+export type Emp201PdfRun = { workerName: string; payDate: string; gross: number; paye: number; uif: number };
+export type Emp201PdfData = {
+  periodLabel: string;
+  dueDate: string;
+  employeesPaid: number;
+  paye: number;
+  uifEmployee: number;
+  uifEmployer: number;
+  sdl: number;
+  eti: number;
+  totalDue: number;
+  payeRef: string;
+  runs: Emp201PdfRun[];
+};
+
+export function buildEmp201HTML(business: BusinessProfile, data: Emp201PdfData, asAt: string, watermark = false): string {
+  const body = data.runs.length
+    ? data.runs
+        .map(
+          (r) => `
+      <tr>
+        <td>${esc(r.workerName)}</td>
+        <td>${esc(r.payDate)}</td>
+        <td style="text-align:right;">${fmt(r.gross)}</td>
+        <td style="text-align:right;">${fmt(r.paye)}</td>
+        <td style="text-align:right;">${fmt(r.uif)}</td>
+      </tr>`
+        )
+        .join("")
+    : `<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:16px;">No pay runs recorded for this month.</td></tr>`;
+
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" /><title>EMP201</title><style>${SHARED_CSS}</style></head>
+<body>
+  ${watermark ? `<div class="wm">TRIAL — NOT FINAL</div>` : ""}
+  ${header(business, "EMP201", `${esc(data.periodLabel)} · as at ${asAt}`)}
+  <div class="meta-row">
+    ${fromBlock(business, "Employer")}
+    <div style="text-align:right;">
+      <div class="meta-label">Declaration period</div>
+      <div style="font-size:20px;font-weight:800;">${esc(data.periodLabel)}</div>
+      <div style="font-size:12px;color:#64748b;margin-top:2px;">${data.employeesPaid} employee${data.employeesPaid !== 1 ? "s" : ""} paid · due ${esc(data.dueDate)}</div>
+      ${data.payeRef ? `<div class="vat-note" style="margin-top:6px;">PAYE Ref: ${esc(data.payeRef)}</div>` : ""}
+    </div>
+  </div>
+  <table>
+    <thead>
+      <tr><th>Employee</th><th>Pay date</th><th style="text-align:right;">Gross</th><th style="text-align:right;">PAYE</th><th style="text-align:right;">UIF</th></tr>
+    </thead>
+    <tbody>${body}</tbody>
+  </table>
+  <div class="totals">
+    <div class="totals-box">
+      <div class="totals-row"><span>PAYE (employee tax)</span><span>${fmt(data.paye)}</span></div>
+      <div class="totals-row"><span>UIF — employee (1%)</span><span>${fmt(data.uifEmployee)}</span></div>
+      <div class="totals-row"><span>UIF — employer (1%)</span><span>${fmt(data.uifEmployer)}</span></div>
+      ${data.sdl > 0 ? `<div class="totals-row"><span>SDL (1%)</span><span>${fmt(data.sdl)}</span></div>` : ""}
+      ${data.eti > 0 ? `<div class="totals-row"><span>Less: ETI claimed</span><span>−${fmt(data.eti)}</span></div>` : ""}
+      <div class="totals-row final"><span>Total due to SARS</span><span>${fmt(data.totalDue)}</span></div>
+    </div>
+  </div>
+  <div class="footer">
+    EMP201 working for ${esc(data.periodLabel)}, as at ${esc(asAt)}. Submit the actual EMP201 via SARS eFiling and declare UIF separately on uFiling — this is a calculation aid, not a filing. Penalty: 10% of PAYE if late.<br/>Generated via Worklog — worklog.co.za${
+      watermark ? `<br/><strong style="color:#dc2626;">Draft — made on a free Worklog trial.</strong>` : ""
+    }
+  </div>
+</body>
+</html>`;
+}

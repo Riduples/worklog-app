@@ -30,6 +30,7 @@ import {
   buildPayersHTML,
   buildDormantHTML,
   buildMissingDetailsHTML,
+  buildEmp201HTML,
   type StatementLine,
   type RemittanceLine,
   type StatementCredits,
@@ -63,6 +64,7 @@ import {
   type PayerPdfRow,
   type DormantPdfRow,
   type MissingPdfRow,
+  type Emp201PdfData,
 } from "@/lib/docgen/buildLedgerHTML";
 import type { BusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 
@@ -247,6 +249,11 @@ type RenderRequest =
       rows: MissingPdfRow[];
       totals: { contacts: number; incomplete: number; blocking: number };
       asAt: string;
+    }
+  | {
+      kind: "emp201";
+      data: Emp201PdfData;
+      asAt: string;
     };
 
 function buildHtml(body: RenderRequest, business: BusinessProfile, watermark: boolean): string | null {
@@ -307,6 +314,8 @@ function buildHtml(body: RenderRequest, business: BusinessProfile, watermark: bo
       return buildDormantHTML(business, body.rows, body.totals, body.asAt, watermark, body.monthsLabel);
     case "missingdetails":
       return buildMissingDetailsHTML(business, body.rows, body.totals, body.asAt, watermark);
+    case "emp201":
+      return buildEmp201HTML(business, body.data, body.asAt, watermark);
     default:
       return null;
   }

@@ -42,3 +42,21 @@ export function useMarkFiled() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEY }),
   });
 }
+
+// Undo a "mark as filed" — for when the wrong period was ticked, or a pay run
+// changed after filing and the total no longer matches. Deletes the marker row
+// only; it never touched a real SARS submission, so there's nothing else to
+// reverse (unlike voiding a pay run). RLS scopes the delete to the caller's
+// business, the same as the insert.
+export function useUnmarkFiled() {
+  const supabase = createClient();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("tax_filings").delete().eq("id", id);
+      if (error) throw error;
+      return id;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEY }),
+  });
+}

@@ -5,11 +5,15 @@ import Link from "next/link";
 import { usePayRuns } from "@/lib/supabase/hooks/usePayRuns";
 import { useStaffRegister } from "@/lib/supabase/hooks/useStaffRegister";
 import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
-import { useTaxFilings, useMarkFiled } from "@/lib/supabase/hooks/useTaxFilings";
+import { useTaxFilings, useMarkFiled, useUnmarkFiled } from "@/lib/supabase/hooks/useTaxFilings";
+import { useTrialState } from "@/lib/supabase/hooks/useSubscription";
 import { useTaxRates } from "@/lib/taxRates";
 import { calcETI, monthsEmployedFrom } from "@/lib/eti";
 import { fmt } from "@/lib/format";
 import { shareReport } from "@/lib/docgen/shareReport";
+import { renderPdf, downloadBlob } from "@/lib/docgen/renderPdf";
+import { openDocumentForPrinting } from "@/lib/docgen/shareDocument";
+import { buildEmp201HTML, type Emp201PdfData } from "@/lib/docgen/buildLedgerHTML";
 
 const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
@@ -19,11 +23,17 @@ export function Emp201View() {
   const { data: payRuns } = usePayRuns();
   const { data: filings } = useTaxFilings();
   const markFiled = useMarkFiled();
+  const unmarkFiled = useUnmarkFiled();
+  const { isTrialing, isReadOnly } = useTrialState();
+  const watermark = isTrialing || isReadOnly;
   const { SDL_ANNUAL_THRESHOLD } = useTaxRates();
 
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month0, setMonth0] = useState(today.getMonth());
+  const [busy, setBusy] = useState(false);
+  const [showUndo, setShowUndo] = useState(false);
+  const [undoError, setUndoError] = useState("");
 
   const step = (dir: 1 | -1) => {
     let m = month0 + dir;
@@ -83,7 +93,8 @@ export function Emp201View() {
     .reduce((s, p) => s + Number(p.gross_wages ?? 0), 0);
 
   const emp201Filings = (filings ?? []).filter((f) => f.filing_type === "emp201");
-  const alreadyFiled = emp201Filings.some((f) => f.period_label === label);
+  const currentFiling = emp201Filings.find((f) => f.period_label === label);
+  const alreadyFiled = !!currentFiling;
 
   // EMP201 is due by the 7th of the month after the pay month.
   const dueMonth0 = (month0 + 1) % 12;
@@ -99,6 +110,54 @@ export function Emp201View() {
     if (eti > 0) lines.push(`Less: ETI claimed: −${fmt(eti)}`);
     lines.push(`Total due to SARS: ${fmt(totalDue)}`);
     void shareReport("EMP201", `${label} · ${employeesPaid} employee${employeesPaid !== 1 ? "s" : ""} paid`, lines, business);
+  };
+
+  // The structured body the render-pdf route rebuilds the EMP201 working from —
+  // rebuilt at click time so it always reflects the month on screen.
+  const emp201PdfData = (): Emp201PdfData => ({
+    periodLabel: label,
+    dueDate,
+    employeesPaid,
+    paye,
+    uifEmployee,
+    uifEmployer,
+    sdl,
+    eti,
+    totalDue,
+    payeRef: business?.paye_ref ?? "",
+    runs: monthRuns.map((p) => ({
+      workerName: p.worker_name,
+      payDate: p.pay_date,
+      gross: Number(p.gross_wages ?? 0),
+      paye: Number(p.paye ?? 0),
+      uif: Number(p.uif_employee ?? 0) + Number(p.uif_employer ?? 0),
+    })),
+  });
+
+  const handlePrint = async () => {
+    if (!business || busy) return;
+    setBusy(true);
+    const asAt = new Date().toLocaleDateString("en-ZA", { year: "numeric", month: "long", day: "numeric" });
+    try {
+      const blob = await renderPdf({ kind: "emp201", data: emp201PdfData(), asAt });
+      downloadBlob(blob, `emp201-${monthKey}`);
+    } catch {
+      // Chromium cold/absent/timed out — fall back to the print flow.
+      openDocumentForPrinting(buildEmp201HTML(business, emp201PdfData(), asAt, watermark), `emp201-${monthKey}`);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // Undo a mistaken "mark as filed" — deletes only the marker row. Nothing else
+  // was created (this never touched eFiling), so there's nothing to reverse.
+  const handleUnfile = () => {
+    if (!currentFiling) return;
+    setUndoError("");
+    unmarkFiled.mutate(currentFiling.id, {
+      onSuccess: () => setShowUndo(false),
+      onError: (e) => setUndoError(e instanceof Error ? e.message : "Couldn't undo the filing."),
+    });
   };
 
   if ((staff ?? []).length === 0) {
@@ -189,8 +248,36 @@ export function Emp201View() {
           No pay runs recorded for {label}.
         </div>
       ) : alreadyFiled ? (
-        <div style={{ background: "#F0F9FF", border: "1.5px solid #7DD3FC", borderRadius: 10, padding: "10px 14px", marginBottom: 14, fontSize: 13, color: "#0369A1" }}>
-          ✅ Marked as filed for {label}
+        <div style={{ marginBottom: 14 }}>
+          <div style={{ background: "#F0F9FF", border: "1.5px solid #7DD3FC", borderRadius: 10, padding: "10px 14px", fontSize: 13, color: "#0369A1" }}>
+            ✅ Marked as filed for {label}
+            {currentFiling?.filed_date ? <span style={{ color: "#64748b" }}> · {currentFiling.filed_date}</span> : null}
+          </div>
+          {/* Made a mistake? Un-marking removes only this "filed" record — it never
+              touched eFiling, so nothing else has to be reversed. Mirrors the
+              payslip's "void this pay run", scaled to what an EMP201 marker is. */}
+          <button
+            onClick={() => setShowUndo((p) => !p)}
+            style={{ width: "100%", marginTop: 8, background: "#fff1f2", border: "1.5px solid #fecdd3", borderRadius: 12, padding: "11px 16px", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}
+          >
+            <span style={{ fontSize: 13, fontWeight: 700, color: "#be123c" }}>↩️ Made a mistake? Undo this filing</span>
+            <span style={{ color: "#be123c" }}>{showUndo ? "▲" : "▼"}</span>
+          </button>
+          {showUndo && (
+            <div style={{ background: "#fff1f2", border: "1.5px solid #fecdd3", borderRadius: 12, padding: 14, marginTop: 8 }}>
+              <div style={{ fontSize: 12, color: "#7f1d1d", lineHeight: 1.6, marginBottom: 10 }}>
+                This removes the “filed” record for <strong>{label}</strong> so you can re-mark it once the numbers are right. It doesn&apos;t change anything on SARS eFiling — that submission, if you made one, stays as it is.
+              </div>
+              {undoError && <p style={{ color: "#dc2626", fontSize: 13, marginBottom: 10 }}>{undoError}</p>}
+              <button
+                onClick={handleUnfile}
+                disabled={unmarkFiled.isPending}
+                style={{ width: "100%", background: "#be123c", color: "#fff", border: "none", borderRadius: 12, padding: 13, fontSize: 13, fontWeight: 700, cursor: unmarkFiled.isPending ? "default" : "pointer", opacity: unmarkFiled.isPending ? 0.6 : 1 }}
+              >
+                {unmarkFiled.isPending ? "Undoing..." : "Confirm — undo this filing"}
+              </button>
+            </div>
+          )}
         </div>
       ) : (
         <button
@@ -206,12 +293,21 @@ export function Emp201View() {
         Submit the actual EMP201 via SARS eFiling and declare UIF separately on uFiling — this is a calculation aid, not a filing. Penalty: 10% of PAYE if late.
       </div>
 
-      <button
-        onClick={handleShare}
-        style={{ width: "100%", marginBottom: 14, background: "#F0F9FF", color: "#0C4A6E", border: "1.5px solid #BAE6FD", borderRadius: 12, padding: 13, fontWeight: 700, fontSize: 13, cursor: "pointer" }}
-      >
-        📤 Share report
-      </button>
+      <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
+        <button
+          onClick={handlePrint}
+          disabled={!business || busy}
+          style={{ flex: 1, background: "#F0F9FF", color: "#0C4A6E", border: "1.5px solid #BAE6FD", borderRadius: 12, padding: 13, fontWeight: 700, fontSize: 13, cursor: "pointer" }}
+        >
+          {busy ? "📄 Preparing..." : "📄 Download PDF"}
+        </button>
+        <button
+          onClick={handleShare}
+          style={{ flex: 1, background: "#F0F9FF", color: "#0C4A6E", border: "1.5px solid #BAE6FD", borderRadius: 12, padding: 13, fontWeight: 700, fontSize: 13, cursor: "pointer" }}
+        >
+          📤 Share
+        </button>
+      </div>
 
       {monthRuns.length > 0 && (
         <>
