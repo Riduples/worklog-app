@@ -21,6 +21,10 @@ export type TaxRateSet = {
   UIF_CEILING: number;
   SDL_RATE: number;
   SDL_ANNUAL_THRESHOLD: number;
+  // COIDA / OID maximum assessable earnings per employee per year — the ceiling
+  // the annual Return of Earnings caps each worker's earnings at. A Department of
+  // Employment & Labour figure, gazetted yearly.
+  OID_EARNINGS_THRESHOLD: number;
   PAYE_MONTHLY_THRESHOLD: number;
   PRIMARY_REBATE: number;
   SECONDARY_REBATE: number;
@@ -60,6 +64,10 @@ export const TAX_RATES: TaxRateSet = {
   UIF_CEILING: 17712,
   SDL_RATE: 0.01,
   SDL_ANNUAL_THRESHOLD: 500000,
+  // OID max assessable earnings — R597,328 was gazetted for the 1 Mar 2024–28 Feb
+  // 2025 assessment year. Update at Gazette time each year, in step with the
+  // tax_rates table's current row.
+  OID_EARNINGS_THRESHOLD: 597328,
   PAYE_MONTHLY_THRESHOLD: 8250, // R99,000 under-65 threshold ÷ 12
   PRIMARY_REBATE: 17820,
   SECONDARY_REBATE: 9765,
@@ -139,6 +147,10 @@ function resolveTaxRates(row: Tables<"tax_rates"> | null | undefined): TaxRateSe
     UIF_CEILING: num(row.uif_ceiling),
     SDL_RATE: num(row.sdl_rate),
     SDL_ANNUAL_THRESHOLD: num(row.sdl_annual_threshold),
+    // Added after the table shipped (migration 0119) — a row written before then
+    // has it null, so fall back to the known-good figure rather than coercing null
+    // to 0 and capping every employee's earnings at zero.
+    OID_EARNINGS_THRESHOLD: row.oid_earnings_threshold != null ? num(row.oid_earnings_threshold) : TAX_RATES.OID_EARNINGS_THRESHOLD,
     PAYE_MONTHLY_THRESHOLD: num(row.paye_monthly_threshold),
     PRIMARY_REBATE: num(row.primary_rebate),
     SECONDARY_REBATE: num(row.secondary_rebate),

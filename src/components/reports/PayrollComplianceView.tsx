@@ -145,7 +145,7 @@ export function PayrollComplianceView() {
             <div style={{ ...rowStyle }}>
               <div>
                 <div style={{ fontSize: 13, fontWeight: 700, color: "#111" }}>COIDA — Return of Earnings</div>
-                <div style={{ fontSize: 11, color: "#94a3b8" }}>Annual (CompEasy) · earnings to report for {year}</div>
+                <div style={{ fontSize: 11, color: "#94a3b8" }}>Annual (CompEasy) · gross wages in {year}, before the OID cap</div>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <span style={{ fontSize: 14, fontWeight: 800, color: "#0C4A6E" }}>{fmt(coidaEarnings)}</span>

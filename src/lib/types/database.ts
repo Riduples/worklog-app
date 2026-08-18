@@ -2153,6 +2153,7 @@ export type Database = {
           medical_credit_first_two: number
           mileage_rate: number
           note: string | null
+          oid_earnings_threshold: number
           paye_brackets: Json
           paye_monthly_threshold: number
           primary_rebate: number
@@ -2182,6 +2183,7 @@ export type Database = {
           medical_credit_first_two: number
           mileage_rate: number
           note?: string | null
+          oid_earnings_threshold: number
           paye_brackets: Json
           paye_monthly_threshold: number
           primary_rebate: number
@@ -2211,6 +2213,7 @@ export type Database = {
           medical_credit_first_two?: number
           mileage_rate?: number
           note?: string | null
+          oid_earnings_threshold?: number
           paye_brackets?: Json
           paye_monthly_threshold?: number
           primary_rebate?: number

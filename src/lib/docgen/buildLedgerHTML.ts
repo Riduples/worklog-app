@@ -2132,26 +2132,32 @@ export function buildUif201HTML(business: BusinessProfile, data: Uif201PdfData, 
 }
 
 // ── COIDA — annual Return of Earnings ────────────────────────────────────────
-export type CoidaPdfRow = { workerName: string; earnings: number };
+// `earnings` is already capped at the OID maximum; `raw` is the gross wages before
+// the cap, so the printed return shows what was reduced.
+export type CoidaPdfRow = { workerName: string; earnings: number; raw: number };
 export type CoidaPdfData = {
   yearLabel: string;
   employees: number;
   totalEarnings: number;
+  cap: number;
+  cappedCount: number;
   rows: CoidaPdfRow[];
 };
 
 export function buildCoidaHTML(business: BusinessProfile, data: CoidaPdfData, asAt: string, watermark = false): string {
   const body = data.rows.length
     ? data.rows
-        .map(
-          (r) => `
+        .map((r) => {
+          const capped = r.raw > r.earnings + 0.005;
+          return `
       <tr>
         <td>${esc(r.workerName)}</td>
+        <td style="text-align:right;color:${capped ? "#b45309" : "#94a3b8"};">${capped ? fmt(r.raw) : "—"}</td>
         <td style="text-align:right;">${fmt(r.earnings)}</td>
-      </tr>`
-        )
+      </tr>`;
+        })
         .join("")
-    : `<tr><td colspan="2" style="text-align:center;color:#94a3b8;padding:16px;">No wages recorded for this year.</td></tr>`;
+    : `<tr><td colspan="3" style="text-align:center;color:#94a3b8;padding:16px;">No wages recorded for this year.</td></tr>`;
 
   return `<!DOCTYPE html>
 <html>
@@ -2164,20 +2170,21 @@ export function buildCoidaHTML(business: BusinessProfile, data: CoidaPdfData, as
     <div style="text-align:right;">
       <div class="meta-label">Assessment year</div>
       <div style="font-size:20px;font-weight:800;">${esc(data.yearLabel)}</div>
-      <div style="font-size:12px;color:#64748b;margin-top:2px;">${data.employees} employee${data.employees !== 1 ? "s" : ""}</div>
+      <div style="font-size:12px;color:#64748b;margin-top:2px;">${data.employees} employee${data.employees !== 1 ? "s" : ""} · capped at ${fmt(data.cap)} each</div>
     </div>
   </div>
   <table>
-    <thead><tr><th>Employee</th><th style="text-align:right;">Earnings (year)</th></tr></thead>
+    <thead><tr><th>Employee</th><th style="text-align:right;">Gross (year)</th><th style="text-align:right;">Capped earnings</th></tr></thead>
     <tbody>${body}</tbody>
   </table>
   <div class="totals">
     <div class="totals-box">
-      <div class="totals-row final"><span>Total earnings</span><span>${fmt(data.totalEarnings)}</span></div>
+      <div class="totals-row"><span>OID cap per employee</span><span>${fmt(data.cap)}</span></div>
+      <div class="totals-row final"><span>Earnings to report</span><span>${fmt(data.totalEarnings)}</span></div>
     </div>
   </div>
   <div class="footer">
-    COIDA Return of Earnings for ${esc(data.yearLabel)}, as at ${esc(asAt)}. File on CompEasy — this is a calculation aid, not a filing. Each employee's earnings are capped at the annual OID threshold for the ROE; this shows uncapped totals, so confirm the cap with your accountant before submitting.<br/>Generated via Worklog — worklog.co.za${
+    COIDA Return of Earnings for ${esc(data.yearLabel)}, as at ${esc(asAt)}. File on CompEasy — this is a calculation aid, not a filing. Each employee's earnings are capped at the annual OID maximum (${fmt(data.cap)}); ${data.cappedCount > 0 ? `${data.cappedCount} employee${data.cappedCount !== 1 ? "s were" : " was"} over it.` : "no one was over it this year."} The cap changes yearly — confirm the current-year figure with your accountant.<br/>Generated via Worklog — worklog.co.za${
       watermark ? `<br/><strong style="color:#dc2626;">Draft — made on a free Worklog trial.</strong>` : ""
     }
   </div>

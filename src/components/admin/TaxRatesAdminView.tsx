@@ -29,6 +29,7 @@ type Draft = {
   uif_ceiling: string;
   sdl_rate: string;
   sdl_annual_threshold: string;
+  oid_earnings_threshold: string;
   company_tax_rate: string;
   trust_tax_rate: string;
   turnover_tax_max: string;
@@ -56,6 +57,7 @@ const NUM_FIELDS: { key: keyof Omit<Draft, "id" | "tax_year" | "effective_from" 
   { key: "uif_ceiling", label: "UIF monthly ceiling (R)" },
   { key: "sdl_rate", label: "SDL rate (e.g. 0.01)" },
   { key: "sdl_annual_threshold", label: "SDL exemption threshold (R/yr)" },
+  { key: "oid_earnings_threshold", label: "COIDA/OID max earnings per employee (R/yr)" },
   { key: "company_tax_rate", label: "Company tax rate (e.g. 0.27)" },
   { key: "trust_tax_rate", label: "Trust tax rate (e.g. 0.45)" },
   { key: "turnover_tax_max", label: "Turnover tax — max qualifying turnover (R/yr)" },
@@ -170,6 +172,7 @@ function rowToDraft(row: TaxRateRow): Draft {
     uif_ceiling: s(row.uif_ceiling),
     sdl_rate: s(row.sdl_rate),
     sdl_annual_threshold: s(row.sdl_annual_threshold),
+    oid_earnings_threshold: s(row.oid_earnings_threshold),
     company_tax_rate: s(row.company_tax_rate),
     trust_tax_rate: s(row.trust_tax_rate),
     turnover_tax_max: s(row.turnover_tax_max),
@@ -223,6 +226,7 @@ function newDraft(latest: TaxRateRow | undefined): Draft {
     uif_ceiling: s(f.UIF_CEILING),
     sdl_rate: s(f.SDL_RATE),
     sdl_annual_threshold: s(f.SDL_ANNUAL_THRESHOLD),
+    oid_earnings_threshold: s(f.OID_EARNINGS_THRESHOLD),
     company_tax_rate: s(f.COMPANY_TAX_RATE),
     trust_tax_rate: s(f.TRUST_TAX_RATE),
     turnover_tax_max: s(f.TURNOVER_TAX_MAX),
@@ -412,6 +416,7 @@ function TaxRateEditor({ draft, onClose, onSaved }: { draft: Draft; onClose: () 
       uif_ceiling: g("uif_ceiling"),
       sdl_rate: g("sdl_rate"),
       sdl_annual_threshold: g("sdl_annual_threshold"),
+      oid_earnings_threshold: g("oid_earnings_threshold"),
       company_tax_rate: g("company_tax_rate"),
       trust_tax_rate: g("trust_tax_rate"),
       turnover_tax_max: g("turnover_tax_max"),

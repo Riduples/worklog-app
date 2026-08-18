@@ -261,7 +261,7 @@ export function Emp201View() {
             <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>COIDA (annual Return of Earnings)</span>
             <span style={{ fontSize: 12, fontWeight: 700, color: "#0C4A6E" }}>{fmt(coidaEarnings)}</span>
           </div>
-          <div style={{ fontSize: 11, color: "#94a3b8", lineHeight: 1.5 }}>Earnings to report for {year} — total gross wages paid this calendar year.</div>
+          <div style={{ fontSize: 11, color: "#94a3b8", lineHeight: 1.5 }}>Gross wages paid in {year}, before the per-employee OID cap — open for the capped figure to report.</div>
         </Link>
       </div>
     </div>

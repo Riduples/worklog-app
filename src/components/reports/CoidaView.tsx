@@ -6,22 +6,25 @@ import { usePayRuns } from "@/lib/supabase/hooks/usePayRuns";
 import { useStaffRegister } from "@/lib/supabase/hooks/useStaffRegister";
 import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 import { useTaxFilings } from "@/lib/supabase/hooks/useTaxFilings";
+import { useTaxRates } from "@/lib/taxRates";
 import { fmt } from "@/lib/format";
 import { shareReport } from "@/lib/docgen/shareReport";
 import { buildCoidaHTML, type CoidaPdfData } from "@/lib/docgen/buildLedgerHTML";
 import { FilingActions, FilingHistory } from "@/components/reports/FilingActions";
 import { asAtLabel } from "@/components/reports/ReportShell";
 
-// COIDA — the annual Return of Earnings filed on CompEasy. Earnings are the total
-// gross wages paid in the year, per employee. The official ROE caps each
-// employee's earnings at the annual OID threshold (which changes yearly and the
-// app doesn't hold); this shows uncapped totals and says so, so nobody
-// over-declares. A year stepper rather than a month one — this return is annual.
+// COIDA — the annual Return of Earnings filed on CompEasy. Earnings are the gross
+// wages paid in the year, per employee, each CAPPED at the annual OID maximum
+// (OID_EARNINGS_THRESHOLD — a Department of Employment & Labour figure gazetted
+// yearly, admin-editable on the tax_rates table). The screen and PDF show the cap
+// they applied, so a stale figure is visible rather than silent. A year stepper
+// rather than a month one — this return is annual.
 export function CoidaView() {
   const { data: business } = useBusinessProfile();
   const { data: staff } = useStaffRegister();
   const { data: payRuns } = usePayRuns();
   const { data: filings } = useTaxFilings();
+  const { OID_EARNINGS_THRESHOLD: cap } = useTaxRates();
 
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
@@ -31,31 +34,40 @@ export function CoidaView() {
 
   // Earnings per person, keyed on staff where possible so two workers who happen
   // to share a name don't collapse into one line.
-  const byWorker = new Map<string, { name: string; earnings: number }>();
+  const byWorker = new Map<string, { name: string; raw: number }>();
   for (const p of yearRuns) {
     const key = p.staff_id ?? `name:${p.worker_name}`;
     const prev = byWorker.get(key);
-    byWorker.set(key, { name: p.worker_name, earnings: (prev?.earnings ?? 0) + Number(p.gross_wages ?? 0) });
+    byWorker.set(key, { name: p.worker_name, raw: (prev?.raw ?? 0) + Number(p.gross_wages ?? 0) });
   }
-  const rows = [...byWorker.values()].sort((a, b) => b.earnings - a.earnings);
+  // Each employee's declarable earnings are capped at the OID maximum before they
+  // are summed — that's how the ROE is assessed.
+  const rows = [...byWorker.values()]
+    .map((w) => ({ name: w.name, raw: w.raw, earnings: Math.min(w.raw, cap) }))
+    .sort((a, b) => b.earnings - a.earnings);
   const totalEarnings = rows.reduce((s, r) => s + r.earnings, 0);
+  const totalRaw = rows.reduce((s, r) => s + r.raw, 0);
+  const cappedCount = rows.filter((r) => r.raw > r.earnings + 0.005).length;
   const employees = rows.length;
 
   const handleShare = () => {
     const lines = [
-      `Total earnings to report: ${fmt(totalEarnings)}`,
+      `Total earnings to report (capped): ${fmt(totalEarnings)}`,
       `Across ${employees} employee${employees !== 1 ? "s" : ""}`,
+      `Capped at ${fmt(cap)} per employee${cappedCount > 0 ? ` · ${cappedCount} over the cap` : ""}`,
       ``,
-      ...rows.map((r) => `${r.name}: ${fmt(r.earnings)}`),
+      ...rows.map((r) => `${r.name}: ${fmt(r.earnings)}${r.raw > r.earnings + 0.005 ? ` (capped from ${fmt(r.raw)})` : ""}`),
     ];
-    void shareReport("COIDA Return of Earnings", `${label} · uncapped`, lines, business);
+    void shareReport("COIDA Return of Earnings", `${label} · capped at ${fmt(cap)}`, lines, business);
   };
 
   const coidaPdfData = (): CoidaPdfData => ({
     yearLabel: label,
     employees,
     totalEarnings,
-    rows: rows.map((r) => ({ workerName: r.name, earnings: r.earnings })),
+    cap,
+    cappedCount,
+    rows: rows.map((r) => ({ workerName: r.name, earnings: r.earnings, raw: r.raw })),
   });
 
   if ((staff ?? []).length === 0 && yearRuns.length === 0) {
@@ -98,16 +110,21 @@ export function CoidaView() {
           Earnings to report · {label}
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <span style={{ fontSize: 15, color: "#38BDF8", fontWeight: 700 }}>Total earnings</span>
+          <span style={{ fontSize: 15, color: "#38BDF8", fontWeight: 700 }}>Earnings to report</span>
           <span style={{ fontSize: 24, color: "#fff", fontWeight: 900 }}>{fmt(totalEarnings)}</span>
         </div>
         <div style={{ fontSize: 11, color: "#38BDF8", marginTop: 8 }}>
-          {employees} employee{employees !== 1 ? "s" : ""} · total gross wages paid in {label}
+          {employees} employee{employees !== 1 ? "s" : ""} · capped at {fmt(cap)} each
+          {cappedCount > 0 ? ` · ${cappedCount} over the cap` : ""}
         </div>
       </div>
 
       <div style={{ background: "#fffbeb", border: "1.5px solid #fde68a", borderRadius: 10, padding: "10px 14px", marginBottom: 14, fontSize: 12, color: "#92400e", lineHeight: 1.5 }}>
-        ⚠️ The ROE caps each employee&apos;s earnings at the annual OID threshold (it changes each year). This shows <strong>uncapped</strong> gross wages — confirm the cap with your accountant before submitting.
+        ⚠️ Each employee&apos;s earnings are capped at the OID maximum of <strong>{fmt(cap)}</strong> for the year (a Labour figure that changes yearly).
+        {cappedCount > 0
+          ? ` ${cappedCount} employee${cappedCount !== 1 ? "s were" : " was"} over it — gross wages this year were ${fmt(totalRaw)}.`
+          : " No one is over it this year."}{" "}
+        Confirm the current-year limit with your accountant.
       </div>
 
       <FilingActions
@@ -127,12 +144,18 @@ export function CoidaView() {
       {rows.length > 0 && (
         <>
           <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>Earnings by employee</div>
-          {rows.map((r, i) => (
-            <div key={`${r.name}-${i}`} style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 10, padding: "10px 12px", marginBottom: 6, display: "flex", justifyContent: "space-between" }}>
-              <span style={{ fontSize: 13, fontWeight: 700, color: "#111" }}>{r.name}</span>
-              <span style={{ fontSize: 13, fontWeight: 700, color: "#0C4A6E" }}>{fmt(r.earnings)}</span>
-            </div>
-          ))}
+          {rows.map((r, i) => {
+            const capped = r.raw > r.earnings + 0.005;
+            return (
+              <div key={`${r.name}-${i}`} style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 10, padding: "10px 12px", marginBottom: 6, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: "#111" }}>{r.name}</span>
+                  {capped && <div style={{ fontSize: 11, color: "#b45309" }}>capped from {fmt(r.raw)}</div>}
+                </div>
+                <span style={{ fontSize: 13, fontWeight: 700, color: "#0C4A6E" }}>{fmt(r.earnings)}</span>
+              </div>
+            );
+          })}
         </>
       )}
 
