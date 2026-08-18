@@ -78,6 +78,11 @@ function SupplierSpendTab() {
             filename="spend-by-supplier"
             pdf={() => ({ kind: "supplierspend", rows, totals, asAt: asAtLabel(), periodLabel })}
             fallbackHtml={(b, w) => buildSupplierSpendHTML(b, rows, totals, asAtLabel(), w, periodLabel)}
+            csv={() => ({
+              filename: "spend-by-supplier",
+              headers: ["Supplier", "Bills", "Billed", "Paid", "Outstanding", "Terms"],
+              rows: rows.map((r) => [r.name, r.invoices, r.billed, r.paid, r.outstanding, r.terms ?? ""]),
+            })}
             share={() => ({
               title: "Spend by Supplier",
               subtitle: `${periodLabel} · as at ${todayStr()}`,
@@ -135,6 +140,11 @@ function CategorySpendTab() {
             filename="spend-by-category"
             pdf={() => ({ kind: "categoryspend", rows, totals, asAt: asAtLabel(), periodLabel })}
             fallbackHtml={(b, w) => buildCategorySpendHTML(b, rows, totals, asAtLabel(), w, periodLabel)}
+            csv={() => ({
+              filename: "spend-by-category",
+              headers: ["Category", "Entries", "Amount", "Share %"],
+              rows: rows.map((r) => [r.category, r.count, r.amount, r.sharePct.toFixed(1)]),
+            })}
             share={() => ({
               title: "Spend by Category",
               subtitle: `${periodLabel} · as at ${todayStr()}`,
@@ -199,6 +209,11 @@ function CommittedTab() {
         filename="committed-on-order"
         pdf={() => ({ kind: "committedonorder", rows, totals, asAt: asAtLabel() })}
         fallbackHtml={(b, w) => buildCommittedHTML(b, rows, totals, asAtLabel(), w)}
+        csv={() => ({
+          filename: "committed-on-order",
+          headers: ["Supplier", "Document", "Ordered", "Wanted by", "Age (days)", "Status", "Amount"],
+          rows: rows.map((r) => [r.supplier, r.docNumber ?? "", r.issueDate ?? "", r.requestedDelivery ?? "", r.ageDays, r.status, r.amount]),
+        })}
         share={() => ({
           title: "Committed on Order",
           subtitle: `As at ${todayStr()}`,
@@ -288,6 +303,11 @@ function BillsDueTab() {
             w
           )
         }
+        csv={() => ({
+          filename: "bills-due",
+          headers: ["Supplier", "Document", "Due date", "When", "Amount"],
+          rows: rows.map((r) => [r.supplier, r.docNumber ?? "", r.dueDate ?? "", BILL_BUCKET_LABEL[r.bucket], r.amount]),
+        })}
         share={() => ({
           title: "Bills Due",
           subtitle: `As at ${todayStr()}`,

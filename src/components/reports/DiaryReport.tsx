@@ -134,6 +134,11 @@ export function DiaryReport() {
             fallbackHtml={(business, watermark) =>
               buildDiaryReportHTML(business, pdfStatuses, pdfClients, totals, asAtLabel(), watermark, periodLabel)
             }
+            csv={() => ({
+              filename: "diary-report",
+              headers: ["Client", "Appointments", "No-shows", "Value"],
+              rows: clients.map((c) => [c.name, c.appointments, c.noShows, c.value]),
+            })}
             share={() => ({
               title: "Diary Report",
               subtitle: `${periodLabel} · as at ${todayStr()}`,

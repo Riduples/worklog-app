@@ -86,6 +86,11 @@ function SalesSummaryTab() {
             filename="sales-summary"
             pdf={() => ({ kind: "salessummary", rows: months, totals, asAt: asAtLabel(), periodLabel })}
             fallbackHtml={(b, w) => buildSalesSummaryHTML(b, months, totals, asAtLabel(), w, periodLabel)}
+            csv={() => ({
+              filename: "sales-summary",
+              headers: ["Month", "Invoices", "Net", "VAT", "Credited", "Outstanding"],
+              rows: months.map((m) => [MONTH_LABEL(m.month), m.invoices, m.net, m.vat, m.credited, m.outstanding]),
+            })}
             share={() => ({
               title: "Sales Summary",
               subtitle: `${periodLabel} · as at ${todayStr()}`,
@@ -166,6 +171,11 @@ function QuoteConversionTab() {
             filename="quote-conversion"
             pdf={() => ({ kind: "quoteconversion", rows: pdfRows, totals, asAt: asAtLabel(), periodLabel })}
             fallbackHtml={(b, w) => buildQuoteConversionHTML(b, pdfRows, totals, asAtLabel(), w, periodLabel)}
+            csv={() => ({
+              filename: "quote-conversion",
+              headers: ["Outcome", "Quotes", "Value"],
+              rows: rows.map((r) => [r.label, r.count, r.value]),
+            })}
             share={() => ({
               title: "Quote Conversion",
               subtitle: `${periodLabel} · as at ${todayStr()}`,
@@ -229,6 +239,11 @@ function WhatSellsTab() {
             filename="what-sells"
             pdf={() => ({ kind: "whatsells", rows, totals, asAt: asAtLabel(), periodLabel })}
             fallbackHtml={(b, w) => buildWhatSellsHTML(b, rows, totals, asAtLabel(), w, periodLabel)}
+            csv={() => ({
+              filename: "what-sells",
+              headers: ["Description", "Qty sold", "Invoices", "Value"],
+              rows: rows.map((r) => [r.description, r.qty, r.invoices, r.value]),
+            })}
             share={() => ({
               title: "What Sells",
               subtitle: `${periodLabel} · as at ${todayStr()}`,
@@ -282,6 +297,11 @@ function RecurringTab() {
         filename="recurring-revenue"
         pdf={() => ({ kind: "recurringrevenue", rows, totals, asAt: asAtLabel() })}
         fallbackHtml={(b, w) => buildRecurringRevenueHTML(b, rows, totals, asAtLabel(), w)}
+        csv={() => ({
+          filename: "recurring-revenue",
+          headers: ["Client", "Document", "Recurrence", "Next run", "Amount", "Per month"],
+          rows: rows.map((r) => [r.client, r.docNumber ?? "", r.recurrenceLabel, r.nextRun ?? "", r.amount, r.perMonth]),
+        })}
         share={() => ({
           title: "Recurring Revenue",
           subtitle: `As at ${todayStr()}`,

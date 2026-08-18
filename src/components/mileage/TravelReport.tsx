@@ -11,6 +11,7 @@ import { shareReport } from "@/lib/docgen/shareReport";
 import { buildTravelReportHTML, type TravelLogbook } from "@/lib/docgen/buildLedgerHTML";
 import { openDocumentForPrinting } from "@/lib/docgen/shareDocument";
 import { renderPdf, downloadBlob } from "@/lib/docgen/renderPdf";
+import { ExportCsvButton } from "@/components/reports/ReportShell";
 import { fmt, todayStr } from "@/lib/format";
 import {
   inPeriod,
@@ -323,6 +324,14 @@ export function TravelReport() {
           📤 Share
         </button>
       </div>
+      <ExportCsvButton
+        style={{ marginTop: 10 }}
+        csv={() => ({
+          filename: "travel-report",
+          headers: ["Date", "Type", "Purpose", "Odometer start", "Odometer end", "Km", "SARS deduction"],
+          rows: pdfRows.map((r) => [r.date, r.type, r.purpose, r.odoStart, r.odoEnd, r.km, r.deduction]),
+        })}
+      />
         </>
       )}
 

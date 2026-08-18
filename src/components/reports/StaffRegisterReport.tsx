@@ -9,6 +9,7 @@ import { shareReport } from "@/lib/docgen/shareReport";
 import { buildStaffRegisterHTML } from "@/lib/docgen/buildLedgerHTML";
 import { openDocumentForPrinting } from "@/lib/docgen/shareDocument";
 import { renderPdf, downloadBlob } from "@/lib/docgen/renderPdf";
+import { ExportCsvButton } from "@/components/reports/ReportShell";
 import { fmt, todayStr } from "@/lib/format";
 
 // The order the register's own type filter uses, so the two screens read the same.
@@ -178,6 +179,14 @@ export function StaffRegisterReport() {
               📤 Share
             </button>
           </div>
+          <ExportCsvButton
+            style={{ marginTop: 10 }}
+            csv={() => ({
+              filename: "staff-register",
+              headers: ["Name", "Employee number", "Employment type", "Pay type", "Rate", "Days per week", "Hours per day", "Start date", "Months employed", "Monthly cost", "Status"],
+              rows: pdfRows.map((r) => [r.name, r.employeeNumber ?? "", r.employmentType, r.payType, r.rate, r.daysPerWeek ?? "", r.hoursPerDay ?? "", r.startDate ?? "", r.monthsEmployed, r.monthlyCost, r.status]),
+            })}
+          />
         </>
       )}
     </>

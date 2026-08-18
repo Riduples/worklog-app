@@ -9,6 +9,7 @@ import { shareReport } from "@/lib/docgen/shareReport";
 import { buildAdvancesReportHTML } from "@/lib/docgen/buildLedgerHTML";
 import { openDocumentForPrinting } from "@/lib/docgen/shareDocument";
 import { renderPdf, downloadBlob } from "@/lib/docgen/renderPdf";
+import { ExportCsvButton } from "@/components/reports/ReportShell";
 import { fmt, todayStr } from "@/lib/format";
 
 // The Advances tab of Payroll Reports — who has been given what, what Pay Run has
@@ -166,6 +167,14 @@ export function AdvancesReport() {
           📤 Share
         </button>
       </div>
+      <ExportCsvButton
+        style={{ marginTop: 10 }}
+        csv={() => ({
+          filename: "advances-report",
+          headers: ["Name", "Advanced", "Repaid", "Balance", "Repay per run", "Runs left"],
+          rows: rows.map((r) => [r.name, r.advanced, r.repaid, r.balance, r.repayPerRun, r.runsLeft]),
+        })}
+      />
     </>
   );
 }

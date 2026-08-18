@@ -56,6 +56,11 @@ function StockOnHandTab() {
         filename="stock-on-hand"
         pdf={() => ({ kind: "stockonhand", rows, totals, asAt: asAtLabel() })}
         fallbackHtml={(b, w) => buildStockOnHandHTML(b, rows, totals, asAtLabel(), w)}
+        csv={() => ({
+          filename: "stock-on-hand",
+          headers: ["Item", "Type", "Qty", "Cost price", "At cost", "At sell"],
+          rows: rows.map((r) => [r.name, r.typeLabel, r.qty, r.costPrice, r.atCost, r.atSell]),
+        })}
         share={() => ({
           title: "Stock on Hand",
           subtitle: `As at ${todayStr()}`,
@@ -117,6 +122,11 @@ function MarginsTab() {
         filename="margins"
         pdf={() => ({ kind: "margins", rows, totals, asAt: asAtLabel() })}
         fallbackHtml={(b, w) => buildMarginsHTML(b, rows, totals, asAtLabel(), w)}
+        csv={() => ({
+          filename: "margins",
+          headers: ["Item", "Type", "Cost price", "Sell price", "Profit each", "Margin %", "Markup %"],
+          rows: rows.map((r) => [r.name, r.typeLabel, r.costPrice, r.unpriced ? "" : r.sellPrice, r.unpriced ? "" : r.profit, r.unpriced ? "" : r.marginPct.toFixed(1), r.unpriced ? "" : r.markupPct.toFixed(1)]),
+        })}
         share={() => ({
           title: "Margins",
           subtitle: `As at ${todayStr()}`,
@@ -179,6 +189,11 @@ function ReorderTab() {
         filename="reorder-list"
         pdf={() => ({ kind: "reorderlist", rows, totals, asAt: asAtLabel() })}
         fallbackHtml={(b, w) => buildReorderHTML(b, rows, totals, asAtLabel(), w)}
+        csv={() => ({
+          filename: "reorder-list",
+          headers: ["Item", "Type", "On hand", "Reorder level", "Short by", "Cost to restock", "Out of stock"],
+          rows: rows.map((r) => [r.name, r.typeLabel, r.qty, r.reorderLevel, r.shortBy, r.costToRestock, r.outOfStock ? "yes" : "no"]),
+        })}
         share={() => ({
           title: "Reorder List",
           subtitle: `As at ${todayStr()}`,
@@ -243,6 +258,11 @@ function CostingDriftTab() {
         filename="costings-vs-price-list"
         pdf={() => ({ kind: "costingdrift", rows, totals, asAt: asAtLabel() })}
         fallbackHtml={(b, w) => buildCostingDriftHTML(b, rows, totals, asAtLabel(), w)}
+        csv={() => ({
+          filename: "costings-vs-price-list",
+          headers: ["Costing", "On price list", "Total cost", "Suggested price", "Listed price", "Difference", "Difference %"],
+          rows: rows.map((r) => [r.name, r.linked ? "yes" : "no", r.totalCost, r.suggestedPrice, r.linked ? (r.listedPrice ?? 0) : "", r.linked ? r.difference : "", r.linked ? r.differencePct.toFixed(1) : ""]),
+        })}
         share={() => ({
           title: "Costings vs Price List",
           subtitle: `As at ${todayStr()}`,

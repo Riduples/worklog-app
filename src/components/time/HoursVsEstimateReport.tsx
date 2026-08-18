@@ -10,6 +10,7 @@ import { shareReport } from "@/lib/docgen/shareReport";
 import { buildActualVsEstimateHTML } from "@/lib/docgen/buildLedgerHTML";
 import { openDocumentForPrinting } from "@/lib/docgen/shareDocument";
 import { renderPdf, downloadBlob } from "@/lib/docgen/renderPdf";
+import { ExportCsvButton } from "@/components/reports/ReportShell";
 import { todayStr } from "@/lib/format";
 
 const STATUS_META: Record<JobStatus, { badge: string; bg: string; border: string; text: string; bar: string }> = {
@@ -201,6 +202,19 @@ export function HoursVsEstimateReport() {
             📤 Share
           </button>
         </div>
+      )}
+      {jobs.length > 0 && (
+        <ExportCsvButton
+          style={{ marginTop: 10 }}
+          csv={() => ({
+            filename: "actual-vs-estimate",
+            headers: ["Client", "Reference", "Quoted hours", "Logged hours", "Billable hours", "Non-billable hours", "Over by", "Remaining", "Status"],
+            rows: [
+              ...pdfRows.map((r) => [r.client, r.reference, r.quotedHours, r.loggedHours, r.billableHours, r.nonBillableHours, r.overBy, r.remaining, r.status]),
+              ...pdfOther.map((r) => [r.client, "", "", r.loggedHours, r.billableHours, r.nonBillableHours, "", "", "No estimate"]),
+            ],
+          })}
+        />
       )}
     </>
   );

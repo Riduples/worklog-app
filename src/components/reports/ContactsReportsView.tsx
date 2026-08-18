@@ -74,6 +74,11 @@ function DirectoryTab() {
         filename="contact-directory"
         pdf={() => ({ kind: "contactdirectory", rows, totals, asAt: asAtLabel() })}
         fallbackHtml={(b, w) => buildDirectoryHTML(b, rows, totals, asAtLabel(), w)}
+        csv={() => ({
+          filename: "contact-directory",
+          headers: ["Name", "Type", "Phone", "Email", "Address", "Bank", "Payment note"],
+          rows: rows.map((r) => [r.name, r.typeLabel, r.phone ?? "", r.email ?? "", r.address ?? "", r.bank ?? "", r.paymentNote ?? ""]),
+        })}
         share={() => ({
           title: "Contact Directory",
           subtitle: `As at ${todayStr()}`,
@@ -147,6 +152,11 @@ function PayersTab() {
         filename="who-pays-late"
         pdf={() => ({ kind: "payers", rows, totals, asAt: asAtLabel() })}
         fallbackHtml={(b, w) => buildPayersHTML(b, rows, totals, asAtLabel(), w)}
+        csv={() => ({
+          filename: "who-pays-late",
+          headers: ["Name", "Marked as", "Measured", "Avg days to pay", "Settled invoices", "Overdue now", "Overdue amount"],
+          rows: rows.map((r) => [r.name, r.behaviour, r.measured, r.averageDays == null ? "" : r.averageDays.toFixed(0), r.paidInvoices, r.overdueCount, r.overdueAmount]),
+        })}
         share={() => ({
           title: "Who Pays Late",
           subtitle: `As at ${todayStr()}`,
@@ -225,6 +235,11 @@ function DormantTab() {
             filename="dormant-customers"
             pdf={() => ({ kind: "dormantcustomers", rows, totals, asAt: asAtLabel(), monthsLabel })}
             fallbackHtml={(b, w) => buildDormantHTML(b, rows, totals, asAtLabel(), w, monthsLabel)}
+            csv={() => ({
+              filename: "dormant-customers",
+              headers: ["Name", "Phone", "Last activity", "Last seen", "Days quiet"],
+              rows: rows.map((r) => [r.name, r.phone ?? "", r.never ? "Never used" : r.lastSeenWhat, r.never ? "" : r.lastSeen, r.daysQuiet ?? ""]),
+            })}
             share={() => ({
               title: "Dormant Customers",
               subtitle: `Quiet ${monthsLabel}+ · as at ${todayStr()}`,
@@ -279,6 +294,11 @@ function MissingTab() {
         filename="missing-details"
         pdf={() => ({ kind: "missingdetails", rows, totals, asAt: asAtLabel() })}
         fallbackHtml={(b, w) => buildMissingDetailsHTML(b, rows, totals, asAtLabel(), w)}
+        csv={() => ({
+          filename: "missing-details",
+          headers: ["Name", "Type", "Missing", "Blocking"],
+          rows: rows.map((r) => [r.name, r.typeLabel, r.missing.join("; "), r.blocking ? "yes" : "no"]),
+        })}
         share={() => ({
           title: "Missing Details",
           subtitle: `As at ${todayStr()}`,

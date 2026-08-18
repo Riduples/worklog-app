@@ -13,6 +13,7 @@ import { shareReport } from "@/lib/docgen/shareReport";
 import { buildAgeAnalysisHTML } from "@/lib/docgen/buildLedgerHTML";
 import { openDocumentForPrinting } from "@/lib/docgen/shareDocument";
 import { renderPdf, downloadBlob } from "@/lib/docgen/renderPdf";
+import { ExportCsvButton } from "@/components/reports/ReportShell";
 import { BackLink } from "@/components/ui/BackLink";
 
 type Bucket = "0–30" | "31–60" | "61–90" | "90+";
@@ -216,6 +217,14 @@ export function AgeAnalysisView({ side }: { side: "debtors" | "creditors" }) {
           📤 Share
         </button>
       </div>
+      <ExportCsvButton
+        style={{ marginTop: 10 }}
+        csv={() => ({
+          filename: `age-analysis-${isDebtors ? "customers" : "suppliers"}`,
+          headers: [isDebtors ? "Customer" : "Supplier", "Reference", "Date", "Days", "Bucket", "Amount"],
+          rows: items.map((i) => [i.name, i.docNumber, i.date || "", i.days, `${i.bucket} days`, i.amount]),
+        })}
+      />
     </div>
   );
 }

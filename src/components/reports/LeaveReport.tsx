@@ -10,6 +10,7 @@ import { shareReport } from "@/lib/docgen/shareReport";
 import { buildLeaveReportHTML } from "@/lib/docgen/buildLedgerHTML";
 import { openDocumentForPrinting } from "@/lib/docgen/shareDocument";
 import { renderPdf, downloadBlob } from "@/lib/docgen/renderPdf";
+import { ExportCsvButton } from "@/components/reports/ReportShell";
 import { todayStr } from "@/lib/format";
 
 const d = (n: number) => `${n}d`;
@@ -171,6 +172,14 @@ export function LeaveReport() {
           📤 Share
         </button>
       </div>
+      <ExportCsvButton
+        style={{ marginTop: 10 }}
+        csv={() => ({
+          filename: "leave-report",
+          headers: ["Name", "Start date", "Months", "Annual accrued", "Annual taken", "Annual balance", "Sick taken", "Sick balance", "Family taken", "Family balance", "Status"],
+          rows: pdfRows.map((r) => [r.name, r.startDate ?? "", r.months, r.annualAccrued, r.annualTaken, r.annualBalance, r.sickTaken, r.sickBalance, r.familyTaken, r.familyBalance, r.status]),
+        })}
+      />
     </>
   );
 }

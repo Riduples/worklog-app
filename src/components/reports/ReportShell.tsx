@@ -6,6 +6,7 @@ import { useTrialState } from "@/lib/supabase/hooks/useSubscription";
 import { shareReport } from "@/lib/docgen/shareReport";
 import { openDocumentForPrinting } from "@/lib/docgen/shareDocument";
 import { renderPdf, downloadBlob, type RenderPdfBody } from "@/lib/docgen/renderPdf";
+import { exportCsv, type CsvExport } from "@/lib/docgen/exportCsv";
 import { BackLink } from "@/components/ui/BackLink";
 import { PERIOD_LABELS, type Period } from "@/lib/period";
 
@@ -197,11 +198,18 @@ export function ReportActions({
   filename,
   fallbackHtml,
   share,
+  csv,
 }: {
   pdf: () => RenderPdfBody;
   filename: string;
   fallbackHtml: (business: BusinessProfile, watermark: boolean) => string;
   share: () => { title: string; subtitle: string; lines: string[] };
+  /**
+   * When given, an "Export CSV" button appears under Download PDF / Share — the
+   * data behind the report as a spreadsheet, the mirror of the CSV import. The
+   * callback runs at click time so the file always holds the current view.
+   */
+  csv?: () => CsvExport;
 }) {
   const { data: business } = useBusinessProfile();
   const { isTrialing, isReadOnly } = useTrialState();
@@ -238,14 +246,48 @@ export function ReportActions({
   };
 
   return (
-    <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
-      <button onClick={handlePrint} disabled={!business || busy} style={btn}>
-        {busy ? "📄 Preparing..." : "📄 Download PDF"}
-      </button>
-      <button onClick={handleShare} style={btn}>
-        📤 Share
-      </button>
+    <div style={{ marginTop: 8 }}>
+      <div style={{ display: "flex", gap: 10 }}>
+        <button onClick={handlePrint} disabled={!business || busy} style={btn}>
+          {busy ? "📄 Preparing..." : "📄 Download PDF"}
+        </button>
+        <button onClick={handleShare} style={btn}>
+          📤 Share
+        </button>
+      </div>
+      {csv && (
+        <button onClick={() => exportCsv(csv())} style={{ ...btn, width: "100%", flex: "none", marginTop: 10 }}>
+          ⬇ Export CSV
+        </button>
+      )}
     </div>
+  );
+}
+
+/**
+ * The standalone Export CSV button, for the reports that hand-roll their own
+ * Download PDF / Share pair rather than going through ReportActions. Same look as
+ * the buttons beside it, so a report gains export without changing its layout.
+ */
+export function ExportCsvButton({ csv, style }: { csv: () => CsvExport; style?: React.CSSProperties }) {
+  return (
+    <button
+      onClick={() => exportCsv(csv())}
+      style={{
+        width: "100%",
+        background: "#F0F9FF",
+        color: "#0C4A6E",
+        border: "1.5px solid #BAE6FD",
+        borderRadius: 12,
+        padding: 13,
+        fontWeight: 700,
+        fontSize: 13,
+        cursor: "pointer",
+        ...style,
+      }}
+    >
+      ⬇ Export CSV
+    </button>
   );
 }
 
