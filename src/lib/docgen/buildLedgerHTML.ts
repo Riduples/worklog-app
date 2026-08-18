@@ -2006,3 +2006,254 @@ export function buildEmp201HTML(business: BusinessProfile, data: Emp201PdfData, 
 </body>
 </html>`;
 }
+
+// ── VAT201 ───────────────────────────────────────────────────────────────────
+export type Vat201PdfData = {
+  periodLabel: string;
+  vatPeriod: string;
+  standardTurnover: number;
+  zeroRatedTurnover: number;
+  exemptTurnover: number;
+  totalTurnover: number;
+  outputVAT: number;
+  custCreditVat: number;
+  inputVAT: number;
+  suppCreditVat: number;
+  vatDue: number; // + = payable, − = refund
+};
+
+export function buildVat201HTML(business: BusinessProfile, data: Vat201PdfData, asAt: string, watermark = false): string {
+  const payable = data.vatDue >= 0;
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" /><title>VAT201</title><style>${SHARED_CSS}</style></head>
+<body>
+  ${watermark ? `<div class="wm">TRIAL — NOT FINAL</div>` : ""}
+  ${header(business, "VAT201", `${esc(data.periodLabel)} · as at ${asAt}`)}
+  <div class="meta-row">
+    ${fromBlock(business, "Vendor")}
+    <div style="text-align:right;">
+      <div class="meta-label">Tax period</div>
+      <div style="font-size:20px;font-weight:800;">${esc(data.periodLabel)}</div>
+      <div style="font-size:12px;color:#64748b;margin-top:2px;">${esc(data.vatPeriod)}</div>
+    </div>
+  </div>
+  <table>
+    <thead><tr><th>Supplies this period (excl. VAT)</th><th style="text-align:right;">Value</th></tr></thead>
+    <tbody>
+      <tr><td>Standard-rated (15%)</td><td style="text-align:right;">${fmt(data.standardTurnover)}</td></tr>
+      <tr><td>Zero-rated (0%)</td><td style="text-align:right;">${fmt(data.zeroRatedTurnover)}</td></tr>
+      <tr><td>Exempt</td><td style="text-align:right;">${fmt(data.exemptTurnover)}</td></tr>
+      <tr><td style="font-weight:700;">Total turnover</td><td style="text-align:right;font-weight:700;">${fmt(data.totalTurnover)}</td></tr>
+    </tbody>
+  </table>
+  <div class="totals">
+    <div class="totals-box">
+      <div class="totals-row"><span>Output VAT (on sales)</span><span>${fmt(data.outputVAT)}</span></div>
+      ${data.custCreditVat > 0 ? `<div class="totals-row"><span>Less credit notes</span><span>−${fmt(data.custCreditVat)}</span></div>` : ""}
+      <div class="totals-row"><span>Input VAT (on purchases)</span><span>−${fmt(data.inputVAT)}</span></div>
+      ${data.suppCreditVat > 0 ? `<div class="totals-row"><span>Less credit notes</span><span>−${fmt(data.suppCreditVat)}</span></div>` : ""}
+      <div class="totals-row final"><span>${payable ? "VAT payable" : "VAT refund due"}</span><span>${fmt(Math.abs(data.vatDue))}</span></div>
+    </div>
+  </div>
+  <div class="footer">
+    VAT201 working for ${esc(data.periodLabel)}, as at ${esc(asAt)}. Only standard-rated supplies produce output VAT. Submit the actual return via SARS eFiling — this is a calculation aid, not a filing. Due by the 25th of the month after the period ends.<br/>Generated via Worklog — worklog.co.za${
+      watermark ? `<br/><strong style="color:#dc2626;">Draft — made on a free Worklog trial.</strong>` : ""
+    }
+  </div>
+</body>
+</html>`;
+}
+
+// ── UIF declaration (monthly) ────────────────────────────────────────────────
+export type Uif201PdfRow = { workerName: string; payDate: string; gross: number; uifEmployee: number; uifEmployer: number };
+export type Uif201PdfData = {
+  periodLabel: string;
+  dueDate: string;
+  employeesPaid: number;
+  uifEmployee: number;
+  uifEmployer: number;
+  total: number;
+  uifRef: string;
+  rows: Uif201PdfRow[];
+};
+
+export function buildUif201HTML(business: BusinessProfile, data: Uif201PdfData, asAt: string, watermark = false): string {
+  const body = data.rows.length
+    ? data.rows
+        .map(
+          (r) => `
+      <tr>
+        <td>${esc(r.workerName)}</td>
+        <td>${esc(r.payDate)}</td>
+        <td style="text-align:right;">${fmt(r.gross)}</td>
+        <td style="text-align:right;">${fmt(r.uifEmployee)}</td>
+        <td style="text-align:right;">${fmt(r.uifEmployer)}</td>
+      </tr>`
+        )
+        .join("")
+    : `<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:16px;">No pay runs recorded for this month.</td></tr>`;
+
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" /><title>UIF declaration</title><style>${SHARED_CSS}</style></head>
+<body>
+  ${watermark ? `<div class="wm">TRIAL — NOT FINAL</div>` : ""}
+  ${header(business, "UIF DECLARATION", `${esc(data.periodLabel)} · as at ${asAt}`)}
+  <div class="meta-row">
+    ${fromBlock(business, "Employer")}
+    <div style="text-align:right;">
+      <div class="meta-label">Declaration period</div>
+      <div style="font-size:20px;font-weight:800;">${esc(data.periodLabel)}</div>
+      <div style="font-size:12px;color:#64748b;margin-top:2px;">${data.employeesPaid} employee${data.employeesPaid !== 1 ? "s" : ""} · due ${esc(data.dueDate)}</div>
+      ${data.uifRef ? `<div class="vat-note" style="margin-top:6px;">Ref: ${esc(data.uifRef)}</div>` : ""}
+    </div>
+  </div>
+  <table>
+    <thead>
+      <tr><th>Employee</th><th>Pay date</th><th style="text-align:right;">Gross</th><th style="text-align:right;">UIF employee</th><th style="text-align:right;">UIF employer</th></tr>
+    </thead>
+    <tbody>${body}</tbody>
+  </table>
+  <div class="totals">
+    <div class="totals-box">
+      <div class="totals-row"><span>UIF — employee (1%)</span><span>${fmt(data.uifEmployee)}</span></div>
+      <div class="totals-row"><span>UIF — employer (1%)</span><span>${fmt(data.uifEmployer)}</span></div>
+      <div class="totals-row final"><span>Total UIF</span><span>${fmt(data.total)}</span></div>
+    </div>
+  </div>
+  <div class="footer">
+    Monthly UIF declaration for ${esc(data.periodLabel)}, as at ${esc(asAt)}. Declare on uFiling (Department of Employment &amp; Labour) — this is a calculation aid, not a filing. Submit a UI-19 whenever someone joins or leaves.<br/>Generated via Worklog — worklog.co.za${
+      watermark ? `<br/><strong style="color:#dc2626;">Draft — made on a free Worklog trial.</strong>` : ""
+    }
+  </div>
+</body>
+</html>`;
+}
+
+// ── COIDA — annual Return of Earnings ────────────────────────────────────────
+export type CoidaPdfRow = { workerName: string; earnings: number };
+export type CoidaPdfData = {
+  yearLabel: string;
+  employees: number;
+  totalEarnings: number;
+  rows: CoidaPdfRow[];
+};
+
+export function buildCoidaHTML(business: BusinessProfile, data: CoidaPdfData, asAt: string, watermark = false): string {
+  const body = data.rows.length
+    ? data.rows
+        .map(
+          (r) => `
+      <tr>
+        <td>${esc(r.workerName)}</td>
+        <td style="text-align:right;">${fmt(r.earnings)}</td>
+      </tr>`
+        )
+        .join("")
+    : `<tr><td colspan="2" style="text-align:center;color:#94a3b8;padding:16px;">No wages recorded for this year.</td></tr>`;
+
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" /><title>COIDA Return of Earnings</title><style>${SHARED_CSS}</style></head>
+<body>
+  ${watermark ? `<div class="wm">TRIAL — NOT FINAL</div>` : ""}
+  ${header(business, "RETURN OF EARNINGS", `${esc(data.yearLabel)} · as at ${asAt}`)}
+  <div class="meta-row">
+    ${fromBlock(business, "Employer")}
+    <div style="text-align:right;">
+      <div class="meta-label">Assessment year</div>
+      <div style="font-size:20px;font-weight:800;">${esc(data.yearLabel)}</div>
+      <div style="font-size:12px;color:#64748b;margin-top:2px;">${data.employees} employee${data.employees !== 1 ? "s" : ""}</div>
+    </div>
+  </div>
+  <table>
+    <thead><tr><th>Employee</th><th style="text-align:right;">Earnings (year)</th></tr></thead>
+    <tbody>${body}</tbody>
+  </table>
+  <div class="totals">
+    <div class="totals-box">
+      <div class="totals-row final"><span>Total earnings</span><span>${fmt(data.totalEarnings)}</span></div>
+    </div>
+  </div>
+  <div class="footer">
+    COIDA Return of Earnings for ${esc(data.yearLabel)}, as at ${esc(asAt)}. File on CompEasy — this is a calculation aid, not a filing. Each employee's earnings are capped at the annual OID threshold for the ROE; this shows uncapped totals, so confirm the cap with your accountant before submitting.<br/>Generated via Worklog — worklog.co.za${
+      watermark ? `<br/><strong style="color:#dc2626;">Draft — made on a free Worklog trial.</strong>` : ""
+    }
+  </div>
+</body>
+</html>`;
+}
+
+// ── EMP501 reconciliation ────────────────────────────────────────────────────
+// Reconciles what the pay runs add up to against what was declared on the
+// EMP201s marked filed. It never generates IRP5/IT3(a) certificates — that
+// (source codes, directives) is out of scope and stays on e@syFile.
+export type Emp501PdfRow = { month: string; declared: number | null; calculated: number };
+export type Emp501PdfData = {
+  periodLabel: string;
+  paye: number;
+  uif: number;
+  sdl: number;
+  eti: number;
+  totalCalculated: number;
+  totalDeclared: number;
+  difference: number;
+  rows: Emp501PdfRow[];
+};
+
+export function buildEmp501HTML(business: BusinessProfile, data: Emp501PdfData, asAt: string, watermark = false): string {
+  const body = data.rows.length
+    ? data.rows
+        .map((r) => {
+          const diff = r.declared == null ? null : r.calculated - r.declared;
+          return `
+      <tr>
+        <td>${esc(r.month)}</td>
+        <td style="text-align:right;">${fmt(r.calculated)}</td>
+        <td style="text-align:right;">${r.declared == null ? `<span style="color:#b45309;">not filed</span>` : fmt(r.declared)}</td>
+        <td style="text-align:right;color:${diff && Math.abs(diff) >= 0.5 ? "#be123c" : "#94a3b8"};">${diff == null ? "—" : fmt(diff)}</td>
+      </tr>`;
+        })
+        .join("")
+    : `<tr><td colspan="4" style="text-align:center;color:#94a3b8;padding:16px;">No pay runs in this period.</td></tr>`;
+
+  const reconciled = Math.abs(data.difference) < 0.5;
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" /><title>EMP501 reconciliation</title><style>${SHARED_CSS}</style></head>
+<body>
+  ${watermark ? `<div class="wm">TRIAL — NOT FINAL</div>` : ""}
+  ${header(business, "EMP501 RECONCILIATION", `${esc(data.periodLabel)} · as at ${asAt}`)}
+  <div class="meta-row">
+    ${fromBlock(business, "Employer")}
+    <div style="text-align:right;">
+      <div class="meta-label">Reconciliation period</div>
+      <div style="font-size:20px;font-weight:800;">${esc(data.periodLabel)}</div>
+    </div>
+  </div>
+  <table>
+    <thead>
+      <tr><th>Month</th><th style="text-align:right;">Per pay runs</th><th style="text-align:right;">Declared (EMP201)</th><th style="text-align:right;">Difference</th></tr>
+    </thead>
+    <tbody>${body}</tbody>
+  </table>
+  <div class="totals">
+    <div class="totals-box">
+      <div class="totals-row"><span>PAYE (per pay runs)</span><span>${fmt(data.paye)}</span></div>
+      <div class="totals-row"><span>UIF (per pay runs)</span><span>${fmt(data.uif)}</span></div>
+      ${data.sdl > 0 ? `<div class="totals-row"><span>SDL (per pay runs)</span><span>${fmt(data.sdl)}</span></div>` : ""}
+      ${data.eti > 0 ? `<div class="totals-row"><span>Less: ETI</span><span>−${fmt(data.eti)}</span></div>` : ""}
+      <div class="totals-row"><span>Total per pay runs</span><span>${fmt(data.totalCalculated)}</span></div>
+      <div class="totals-row"><span>Total declared (EMP201s filed)</span><span>${fmt(data.totalDeclared)}</span></div>
+      <div class="totals-row final"><span>${reconciled ? "Reconciled" : "Difference to resolve"}</span><span>${fmt(data.difference)}</span></div>
+    </div>
+  </div>
+  <div class="footer">
+    EMP501 reconciliation for ${esc(data.periodLabel)}, as at ${esc(asAt)}. This reconciles pay-run totals against the EMP201s you marked filed; it does not generate IRP5/IT3(a) certificates. File the EMP501 and issue certificates on SARS e@syFile.<br/>Generated via Worklog — worklog.co.za${
+      watermark ? `<br/><strong style="color:#dc2626;">Draft — made on a free Worklog trial.</strong>` : ""
+    }
+  </div>
+</body>
+</html>`;
+}

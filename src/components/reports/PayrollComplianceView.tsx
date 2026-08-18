@@ -131,6 +131,7 @@ export function PayrollComplianceView() {
                 <div style={{ fontSize: 13, fontWeight: 700, color: "#111" }}>EMP501 — reconciliation</div>
                 <div style={{ fontSize: 11, color: "#94a3b8" }}>Reconciles the EMP201s &amp; issues IRP5s · interim 31 Oct, annual 31 May (e@syFile)</div>
               </div>
+              <Link href="/emp501" style={{ fontSize: 12, color: "#0369A1", fontWeight: 600 }}>Open</Link>
             </div>
 
             <div style={{ ...rowStyle, borderBottom: "1px solid #f1f5f9" }}>
@@ -138,6 +139,7 @@ export function PayrollComplianceView() {
                 <div style={{ fontSize: 13, fontWeight: 700, color: "#111" }}>UIF declaration — monthly</div>
                 <div style={{ fontSize: 11, color: "#94a3b8" }}>uFiling · plus a UI-19 whenever someone joins or leaves</div>
               </div>
+              <Link href="/uif-declaration" style={{ fontSize: 12, color: "#0369A1", fontWeight: 600 }}>Open</Link>
             </div>
 
             <div style={{ ...rowStyle }}>
@@ -145,7 +147,10 @@ export function PayrollComplianceView() {
                 <div style={{ fontSize: 13, fontWeight: 700, color: "#111" }}>COIDA — Return of Earnings</div>
                 <div style={{ fontSize: 11, color: "#94a3b8" }}>Annual (CompEasy) · earnings to report for {year}</div>
               </div>
-              <span style={{ fontSize: 14, fontWeight: 800, color: "#0C4A6E" }}>{fmt(coidaEarnings)}</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{ fontSize: 14, fontWeight: 800, color: "#0C4A6E" }}>{fmt(coidaEarnings)}</span>
+                <Link href="/coida-roe" style={{ fontSize: 12, color: "#0369A1", fontWeight: 600 }}>Open</Link>
+              </div>
             </div>
           </div>
 

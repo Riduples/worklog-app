@@ -7,6 +7,11 @@ import type { Tables } from "@/lib/types/database";
 
 type TaxFiling = Tables<"tax_filings">;
 
+// The statutory returns the app can mark as filed. `filing_type` is a plain
+// string column, so widening this union is all it takes to add another return —
+// no migration. Each value is the key its own screen filters the history by.
+export type FilingType = "vat201" | "emp201" | "emp501" | "uif201" | "coida";
+
 const QUERY_KEY = ["tax_filings"];
 
 export function useTaxFilings() {
@@ -25,7 +30,7 @@ export function useMarkFiled() {
   const supabase = createClient();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (filing: { filing_type: "vat201" | "emp201"; period_label: string; amount: number }) => {
+    mutationFn: async (filing: { filing_type: FilingType; period_label: string; amount: number }) => {
       const {
         data: { user },
       } = await supabase.auth.getUser();

@@ -5,15 +5,14 @@ import Link from "next/link";
 import { usePayRuns } from "@/lib/supabase/hooks/usePayRuns";
 import { useStaffRegister } from "@/lib/supabase/hooks/useStaffRegister";
 import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
-import { useTaxFilings, useMarkFiled, useUnmarkFiled } from "@/lib/supabase/hooks/useTaxFilings";
-import { useTrialState } from "@/lib/supabase/hooks/useSubscription";
+import { useTaxFilings } from "@/lib/supabase/hooks/useTaxFilings";
 import { useTaxRates } from "@/lib/taxRates";
 import { calcETI, monthsEmployedFrom } from "@/lib/eti";
 import { fmt } from "@/lib/format";
 import { shareReport } from "@/lib/docgen/shareReport";
-import { renderPdf, downloadBlob } from "@/lib/docgen/renderPdf";
-import { openDocumentForPrinting } from "@/lib/docgen/shareDocument";
 import { buildEmp201HTML, type Emp201PdfData } from "@/lib/docgen/buildLedgerHTML";
+import { FilingActions, FilingHistory } from "@/components/reports/FilingActions";
+import { asAtLabel } from "@/components/reports/ReportShell";
 
 const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
@@ -22,18 +21,11 @@ export function Emp201View() {
   const { data: staff } = useStaffRegister();
   const { data: payRuns } = usePayRuns();
   const { data: filings } = useTaxFilings();
-  const markFiled = useMarkFiled();
-  const unmarkFiled = useUnmarkFiled();
-  const { isTrialing, isReadOnly } = useTrialState();
-  const watermark = isTrialing || isReadOnly;
   const { SDL_ANNUAL_THRESHOLD } = useTaxRates();
 
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month0, setMonth0] = useState(today.getMonth());
-  const [busy, setBusy] = useState(false);
-  const [showUndo, setShowUndo] = useState(false);
-  const [undoError, setUndoError] = useState("");
 
   const step = (dir: 1 | -1) => {
     let m = month0 + dir;
@@ -92,10 +84,6 @@ export function Emp201View() {
     .filter((p) => p.pay_date.startsWith(`${year}-`))
     .reduce((s, p) => s + Number(p.gross_wages ?? 0), 0);
 
-  const emp201Filings = (filings ?? []).filter((f) => f.filing_type === "emp201");
-  const currentFiling = emp201Filings.find((f) => f.period_label === label);
-  const alreadyFiled = !!currentFiling;
-
   // EMP201 is due by the 7th of the month after the pay month.
   const dueMonth0 = (month0 + 1) % 12;
   const dueYear = month0 === 11 ? year + 1 : year;
@@ -133,32 +121,6 @@ export function Emp201View() {
       uif: Number(p.uif_employee ?? 0) + Number(p.uif_employer ?? 0),
     })),
   });
-
-  const handlePrint = async () => {
-    if (!business || busy) return;
-    setBusy(true);
-    const asAt = new Date().toLocaleDateString("en-ZA", { year: "numeric", month: "long", day: "numeric" });
-    try {
-      const blob = await renderPdf({ kind: "emp201", data: emp201PdfData(), asAt });
-      downloadBlob(blob, `emp201-${monthKey}`);
-    } catch {
-      // Chromium cold/absent/timed out — fall back to the print flow.
-      openDocumentForPrinting(buildEmp201HTML(business, emp201PdfData(), asAt, watermark), `emp201-${monthKey}`);
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  // Undo a mistaken "mark as filed" — deletes only the marker row. Nothing else
-  // was created (this never touched eFiling), so there's nothing to reverse.
-  const handleUnfile = () => {
-    if (!currentFiling) return;
-    setUndoError("");
-    unmarkFiled.mutate(currentFiling.id, {
-      onSuccess: () => setShowUndo(false),
-      onError: (e) => setUndoError(e instanceof Error ? e.message : "Couldn't undo the filing."),
-    });
-  };
 
   if ((staff ?? []).length === 0) {
     return (
@@ -243,71 +205,19 @@ export function Emp201View() {
         </div>
       )}
 
-      {monthRuns.length === 0 ? (
-        <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 12, padding: 16, marginBottom: 14, fontSize: 13, color: "#94a3b8", textAlign: "center" }}>
-          No pay runs recorded for {label}.
-        </div>
-      ) : alreadyFiled ? (
-        <div style={{ marginBottom: 14 }}>
-          <div style={{ background: "#F0F9FF", border: "1.5px solid #7DD3FC", borderRadius: 10, padding: "10px 14px", fontSize: 13, color: "#0369A1" }}>
-            ✅ Marked as filed for {label}
-            {currentFiling?.filed_date ? <span style={{ color: "#64748b" }}> · {currentFiling.filed_date}</span> : null}
-          </div>
-          {/* Made a mistake? Un-marking removes only this "filed" record — it never
-              touched eFiling, so nothing else has to be reversed. Mirrors the
-              payslip's "void this pay run", scaled to what an EMP201 marker is. */}
-          <button
-            onClick={() => setShowUndo((p) => !p)}
-            style={{ width: "100%", marginTop: 8, background: "#fff1f2", border: "1.5px solid #fecdd3", borderRadius: 12, padding: "11px 16px", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}
-          >
-            <span style={{ fontSize: 13, fontWeight: 700, color: "#be123c" }}>↩️ Made a mistake? Undo this filing</span>
-            <span style={{ color: "#be123c" }}>{showUndo ? "▲" : "▼"}</span>
-          </button>
-          {showUndo && (
-            <div style={{ background: "#fff1f2", border: "1.5px solid #fecdd3", borderRadius: 12, padding: 14, marginTop: 8 }}>
-              <div style={{ fontSize: 12, color: "#7f1d1d", lineHeight: 1.6, marginBottom: 10 }}>
-                This removes the “filed” record for <strong>{label}</strong> so you can re-mark it once the numbers are right. It doesn&apos;t change anything on SARS eFiling — that submission, if you made one, stays as it is.
-              </div>
-              {undoError && <p style={{ color: "#dc2626", fontSize: 13, marginBottom: 10 }}>{undoError}</p>}
-              <button
-                onClick={handleUnfile}
-                disabled={unmarkFiled.isPending}
-                style={{ width: "100%", background: "#be123c", color: "#fff", border: "none", borderRadius: 12, padding: 13, fontSize: 13, fontWeight: 700, cursor: unmarkFiled.isPending ? "default" : "pointer", opacity: unmarkFiled.isPending ? 0.6 : 1 }}
-              >
-                {unmarkFiled.isPending ? "Undoing..." : "Confirm — undo this filing"}
-              </button>
-            </div>
-          )}
-        </div>
-      ) : (
-        <button
-          onClick={() => markFiled.mutate({ filing_type: "emp201", period_label: label, amount: totalDue })}
-          disabled={markFiled.isPending}
-          style={{ width: "100%", background: "#0369A1", border: "none", borderRadius: 14, padding: 15, fontSize: 15, fontWeight: 700, color: "#fff", cursor: markFiled.isPending ? "default" : "pointer", marginBottom: 14 }}
-        >
-          {markFiled.isPending ? "Saving..." : "✔️ Mark EMP201 as filed"}
-        </button>
-      )}
-
-      <div style={{ background: "#fff7ed", border: "1.5px solid #fed7aa", borderRadius: 12, padding: "12px 14px", fontSize: 12, color: "#92400e", lineHeight: 1.6, marginBottom: 14 }}>
-        Submit the actual EMP201 via SARS eFiling and declare UIF separately on uFiling — this is a calculation aid, not a filing. Penalty: 10% of PAYE if late.
-      </div>
-
-      <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
-        <button
-          onClick={handlePrint}
-          disabled={!business || busy}
-          style={{ flex: 1, background: "#F0F9FF", color: "#0C4A6E", border: "1.5px solid #BAE6FD", borderRadius: 12, padding: 13, fontWeight: 700, fontSize: 13, cursor: "pointer" }}
-        >
-          {busy ? "📄 Preparing..." : "📄 Download PDF"}
-        </button>
-        <button
-          onClick={handleShare}
-          style={{ flex: 1, background: "#F0F9FF", color: "#0C4A6E", border: "1.5px solid #BAE6FD", borderRadius: 12, padding: 13, fontWeight: 700, fontSize: 13, cursor: "pointer" }}
-        >
-          📤 Share
-        </button>
-      </div>
+      <FilingActions
+        filingType="emp201"
+        periodLabel={label}
+        amount={totalDue}
+        markLabel="Mark EMP201 as filed"
+        hasData={monthRuns.length > 0}
+        emptyLabel={`No pay runs recorded for ${label}.`}
+        note="Submit the actual EMP201 via SARS eFiling and declare UIF separately on uFiling — this is a calculation aid, not a filing. Penalty: 10% of PAYE if late."
+        filename={`emp201-${monthKey}`}
+        pdf={() => ({ kind: "emp201", data: emp201PdfData(), asAt: asAtLabel() })}
+        fallbackHtml={(b, w) => buildEmp201HTML(b, emp201PdfData(), asAtLabel(), w)}
+        share={handleShare}
+      />
 
       {monthRuns.length > 0 && (
         <>
@@ -326,35 +236,33 @@ export function Emp201View() {
         </>
       )}
 
-      {emp201Filings.length > 0 && (
-        <div style={{ marginTop: 16 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>Filing history</div>
-          {emp201Filings.map((f) => (
-            <div key={f.id} style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 10, padding: "9px 12px", marginBottom: 6, display: "flex", justifyContent: "space-between" }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>{f.period_label}</span>
-              <span style={{ fontSize: 12, color: "#64748b" }}>
-                {fmt(f.amount)} · filed {f.filed_date}
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
+      <FilingHistory filingType="emp201" filings={filings ?? []} />
 
       <div style={{ marginTop: 16 }}>
         <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>Related returns</div>
-        <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 10, padding: "10px 12px", marginBottom: 6 }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: "#111", marginBottom: 2 }}>EMP501 reconciliation</div>
-          <div style={{ fontSize: 11, color: "#94a3b8", lineHeight: 1.5 }}>
-            Twice-yearly reconciliation of your EMP201s — interim due 31 Oct, annual due 31 May. Reconcile these EMP201 totals with your IRP5/IT3(a) certificates on SARS eFiling.
+        <Link href="/uif-declaration" style={{ display: "block", textDecoration: "none", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 10, padding: "10px 12px", marginBottom: 6 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 2 }}>
+            <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>UIF declaration (monthly)</span>
+            <span style={{ fontSize: 12, color: "#0369A1", fontWeight: 600 }}>Open →</span>
           </div>
-        </div>
-        <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 10, padding: "10px 12px", marginBottom: 6 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 2 }}>
+          <div style={{ fontSize: 11, color: "#94a3b8", lineHeight: 1.5 }}>Declared to the Department of Employment &amp; Labour on uFiling — separately from this SARS return.</div>
+        </Link>
+        <Link href="/emp501" style={{ display: "block", textDecoration: "none", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 10, padding: "10px 12px", marginBottom: 6 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 2 }}>
+            <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>EMP501 reconciliation</span>
+            <span style={{ fontSize: 12, color: "#0369A1", fontWeight: 600 }}>Open →</span>
+          </div>
+          <div style={{ fontSize: 11, color: "#94a3b8", lineHeight: 1.5 }}>
+            Twice-yearly reconciliation of your EMP201s — interim due 31 Oct, annual due 31 May.
+          </div>
+        </Link>
+        <Link href="/coida-roe" style={{ display: "block", textDecoration: "none", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 10, padding: "10px 12px", marginBottom: 6 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 2 }}>
             <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>COIDA (annual Return of Earnings)</span>
             <span style={{ fontSize: 12, fontWeight: 700, color: "#0C4A6E" }}>{fmt(coidaEarnings)}</span>
           </div>
           <div style={{ fontSize: 11, color: "#94a3b8", lineHeight: 1.5 }}>Earnings to report for {year} — total gross wages paid this calendar year.</div>
-        </div>
+        </Link>
       </div>
     </div>
   );

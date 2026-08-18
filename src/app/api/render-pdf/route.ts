@@ -31,6 +31,10 @@ import {
   buildDormantHTML,
   buildMissingDetailsHTML,
   buildEmp201HTML,
+  buildVat201HTML,
+  buildUif201HTML,
+  buildCoidaHTML,
+  buildEmp501HTML,
   type StatementLine,
   type RemittanceLine,
   type StatementCredits,
@@ -65,6 +69,10 @@ import {
   type DormantPdfRow,
   type MissingPdfRow,
   type Emp201PdfData,
+  type Vat201PdfData,
+  type Uif201PdfData,
+  type CoidaPdfData,
+  type Emp501PdfData,
 } from "@/lib/docgen/buildLedgerHTML";
 import type { BusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 
@@ -254,6 +262,26 @@ type RenderRequest =
       kind: "emp201";
       data: Emp201PdfData;
       asAt: string;
+    }
+  | {
+      kind: "vat201";
+      data: Vat201PdfData;
+      asAt: string;
+    }
+  | {
+      kind: "uif201";
+      data: Uif201PdfData;
+      asAt: string;
+    }
+  | {
+      kind: "coida";
+      data: CoidaPdfData;
+      asAt: string;
+    }
+  | {
+      kind: "emp501";
+      data: Emp501PdfData;
+      asAt: string;
     };
 
 function buildHtml(body: RenderRequest, business: BusinessProfile, watermark: boolean): string | null {
@@ -316,6 +344,14 @@ function buildHtml(body: RenderRequest, business: BusinessProfile, watermark: bo
       return buildMissingDetailsHTML(business, body.rows, body.totals, body.asAt, watermark);
     case "emp201":
       return buildEmp201HTML(business, body.data, body.asAt, watermark);
+    case "vat201":
+      return buildVat201HTML(business, body.data, body.asAt, watermark);
+    case "uif201":
+      return buildUif201HTML(business, body.data, body.asAt, watermark);
+    case "coida":
+      return buildCoidaHTML(business, body.data, body.asAt, watermark);
+    case "emp501":
+      return buildEmp501HTML(business, body.data, body.asAt, watermark);
     default:
       return null;
   }

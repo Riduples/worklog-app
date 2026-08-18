@@ -6,12 +6,15 @@ import { useInvoices } from "@/lib/supabase/hooks/useInvoices";
 import { useIncome } from "@/lib/supabase/hooks/useIncome";
 import { useSupplierInvoices } from "@/lib/supabase/hooks/useSupplierInvoices";
 import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
-import { useTaxFilings, useMarkFiled } from "@/lib/supabase/hooks/useTaxFilings";
+import { useTaxFilings } from "@/lib/supabase/hooks/useTaxFilings";
 import { useCreditNotes } from "@/lib/supabase/hooks/useCreditNotes";
 import { sumCreditVat } from "@/lib/creditNotes";
 import { fmt, toLocalIsoDate } from "@/lib/format";
 import { suppliesByType } from "@/lib/vat201";
 import { shareReport } from "@/lib/docgen/shareReport";
+import { buildVat201HTML, type Vat201PdfData } from "@/lib/docgen/buildLedgerHTML";
+import { FilingActions, FilingHistory } from "@/components/reports/FilingActions";
+import { asAtLabel } from "@/components/reports/ReportShell";
 
 const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
@@ -43,7 +46,6 @@ export function Vat201View() {
   const { data: supplierInvoices } = useSupplierInvoices();
   const { data: creditNotes } = useCreditNotes();
   const { data: filings } = useTaxFilings();
-  const markFiled = useMarkFiled();
 
   const monthly = business?.vat_period === "Monthly";
   const today = new Date();
@@ -108,8 +110,19 @@ export function Vat201View() {
     total: totalTurnover,
   } = suppliesByType(invoices ?? [], income ?? [], creditNotes ?? [], fromDate, toDate);
 
-  const vat201Filings = (filings ?? []).filter((f) => f.filing_type === "vat201");
-  const alreadyFiled = vat201Filings.some((f) => f.period_label === label);
+  const vat201PdfData = (): Vat201PdfData => ({
+    periodLabel: label,
+    vatPeriod: business?.vat_period ?? "",
+    standardTurnover,
+    zeroRatedTurnover,
+    exemptTurnover,
+    totalTurnover,
+    outputVAT,
+    custCreditVat,
+    inputVAT,
+    suppCreditVat,
+    vatDue,
+  });
 
   const handleShare = () => {
     const lines = [
@@ -214,44 +227,19 @@ export function Vat201View() {
         </div>
       </div>
 
-      {alreadyFiled ? (
-        <div style={{ background: "#F0F9FF", border: "1.5px solid #7DD3FC", borderRadius: 10, padding: "10px 14px", marginBottom: 14, fontSize: 13, color: "#0369A1" }}>
-          ✅ Marked as filed for {label}
-        </div>
-      ) : (
-        <button
-          onClick={() => markFiled.mutate({ filing_type: "vat201", period_label: label, amount: vatDue })}
-          disabled={markFiled.isPending}
-          style={{ width: "100%", background: "#0369A1", border: "none", borderRadius: 14, padding: 15, fontSize: 15, fontWeight: 700, color: "#fff", cursor: markFiled.isPending ? "default" : "pointer", marginBottom: 14 }}
-        >
-          {markFiled.isPending ? "Saving..." : "✔️ Mark VAT201 as filed"}
-        </button>
-      )}
+      <FilingActions
+        filingType="vat201"
+        periodLabel={label}
+        amount={vatDue}
+        markLabel="Mark VAT201 as filed"
+        note="Submit the actual VAT201 return via SARS eFiling — this is a calculation aid, not a filing. Due by the 25th of the month after the period ends."
+        filename={`vat201-${year}-${String(startMonth0 + 1).padStart(2, "0")}`}
+        pdf={() => ({ kind: "vat201", data: vat201PdfData(), asAt: asAtLabel() })}
+        fallbackHtml={(b, w) => buildVat201HTML(b, vat201PdfData(), asAtLabel(), w)}
+        share={handleShare}
+      />
 
-      <div style={{ background: "#fff7ed", border: "1.5px solid #fed7aa", borderRadius: 12, padding: "12px 14px", fontSize: 12, color: "#92400e", lineHeight: 1.6, marginBottom: 14 }}>
-        Submit the actual VAT201 return via SARS eFiling — this is a calculation aid, not a filing. Due by the 25th of the month after the period ends.
-      </div>
-
-      <button
-        onClick={handleShare}
-        style={{ width: "100%", marginBottom: 14, background: "#F0F9FF", color: "#0C4A6E", border: "1.5px solid #BAE6FD", borderRadius: 12, padding: 13, fontWeight: 700, fontSize: 13, cursor: "pointer" }}
-      >
-        📤 Share report
-      </button>
-
-      {vat201Filings.length > 0 && (
-        <>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>Filing history</div>
-          {vat201Filings.map((f) => (
-            <div key={f.id} style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 10, padding: "9px 12px", marginBottom: 6, display: "flex", justifyContent: "space-between" }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>{f.period_label}</span>
-              <span style={{ fontSize: 12, color: "#64748b" }}>
-                {fmt(f.amount)} · filed {f.filed_date}
-              </span>
-            </div>
-          ))}
-        </>
-      )}
+      <FilingHistory filingType="vat201" filings={filings ?? []} />
     </div>
   );
 }
