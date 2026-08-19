@@ -13,7 +13,7 @@ import { useBankAccounts } from "@/lib/supabase/hooks/useBankAccounts";
 import { useAccountTransfers } from "@/lib/supabase/hooks/useAccountTransfers";
 import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 import { inPeriod, PERIOD_LABELS, type Period } from "@/lib/period";
-import { computePnl } from "@/lib/pnl";
+import { computePnl, expenseCategoryTotals } from "@/lib/pnl";
 import { accountBalance } from "@/lib/accounts";
 import { fmt } from "@/lib/format";
 import { shareReport } from "@/lib/docgen/shareReport";
@@ -52,24 +52,17 @@ export function ProfitLossView() {
   const netProfit = pnl.profit;
   const margin = pnl.revenue > 0 ? (netProfit / pnl.revenue) * 100 : 0;
   const taxJar = acctIncome
-    .filter((r) => within(r.transaction_date) && !r.is_credit_settlement)
+    .filter((r) => within(r.transaction_date) && !r.is_credit_settlement && !r.is_personal)
     .reduce((s, r) => s + Number(r.tax_jar_amount || 0), 0);
   const mileageDeduction = (mileage ?? [])
     .filter((t) => within(t.trip_date))
     .reduce((s, t) => s + Number(t.sars_deduction || 0), 0);
   const acctBalance = selectedAccount ? accountBalance(selectedAccount, income ?? [], expenses ?? [], transfers ?? []) : 0;
 
-  const expenseByCategory = Object.entries(
-    acctExpenses
-      .filter((r) => within(r.transaction_date) && !r.is_credit_settlement)
-      .reduce<Record<string, number>>((acc, r) => {
-        const cat = r.sars_category || r.what_for || "Uncategorised";
-        acc[cat] = (acc[cat] || 0) + Number(r.amount);
-        return acc;
-      }, {})
-  )
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 8);
+  // The breakdown must count exactly the rows that went into "Total costs", or
+  // the list sums past the total printed directly above it. That rule lives with
+  // computePnl so the two cannot drift apart again.
+  const expenseByCategory = expenseCategoryTotals(acctExpenses, within, { cashBasis: !isAll }).slice(0, 8);
 
   const handleShare = () => {
     const basis = isAll ? "Accrual basis" : `Cash basis · ${selectedAccount?.name ?? "account"}`;
@@ -153,6 +146,14 @@ export function ProfitLossView() {
           <div style={{ fontSize: 12, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 12 }}>
             Top expense categories
           </div>
+          {/* Supplier invoices and supplier credit carry no expense category, so
+              in the accrual view this breaks down the cash expenses line only.
+              Saying so keeps it from reading as a breakdown of Total costs. */}
+          {isAll && (pnl.supplierInvoicesIssued > 0 || pnl.supplierCreditIncurred > 0) && (
+            <div style={{ fontSize: 11, color: "#94a3b8", marginTop: -8, marginBottom: 12, lineHeight: 1.5 }}>
+              Breaks down “Other cash expenses” — supplier invoices and credit are listed above.
+            </div>
+          )}
           {expenseByCategory.map(([cat, amt]) => (
             <Row key={cat} label={cat} value={fmt(amt)} />
           ))}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computePnl } from "@/lib/pnl";
+import { computePnl, expenseCategoryTotals } from "@/lib/pnl";
 import { incomeNet } from "@/lib/taxRates";
 import type { Tables } from "@/lib/types/database";
 
@@ -130,5 +130,89 @@ describe("computePnl", () => {
     );
     expect(p.invoicesIssued).toBe(1000); // June's 9999 excluded
     expect(p.supplierInvoicesIssued).toBe(344); // August's 9999 excluded
+  });
+});
+
+describe("expenseCategoryTotals", () => {
+  it("groups by SARS category, biggest first", () => {
+    const rows = [
+      expense({ id: "1", amount: 100, sars_category: "Materials" }),
+      expense({ id: "2", amount: 400, sars_category: "Fuel" }),
+      expense({ id: "3", amount: 50, sars_category: "Materials" }),
+    ];
+    expect(expenseCategoryTotals(rows, all)).toEqual([
+      ["Fuel", 400],
+      ["Materials", 150],
+    ]);
+  });
+
+  it("falls back to what_for, then Uncategorised, when no SARS category is set", () => {
+    const rows = [
+      expense({ id: "1", amount: 30, sars_category: null, what_for: "Airtime" }),
+      expense({ id: "2", amount: 20, sars_category: null, what_for: null }),
+    ];
+    expect(expenseCategoryTotals(rows, all)).toEqual([
+      ["Airtime", 30],
+      ["Uncategorised", 20],
+    ]);
+  });
+
+  it("leaves out the owner's own money — costs never counted it", () => {
+    const rows = [
+      expense({ id: "1", amount: 900, sars_category: "Drawings", is_personal: true }),
+      expense({ id: "2", amount: 100, sars_category: "Materials" }),
+    ];
+    expect(expenseCategoryTotals(rows, all)).toEqual([["Materials", 100]]);
+  });
+
+  it("leaves out refund settlements — the credit note already adjusted profit", () => {
+    const rows = [
+      expense({ id: "1", amount: 575, sars_category: "Refund", is_credit_settlement: true }),
+      expense({ id: "2", amount: 100, sars_category: "Materials" }),
+    ];
+    expect(expenseCategoryTotals(rows, all)).toEqual([["Materials", 100]]);
+  });
+
+  it("leaves out an expense settling a supplier invoice or ledger entry — the document carried it", () => {
+    const rows = [
+      expense({ id: "1", amount: 344, sars_category: "Stock", matched_supplier_invoice_id: "si1" }),
+      expense({ id: "2", amount: 800, sars_category: "Stock", matched_ledger_entry_id: "le1" }),
+      expense({ id: "3", amount: 100, sars_category: "Materials" }),
+    ];
+    expect(expenseCategoryTotals(rows, all)).toEqual([["Materials", 100]]);
+  });
+
+  it("keeps matched rows on the cash basis, where nothing is netted", () => {
+    const rows = [
+      expense({ id: "1", amount: 344, sars_category: "Stock", matched_supplier_invoice_id: "si1" }),
+      expense({ id: "2", amount: 100, sars_category: "Materials" }),
+    ];
+    expect(expenseCategoryTotals(rows, all, { cashBasis: true })).toEqual([
+      ["Stock", 344],
+      ["Materials", 100],
+    ]);
+  });
+
+  it("only counts rows inside the period", () => {
+    const rows = [
+      expense({ id: "1", amount: 100, transaction_date: "2026-07-10", sars_category: "Materials" }),
+      expense({ id: "2", amount: 999, transaction_date: "2026-08-10", sars_category: "Materials" }),
+    ];
+    expect(expenseCategoryTotals(rows, (d) => d.startsWith("2026-07"))).toEqual([["Materials", 100]]);
+  });
+
+  it("sums to the cash expense line computePnl reports, so the breakdown reconciles", () => {
+    // The regression this pairing exists for: the list used to include personal
+    // and matched rows the total above it excluded, so it could sum past the total.
+    const rows = [
+      expense({ id: "1", amount: 900, sars_category: "Drawings", is_personal: true }),
+      expense({ id: "2", amount: 344, sars_category: "Stock", matched_supplier_invoice_id: "si1" }),
+      expense({ id: "3", amount: 100, sars_category: "Materials" }),
+      expense({ id: "4", amount: 60, sars_category: "Fuel" }),
+    ];
+    const pnl = computePnl({ expenses: rows, supplierInvoices: [supplierInvoice()] }, all);
+    const breakdown = expenseCategoryTotals(rows, all).reduce((s, [, amt]) => s + amt, 0);
+    expect(breakdown).toBe(pnl.cashExpensesNotMatched);
+    expect(breakdown).toBe(160);
   });
 });
