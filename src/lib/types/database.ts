@@ -526,6 +526,7 @@ export type Database = {
           phone: string | null
           updated_at: string | null
           user_id: string
+          default_sars_category: string | null
         }
         Insert: {
           account_number?: string | null
@@ -546,6 +547,7 @@ export type Database = {
           phone?: string | null
           updated_at?: string | null
           user_id: string
+          default_sars_category?: string | null
         }
         Update: {
           account_number?: string | null
@@ -566,6 +568,7 @@ export type Database = {
           phone?: string | null
           updated_at?: string | null
           user_id?: string
+          default_sars_category?: string | null
         }
         Relationships: [
           {
@@ -1908,6 +1911,7 @@ export type Database = {
           source_costing_id: string | null
           updated_at: string | null
           user_id: string
+          sars_category: string | null
         }
         Insert: {
           business_id: string
@@ -1925,6 +1929,7 @@ export type Database = {
           source_costing_id?: string | null
           updated_at?: string | null
           user_id: string
+          sars_category?: string | null
         }
         Update: {
           business_id?: string
@@ -1942,6 +1947,7 @@ export type Database = {
           source_costing_id?: string | null
           updated_at?: string | null
           user_id?: string
+          sars_category?: string | null
         }
         Relationships: [
           {
