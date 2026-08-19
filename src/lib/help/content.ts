@@ -4664,7 +4664,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "steps",
             "items": [
-              "Go to Cash Flow — under the \"Compliance & Financials\" tools card, or the \"Compliance & Financials\" group on desktop (or open /cashflow).",
+              "Go to Cash Flow — under the \"Money\" tools card, or the \"Money\" group on desktop (or open /cashflow).",
               "Find the row of period buttons: Today, This week, This month, This year and All time. Tap the one you want. This month is chosen to start with.",
               "The dark blue NET CASH FLOW card updates straight away, showing your IN, your OUT, and the net figure for that period."
             ]
