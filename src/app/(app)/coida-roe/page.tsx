@@ -1,7 +1,9 @@
+import { redirect } from "next/navigation";
 import { requirePlanAccess } from "@/lib/auth";
-import { CoidaView } from "@/components/reports/CoidaView";
 
+// COIDA lives inside the Payroll Compliance hub now — forward there so existing
+// links keep working without a duplicate screen.
 export default async function CoidaRoePage() {
   await requirePlanAccess("payrollcompliance");
-  return <CoidaView />;
+  redirect("/payroll-compliance?tab=coida");
 }

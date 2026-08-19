@@ -172,7 +172,7 @@ export function ComplianceView() {
       })}
 
       <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 10, padding: "10px 14px", fontSize: 11, color: "#64748b", lineHeight: 1.7, marginTop: 4 }}>
-        💡 Worklog handles VAT201, EMP201 and Provisional Tax estimation. All other obligations require eFiling, uFiling, CompEasy, BizPortal or your accountant. Deadlines shown are for the current period — set calendar reminders for each.
+        💡 Worklog works out VAT201, EMP201, UIF, EMP501, COIDA and Provisional Tax for you — the payroll ones live together in Payroll Compliance. All returns are still submitted on eFiling, uFiling, CompEasy, BizPortal or by your accountant. Deadlines shown are for the current period — set calendar reminders for each.
       </div>
     </div>
   );

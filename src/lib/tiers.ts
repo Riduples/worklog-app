@@ -172,7 +172,7 @@ export const UPGRADE_DETAILS: Partial<Record<ToolId | "team" | "invoice_recurrin
   payrun: { title: "Pay Runs", desc: "Calculate PAYE, UIF and SDL, run payroll and share professional payslips. Included from Trade.", icon: "💵" },
   advances: { title: "Staff Advances", desc: "Track employee loans and repayments. Included from Trade.", icon: "💰" },
   leave: { title: "Leave Tracking", desc: "Track employee leave, linked to your pay runs. Included from Trade.", icon: "🏖️" },
-  payrollcompliance: { title: "Payroll Compliance", desc: "PAYE, UIF, SDL and ETI payable, plus EMP201/EMP501 and COIDA reminders — your payroll statutory items in one place. Included from Trade.", icon: "📋" },
+  payrollcompliance: { title: "Payroll Compliance", desc: "All your payroll returns in one place — EMP201, the monthly UIF declaration, the EMP501 reconciliation and the COIDA Return of Earnings — each with the figures worked out, a PDF and a filing record. Included from Trade (EMP201 on Structured).", icon: "📋" },
   purchaseorder: { title: "Purchase Orders", desc: "Formal requests to suppliers before they deliver. Included from Trade.", icon: "🛒" },
   supplierinvoice: { title: "Supplier Invoices", desc: "Record and track invoices you receive from suppliers. Included from Trade.", icon: "📥" },
   remittance: { title: "Remittance Advice", desc: "Tell suppliers exactly which invoice you're paying. Included from Trade.", icon: "🧾" },

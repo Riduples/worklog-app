@@ -1,22 +1,75 @@
 "use client";
 
+import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 import { useStaffRegister } from "@/lib/supabase/hooks/useStaffRegister";
 import { usePayRuns } from "@/lib/supabase/hooks/usePayRuns";
+import { useCurrentMember } from "@/lib/supabase/hooks/useCurrentMember";
 import { useTaxRates } from "@/lib/taxRates";
 import { calcETI, monthsEmployedFrom } from "@/lib/eti";
 import { fmt } from "@/lib/format";
+import { isLocked, type Plan } from "@/lib/tiers";
+import { UpgradeModal } from "@/components/modals/UpgradeModal";
+import { BackLink } from "@/components/ui/BackLink";
+import { Emp201View } from "@/components/reports/Emp201View";
+import { Uif201View } from "@/components/reports/Uif201View";
+import { Emp501View } from "@/components/reports/Emp501View";
+import { CoidaView } from "@/components/reports/CoidaView";
 
-// One home for the payroll-specific statutory items — the numbers and reminders
-// that otherwise live scattered across EMP201, the compliance dashboard and the
-// termination flow. Read-only: reminders + figures to confirm with an accountant;
-// filing still happens on the SARS/Labour portals.
+// Every payroll return in one place, as tabs — the same shape as the Reports
+// tools. The individual EMP201 / UIF / EMP501 / COIDA screens render here as tab
+// panels (embedded), so there's one home for them rather than a scattered list of
+// links. Overview carries the month's payable-to-SARS summary; the rest are the
+// working returns.
+const TABS = [
+  { id: "overview", label: "📋 Overview" },
+  { id: "emp201", label: "👷 EMP201" },
+  { id: "uif", label: "🛡️ UIF" },
+  { id: "emp501", label: "🔁 EMP501" },
+  { id: "coida", label: "🏭 COIDA" },
+] as const;
+type TabId = (typeof TABS)[number]["id"];
+
+// One row in the Overview's returns list — a button that jumps to that return's
+// tab. Hoisted to module scope so it isn't re-created on every render.
+function ReturnRow({ title, sub, right, border = true, onOpen }: { title: string; sub: string; right?: React.ReactNode; border?: boolean; onOpen: () => void }) {
+  return (
+    <button
+      onClick={onOpen}
+      style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", width: "100%", background: "none", border: "none", borderBottom: border ? "1px solid #f1f5f9" : "none", cursor: "pointer", textAlign: "left" }}
+    >
+      <div>
+        <div style={{ fontSize: 13, fontWeight: 700, color: "#111" }}>{title}</div>
+        <div style={{ fontSize: 11, color: "#94a3b8" }}>{sub}</div>
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        {right}
+        <span style={{ fontSize: 12, color: "#0369A1", fontWeight: 600 }}>Open →</span>
+      </div>
+    </button>
+  );
+}
+
 export function PayrollComplianceView() {
+  const searchParams = useSearchParams();
+  const initialTab = searchParams.get("tab");
+  const [tab, setTab] = useState<TabId>(TABS.some((t) => t.id === initialTab) ? (initialTab as TabId) : "overview");
+  const [showUpgrade, setShowUpgrade] = useState(false);
+
   const { data: business } = useBusinessProfile();
   const { data: staff } = useStaffRegister();
   const { data: payRuns } = usePayRuns();
+  const { data: currentMember } = useCurrentMember();
   const { SDL_ANNUAL_THRESHOLD } = useTaxRates();
+
+  const plan = (business?.plan ?? "solo") as Plan;
+  const isOwner = (currentMember?.role ?? "owner") === "owner";
+  // EMP201 is a Structured tool; the rest of the hub is Trade. So the EMP201 tab
+  // stays gated to its own plan — a Trade user sees the upgrade prompt on it,
+  // exactly as they would have hitting the standalone /emp201.
+  const emp201Locked = isLocked(plan, "emp201");
 
   const now = new Date();
   const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
@@ -32,7 +85,6 @@ export function PayrollComplianceView() {
   const sdl = monthRuns.reduce((s, p) => s + Number(p.sdl ?? 0), 0);
   const monthWages = monthRuns.reduce((s, p) => s + Number(p.gross_wages ?? 0), 0);
 
-  // ETI claimable this month, capped at the PAYE it can offset.
   const etiRaw = monthRuns.reduce((s, p) => {
     const worker = staffList.find((w) => w.id === p.staff_id);
     if (!worker) return s;
@@ -45,20 +97,15 @@ export function PayrollComplianceView() {
   const coidaEarnings = runs.filter((p) => p.pay_date.startsWith(year)).reduce((s, p) => s + Number(p.gross_wages ?? 0), 0);
   const annualisedWages = monthWages * 12;
   const sdlNudge = !business?.sdl_registered && annualisedWages > SDL_ANNUAL_THRESHOLD;
-
   const hasPayroll = staffList.length > 0 || runs.length > 0;
 
   const card: React.CSSProperties = { background: "#fff", border: "1.5px solid #e2e8f0", borderRadius: 14, padding: "14px 16px", marginBottom: 12 };
   const rowStyle: React.CSSProperties = { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0" };
 
-  return (
-    <div style={{ padding: "20px 16px 100px" }}>
-      <Link href="/tax" style={{ fontSize: 12, color: "#64748b" }}>
-        ← Compliance &amp; Financials
-      </Link>
-      <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 4px" }}>Payroll Compliance</h1>
-      <p style={{ fontSize: 12, color: "#94a3b8", marginBottom: 18, lineHeight: 1.5 }}>
-        Your payroll statutory items in one place. Figures are estimates to confirm with your accountant — filing happens on the SARS &amp; Labour portals.
+  const overview = (
+    <>
+      <p style={{ fontSize: 12, color: "#94a3b8", marginBottom: 16, lineHeight: 1.5 }}>
+        Your payroll returns in one place. Figures are estimates to confirm with your accountant — filing happens on the SARS &amp; Labour portals.
       </p>
 
       {!hasPayroll ? (
@@ -72,7 +119,6 @@ export function PayrollComplianceView() {
         </div>
       ) : (
         <>
-          {/* Payable to SARS this month */}
           <div style={{ background: "#0C4A6E", borderRadius: 16, padding: "18px 20px", marginBottom: 14 }}>
             <div style={{ fontSize: 11, color: "#38BDF8", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 10 }}>Payable to SARS · {monthLabel}</div>
             <div style={{ ...rowStyle }}>
@@ -99,9 +145,12 @@ export function PayrollComplianceView() {
               <span style={{ fontSize: 14, color: "#38BDF8", fontWeight: 700 }}>Total payable</span>
               <span style={{ fontSize: 22, color: "#fff", fontWeight: 900 }}>{fmt(payableToSars)}</span>
             </div>
-            <Link href="/emp201" style={{ display: "block", textAlign: "center", marginTop: 12, background: "#38BDF8", color: "#0C4A6E", borderRadius: 10, padding: "10px", fontSize: 13, fontWeight: 700, textDecoration: "none" }}>
+            <button
+              onClick={() => setTab("emp201")}
+              style={{ width: "100%", marginTop: 12, background: "#38BDF8", color: "#0C4A6E", border: "none", borderRadius: 10, padding: "10px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+            >
               Open EMP201 →
-            </Link>
+            </button>
           </div>
 
           {sdlNudge && (
@@ -114,50 +163,84 @@ export function PayrollComplianceView() {
             </div>
           )}
 
-          {/* Returns & declarations */}
           <div style={card}>
             <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>Returns &amp; declarations</div>
-
-            <div style={{ ...rowStyle, borderBottom: "1px solid #f1f5f9" }}>
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "#111" }}>EMP201 — monthly</div>
-                <div style={{ fontSize: 11, color: "#94a3b8" }}>PAYE, UIF &amp; SDL · due by the 7th of next month</div>
-              </div>
-              <Link href="/emp201" style={{ fontSize: 12, color: "#0369A1", fontWeight: 600 }}>Open</Link>
-            </div>
-
-            <div style={{ ...rowStyle, borderBottom: "1px solid #f1f5f9" }}>
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "#111" }}>EMP501 — reconciliation</div>
-                <div style={{ fontSize: 11, color: "#94a3b8" }}>Reconciles the EMP201s &amp; issues IRP5s · interim 31 Oct, annual 31 May (e@syFile)</div>
-              </div>
-              <Link href="/emp501" style={{ fontSize: 12, color: "#0369A1", fontWeight: 600 }}>Open</Link>
-            </div>
-
-            <div style={{ ...rowStyle, borderBottom: "1px solid #f1f5f9" }}>
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "#111" }}>UIF declaration — monthly</div>
-                <div style={{ fontSize: 11, color: "#94a3b8" }}>uFiling · plus a UI-19 whenever someone joins or leaves</div>
-              </div>
-              <Link href="/uif-declaration" style={{ fontSize: 12, color: "#0369A1", fontWeight: 600 }}>Open</Link>
-            </div>
-
-            <div style={{ ...rowStyle }}>
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "#111" }}>COIDA — Return of Earnings</div>
-                <div style={{ fontSize: 11, color: "#94a3b8" }}>Annual (CompEasy) · gross wages in {year}, before the OID cap</div>
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <span style={{ fontSize: 14, fontWeight: 800, color: "#0C4A6E" }}>{fmt(coidaEarnings)}</span>
-                <Link href="/coida-roe" style={{ fontSize: 12, color: "#0369A1", fontWeight: 600 }}>Open</Link>
-              </div>
-            </div>
+            <ReturnRow onOpen={() => setTab("emp201")} title="EMP201 — monthly" sub="PAYE, UIF & SDL · due by the 7th of next month" />
+            <ReturnRow onOpen={() => setTab("uif")} title="UIF declaration — monthly" sub="uFiling · plus a UI-19 whenever someone joins or leaves" />
+            <ReturnRow onOpen={() => setTab("emp501")} title="EMP501 — reconciliation" sub="Reconciles your EMP201s · interim 31 Oct, annual 31 May (e@syFile)" />
+            <ReturnRow
+              onOpen={() => setTab("coida")}
+              title="COIDA — Return of Earnings"
+              sub={`Annual (CompEasy) · gross wages in ${year}, before the OID cap`}
+              right={<span style={{ fontSize: 14, fontWeight: 800, color: "#0C4A6E" }}>{fmt(coidaEarnings)}</span>}
+              border={false}
+            />
           </div>
 
-          <p style={{ fontSize: 11, color: "#94a3b8", lineHeight: 1.5 }}>
-            Worklog surfaces these reminders and figures — it doesn&apos;t file for you. Confirm amounts and deadlines with your accountant.
+          <p style={{ fontSize: 11, color: "#94a3b8", lineHeight: 1.6 }}>
+            Worklog surfaces these figures — it doesn&apos;t file for you. For CIPC, POPIA and every other obligation, see the{" "}
+            <Link href="/compliance" style={{ color: "#0369A1", fontWeight: 600 }}>
+              Compliance Dashboard
+            </Link>
+            .
           </p>
         </>
+      )}
+    </>
+  );
+
+  const emp201Panel = emp201Locked ? (
+    <div style={{ ...card, textAlign: "center" }}>
+      <div style={{ fontSize: 32, marginBottom: 8 }}>🔒</div>
+      <div style={{ fontSize: 14, fontWeight: 700, color: "#0C4A6E", marginBottom: 4 }}>EMP201 is a Structured feature</div>
+      <div style={{ fontSize: 12, color: "#64748b", lineHeight: 1.5, marginBottom: 12 }}>
+        The full monthly EMP201 working — PAYE, UIF, SDL and ETI, with a filing record — is included on the Structured plan.
+      </div>
+      <button
+        onClick={() => setShowUpgrade(true)}
+        style={{ background: "#0C4A6E", color: "#fff", border: "none", borderRadius: 12, padding: "11px 20px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+      >
+        See Structured
+      </button>
+    </div>
+  ) : (
+    <Emp201View embedded />
+  );
+
+  return (
+    <div style={{ padding: "20px 16px 100px" }}>
+      <BackLink />
+      <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 16px" }}>Payroll Compliance</h1>
+
+      <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
+        {TABS.map((t) => (
+          <button
+            key={t.id}
+            onClick={() => setTab(t.id)}
+            style={{
+              padding: "8px 14px",
+              borderRadius: 20,
+              border: `1.5px solid ${tab === t.id ? "#0C4A6E" : "#e2e8f0"}`,
+              background: tab === t.id ? "#0C4A6E" : "#fff",
+              color: tab === t.id ? "#fff" : "#374151",
+              fontSize: 12,
+              fontWeight: 700,
+              cursor: "pointer",
+            }}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "overview" && overview}
+      {tab === "emp201" && emp201Panel}
+      {tab === "uif" && <Uif201View embedded />}
+      {tab === "emp501" && <Emp501View embedded />}
+      {tab === "coida" && <CoidaView embedded />}
+
+      {showUpgrade && business && (
+        <UpgradeModal feature="emp201" currentPlan={plan} isOwner={isOwner} onClose={() => setShowUpgrade(false)} />
       )}
     </div>
   );

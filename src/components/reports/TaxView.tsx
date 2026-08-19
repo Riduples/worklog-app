@@ -20,7 +20,8 @@ import { BackLink } from "@/components/ui/BackLink";
 
 const TOOLS: { id: ToolId; href: string; icon: string; label: string }[] = [
   { id: "vat201", href: "/vat201", icon: "🏦", label: "VAT201" },
-  { id: "emp201", href: "/emp201", icon: "👷", label: "EMP201" },
+  // EMP201 lives in the Payroll Compliance hub now (with UIF, EMP501 & COIDA), so
+  // it isn't duplicated here — Payroll → Payroll Compliance is its single home.
   { id: "provtax", href: "/provtax", icon: "📅", label: "Prov Tax" },
   { id: "taxjar", href: "/taxjar", icon: "🫙", label: "Tax Jar" },
   { id: "compliance", href: "/compliance", icon: "✅", label: "Compliance" },

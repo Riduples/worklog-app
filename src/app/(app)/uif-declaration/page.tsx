@@ -1,7 +1,10 @@
+import { redirect } from "next/navigation";
 import { requirePlanAccess } from "@/lib/auth";
-import { Uif201View } from "@/components/reports/Uif201View";
 
+// The UIF declaration lives inside the Payroll Compliance hub now — this old
+// route just forwards there so existing links keep working without a duplicate
+// screen.
 export default async function UifDeclarationPage() {
   await requirePlanAccess("payrollcompliance");
-  return <Uif201View />;
+  redirect("/payroll-compliance?tab=uif");
 }

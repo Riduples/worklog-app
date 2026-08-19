@@ -106,7 +106,7 @@ export const TOOL_LABELS: Partial<Record<ToolId, { icon: string; label: string; 
   payrun: { icon: "💵", label: "Pay Run", desc: "Calculate wages, deductions & generate payslips" },
   advances: { icon: "💰", label: "Advances", desc: "Record employee loans & track repayments" },
   leave: { icon: "🏖️", label: "Leave", desc: "Record & track leave per employee — links to Pay Run" },
-  payrollcompliance: { icon: "📋", label: "Payroll Compliance", desc: "PAYE, UIF, SDL & ETI payable, EMP201/EMP501 & COIDA reminders — your payroll statutory items in one place" },
+  payrollcompliance: { icon: "📋", label: "Payroll Compliance", desc: "All your payroll returns in one place — EMP201, UIF, EMP501 & COIDA — with the figures, a PDF and a filing record for each" },
   timetrack: { icon: "⏱️", label: "Time Log", desc: "Log the hours you work per client — link them to quotes & diary appointments" },
   mileage: { icon: "🚗", label: "Travel Log", desc: "Log business trips — SARS deduction auto-calculated" },
   profitloss: { icon: "📈", label: "Profit & Loss", desc: "The official summary of what your business earned vs spent — needed for SARS and for loan/funding applications" },

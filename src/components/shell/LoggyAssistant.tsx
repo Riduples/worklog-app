@@ -39,7 +39,7 @@ const TOOL_HREF: Partial<Record<ToolId, string>> = {
   tax: "/tax",
   taxjar: "/taxjar",
   vat201: "/vat201",
-  emp201: "/emp201",
+  emp201: "/payroll-compliance?tab=emp201",
   provtax: "/provtax",
   compliance: "/compliance",
   ageanalysis: "/age-analysis",

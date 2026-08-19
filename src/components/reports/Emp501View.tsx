@@ -60,7 +60,9 @@ function monthFigures(runs: PayRun[], staff: StaffRow[]) {
   return { paye, uif, sdl, eti, totalDue: paye + uif + sdl - eti };
 }
 
-export function Emp501View() {
+// `embedded` = rendered as a tab inside the Payroll Compliance hub — drops its
+// own back-link, title and outer padding (the hub supplies them).
+export function Emp501View({ embedded = false }: { embedded?: boolean } = {}) {
   const { data: business } = useBusinessProfile();
   const { data: staff } = useStaffRegister();
   const { data: payRuns } = usePayRuns();
@@ -132,11 +134,13 @@ export function Emp501View() {
   });
 
   return (
-    <div style={{ padding: "20px 16px 100px" }}>
-      <Link href="/payroll-compliance" style={{ fontSize: 12, color: "#64748b" }}>
-        ← Payroll Compliance
-      </Link>
-      <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 6px" }}>EMP501 reconciliation</h1>
+    <div style={{ padding: embedded ? 0 : "20px 16px 100px" }}>
+      {!embedded && (
+        <Link href="/payroll-compliance" style={{ fontSize: 12, color: "#64748b" }}>
+          ← Payroll Compliance
+        </Link>
+      )}
+      {!embedded && <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 6px" }}>EMP501 reconciliation</h1>}
       <p style={{ fontSize: 12, color: "#94a3b8", marginBottom: 16, lineHeight: 1.5 }}>
         Checks your pay runs against the EMP201s you&apos;ve marked filed. It doesn&apos;t issue IRP5/IT3(a) certificates — do that on SARS e@syFile.
       </p>

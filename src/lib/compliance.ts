@@ -157,9 +157,9 @@ export function buildObligations(ctx: ComplianceContext, now: Date = new Date())
       dueDate: iso(empDate),
       status: ctx.hasEmployees && ctx.hasPaye ? (isRecent(ctx.lastEmp201Date, 35) ? "ready" : "action") : ctx.hasEmployees ? "action" : "na",
       where: ctx.hasEmployees ? "worklog" : "external",
-      href: "/emp201",
+      href: "/payroll-compliance?tab=emp201",
       note: ctx.hasEmployees
-        ? "PAYE, UIF and SDL declared and paid by the 7th. Use the Worklog EMP201 tool to generate the summary, then pay via eFiling. Penalty: 10% of PAYE + R100/month late filing."
+        ? "PAYE, UIF and SDL declared and paid by the 7th. Use the Payroll Compliance hub to generate the EMP201 summary, then pay via eFiling. Penalty: 10% of PAYE + R100/month late filing."
         : "Required as soon as you have any employee. Register as an employer with SARS when you hire your first person.",
       cta: ctx.hasEmployees ? "Open EMP201" : "Register on eFiling",
       ctaUrl: "https://www.sarsefiling.co.za",
@@ -219,11 +219,12 @@ export function buildObligations(ctx: ComplianceContext, now: Date = new Date())
       due: empDate ? fmtDMY(empDate) : "No employees",
       dueDate: iso(empDate),
       status: ctx.hasEmployees ? "action" : "na",
-      where: "external",
+      where: ctx.hasEmployees ? "worklog" : "external",
+      href: "/payroll-compliance?tab=uif",
       note: ctx.hasEmployees
-        ? "Declare each employee and their UIF contributions monthly via uFiling (ufiling.labour.gov.za). The same deadline as EMP201 — 7th of the month. A UIF Compliance Certificate is required for any government tender. Non-compliance means your employees have no UIF cover when they need it — and you remain personally liable for those contributions."
+        ? "Work out the monthly UIF in the Payroll Compliance hub, then declare each employee on uFiling (ufiling.labour.gov.za) by the 7th — the same deadline as EMP201. A UIF Compliance Certificate is required for any government tender. Non-compliance means your employees have no UIF cover when they need it — and you remain personally liable for those contributions."
         : "Required as soon as you employ any person, even part-time or casual. Register on uFiling and declare monthly.",
-      cta: "Go to uFiling",
+      cta: ctx.hasEmployees ? "Open UIF declaration" : "Go to uFiling",
       ctaUrl: "https://www.ufiling.co.za",
     },
     {
@@ -235,11 +236,12 @@ export function buildObligations(ctx: ComplianceContext, now: Date = new Date())
       due: coidaDate ? fmtDMY(coidaDate) : "No employees",
       dueDate: iso(coidaDate),
       status: ctx.hasEmployees ? "action" : "na",
-      where: "external",
+      where: ctx.hasEmployees ? "worklog" : "external",
+      href: "/payroll-compliance?tab=coida",
       note: ctx.hasEmployees
-        ? "Declare your annual payroll to the Compensation Fund every March. Your Worklog payroll records have the figures you need. File on the CompEasy portal (workmanscomp.co.za). Without a valid Letter of Good Standing: you are personally liable for all workplace injury costs, and you cannot win any government or private-sector tender."
+        ? "Declare your annual payroll to the Compensation Fund every March. The Payroll Compliance hub adds up your earnings (capped at the OID maximum per employee) ready to report. File on the CompEasy portal (workmanscomp.co.za). Without a valid Letter of Good Standing: you are personally liable for all workplace injury costs, and you cannot win any government or private-sector tender."
         : "Required for any employer. Register with the Compensation Fund before staff start work.",
-      cta: "Go to CompEasy",
+      cta: ctx.hasEmployees ? "Open Return of Earnings" : "Go to CompEasy",
       ctaUrl: "https://www.workmanscomp.co.za",
     },
     {

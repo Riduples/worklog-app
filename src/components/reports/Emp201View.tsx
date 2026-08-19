@@ -16,7 +16,9 @@ import { asAtLabel } from "@/components/reports/ReportShell";
 
 const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-export function Emp201View() {
+// `embedded` = rendered as a tab inside the Payroll Compliance hub, so it drops
+// its own back-link, page title and outer padding (the hub supplies the chrome).
+export function Emp201View({ embedded = false }: { embedded?: boolean } = {}) {
   const { data: business } = useBusinessProfile();
   const { data: staff } = useStaffRegister();
   const { data: payRuns } = usePayRuns();
@@ -79,11 +81,6 @@ export function Emp201View() {
   const annualisedWages = monthGross * 12;
   const sdlNudge = annualisedWages > SDL_ANNUAL_THRESHOLD && !business?.sdl_registered;
 
-  // COIDA (annual Return of Earnings) — total gross wages paid this calendar year.
-  const coidaEarnings = (payRuns ?? [])
-    .filter((p) => p.pay_date.startsWith(`${year}-`))
-    .reduce((s, p) => s + Number(p.gross_wages ?? 0), 0);
-
   // EMP201 is due by the 7th of the month after the pay month.
   const dueMonth0 = (month0 + 1) % 12;
   const dueYear = month0 === 11 ? year + 1 : year;
@@ -124,11 +121,15 @@ export function Emp201View() {
 
   if ((staff ?? []).length === 0) {
     return (
-      <div style={{ padding: "20px 16px 100px" }}>
-        <Link href="/tax" style={{ fontSize: 12, color: "#64748b" }}>
-          ← Compliance &amp; Financials
-        </Link>
-        <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 18px" }}>EMP201</h1>
+      <div style={{ padding: embedded ? 0 : "20px 16px 100px" }}>
+        {!embedded && (
+          <>
+            <Link href="/tax" style={{ fontSize: 12, color: "#64748b" }}>
+              ← Compliance &amp; Financials
+            </Link>
+            <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 18px" }}>EMP201</h1>
+          </>
+        )}
         <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 12, padding: 20, textAlign: "center", fontSize: 13, color: "#64748b" }}>
           👷 No employees registered. Add them in{" "}
           <Link href="/staff" style={{ color: "#0C4A6E", fontWeight: 700 }}>
@@ -141,11 +142,15 @@ export function Emp201View() {
   }
 
   return (
-    <div style={{ padding: "20px 16px 100px" }}>
-      <Link href="/tax" style={{ fontSize: 12, color: "#64748b" }}>
-        ← Compliance &amp; Financials
-      </Link>
-      <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 18px" }}>EMP201</h1>
+    <div style={{ padding: embedded ? 0 : "20px 16px 100px" }}>
+      {!embedded && (
+        <>
+          <Link href="/tax" style={{ fontSize: 12, color: "#64748b" }}>
+            ← Compliance &amp; Financials
+          </Link>
+          <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 18px" }}>EMP201</h1>
+        </>
+      )}
 
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
         <button onClick={() => step(-1)} style={{ background: "#f1f5f9", border: "none", borderRadius: 10, padding: "8px 14px", fontSize: 16, cursor: "pointer" }}>
@@ -237,33 +242,6 @@ export function Emp201View() {
       )}
 
       <FilingHistory filingType="emp201" filings={filings ?? []} />
-
-      <div style={{ marginTop: 16 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>Related returns</div>
-        <Link href="/uif-declaration" style={{ display: "block", textDecoration: "none", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 10, padding: "10px 12px", marginBottom: 6 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 2 }}>
-            <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>UIF declaration (monthly)</span>
-            <span style={{ fontSize: 12, color: "#0369A1", fontWeight: 600 }}>Open →</span>
-          </div>
-          <div style={{ fontSize: 11, color: "#94a3b8", lineHeight: 1.5 }}>Declared to the Department of Employment &amp; Labour on uFiling — separately from this SARS return.</div>
-        </Link>
-        <Link href="/emp501" style={{ display: "block", textDecoration: "none", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 10, padding: "10px 12px", marginBottom: 6 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 2 }}>
-            <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>EMP501 reconciliation</span>
-            <span style={{ fontSize: 12, color: "#0369A1", fontWeight: 600 }}>Open →</span>
-          </div>
-          <div style={{ fontSize: 11, color: "#94a3b8", lineHeight: 1.5 }}>
-            Twice-yearly reconciliation of your EMP201s — interim due 31 Oct, annual due 31 May.
-          </div>
-        </Link>
-        <Link href="/coida-roe" style={{ display: "block", textDecoration: "none", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 10, padding: "10px 12px", marginBottom: 6 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 2 }}>
-            <span style={{ fontSize: 12, fontWeight: 700, color: "#111" }}>COIDA (annual Return of Earnings)</span>
-            <span style={{ fontSize: 12, fontWeight: 700, color: "#0C4A6E" }}>{fmt(coidaEarnings)}</span>
-          </div>
-          <div style={{ fontSize: 11, color: "#94a3b8", lineHeight: 1.5 }}>Gross wages paid in {year}, before the per-employee OID cap — open for the capped figure to report.</div>
-        </Link>
-      </div>
     </div>
   );
 }

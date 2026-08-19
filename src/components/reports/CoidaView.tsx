@@ -19,7 +19,9 @@ import { asAtLabel } from "@/components/reports/ReportShell";
 // yearly, admin-editable on the tax_rates table). The screen and PDF show the cap
 // they applied, so a stale figure is visible rather than silent. A year stepper
 // rather than a month one — this return is annual.
-export function CoidaView() {
+// `embedded` = rendered as a tab inside the Payroll Compliance hub — drops its
+// own back-link, title and outer padding (the hub supplies them).
+export function CoidaView({ embedded = false }: { embedded?: boolean } = {}) {
   const { data: business } = useBusinessProfile();
   const { data: staff } = useStaffRegister();
   const { data: payRuns } = usePayRuns();
@@ -72,11 +74,15 @@ export function CoidaView() {
 
   if ((staff ?? []).length === 0 && yearRuns.length === 0) {
     return (
-      <div style={{ padding: "20px 16px 100px" }}>
-        <Link href="/payroll-compliance" style={{ fontSize: 12, color: "#64748b" }}>
-          ← Payroll Compliance
-        </Link>
-        <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 18px" }}>COIDA — Return of Earnings</h1>
+      <div style={{ padding: embedded ? 0 : "20px 16px 100px" }}>
+        {!embedded && (
+          <>
+            <Link href="/payroll-compliance" style={{ fontSize: 12, color: "#64748b" }}>
+              ← Payroll Compliance
+            </Link>
+            <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 18px" }}>COIDA — Return of Earnings</h1>
+          </>
+        )}
         <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 12, padding: 20, textAlign: "center", fontSize: 13, color: "#64748b" }}>
           👷 No payroll yet. Run a{" "}
           <Link href="/payroll" style={{ color: "#0C4A6E", fontWeight: 700 }}>
@@ -89,11 +95,15 @@ export function CoidaView() {
   }
 
   return (
-    <div style={{ padding: "20px 16px 100px" }}>
-      <Link href="/payroll-compliance" style={{ fontSize: 12, color: "#64748b" }}>
-        ← Payroll Compliance
-      </Link>
-      <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 18px" }}>COIDA — Return of Earnings</h1>
+    <div style={{ padding: embedded ? 0 : "20px 16px 100px" }}>
+      {!embedded && (
+        <>
+          <Link href="/payroll-compliance" style={{ fontSize: 12, color: "#64748b" }}>
+            ← Payroll Compliance
+          </Link>
+          <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 18px" }}>COIDA — Return of Earnings</h1>
+        </>
+      )}
 
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
         <button onClick={() => setYear((y) => y - 1)} style={{ background: "#f1f5f9", border: "none", borderRadius: 10, padding: "8px 14px", fontSize: 16, cursor: "pointer" }}>

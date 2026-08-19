@@ -1,7 +1,9 @@
+import { redirect } from "next/navigation";
 import { requirePlanAccess } from "@/lib/auth";
-import { Emp501View } from "@/components/reports/Emp501View";
 
+// EMP501 lives inside the Payroll Compliance hub now — forward there so existing
+// links keep working without a duplicate screen.
 export default async function Emp501Page() {
   await requirePlanAccess("payrollcompliance");
-  return <Emp501View />;
+  redirect("/payroll-compliance?tab=emp501");
 }
