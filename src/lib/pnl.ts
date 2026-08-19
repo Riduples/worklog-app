@@ -138,3 +138,43 @@ export function computePnl(inputs: PnlInputs, within: (dateStr: string) => boole
     profit: revenueNetOfCredits - costs,
   };
 }
+
+/**
+ * Expense totals per category, for the Profit & Loss breakdown.
+ *
+ * Lives here, beside computePnl, because it has to count exactly the rows that
+ * went into `costs` — a breakdown that includes rows the total excluded sums
+ * past the total printed above it. Keeping the two rules in one file is what
+ * stops them drifting apart again.
+ *
+ * Mirrors the cost side of computePnl: the owner's own money and refund
+ * settlements are never costs, and on the accrual path an expense settling a
+ * supplier invoice or ledger entry is netted out there, so it cannot be listed
+ * here either. Under `cashBasis` (a single account's own view) nothing is
+ * netted, so matched rows stay.
+ *
+ * Note this covers the CASH expense side only — supplier invoices and supplier
+ * credit carry no expense category, so on the accrual path these totals break
+ * down `cashExpensesNotMatched`, not the whole of `costs`.
+ */
+export function expenseCategoryTotals(
+  expenses: Expense[] | null | undefined,
+  within: (dateStr: string) => boolean,
+  opts?: { cashBasis?: boolean }
+): [string, number][] {
+  const counted = (expenses ?? []).filter(
+    (r) =>
+      within(r.transaction_date) &&
+      !r.is_credit_settlement &&
+      !r.is_personal &&
+      (opts?.cashBasis || !(r.matched_ledger_entry_id || r.matched_supplier_invoice_id))
+  );
+
+  const byCategory = counted.reduce<Record<string, number>>((acc, r) => {
+    const cat = r.sars_category || r.what_for || "Uncategorised";
+    acc[cat] = (acc[cat] || 0) + Number(r.amount);
+    return acc;
+  }, {});
+
+  return Object.entries(byCategory).sort((a, b) => b[1] - a[1]);
+}

@@ -17,6 +17,7 @@ import { fmt } from "@/lib/format";
 import { balanceInclVat } from "@/lib/balance";
 import { sumOnAccount } from "@/lib/creditNotes";
 import { accountBalance } from "@/lib/accounts";
+import { cashOnHand, adjustedPosition } from "@/lib/cashPosition";
 import { shareReport } from "@/lib/docgen/shareReport";
 import { BackLink } from "@/components/ui/BackLink";
 import { BankAccountSelector, ALL_ACCOUNTS, type AccountFilter } from "@/components/ui/BankAccountSelector";
@@ -46,6 +47,10 @@ export function CashFlowView() {
   const netCashFlow = moneyIn - moneyOut;
   const acctBalance = selectedAccount ? accountBalance(selectedAccount, income ?? [], expenses ?? [], transfers ?? []) : 0;
 
+  // The position below is point-in-time, so it takes no period — see cashPosition.ts.
+  const hasAccounts = (accounts ?? []).length > 0;
+  const cash = cashOnHand(accounts, income, expenses, transfers);
+
   // Receivables/payables are point-in-time (not period-filtered) — they represent
   // what's outstanding right now regardless of the period selector.
   // A fully-credited invoice (status "credited") is no longer owed.
@@ -70,7 +75,7 @@ export function CashFlowView() {
   const supplierCreditOnAccount = sumOnAccount(creditNotes ?? [], "supplier");
   const youOwe = supplierInvoicesOwed + supplierLedgerOwed - supplierCreditOnAccount;
 
-  const adjustedPosition = netCashFlow + owedToYou - youOwe;
+  const position = adjustedPosition(cash, owedToYou, youOwe);
   const stockValue = (stock ?? []).reduce((s, item) => s + Number(item.cost_price || 0) * Number(item.qty || 0), 0);
 
   const handleShare = () => {
@@ -80,12 +85,13 @@ export function CashFlowView() {
       `Net cash flow: ${fmt(netCashFlow)}`,
     ];
     if (isAll) {
+      lines.push(`Cash on hand: ${fmt(cash)}`);
       lines.push(`Owed to you: ${fmt(owedToYou)}`);
       if (customerCreditOnAccount > 0) lines.push(`  Less credit on account (customers): ${fmt(customerCreditOnAccount)}`);
       lines.push(`You owe suppliers: ${fmt(youOwe)}`);
       if (supplierCreditOnAccount > 0) lines.push(`  Less credit on account (suppliers): ${fmt(supplierCreditOnAccount)}`);
       lines.push(
-        `Adjusted position: ${fmt(adjustedPosition)}`,
+        `Adjusted position: ${fmt(position)}`,
         `Stock on hand (at cost): ${fmt(stockValue)}`
       );
     } else {
@@ -127,11 +133,18 @@ export function CashFlowView() {
             <div style={{ fontSize: 12, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 12 }}>
               Adjusted position (incl. what&apos;s outstanding)
             </div>
-            <Row label="Net cash flow" value={fmt(netCashFlow)} />
+            <Row label="Cash on hand" value={fmt(cash)} />
             <Row label="+ Owed to you" value={fmt(owedToYou)} color="#0369A1" />
             <Row label="− You owe suppliers" value={fmt(youOwe)} color="#b45309" />
             <div style={{ borderTop: "1.5px solid #e2e8f0", marginTop: 8, paddingTop: 8 }}>
-              <Row label="Adjusted position" value={fmt(adjustedPosition)} bold />
+              <Row label="Adjusted position" value={fmt(position)} bold />
+            </div>
+            {/* The period selector drives the cash flow figures above; this block
+                is where you stand right now, so it says so rather than looking
+                like it moved with the period. */}
+            <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 8, lineHeight: 1.5 }}>
+              Where you stand right now — not affected by the period above.
+              {!hasAccounts && " Cash on hand is money in less money out; add your accounts for an exact figure."}
             </div>
           </div>
 
