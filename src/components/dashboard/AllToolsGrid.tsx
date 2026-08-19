@@ -102,6 +102,7 @@ const NAV_CATEGORIES: { id: string; items: NavItem[] }[] = [
       { href: "/bank-statement", icon: "🏦", label: "Import Statement", toolId: "bankstatement" },
       { href: "/cash-up", icon: "🧮", label: "Daily Cash-Up", toolId: "cashup" },
       { href: "/ledger", icon: "📒", label: "Ledgers", toolId: "ledger" },
+      { href: "/cashflow", icon: "📊", label: "Cash Flow", toolId: "profit" },
       { logKind: "income", icon: "💰", label: "Log income", toolId: "income" },
       { logKind: "expense", icon: "💸", label: "Log expense", toolId: "expense" },
     ],
@@ -110,7 +111,6 @@ const NAV_CATEGORIES: { id: string; items: NavItem[] }[] = [
     id: "taxcompliance", // Compliance & Financials
     items: [
       { href: "/tax", icon: "🧾", label: "Tax & SARS", toolId: "tax" },
-      { href: "/cashflow", icon: "📊", label: "Cash Flow", toolId: "profit" },
       { href: "/profit-loss", icon: "📈", label: "Profit & Loss", toolId: "profitloss" },
     ],
   },
