@@ -10,6 +10,7 @@ import type { PurchaseOrder } from "@/lib/supabase/hooks/usePurchaseOrders";
 import type { Expense } from "@/lib/supabase/hooks/useExpenses";
 import type { Contact } from "@/lib/supabase/hooks/useContacts";
 import { addDays } from "@/lib/format";
+import { expenseCategoryTotals, UNCATEGORISED, type PnlInputs } from "@/lib/pnl";
 
 const num = (v: unknown) => Number(v || 0);
 const inclVat = (r: { invoice_amount?: number | null; total_amount?: number | null; vat_amount?: number | null }) =>
@@ -100,42 +101,39 @@ export type CategorySpendRow = { category: string; amount: number; count: number
 /**
  * Every SARS category with its total — the deduction schedule, in full.
  *
- * P&L shows the top eight for a period, which is a summary; this is the list an
- * accountant works from. Personal spend is excluded because it isn't deductible,
- * and a credit settlement is excluded because it moves money against a credit
- * note rather than buying anything.
+ * P&L shows the top eight for a period; this is the whole list an accountant
+ * works from, so it must agree with that one down to the rand. It therefore
+ * delegates the attribution to expenseCategoryTotals rather than re-deriving it:
+ * two functions summing "spend by category" from different rules is exactly how
+ * a schedule and the report above it come to disagree.
+ *
+ * That delegation also fixed what this used to miss. It read sars_category off
+ * expense rows only, so anything bought on a supplier invoice was invisible —
+ * and a payment settling one has its own category deliberately nulled, which
+ * dropped it into Uncategorised. Categories now come from the document's lines,
+ * which is where they are actually recorded.
  */
 export function aggregateCategorySpend(
-  expenses: Expense[],
+  inputs: PnlInputs,
   within: (d: string) => boolean
 ): { rows: CategorySpendRow[]; totals: { total: number; count: number; categories: number; uncategorised: number } } {
-  const byCat = new Map<string, { amount: number; count: number }>();
-  let total = 0;
-  let count = 0;
+  const breakdown = expenseCategoryTotals(inputs, within);
+  const total = breakdown.reduce((s, r) => s + r.amount, 0);
 
-  for (const e of expenses) {
-    if (e.is_personal || e.is_credit_settlement) continue;
-    if (!within(e.transaction_date ?? "")) continue;
-    const category = (e.sars_category ?? "").trim() || "Uncategorised";
-    const cur = byCat.get(category) ?? { amount: 0, count: 0 };
-    cur.amount += num(e.amount);
-    cur.count += 1;
-    byCat.set(category, cur);
-    total += num(e.amount);
-    count += 1;
-  }
-
-  const rows = [...byCat.entries()]
-    .map(([category, v]) => ({ category, amount: v.amount, count: v.count, sharePct: total > 0 ? (v.amount / total) * 100 : 0 }))
-    .sort((a, b) => b.amount - a.amount || a.category.localeCompare(b.category));
+  const rows: CategorySpendRow[] = breakdown.map((r) => ({
+    category: r.category,
+    amount: r.amount,
+    count: r.count,
+    sharePct: total > 0 ? (r.amount / total) * 100 : 0,
+  }));
 
   return {
     rows,
     totals: {
       total,
-      count,
+      count: rows.reduce((s, r) => s + r.count, 0),
       categories: rows.length,
-      uncategorised: rows.find((r) => r.category === "Uncategorised")?.amount ?? 0,
+      uncategorised: rows.find((r) => r.category === UNCATEGORISED)?.amount ?? 0,
     },
   };
 }

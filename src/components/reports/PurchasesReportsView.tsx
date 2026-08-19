@@ -17,6 +17,8 @@ import {
 import { buildBillsDueHTML, buildCategorySpendHTML, buildCommittedHTML, buildSupplierSpendHTML } from "@/lib/docgen/buildLedgerHTML";
 import { fmt, todayStr } from "@/lib/format";
 import { inPeriod, PERIOD_LABELS, type Period } from "@/lib/period";
+import { useMoneySummary } from "@/lib/useMoneySummary";
+import { ALL_ACCOUNTS } from "@/components/ui/BankAccountSelector";
 import {
   ReportsTool,
   ReportIntro,
@@ -97,10 +99,12 @@ function SupplierSpendTab() {
 // ── Spend by category ────────────────────────────────────────────────────────
 
 function CategorySpendTab() {
-  const { data: expenses } = useExpenses();
   const [period, setPeriod] = useState<Period>("year");
 
-  const { rows, totals } = aggregateCategorySpend(expenses ?? [], inPeriod(period));
+  // The same assembled inputs the Profit & Loss reads, so this schedule and the
+  // top-eight list on that report cannot disagree about a category.
+  const { pnlInputs, within } = useMoneySummary(period, ALL_ACCOUNTS);
+  const { rows, totals } = aggregateCategorySpend(pnlInputs, within);
   const periodLabel = PERIOD_LABELS[period];
 
   return (

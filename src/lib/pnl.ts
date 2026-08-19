@@ -1,6 +1,7 @@
 import type { Tables } from "@/lib/types/database";
 import type { CreditNote } from "@/lib/creditNotes";
 import { incomeNet } from "@/lib/taxRates";
+import { salesLineTotal } from "@/lib/lineItems";
 
 // The one place profit is defined, so the dashboard and the Profit & Loss report
 // can never disagree about it again. Both used to compute their own — the
@@ -139,42 +140,191 @@ export function computePnl(inputs: PnlInputs, within: (dateStr: string) => boole
   };
 }
 
+// ── Category breakdown ───────────────────────────────────────────────────────
+//
+// Where each rand of revenue and cost sits, by SARS category.
+//
+// These live beside computePnl because they have to add up to it. A breakdown
+// that counts a different set of rows than the total printed above it is worse
+// than no breakdown, and keeping the two rules in one file is what stops them
+// drifting apart. The tests assert the reconciliation directly.
+//
+// The category is read from the DOCUMENT wherever one exists — an invoice line
+// knows what it sold, a supplier invoice line knows what was bought — and from
+// the money row only when there is no document, which is the one case where the
+// row is itself the record. That is the same rule the Income and Expense modals
+// already follow when they null a matched payment's own category.
+
+export const UNCATEGORISED = "Uncategorised";
+
+export type CategoryTotal = { category: string; amount: number };
+/** A category with how many entries fed it — the schedule an accountant reads. */
+export type CategoryBreakdown = { category: string; amount: number; count: number };
+
+type LineLike = { sars_category?: string | null; qty?: number; unit_price?: number; labour?: number; materials?: number };
+
 /**
- * Expense totals per category, for the Profit & Loss breakdown.
+ * Spread a document's ex-VAT total across its lines' categories, pro rata.
  *
- * Lives here, beside computePnl, because it has to count exactly the rows that
- * went into `costs` — a breakdown that includes rows the total excluded sums
- * past the total printed above it. Keeping the two rules in one file is what
- * stops them drifting apart again.
+ * Pro rata rather than summing the lines directly, because a document's stored
+ * amount is the authority and its lines need not add up to it — a discount, a
+ * rounding, or a historic line shape can all put the two slightly apart. Summing
+ * lines would then produce a breakdown that misses the total by a few rand and
+ * quietly stops reconciling. Allocating the real total guarantees it never can.
  *
- * Mirrors the cost side of computePnl: the owner's own money and refund
- * settlements are never costs, and on the accrual path an expense settling a
- * supplier invoice or ledger entry is netted out there, so it cannot be listed
- * here either. Under `cashBasis` (a single account's own view) nothing is
- * netted, so matched rows stay.
- *
- * Note this covers the CASH expense side only — supplier invoices and supplier
- * credit carry no expense category, so on the accrual path these totals break
- * down `cashExpensesNotMatched`, not the whole of `costs`.
+ * A document with no lines, or lines carrying no category at all, puts its whole
+ * amount under Uncategorised — visible rather than dropped.
  */
-export function expenseCategoryTotals(
-  expenses: Expense[] | null | undefined,
+type Bucket = { amount: number; count: number };
+
+function bump(into: Map<string, Bucket>, cat: string, amount: number) {
+  const cur = into.get(cat) ?? { amount: 0, count: 0 };
+  into.set(cat, { amount: cur.amount + amount, count: cur.count + 1 });
+}
+
+function allocate(into: Map<string, Bucket>, amountExVat: number, lines: LineLike[] | null | undefined, sign = 1) {
+  const rows = (lines ?? []).filter((l) => l && typeof l === "object");
+  const weights = rows.map((l) => Math.abs(salesLineTotal(l)));
+  const totalWeight = weights.reduce((s, w) => s + w, 0);
+
+  const add = (cat: string, amt: number) => bump(into, cat, sign * amt);
+
+  if (rows.length === 0 || totalWeight === 0) {
+    add(UNCATEGORISED, amountExVat);
+    return;
+  }
+
+  // Allocate all but the last line by weight, then give the remainder to the last
+  // one, so rounding never loses or invents a cent against the document total.
+  let allocated = 0;
+  rows.forEach((line, i) => {
+    const cat = line.sars_category || UNCATEGORISED;
+    const share = i === rows.length - 1 ? amountExVat - allocated : (amountExVat * weights[i]) / totalWeight;
+    allocated += share;
+    add(cat, share);
+  });
+}
+
+function sorted(totals: Map<string, Bucket>): CategoryBreakdown[] {
+  return [...totals.entries()]
+    .map(([category, b]) => ({ category, amount: b.amount, count: b.count }))
+    .filter((r) => r.amount !== 0)
+    .sort((a, b) => b.amount - a.amount || a.category.localeCompare(b.category));
+}
+
+/**
+ * Revenue by category. Sums to `computePnl(...).revenue` for the same inputs.
+ *
+ * Invoices carry their categories on their lines; cash income that isn't settling
+ * an invoice carries its own; a customer credit note is contra-revenue and is
+ * pushed back against the categories of the invoice it credits, so crediting a
+ * sale unwinds it from the same heading it landed under.
+ */
+export function revenueCategoryTotals(
+  inputs: PnlInputs,
   within: (dateStr: string) => boolean,
   opts?: { cashBasis?: boolean }
-): [string, number][] {
-  const counted = (expenses ?? []).filter(
-    (r) =>
-      within(r.transaction_date) &&
-      !r.is_credit_settlement &&
-      !r.is_personal &&
-      (opts?.cashBasis || !(r.matched_ledger_entry_id || r.matched_supplier_invoice_id))
-  );
+): CategoryBreakdown[] {
+  const { income, invoices, creditNotes } = inputs;
+  const totals = new Map<string, Bucket>();
 
-  const byCategory = counted.reduce<Record<string, number>>((acc, r) => {
-    const cat = r.sars_category || r.what_for || "Uncategorised";
-    acc[cat] = (acc[cat] || 0) + Number(r.amount);
-    return acc;
-  }, {});
+  // Cash basis (a single account): every rand received is revenue under its own
+  // category, with no invoices to inherit from and no netting — the same shape
+  // computePnl takes for that view.
+  if (opts?.cashBasis) {
+    for (const r of income ?? []) {
+      if (!within(r.transaction_date) || r.is_credit_settlement || r.is_personal) continue;
+      bump(totals, r.sars_category || UNCATEGORISED, incomeNet(r));
+    }
+    return sorted(totals);
+  }
 
-  return Object.entries(byCategory).sort((a, b) => b[1] - a[1]);
+  const invoiceById = new Map((invoices ?? []).map((i) => [i.id, i]));
+
+  for (const inv of invoices ?? []) {
+    if (!within(inv.issue_date)) continue;
+    allocate(totals, Number(inv.invoice_amount), inv.line_items as LineLike[] | null);
+  }
+
+  // Cash income not already tied to an invoice — the money row is the record here,
+  // so its own category is the right one. Ex-VAT, as everywhere in this file.
+  for (const r of income ?? []) {
+    if (!within(r.transaction_date) || r.is_credit_settlement || r.is_personal || r.matched_invoice_id) continue;
+    bump(totals, r.sars_category || UNCATEGORISED, incomeNet(r));
+  }
+
+  for (const cn of creditNotes ?? []) {
+    if (cn.ledger !== "customer" || !within(cn.issue_date)) continue;
+    const exVat = Number(cn.amount || 0) - Number(cn.vat_amount || 0);
+    // Its own lines if it has them (a partial credit lists what was credited),
+    // otherwise the credited invoice's — either way it lands where the sale did.
+    const lines = (cn.line_items as LineLike[] | null) ?? null;
+    const fallback = cn.invoice_id ? (invoiceById.get(cn.invoice_id)?.line_items as LineLike[] | null) : null;
+    allocate(totals, exVat, lines?.length ? lines : fallback, -1);
+  }
+
+  return sorted(totals);
+}
+
+/**
+ * Costs by category. Sums to `computePnl(...).costs` for the same inputs.
+ *
+ * `cashBasis` mirrors computePnl's single-account view: every rand that moved is
+ * a cost, with no accrual documents and no netting, so each row's own category
+ * stands.
+ *
+ * Supplier ledger entries have no category to give — the credit book records an
+ * amount owed and nothing about what it bought — so they land under
+ * Uncategorised until that table carries one too.
+ */
+export function expenseCategoryTotals(
+  inputs: PnlInputs,
+  within: (dateStr: string) => boolean,
+  opts?: { cashBasis?: boolean }
+): CategoryBreakdown[] {
+  const { expenses, supplierInvoices, ledger, creditNotes } = inputs;
+  const totals = new Map<string, Bucket>();
+
+  const ownCategory = (r: { sars_category?: string | null }) => r.sars_category || UNCATEGORISED;
+
+  if (opts?.cashBasis) {
+    for (const r of expenses ?? []) {
+      if (!within(r.transaction_date) || r.is_credit_settlement || r.is_personal) continue;
+      bump(totals, ownCategory(r), Number(r.amount));
+    }
+    return sorted(totals);
+  }
+
+  const supplierInvoiceById = new Map((supplierInvoices ?? []).map((si) => [si.id, si]));
+
+  for (const si of supplierInvoices ?? []) {
+    if (!within(si.issue_date)) continue;
+    allocate(totals, Number(si.invoice_amount), si.line_items as LineLike[] | null);
+  }
+
+  for (const e of ledger ?? []) {
+    if (e.ledger_type !== "supplier" || !within(e.entry_date)) continue;
+    bump(totals, UNCATEGORISED, Number(e.amount));
+  }
+
+  // Cash expenses not settling a supplier invoice or ledger entry. A settling
+  // payment is excluded because the document it settles already carried the
+  // amount — and the category with it.
+  for (const r of expenses ?? []) {
+    if (!within(r.transaction_date) || r.is_credit_settlement || r.is_personal) continue;
+    if (r.matched_ledger_entry_id || r.matched_supplier_invoice_id) continue;
+    bump(totals, ownCategory(r), Number(r.amount));
+  }
+
+  for (const cn of creditNotes ?? []) {
+    if (cn.ledger !== "supplier" || !within(cn.issue_date)) continue;
+    const exVat = Number(cn.amount || 0) - Number(cn.vat_amount || 0);
+    const lines = (cn.line_items as LineLike[] | null) ?? null;
+    const fallback = cn.supplier_invoice_id
+      ? (supplierInvoiceById.get(cn.supplier_invoice_id)?.line_items as LineLike[] | null)
+      : null;
+    allocate(totals, exVat, lines?.length ? lines : fallback, -1);
+  }
+
+  return sorted(totals);
 }

@@ -1,22 +1,33 @@
 import { fmt } from "@/lib/format";
+import { LineCategoryPicker } from "@/components/ui/LineCategoryPicker";
 import { itemTypeMeta } from "@/lib/itemTypes";
 import { useStockItems } from "@/lib/supabase/hooks/useStock";
 
-export type PurchaseLineItem = { desc: string; qty: number; unit_price: number };
+// sars_category is the expense heading this line files under. Per line, because
+// one supplier can sell you two different things — cleaning and stationery off the
+// same slip belong under two headings, and no per-supplier default knows that.
+export type PurchaseLineItem = { desc: string; qty: number; unit_price: number; sars_category?: string | null };
 
 export function PurchaseLineItemsEditor({
   items,
   onChange,
+  defaultCategory = null,
+  defaultCategorySource,
 }: {
   items: PurchaseLineItem[];
   onChange: (items: PurchaseLineItem[]) => void;
+  /** The supplier's usual category — seeds a new line so the common bill needs no
+   *  typing at all. Every line stays overridable for the bill that mixes things. */
+  defaultCategory?: string | null;
+  /** Named in the line's label so an inherited category doesn't read as typed. */
+  defaultCategorySource?: string;
 }) {
   const { data: stock } = useStockItems();
   const updateItem = (index: number, changes: Partial<PurchaseLineItem>) => {
     onChange(items.map((it, i) => (i === index ? { ...it, ...changes } : it)));
   };
   const removeItem = (index: number) => onChange(items.filter((_, i) => i !== index));
-  const addItem = () => onChange([...items, { desc: "", qty: 1, unit_price: 0 }]);
+  const addItem = () => onChange([...items, { desc: "", qty: 1, unit_price: 0, sars_category: defaultCategory }]);
 
   return (
     <div style={{ marginBottom: 16 }}>
@@ -41,7 +52,7 @@ export function PurchaseLineItemsEditor({
             const s = (stock ?? []).find((it) => it.id === e.target.value);
             if (!s) return;
             // Purchases are what you PAY, so a picked item seeds its cost price.
-            onChange([...items, { desc: s.name, qty: 1, unit_price: Number(s.cost_price || 0) }]);
+            onChange([...items, { desc: s.name, qty: 1, unit_price: Number(s.cost_price || 0), sars_category: defaultCategory }]);
             e.target.value = "";
           }}
           style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1.5px solid #e2e8f0", fontSize: 14, color: "#334155", background: "#fff", marginBottom: 10, boxSizing: "border-box" }}
@@ -122,6 +133,12 @@ export function PurchaseLineItemsEditor({
                 />
               </div>
             </div>
+            <LineCategoryPicker
+              kind="expense"
+              value={item.sars_category}
+              onChange={(sars) => updateItem(i, { sars_category: sars })}
+              inheritedFrom={item.sars_category && item.sars_category === defaultCategory ? defaultCategorySource : undefined}
+            />
             <div style={{ textAlign: "right", fontSize: 12, color: "#64748b", marginTop: 6 }}>Line total: {fmt(lineTotal)}</div>
           </div>
         );

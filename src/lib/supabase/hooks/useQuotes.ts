@@ -8,7 +8,10 @@ import type { Tables, TablesInsert, TablesUpdate } from "@/lib/types/database";
 export type Quote = Tables<"quotes">;
 // New lines carry unit_price (qty × unit_price); historic lines carry the old
 // labour + materials split. Both are read through salesLineTotal (@/lib/lineItems).
-export type QuoteLineItem = { desc: string; qty: number; unit_price?: number; labour?: number; materials?: number; est_hours?: number };
+// sars_category is the revenue heading this line earns under. It rides on the
+// line, not the invoice, so a bill mixing labour and materials files each half
+// where it belongs — which one field on the document could never do.
+export type QuoteLineItem = { desc: string; qty: number; unit_price?: number; labour?: number; materials?: number; est_hours?: number; sars_category?: string | null };
 
 const QUERY_KEY = ["quotes"];
 

@@ -33,6 +33,11 @@ export function PurchaseOrderModal({ po, onClose }: { po?: PurchaseOrder; onClos
   const saving = createPO.isPending || updatePO.isPending;
 
   const suppliers = (contacts ?? []).filter((c) => c.contact_type === "supplier");
+  // The supplier's usual heading seeds each new line, so the common bill needs no
+  // category typed at all — and any line stays overridable for the bill that mixes
+  // cleaning with stationery.
+  const supplierDefaultCategory =
+    suppliers.find((c) => c.id === supplierContactId)?.default_sars_category ?? null;
   const subtotal = items.reduce((s, it) => s + Number(it.qty || 0) * Number(it.unit_price || 0), 0);
   const isVatRegistered = !!business?.vat_number;
   const vatAmount = isVatRegistered ? subtotal * VAT_RATE : 0;
@@ -96,7 +101,12 @@ export function PurchaseOrderModal({ po, onClose }: { po?: PurchaseOrder; onClos
         <Input value={requestedDelivery} onChange={setRequestedDelivery} type="date" />
       </Field>
 
-      <PurchaseLineItemsEditor items={items} onChange={setItems} />
+      <PurchaseLineItemsEditor
+        items={items}
+        onChange={setItems}
+        defaultCategory={supplierDefaultCategory}
+        defaultCategorySource="this supplier"
+      />
 
       <div style={{ background: "#fff7ed", borderRadius: 12, padding: "12px 14px", marginBottom: 16, fontSize: 13, color: "#92400e" }}>
         <div style={{ display: "flex", justifyContent: "space-between" }}>

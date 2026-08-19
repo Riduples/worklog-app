@@ -8,7 +8,7 @@ import { useLedgerEntries } from "@/lib/supabase/hooks/useLedger";
 import { useCreditNotes } from "@/lib/supabase/hooks/useCreditNotes";
 import { useBankAccounts, type BankAccount } from "@/lib/supabase/hooks/useBankAccounts";
 import { useAccountTransfers } from "@/lib/supabase/hooks/useAccountTransfers";
-import { computePnl, type Pnl } from "@/lib/pnl";
+import { computePnl, type Pnl, type PnlInputs } from "@/lib/pnl";
 import { accountBalance } from "@/lib/accounts";
 import { bankedBalance, cashOnHand } from "@/lib/cashPosition";
 import { inPeriod, type Period } from "@/lib/period";
@@ -43,6 +43,14 @@ export type MoneySummary = {
    * account, whose own rows carry no business-wide invoices or supplier credit.
    */
   pnl: Pnl;
+
+  /**
+   * The exact inputs `pnl` was computed from, so a category breakdown can be
+   * built from the same rows as the total it has to add up to. Handing back the
+   * inputs rather than letting callers reassemble them is what makes that
+   * guarantee structural instead of a convention someone has to remember.
+   */
+  pnlInputs: PnlInputs;
 
   /**
    * Every rand that MOVED in the period for the chosen account, VAT included.
@@ -85,9 +93,13 @@ export function useMoneySummary(period: Period, account: AccountFilter): MoneySu
   // own rows are counted directly. Running them through the accrual path instead
   // would net every invoice-matched rand against documents that aren't in the
   // inputs, silently zeroing them.
+  const pnlInputs: PnlInputs = isAllAccounts
+    ? { income, expenses, invoices, supplierInvoices, ledger, creditNotes }
+    : { income: incomeRows, expenses: expenseRows };
+
   const pnl = isAllAccounts
-    ? computePnl({ income, expenses, invoices, supplierInvoices, ledger, creditNotes }, within)
-    : computePnl({ income: incomeRows, expenses: expenseRows }, within, { cashBasis: true });
+    ? computePnl(pnlInputs, within)
+    : computePnl(pnlInputs, within, { cashBasis: true });
 
   const grossIn = incomeRows.filter((r) => within(r.transaction_date)).reduce((s, r) => s + Number(r.amount || 0), 0);
   const grossOut = expenseRows.filter((r) => within(r.transaction_date)).reduce((s, r) => s + Number(r.amount || 0), 0);
@@ -100,6 +112,7 @@ export function useMoneySummary(period: Period, account: AccountFilter): MoneySu
     incomeRows,
     expenseRows,
     pnl,
+    pnlInputs,
     grossIn,
     grossOut,
     // Balances are point-in-time and take no period — see cashPosition.ts.

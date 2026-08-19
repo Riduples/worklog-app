@@ -101,11 +101,13 @@ describe("aggregateSupplierSpend", () => {
 describe("aggregateCategorySpend", () => {
   it("totals every category with its share, biggest first", () => {
     const { rows, totals } = aggregateCategorySpend(
-      [
-        expense({ id: "1", sars_category: "Materials", amount: 700 }),
-        expense({ id: "2", sars_category: "Fuel", amount: 300 }),
-        expense({ id: "3", sars_category: "Materials", amount: 0 }),
-      ],
+      {
+        expenses: [
+          expense({ id: "1", sars_category: "Materials", amount: 700 }),
+          expense({ id: "2", sars_category: "Fuel", amount: 300 }),
+          expense({ id: "3", sars_category: "Materials", amount: 0 }),
+        ],
+      },
       always
     );
     expect(rows[0]).toMatchObject({ category: "Materials", amount: 700, count: 2, sharePct: 70 });
@@ -113,13 +115,13 @@ describe("aggregateCategorySpend", () => {
   });
 
   it("gathers spend with no category under Uncategorised and reports it", () => {
-    const { totals } = aggregateCategorySpend([expense({ sars_category: null, amount: 250 })], always);
+    const { totals } = aggregateCategorySpend({ expenses: [expense({ sars_category: null, amount: 250 })] }, always);
     expect(totals.uncategorised).toBe(250);
   });
 
   it("excludes personal spend and credit settlements", () => {
     const { totals } = aggregateCategorySpend(
-      [expense({ id: "1", amount: 100, is_personal: true }), expense({ id: "2", amount: 200, is_credit_settlement: true }), expense({ id: "3", amount: 30 })],
+      { expenses: [expense({ id: "1", amount: 100, is_personal: true }), expense({ id: "2", amount: 200, is_credit_settlement: true }), expense({ id: "3", amount: 30 })] },
       always
     );
     expect(totals.total).toBe(30);

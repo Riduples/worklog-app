@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computePnl, expenseCategoryTotals } from "@/lib/pnl";
+import { computePnl, expenseCategoryTotals, revenueCategoryTotals, UNCATEGORISED } from "@/lib/pnl";
 import { incomeNet } from "@/lib/taxRates";
 import type { Tables } from "@/lib/types/database";
 
@@ -133,86 +133,171 @@ describe("computePnl", () => {
   });
 });
 
+// ── Category breakdown ───────────────────────────────────────────────────────
+// The property that matters most is the last one in each block: the breakdown
+// has to add up to the total printed above it. A list that counts a different
+// set of rows than its own total is worse than no list at all.
+
+const amountOf = (rows: { category: string; amount: number }[], cat: string) =>
+  rows.find((r) => r.category === cat)?.amount ?? 0;
+const sum = (rows: { amount: number }[]) => rows.reduce((s, r) => s + r.amount, 0);
+
+describe("revenueCategoryTotals", () => {
+  it("reads an invoice's categories off its lines, not off the invoice", () => {
+    const inv = invoice({
+      invoice_amount: 1000,
+      line_items: [
+        { desc: "Labour", qty: 1, unit_price: 600, sars_category: "Trading income — Services rendered" },
+        { desc: "Parts", qty: 1, unit_price: 400, sars_category: "Trading income — Sale of goods" },
+      ],
+    } as Partial<Tables<"invoices">>);
+    const rows = revenueCategoryTotals({ invoices: [inv] }, all);
+    expect(amountOf(rows, "Trading income — Services rendered")).toBe(600);
+    expect(amountOf(rows, "Trading income — Sale of goods")).toBe(400);
+  });
+
+  it("counts cash income under its own category — no document to inherit from", () => {
+    const rows = revenueCategoryTotals(
+      { income: [income({ amount: 1150, vat_amount: 150, sars_category: "Other income — Interest received" })] },
+      all
+    );
+    // Ex-VAT, like every figure in this file.
+    expect(amountOf(rows, "Other income — Interest received")).toBe(1000);
+  });
+
+  it("ignores a payment settling an invoice — the invoice already carried it", () => {
+    const inv = invoice({ invoice_amount: 1000, line_items: [{ desc: "Job", qty: 1, unit_price: 1000, sars_category: "Trading income — Services rendered" }] } as Partial<Tables<"invoices">>);
+    const rows = revenueCategoryTotals(
+      { invoices: [inv], income: [income({ amount: 1150, vat_amount: 150, matched_invoice_id: inv.id, sars_category: null })] },
+      all
+    );
+    expect(sum(rows)).toBe(1000);
+  });
+
+  it("unwinds a customer credit against the heading the sale landed under", () => {
+    const inv = invoice({ id: "iv1", invoice_amount: 1000, line_items: [{ desc: "Job", qty: 1, unit_price: 1000, sars_category: "Trading income — Services rendered" }] } as Partial<Tables<"invoices">>);
+    const rows = revenueCategoryTotals(
+      { invoices: [inv], creditNotes: [creditNote({ invoice_id: "iv1", amount: 575, vat_amount: 75, line_items: [] })] },
+      all
+    );
+    expect(amountOf(rows, "Trading income — Services rendered")).toBe(500);
+  });
+
+  it("puts an uncategorised invoice somewhere visible rather than dropping it", () => {
+    const rows = revenueCategoryTotals({ invoices: [invoice({ invoice_amount: 1000, line_items: [] } as Partial<Tables<"invoices">>)] }, all);
+    expect(amountOf(rows, UNCATEGORISED)).toBe(1000);
+  });
+
+  it("adds up to computePnl's revenue — the whole point", () => {
+    const inputs = {
+      invoices: [invoice({ id: "iv1", invoice_amount: 8000, line_items: [
+        { desc: "Labour", qty: 1, unit_price: 5000, sars_category: "Trading income — Services rendered" },
+        { desc: "Parts", qty: 1, unit_price: 3000, sars_category: "Trading income — Sale of goods" },
+      ] } as Partial<Tables<"invoices">>)],
+      income: [
+        income({ id: "i1", amount: 1150, vat_amount: 150, sars_category: "Other income — Interest received" }),
+        income({ id: "i2", amount: 2300, vat_amount: 300, matched_invoice_id: "iv1" }),
+        income({ id: "i3", amount: 900, is_personal: true }),
+      ],
+      creditNotes: [creditNote({ invoice_id: "iv1", amount: 575, vat_amount: 75 })],
+    };
+    expect(sum(revenueCategoryTotals(inputs, all))).toBeCloseTo(computePnl(inputs, all).revenue, 6);
+  });
+});
+
 describe("expenseCategoryTotals", () => {
-  it("groups by SARS category, biggest first", () => {
-    const rows = [
-      expense({ id: "1", amount: 100, sars_category: "Materials" }),
-      expense({ id: "2", amount: 400, sars_category: "Fuel" }),
-      expense({ id: "3", amount: 50, sars_category: "Materials" }),
-    ];
-    expect(expenseCategoryTotals(rows, all)).toEqual([
-      ["Fuel", 400],
-      ["Materials", 150],
-    ]);
+  it("reads a supplier invoice's categories off its lines", () => {
+    const si = supplierInvoice({ invoice_amount: 500, line_items: [
+      { desc: "Cleaning stuff", qty: 1, unit_price: 300, sars_category: "Premises — Cleaning costs" },
+      { desc: "Paper", qty: 1, unit_price: 200, sars_category: "Admin — Stationery & printing" },
+    ] } as Partial<Tables<"supplier_invoices">>);
+    const rows = expenseCategoryTotals({ supplierInvoices: [si] }, all);
+    // One supplier, two headings — the case a per-supplier default cannot cover.
+    expect(amountOf(rows, "Premises — Cleaning costs")).toBe(300);
+    expect(amountOf(rows, "Admin — Stationery & printing")).toBe(200);
   });
 
-  it("falls back to what_for, then Uncategorised, when no SARS category is set", () => {
-    const rows = [
-      expense({ id: "1", amount: 30, sars_category: null, what_for: "Airtime" }),
-      expense({ id: "2", amount: 20, sars_category: null, what_for: null }),
-    ];
-    expect(expenseCategoryTotals(rows, all)).toEqual([
-      ["Airtime", 30],
-      ["Uncategorised", 20],
-    ]);
+  it("leaves out the owner's own money and refund settlements", () => {
+    const rows = expenseCategoryTotals(
+      {
+        expenses: [
+          expense({ id: "1", amount: 900, sars_category: "Drawings", is_personal: true }),
+          expense({ id: "2", amount: 575, sars_category: "Refund", is_credit_settlement: true }),
+          expense({ id: "3", amount: 100, sars_category: "Cost of sales — Materials" }),
+        ],
+      },
+      all
+    );
+    expect(rows).toEqual([{ category: "Cost of sales — Materials", amount: 100, count: 1 }]);
   });
 
-  it("leaves out the owner's own money — costs never counted it", () => {
-    const rows = [
-      expense({ id: "1", amount: 900, sars_category: "Drawings", is_personal: true }),
-      expense({ id: "2", amount: 100, sars_category: "Materials" }),
-    ];
-    expect(expenseCategoryTotals(rows, all)).toEqual([["Materials", 100]]);
+  it("leaves out an expense settling a document — the document carried it", () => {
+    const rows = expenseCategoryTotals(
+      {
+        supplierInvoices: [supplierInvoice({ id: "si1", invoice_amount: 344, line_items: [{ desc: "Stock", qty: 1, unit_price: 344, sars_category: "Cost of sales — Trading stock" }] } as Partial<Tables<"supplier_invoices">>)],
+        expenses: [expense({ id: "1", amount: 344, sars_category: "Cost of sales — Materials", matched_supplier_invoice_id: "si1" })],
+      },
+      all
+    );
+    expect(amountOf(rows, "Cost of sales — Trading stock")).toBe(344);
+    expect(amountOf(rows, "Cost of sales — Materials")).toBe(0);
   });
 
-  it("leaves out refund settlements — the credit note already adjusted profit", () => {
-    const rows = [
-      expense({ id: "1", amount: 575, sars_category: "Refund", is_credit_settlement: true }),
-      expense({ id: "2", amount: 100, sars_category: "Materials" }),
-    ];
-    expect(expenseCategoryTotals(rows, all)).toEqual([["Materials", 100]]);
+  it("shows supplier ledger credit as uncategorised — the credit book records no category", () => {
+    const rows = expenseCategoryTotals({ ledger: [ledgerEntry({ amount: 800 })] }, all);
+    expect(amountOf(rows, UNCATEGORISED)).toBe(800);
   });
 
-  it("leaves out an expense settling a supplier invoice or ledger entry — the document carried it", () => {
-    const rows = [
-      expense({ id: "1", amount: 344, sars_category: "Stock", matched_supplier_invoice_id: "si1" }),
-      expense({ id: "2", amount: 800, sars_category: "Stock", matched_ledger_entry_id: "le1" }),
-      expense({ id: "3", amount: 100, sars_category: "Materials" }),
-    ];
-    expect(expenseCategoryTotals(rows, all)).toEqual([["Materials", 100]]);
-  });
-
-  it("keeps matched rows on the cash basis, where nothing is netted", () => {
-    const rows = [
-      expense({ id: "1", amount: 344, sars_category: "Stock", matched_supplier_invoice_id: "si1" }),
-      expense({ id: "2", amount: 100, sars_category: "Materials" }),
-    ];
-    expect(expenseCategoryTotals(rows, all, { cashBasis: true })).toEqual([
-      ["Stock", 344],
-      ["Materials", 100],
-    ]);
+  it("keeps matched rows and their own categories on the cash basis", () => {
+    const rows = expenseCategoryTotals(
+      { expenses: [expense({ id: "1", amount: 344, sars_category: "Cost of sales — Trading stock", matched_supplier_invoice_id: "si1" })] },
+      all,
+      { cashBasis: true }
+    );
+    expect(amountOf(rows, "Cost of sales — Trading stock")).toBe(344);
   });
 
   it("only counts rows inside the period", () => {
-    const rows = [
-      expense({ id: "1", amount: 100, transaction_date: "2026-07-10", sars_category: "Materials" }),
-      expense({ id: "2", amount: 999, transaction_date: "2026-08-10", sars_category: "Materials" }),
-    ];
-    expect(expenseCategoryTotals(rows, (d) => d.startsWith("2026-07"))).toEqual([["Materials", 100]]);
+    const rows = expenseCategoryTotals(
+      {
+        expenses: [
+          expense({ id: "1", amount: 100, transaction_date: "2026-07-10", sars_category: "Cost of sales — Materials" }),
+          expense({ id: "2", amount: 999, transaction_date: "2026-08-10", sars_category: "Cost of sales — Materials" }),
+        ],
+      },
+      (d) => d.startsWith("2026-07")
+    );
+    expect(amountOf(rows, "Cost of sales — Materials")).toBe(100);
   });
 
-  it("sums to the cash expense line computePnl reports, so the breakdown reconciles", () => {
-    // The regression this pairing exists for: the list used to include personal
-    // and matched rows the total above it excluded, so it could sum past the total.
-    const rows = [
-      expense({ id: "1", amount: 900, sars_category: "Drawings", is_personal: true }),
-      expense({ id: "2", amount: 344, sars_category: "Stock", matched_supplier_invoice_id: "si1" }),
-      expense({ id: "3", amount: 100, sars_category: "Materials" }),
-      expense({ id: "4", amount: 60, sars_category: "Fuel" }),
-    ];
-    const pnl = computePnl({ expenses: rows, supplierInvoices: [supplierInvoice()] }, all);
-    const breakdown = expenseCategoryTotals(rows, all).reduce((s, [, amt]) => s + amt, 0);
-    expect(breakdown).toBe(pnl.cashExpensesNotMatched);
-    expect(breakdown).toBe(160);
+  it("adds up to computePnl's costs — the whole point", () => {
+    const inputs = {
+      supplierInvoices: [supplierInvoice({ id: "si1", invoice_amount: 500, line_items: [
+        { desc: "Cleaning", qty: 1, unit_price: 300, sars_category: "Premises — Cleaning costs" },
+        { desc: "Paper", qty: 1, unit_price: 200, sars_category: "Admin — Stationery & printing" },
+      ] } as Partial<Tables<"supplier_invoices">>)],
+      ledger: [ledgerEntry({ amount: 800 })],
+      expenses: [
+        expense({ id: "1", amount: 500, matched_supplier_invoice_id: "si1" }),
+        expense({ id: "2", amount: 120, sars_category: "Motor vehicle — Fuel & oil" }),
+        expense({ id: "3", amount: 900, is_personal: true }),
+      ],
+      creditNotes: [creditNote({ ledger: "supplier", supplier_invoice_id: "si1", amount: 115, vat_amount: 15 })],
+    };
+    expect(sum(expenseCategoryTotals(inputs, all))).toBeCloseTo(computePnl(inputs, all).costs, 6);
+  });
+
+  it("reconciles even when the lines do not add up to the document total", () => {
+    // A discount, a rounding, or a historic line shape can leave lines short of
+    // the stored amount. The stored amount is the authority, so the breakdown
+    // allocates it pro rata rather than summing the lines and drifting.
+    const si = supplierInvoice({ invoice_amount: 1000, line_items: [
+      { desc: "A", qty: 1, unit_price: 300, sars_category: "Premises — Cleaning costs" },
+      { desc: "B", qty: 1, unit_price: 100, sars_category: "Admin — Stationery & printing" },
+    ] } as Partial<Tables<"supplier_invoices">>);
+    const rows = expenseCategoryTotals({ supplierInvoices: [si] }, all);
+    expect(sum(rows)).toBe(1000);
+    expect(amountOf(rows, "Premises — Cleaning costs")).toBe(750);
+    expect(amountOf(rows, "Admin — Stationery & printing")).toBe(250);
   });
 });
