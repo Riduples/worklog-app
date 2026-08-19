@@ -17,6 +17,26 @@ type Movement = { account_id: string | null; amount: number; transaction_date: s
 type TransferMovement = { from_account_id: string; to_account_id: string; amount: number; transfer_date: string };
 
 /**
+ * What the saved accounts hold right now — the sum of their running balances.
+ *
+ * This is the dashboard's "in your accounts now" figure. It is deliberately
+ * narrower than cashOnHand() below: money logged without an account is real,
+ * but it is not in any account, so it does not belong under this label. The two
+ * agree whenever every row is tagged to an account.
+ */
+export function bankedBalance(
+  accounts: BankAccount[] | null | undefined,
+  income: Movement[] | null | undefined,
+  expenses: Movement[] | null | undefined,
+  transfers: TransferMovement[] | null | undefined
+): number {
+  return (accounts ?? []).reduce(
+    (s, a) => s + accountBalance(a, income ?? [], expenses ?? [], transfers ?? []),
+    0
+  );
+}
+
+/**
  * Cash held right now, across every account.
  *
  * With accounts set up this is their real running balance — opening balance,
@@ -45,7 +65,7 @@ export function cashOnHand(
 
   if (accts.length === 0) return net(inRows) - net(outRows);
 
-  const banked = accts.reduce((s, a) => s + accountBalance(a, inRows, outRows, transfers ?? []), 0);
+  const banked = bankedBalance(accts, inRows, outRows, transfers);
 
   // Rows logged without an account still moved real money — a cash sale taken
   // before the business added its bank details, say. accountBalance() only counts

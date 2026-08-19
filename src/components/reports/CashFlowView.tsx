@@ -2,22 +2,18 @@
 
 import { useState } from "react";
 import { PeriodSelector } from "@/components/ui/PeriodSelector";
-import { useIncome } from "@/lib/supabase/hooks/useIncome";
-import { useExpenses } from "@/lib/supabase/hooks/useExpenses";
 import { useInvoices } from "@/lib/supabase/hooks/useInvoices";
 import { useSupplierInvoices } from "@/lib/supabase/hooks/useSupplierInvoices";
 import { useLedgerEntries } from "@/lib/supabase/hooks/useLedger";
 import { useStockItems } from "@/lib/supabase/hooks/useStock";
-import { useBankAccounts } from "@/lib/supabase/hooks/useBankAccounts";
-import { useAccountTransfers } from "@/lib/supabase/hooks/useAccountTransfers";
 import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 import { useCreditNotes } from "@/lib/supabase/hooks/useCreditNotes";
-import { inPeriod, PERIOD_LABELS, type Period } from "@/lib/period";
+import { PERIOD_LABELS, type Period } from "@/lib/period";
 import { fmt } from "@/lib/format";
 import { balanceInclVat } from "@/lib/balance";
 import { sumOnAccount } from "@/lib/creditNotes";
-import { accountBalance } from "@/lib/accounts";
-import { cashOnHand, adjustedPosition } from "@/lib/cashPosition";
+import { adjustedPosition } from "@/lib/cashPosition";
+import { useMoneySummary } from "@/lib/useMoneySummary";
 import { shareReport } from "@/lib/docgen/shareReport";
 import { BackLink } from "@/components/ui/BackLink";
 import { BankAccountSelector, ALL_ACCOUNTS, type AccountFilter } from "@/components/ui/BankAccountSelector";
@@ -25,31 +21,26 @@ import { BankAccountSelector, ALL_ACCOUNTS, type AccountFilter } from "@/compone
 export function CashFlowView() {
   const [period, setPeriod] = useState<Period>("month");
   const [account, setAccount] = useState<AccountFilter>(ALL_ACCOUNTS);
-  const { data: income } = useIncome();
-  const { data: expenses } = useExpenses();
   const { data: invoices } = useInvoices();
   const { data: supplierInvoices } = useSupplierInvoices();
   const { data: ledger } = useLedgerEntries();
   const { data: stock } = useStockItems();
-  const { data: accounts } = useBankAccounts();
-  const { data: transfers } = useAccountTransfers();
   const { data: business } = useBusinessProfile();
   const { data: creditNotes } = useCreditNotes();
 
-  const within = inPeriod(period);
-  const isAll = account === ALL_ACCOUNTS;
-  const selectedAccount = (accounts ?? []).find((a) => a.id === account) ?? null;
-  const byAccount = <T extends { account_id: string | null }>(rows: T[]) =>
-    isAll ? rows : rows.filter((r) => r.account_id === account);
+  // Money in/out and the balances come from the shared summary — the same
+  // calculation the dashboard hero and the P&L report read.
+  const {
+    isAllAccounts: isAll,
+    selectedAccount,
+    hasAccounts,
+    grossIn: moneyIn,
+    grossOut: moneyOut,
+    accountBalance: acctBalance,
+    cash,
+  } = useMoneySummary(period, account);
 
-  const moneyIn = byAccount(income ?? []).filter((r) => within(r.transaction_date)).reduce((s, r) => s + Number(r.amount), 0);
-  const moneyOut = byAccount(expenses ?? []).filter((r) => within(r.transaction_date)).reduce((s, r) => s + Number(r.amount), 0);
   const netCashFlow = moneyIn - moneyOut;
-  const acctBalance = selectedAccount ? accountBalance(selectedAccount, income ?? [], expenses ?? [], transfers ?? []) : 0;
-
-  // The position below is point-in-time, so it takes no period — see cashPosition.ts.
-  const hasAccounts = (accounts ?? []).length > 0;
-  const cash = cashOnHand(accounts, income, expenses, transfers);
 
   // Receivables/payables are point-in-time (not period-filtered) — they represent
   // what's outstanding right now regardless of the period selector.

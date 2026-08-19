@@ -6,12 +6,9 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { useIncome } from "@/lib/supabase/hooks/useIncome";
 import { useExpenses } from "@/lib/supabase/hooks/useExpenses";
 import { useInvoices } from "@/lib/supabase/hooks/useInvoices";
-import { useSupplierInvoices } from "@/lib/supabase/hooks/useSupplierInvoices";
-import { useLedgerEntries } from "@/lib/supabase/hooks/useLedger";
 import { useStockItems } from "@/lib/supabase/hooks/useStock";
 import { useBookings } from "@/lib/supabase/hooks/useBookings";
 import { useBankAccounts } from "@/lib/supabase/hooks/useBankAccounts";
-import { useAccountTransfers } from "@/lib/supabase/hooks/useAccountTransfers";
 import { useStaffRegister } from "@/lib/supabase/hooks/useStaffRegister";
 import { QuickLogModal } from "@/components/modals/QuickLogModal";
 import { UpgradeModal } from "@/components/modals/UpgradeModal";
@@ -26,9 +23,7 @@ import { SetupChecklist } from "@/components/dashboard/SetupChecklist";
 import { computeSetupSteps } from "@/lib/setupChecklist";
 import { BankAccountSelector, ALL_ACCOUNTS, type AccountFilter } from "@/components/ui/BankAccountSelector";
 import { fmt, greeting, todayStr } from "@/lib/format";
-import { inPeriod } from "@/lib/period";
-import { computePnl } from "@/lib/pnl";
-import { accountBalance } from "@/lib/accounts";
+import { useMoneySummary } from "@/lib/useMoneySummary";
 import { balanceInclVat } from "@/lib/balance";
 import { useToolGate } from "@/lib/useToolGate";
 import { upcomingDeadlines } from "@/lib/compliance";
@@ -40,12 +35,9 @@ export function DashboardView({ businessName }: { businessName: string }) {
   const { data: income } = useIncome();
   const { data: expenses } = useExpenses();
   const { data: invoices } = useInvoices();
-  const { data: supplierInvoices } = useSupplierInvoices();
-  const { data: ledger } = useLedgerEntries();
   const { data: stock } = useStockItems();
   const { data: bookings } = useBookings();
   const { data: accounts } = useBankAccounts();
-  const { data: transfers } = useAccountTransfers();
   const { data: staff } = useStaffRegister();
   const [modal, setModal] = useState<"quicklog" | null>(null);
   const { open: openLoggy } = useLoggy();
@@ -80,29 +72,27 @@ export function DashboardView({ businessName }: { businessName: string }) {
   // about every tool — see useToolGate.
   const { business, plan, isOwner, gate } = useToolGate();
 
-  // The money hero. "Money left" over the chosen period is the accrual profit —
-  // the same computePnl the Profit & Loss report uses, so the two can't disagree.
-  // The toggle stays (a single month is too narrow for multi-month contracting),
-  // and "in your accounts now" comes from the real bank balances.
-  const within = inPeriod(period);
-  const isAllAccounts = account === ALL_ACCOUNTS;
-  const selectedAccount = (accounts ?? []).find((a) => a.id === account) ?? null;
-  const pnl = computePnl({ income, expenses, invoices, supplierInvoices, ledger }, within);
-
-  // A single account is a cash view: gross money that moved through it this period,
-  // plus its running balance.
-  const acctIn = (income ?? [])
-    .filter((r) => r.account_id === account && within(r.transaction_date))
-    .reduce((s, r) => s + Number(r.amount || 0), 0);
-  const acctOut = (expenses ?? [])
-    .filter((r) => r.account_id === account && within(r.transaction_date))
-    .reduce((s, r) => s + Number(r.amount || 0), 0);
-  const acctBalance = selectedAccount ? accountBalance(selectedAccount, income ?? [], expenses ?? [], transfers ?? []) : 0;
-  const totalBalance = (accounts ?? []).reduce(
-    (s, a) => s + accountBalance(a, income ?? [], expenses ?? [], transfers ?? []),
-    0
-  );
-  const hasAccounts = (accounts ?? []).length > 0;
+  // The money hero. "Money left" over the chosen period is the accrual profit,
+  // and it comes from the SAME shared summary the Profit & Loss report reads —
+  // not a second assembly of the same inputs. That is what stopped the two
+  // disagreeing: this screen used to build its own inputs and omitted credit
+  // notes, so it reported a profit its own P&L report contradicted. The toggle
+  // stays (a single month is too narrow for multi-month contracting), and "in
+  // your accounts now" is the real bank balance.
+  //
+  // A single account stays a cash view — its running balance, and the gross money
+  // that moved through it — because an invoice is not money sitting in any one
+  // account. Hence the balance and grossIn/grossOut rather than the profit.
+  const {
+    isAllAccounts,
+    selectedAccount,
+    hasAccounts,
+    pnl,
+    grossIn: acctIn,
+    grossOut: acctOut,
+    accountBalance: acctBalance,
+    banked: totalBalance,
+  } = useMoneySummary(period, account);
 
   const periodLabel = period === "month" ? "this month" : period === "year" ? "this year" : "all time";
   const heroLabel = isAllAccounts ? `Money left · ${periodLabel}` : `${selectedAccount?.name ?? "Account"} balance`;

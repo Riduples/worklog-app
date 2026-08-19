@@ -2,19 +2,11 @@
 
 import { useState } from "react";
 import { PeriodSelector } from "@/components/ui/PeriodSelector";
-import { useIncome } from "@/lib/supabase/hooks/useIncome";
-import { useExpenses } from "@/lib/supabase/hooks/useExpenses";
-import { useInvoices } from "@/lib/supabase/hooks/useInvoices";
-import { useSupplierInvoices } from "@/lib/supabase/hooks/useSupplierInvoices";
-import { useLedgerEntries } from "@/lib/supabase/hooks/useLedger";
-import { useCreditNotes } from "@/lib/supabase/hooks/useCreditNotes";
 import { useMileageTrips } from "@/lib/supabase/hooks/useMileage";
-import { useBankAccounts } from "@/lib/supabase/hooks/useBankAccounts";
-import { useAccountTransfers } from "@/lib/supabase/hooks/useAccountTransfers";
 import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
-import { inPeriod, PERIOD_LABELS, type Period } from "@/lib/period";
-import { computePnl, expenseCategoryTotals } from "@/lib/pnl";
-import { accountBalance } from "@/lib/accounts";
+import { PERIOD_LABELS, type Period } from "@/lib/period";
+import { expenseCategoryTotals } from "@/lib/pnl";
+import { useMoneySummary } from "@/lib/useMoneySummary";
 import { fmt } from "@/lib/format";
 import { shareReport } from "@/lib/docgen/shareReport";
 import { BackLink } from "@/components/ui/BackLink";
@@ -23,31 +15,21 @@ import { BankAccountSelector, ALL_ACCOUNTS, type AccountFilter } from "@/compone
 export function ProfitLossView() {
   const [period, setPeriod] = useState<Period>("month");
   const [account, setAccount] = useState<AccountFilter>(ALL_ACCOUNTS);
-  const { data: income } = useIncome();
-  const { data: expenses } = useExpenses();
-  const { data: invoices } = useInvoices();
-  const { data: supplierInvoices } = useSupplierInvoices();
-  const { data: ledger } = useLedgerEntries();
-  const { data: creditNotes } = useCreditNotes();
   const { data: mileage } = useMileageTrips();
-  const { data: accounts } = useBankAccounts();
-  const { data: transfers } = useAccountTransfers();
   const { data: business } = useBusinessProfile();
 
-  const within = inPeriod(period);
-  const isAll = account === ALL_ACCOUNTS;
-  const selectedAccount = (accounts ?? []).find((a) => a.id === account) ?? null;
-  const acctIncome = isAll ? (income ?? []) : (income ?? []).filter((r) => r.account_id === account);
-  const acctExpenses = isAll ? (expenses ?? []) : (expenses ?? []).filter((r) => r.account_id === account);
-
-  // "All accounts" is the full accrual report from the one shared definition, so
-  // this report and the dashboard can't disagree for a period. A single account is
-  // a cash-basis view of what moved through it — invoices and supplier credit are
-  // business-wide claims, not tied to an account, so cashBasis counts the account's
-  // own rows directly (no accrual netting, which would zero invoice-matched cash).
-  const pnl = isAll
-    ? computePnl({ income, expenses, invoices, supplierInvoices, ledger, creditNotes }, within)
-    : computePnl({ income: acctIncome, expenses: acctExpenses }, within, { cashBasis: true });
+  // Every money figure comes from the shared summary, so this report and the
+  // dashboard hero cannot disagree about the same period — they are now one
+  // calculation, not two that happen to call the same function.
+  const {
+    within,
+    isAllAccounts: isAll,
+    selectedAccount,
+    incomeRows: acctIncome,
+    expenseRows: acctExpenses,
+    pnl,
+    accountBalance: acctBalance,
+  } = useMoneySummary(period, account);
 
   const netProfit = pnl.profit;
   const margin = pnl.revenue > 0 ? (netProfit / pnl.revenue) * 100 : 0;
@@ -57,7 +39,6 @@ export function ProfitLossView() {
   const mileageDeduction = (mileage ?? [])
     .filter((t) => within(t.trip_date))
     .reduce((s, t) => s + Number(t.sars_deduction || 0), 0);
-  const acctBalance = selectedAccount ? accountBalance(selectedAccount, income ?? [], expenses ?? [], transfers ?? []) : 0;
 
   // The breakdown must count exactly the rows that went into "Total costs", or
   // the list sums past the total printed directly above it. That rule lives with
