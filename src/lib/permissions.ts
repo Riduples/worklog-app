@@ -77,11 +77,14 @@ export const TOOL_CATEGORIES: { id: string; label: string; icon: string; desc: s
   { id: "workers", label: "Payroll", icon: "💼", desc: "Employees, wages, payslips & advances", tools: ["staffregister", "payrun", "advances", "leave", "payrollcompliance"] },
   // "ledger" isn't in the source prototype's categories (it dropped Ledgers
   // from the matrix) but the tool exists here, so it needs a home to be gated.
-  { id: "money", label: "Money", icon: "💰", desc: "Track what comes in and goes out", tools: ["income", "expense", "bankstatement", "cashup", "ledger"] },
+  // "profit" (Cash Flow) lives here too: it's the cash-in/out view of Money, and
+  // the phone's Money tab already opens it — its accrual sibling Profit & Loss
+  // stays under Compliance & Financials.
+  { id: "money", label: "Money", icon: "💰", desc: "Track what comes in and goes out", tools: ["income", "expense", "bankstatement", "cashup", "ledger", "profit"] },
   // "taxdashboard" is deliberately absent: the /tax hub it described is gated
   // by "tax", so a second id for the same page was a toggle that controlled
   // nothing. Every id below reaches a real screen.
-  { id: "taxcompliance", label: "Compliance & Financials", icon: "💡", desc: "Everything tax, SARS and compliance — your complete financial overview", tools: ["vat201", "emp201", "provtax", "taxjar", "profitloss", "profit", "compliance", "tax"] },
+  { id: "taxcompliance", label: "Compliance & Financials", icon: "💡", desc: "Everything tax, SARS and compliance — your complete financial overview", tools: ["vat201", "emp201", "provtax", "taxjar", "profitloss", "compliance", "tax"] },
 ];
 
 export const TOOL_LABELS: Partial<Record<ToolId, { icon: string; label: string; desc?: string }>> = {

@@ -62,6 +62,7 @@ const GROUPS: Group[] = [
       { tool: "bankstatement", href: "/bank-statement", icon: "🏦", label: "Import Statement" },
       { tool: "cashup", href: "/cash-up", icon: "🧮", label: "Daily Cash-Up" },
       { tool: "ledger", href: "/ledger", icon: "📒", label: "Ledgers" },
+      { tool: "profit", href: "/cashflow", icon: "📊", label: "Cash Flow" },
     ],
   },
   {
@@ -89,7 +90,6 @@ const GROUPS: Group[] = [
     items: [
       { tool: "tax", href: "/tax", icon: "🧾", label: "Tax & SARS" },
       { tool: "profitloss", href: "/profit-loss", icon: "📈", label: "Profit & Loss" },
-      { tool: "profit", href: "/cashflow", icon: "📊", label: "Cash Flow" },
     ],
   },
 ];
