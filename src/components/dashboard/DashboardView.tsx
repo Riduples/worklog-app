@@ -72,8 +72,16 @@ export function DashboardView({ businessName }: { businessName: string }) {
   // about every tool — see useToolGate.
   const { business, plan, isOwner, gate } = useToolGate();
 
-  // The money hero. "Money left" over the chosen period is the accrual profit,
-  // and it comes from the SAME shared summary the Profit & Loss report reads —
+  // The money hero. The headline figure is the accrual profit for the chosen
+  // period — money earned, including invoices issued but not yet paid.
+  //
+  // It is labelled "Profit", the same word the Profit & Loss report uses for the
+  // same number. It used to say "Money left", which reads as cash in hand and is
+  // the one thing this figure is not: a business can be owed most of it. The cash
+  // answer is the "in your accounts now" line at the foot of this card, and the
+  // two only tell their story when they are named apart.
+  //
+  // It comes from the SAME shared summary the Profit & Loss report reads —
   // not a second assembly of the same inputs. That is what stopped the two
   // disagreeing: this screen used to build its own inputs and omitted credit
   // notes, so it reported a profit its own P&L report contradicted. The toggle
@@ -95,7 +103,7 @@ export function DashboardView({ businessName }: { businessName: string }) {
   } = useMoneySummary(period, account);
 
   const periodLabel = period === "month" ? "this month" : period === "year" ? "this year" : "all time";
-  const heroLabel = isAllAccounts ? `Money left · ${periodLabel}` : `${selectedAccount?.name ?? "Account"} balance`;
+  const heroLabel = isAllAccounts ? `Profit · ${periodLabel}` : `${selectedAccount?.name ?? "Account"} balance`;
   const heroFig = isAllAccounts ? pnl.profit : acctBalance;
   const heroIn = isAllAccounts ? pnl.revenue : acctIn;
   const heroOut = isAllAccounts ? pnl.costs : acctOut;
