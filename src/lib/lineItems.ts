@@ -11,6 +11,8 @@ export type SalesLineItem = {
   labour?: number;
   materials?: number;
   unit_price?: number;
+  /** The revenue heading this line earns under; absent on every historic line. */
+  sars_category?: string | null;
 };
 
 export function salesLineTotal(item: SalesLineItem): number {

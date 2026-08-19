@@ -1,4 +1,5 @@
 import { fmt } from "@/lib/format";
+import { LineCategoryPicker } from "@/components/ui/LineCategoryPicker";
 import { itemTypeMeta } from "@/lib/itemTypes";
 import { salesLineTotal } from "@/lib/lineItems";
 import type { QuoteLineItem } from "@/lib/supabase/hooks/useQuotes";
@@ -40,7 +41,9 @@ export function SalesLineItemsEditor({
           onChange={(e) => {
             const s = (stock ?? []).find((it) => it.id === e.target.value);
             if (!s) return;
-            onChange([...items, { desc: s.name, qty: 1, unit_price: Number(s.sell_price || 0), est_hours: Number(s.estimated_hours || 0) }]);
+            // The item carries the heading it earns under, so picking it here is
+            // the last time anyone thinks about the category for this sale.
+            onChange([...items, { desc: s.name, qty: 1, unit_price: Number(s.sell_price || 0), est_hours: Number(s.estimated_hours || 0), sars_category: s.sars_category }]);
             e.target.value = "";
           }}
           style={{
@@ -130,6 +133,12 @@ export function SalesLineItemsEditor({
                 />
               </div>
             </div>
+            <LineCategoryPicker
+              kind="income"
+              value={item.sars_category}
+              onChange={(sars) => updateItem(i, { sars_category: sars })}
+              inheritedFrom={item.sars_category ? "your price list" : undefined}
+            />
             <div style={{ textAlign: "right", fontSize: 12, color: "#64748b", marginTop: 6 }}>Line total: {fmt(lineTotal)}</div>
           </div>
         );

@@ -5,7 +5,7 @@ import { PeriodSelector } from "@/components/ui/PeriodSelector";
 import { useMileageTrips } from "@/lib/supabase/hooks/useMileage";
 import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 import { PERIOD_LABELS, type Period } from "@/lib/period";
-import { expenseCategoryTotals } from "@/lib/pnl";
+import { expenseCategoryTotals, revenueCategoryTotals } from "@/lib/pnl";
 import { useMoneySummary } from "@/lib/useMoneySummary";
 import { fmt } from "@/lib/format";
 import { shareReport } from "@/lib/docgen/shareReport";
@@ -26,8 +26,8 @@ export function ProfitLossView() {
     isAllAccounts: isAll,
     selectedAccount,
     incomeRows: acctIncome,
-    expenseRows: acctExpenses,
     pnl,
+    pnlInputs,
     accountBalance: acctBalance,
   } = useMoneySummary(period, account);
 
@@ -40,10 +40,13 @@ export function ProfitLossView() {
     .filter((t) => within(t.trip_date))
     .reduce((s, t) => s + Number(t.sars_deduction || 0), 0);
 
-  // The breakdown must count exactly the rows that went into "Total costs", or
-  // the list sums past the total printed directly above it. That rule lives with
-  // computePnl so the two cannot drift apart again.
-  const expenseByCategory = expenseCategoryTotals(acctExpenses, within, { cashBasis: !isAll }).slice(0, 8);
+  // Built from the same inputs the totals above were computed from, so each list
+  // adds up to the line it sits under. Categories come from the documents — an
+  // invoice line knows what it sold — and from the money row only where there is
+  // no document to inherit from.
+  const cashBasis = !isAll;
+  const revenueByCategory = revenueCategoryTotals(pnlInputs, within, { cashBasis }).slice(0, 8);
+  const expenseByCategory = expenseCategoryTotals(pnlInputs, within, { cashBasis }).slice(0, 8);
 
   const handleShare = () => {
     const basis = isAll ? "Accrual basis" : `Cash basis · ${selectedAccount?.name ?? "account"}`;
@@ -53,8 +56,11 @@ export function ProfitLossView() {
       `Net profit: ${fmt(netProfit)}`,
       `Margin: ${margin.toFixed(1)}%`,
     ];
+    if (revenueByCategory.length > 0) {
+      lines.push(``, `Revenue by category:`, ...revenueByCategory.map((r) => `  ${r.category}: ${fmt(r.amount)}`));
+    }
     if (expenseByCategory.length > 0) {
-      lines.push(``, `Top expense categories:`, ...expenseByCategory.map(([cat, amt]) => `  ${cat}: ${fmt(amt)}`));
+      lines.push(``, `Expenses by category:`, ...expenseByCategory.map((r) => `  ${r.category}: ${fmt(r.amount)}`));
     }
     void shareReport("Profit & Loss", `${PERIOD_LABELS[period]} · ${basis}`, lines, business);
   };
@@ -122,21 +128,24 @@ export function ProfitLossView() {
         )}
       </div>
 
+      {revenueByCategory.length > 0 && (
+        <div style={{ background: "#fff", borderRadius: 14, padding: "16px", marginBottom: 16, boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 12 }}>
+            Revenue by category
+          </div>
+          {revenueByCategory.map((r) => (
+            <Row key={r.category} label={r.category} value={fmt(r.amount)} />
+          ))}
+        </div>
+      )}
+
       {expenseByCategory.length > 0 && (
         <div style={{ background: "#fff", borderRadius: 14, padding: "16px", boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
           <div style={{ fontSize: 12, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 12 }}>
-            Top expense categories
+            Expenses by category
           </div>
-          {/* Supplier invoices and supplier credit carry no expense category, so
-              in the accrual view this breaks down the cash expenses line only.
-              Saying so keeps it from reading as a breakdown of Total costs. */}
-          {isAll && (pnl.supplierInvoicesIssued > 0 || pnl.supplierCreditIncurred > 0) && (
-            <div style={{ fontSize: 11, color: "#94a3b8", marginTop: -8, marginBottom: 12, lineHeight: 1.5 }}>
-              Breaks down “Other cash expenses” — supplier invoices and credit are listed above.
-            </div>
-          )}
-          {expenseByCategory.map(([cat, amt]) => (
-            <Row key={cat} label={cat} value={fmt(amt)} />
+          {expenseByCategory.map((r) => (
+            <Row key={r.category} label={r.category} value={fmt(r.amount)} color="#b45309" />
           ))}
         </div>
       )}

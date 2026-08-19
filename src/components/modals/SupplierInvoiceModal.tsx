@@ -36,6 +36,11 @@ export function SupplierInvoiceModal({ onClose }: { onClose: () => void }) {
   const createSI = useCreateSupplierInvoice();
 
   const suppliers = (contacts ?? []).filter((c) => c.contact_type === "supplier");
+  // The supplier's usual heading seeds each new line, so the common bill needs no
+  // category typed at all — and any line stays overridable for the bill that mixes
+  // cleaning with stationery.
+  const supplierDefaultCategory =
+    suppliers.find((c) => c.id === supplierContactId)?.default_sars_category ?? null;
   const openPos = (purchaseOrders ?? []).filter((po) => po.status !== "cancelled");
   const linkedPo = openPos.find((po) => po.id === linkedPoId);
 
@@ -200,7 +205,12 @@ export function SupplierInvoiceModal({ onClose }: { onClose: () => void }) {
         <Input value={dueDate} onChange={setDueDate} type="date" />
       </Field>
 
-      <PurchaseLineItemsEditor items={items} onChange={setItems} />
+      <PurchaseLineItemsEditor
+        items={items}
+        onChange={setItems}
+        defaultCategory={supplierDefaultCategory}
+        defaultCategorySource="this supplier"
+      />
 
       <Field label="Total on the invoice">
         <Input value={amountOverride} onChange={setAmountOverride} type="number" placeholder={subtotal ? subtotal.toFixed(2) : "auto calculate from the lines above"} />
