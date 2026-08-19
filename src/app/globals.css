@@ -224,8 +224,8 @@ body {
   width: 100%;
 }
 
-/* The money-first hero: a navy card carrying "money left", In/Out and the
-   real account balance. Replaces the old stats strip in the header band. */
+/* The money-first hero: a navy card carrying profit, In/Out and the real
+   account balance. Replaces the old stats strip in the header band. */
 .dash-hero {
   background: linear-gradient(135deg, #0c4a6e, #075985);
   border-radius: 18px;

@@ -124,7 +124,9 @@ export function LandingPage() {
             <div style={{ width: "100%", maxWidth: 320, background: "#fff", borderRadius: 20, padding: "20px 20px 22px", boxShadow: "0 24px 60px rgba(0,0,0,0.35)", color: INK }}>
               <div style={{ fontSize: 11, fontWeight: 800, color: MUTED, textTransform: "uppercase", letterSpacing: 0.6 }}>This month</div>
               <div style={{ fontSize: 34, fontWeight: 800, color: NAVY, margin: "2px 0 2px" }}>R18,240</div>
-              <div style={{ fontSize: 12, color: "#16a34a", fontWeight: 700, marginBottom: 16 }}>money left ▲ 12%</div>
+              {/* Mirrors the dashboard hero's own wording — this card is a hand-built
+                  likeness of it, so it has to say what the real screen says. */}
+              <div style={{ fontSize: 12, color: "#16a34a", fontWeight: 700, marginBottom: 16 }}>profit ▲ 12%</div>
 
               <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
                 <div style={{ flex: 1, background: "#F0F9FF", borderRadius: 12, padding: "10px 12px" }}>
