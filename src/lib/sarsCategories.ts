@@ -177,3 +177,24 @@ export function getSarsMatch(text: string) {
 export function getSarsIncomeMatch(text: string) {
   return getSarsMatchFromList(SARS_INCOME_CATEGORIES, text);
 }
+
+/**
+ * The category a stored `sars` string belongs to, or null if it matches nothing.
+ *
+ * Rows store the `sars` account name ("Premises — Electricity"), which is what
+ * SARS wants to see, while every screen shows the plain-English `label` ("Water
+ * & rates"). A form editing a saved category therefore has to look the row's
+ * value back up to display it — and to keep displaying the friendly half rather
+ * than the accounting one.
+ *
+ * Searches both lists because a caller holding only a stored string doesn't
+ * necessarily know which side it came from; the two lists share no `sars` values.
+ */
+export function findSarsCategory(sars: string | null | undefined): SarsCategory | null {
+  if (!sars) return null;
+  return (
+    SARS_INCOME_CATEGORIES.find((c) => c.sars === sars) ??
+    SARS_CATEGORIES.find((c) => c.sars === sars) ??
+    null
+  );
+}

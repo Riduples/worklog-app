@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Chips } from "@/components/ui/Chips";
 import { SaveBtn } from "@/components/ui/SaveBtn";
+import { SarsCategoryField } from "@/components/ui/SarsCategoryField";
 import { useCreateContact, useUpdateContact, type Contact } from "@/lib/supabase/hooks/useContacts";
 
 const PAYMENT_BEHAVIOURS = ["Good payer", "Slow payer", "Problem payer"];
@@ -64,6 +65,7 @@ export function ContactModal({
   const [paymentTerms, setPaymentTerms] = useState(contact?.payment_terms ?? "On delivery");
   const [bankName, setBankName] = useState(contact?.bank_name ?? "");
   const [accountNumber, setAccountNumber] = useState(contact?.account_number ?? "");
+  const [defaultCategory, setDefaultCategory] = useState<string | null>(contact?.default_sars_category ?? null);
   const [error, setError] = useState("");
 
   const createContact = useCreateContact();
@@ -93,6 +95,7 @@ export function ContactModal({
       payment_terms: isClient ? null : paymentTerms,
       bank_name: isClient ? null : bankName.trim() || null,
       account_number: isClient ? null : accountNumber.trim() || null,
+      default_sars_category: defaultCategory,
     };
 
     if (isEdit) {
@@ -113,7 +116,12 @@ export function ContactModal({
                 <button
                   key={t}
                   type="button"
-                  onClick={() => setContactType(t)}
+                  onClick={() => {
+                    setContactType(t);
+                    // The two types read different category lists, so a value
+                    // picked before the switch belongs to the wrong one.
+                    setDefaultCategory(null);
+                  }}
                   style={{
                     padding: "9px 16px",
                     borderRadius: 20,
@@ -187,6 +195,24 @@ export function ContactModal({
           </div>
         </>
       )}
+
+      {/* Most of a small business's spend is a dozen repeat suppliers, and the
+          same supplier almost always files under the same category. Set once here
+          and money against this contact knows where it belongs from then on.
+          Remounted per type: the two read different category lists. */}
+      <SarsCategoryField
+        key={contactType}
+        label={isClient ? "Usual income category — optional" : "Usual expense category — optional"}
+        kind={isClient ? "income" : "expense"}
+        value={defaultCategory}
+        onChange={setDefaultCategory}
+        placeholder={isClient ? "e.g. service, product sale" : "e.g. materials, electricity, fuel"}
+        hint={
+          isClient
+            ? "Where sales to this customer usually land on your Profit & Loss."
+            : "Where money paid to this supplier usually lands on your Profit & Loss."
+        }
+      />
 
       {error && <p style={{ color: "#dc2626", fontSize: 13, marginBottom: 12 }}>{error}</p>}
       <SaveBtn label={saving ? "Saving..." : `Save ${t.noun}`} icon={t.icon} onClick={handleSave} disabled={saving} />

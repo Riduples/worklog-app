@@ -5,6 +5,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Field } from "@/components/ui/Field";
 import { Input } from "@/components/ui/Input";
 import { SaveBtn } from "@/components/ui/SaveBtn";
+import { SarsCategoryField } from "@/components/ui/SarsCategoryField";
 import { fmt } from "@/lib/format";
 import { ITEM_TYPES, ITEM_TYPE_META, type ItemType } from "@/lib/itemTypes";
 import { useCreateStockItem, useUpdateStockItem, type StockItem } from "@/lib/supabase/hooks/useStock";
@@ -17,6 +18,7 @@ export function StockModal({ item, onClose }: { item?: StockItem; onClose: () =>
   const [cost, setCost] = useState(String(item?.cost_price ?? 0));
   const [sell, setSell] = useState(String(item?.sell_price ?? 0));
   const [reorder, setReorder] = useState(String(item?.reorder_level ?? 0));
+  const [sarsCategory, setSarsCategory] = useState<string | null>(item?.sars_category ?? null);
   const [error, setError] = useState("");
 
   const createStockItem = useCreateStockItem();
@@ -43,6 +45,7 @@ export function StockModal({ item, onClose }: { item?: StockItem; onClose: () =>
       sell_price: sellNum,
       reorder_level: meta.showStock ? parseInt(reorder, 10) || 0 : 0,
       margin_pct: marginPct,
+      sars_category: sarsCategory,
     };
 
     if (isEdit) {
@@ -135,6 +138,18 @@ export function StockModal({ item, onClose }: { item?: StockItem; onClose: () =>
           Margin: <strong>{marginPct.toFixed(1)}%</strong> ({fmt(sellNum - costNum)} per unit)
         </div>
       )}
+
+      {/* Set once here and every quote and invoice line for this item inherits it,
+          so nobody picks a category while invoicing — and an invoice mixing labour
+          and materials still carries both, because they arrive per line. */}
+      <SarsCategoryField
+        label="Income category — optional"
+        kind="income"
+        value={sarsCategory}
+        onChange={setSarsCategory}
+        placeholder="e.g. service, product sale, consulting"
+        hint="Where sales of this item land on your Profit & Loss. Set it once and every invoice line for this item files itself."
+      />
 
       {error && <p style={{ color: "#dc2626", fontSize: 13, marginBottom: 12 }}>{error}</p>}
       <SaveBtn label={saving ? "Saving..." : isEdit ? "Save changes" : meta.addLabel} icon={meta.icon} onClick={handleSave} disabled={saving} />
