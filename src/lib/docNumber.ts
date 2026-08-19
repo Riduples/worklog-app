@@ -1,25 +1,19 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-// Each numbered series lives in a table + column. Most use a shared "doc_number"
-// column; employee numbers (EMP-YYYY-NNNN) live in staff_register.employee_number.
-// (Payslip numbers PS-YYYY-NNNN are assigned server-side inside create_pay_run so
-// they stay atomic/race-safe, so there is no client series for them.)
-const SERIES = {
-  QTE: { table: "quotes", column: "doc_number" },
-  INV: { table: "invoices", column: "doc_number" },
-  PO: { table: "purchase_orders", column: "doc_number" },
-  CN: { table: "credit_notes", column: "doc_number" },
-  // Our own internal bill number for a supplier invoice, kept separate from the
-  // supplier's own supplier_ref_number (each supplier numbers differently, so
-  // that ref isn't a sortable sequence — this one is).
-  SI: { table: "supplier_invoices", column: "doc_number" },
-  EMP: { table: "staff_register", column: "employee_number" },
-} as const;
+// Each numbered series has a prefix. The numbers themselves come from the
+// doc_sequences counter (migration 0120), not from reading the documents back —
+// see the note on getNextDocNumbers below for why that distinction matters.
+//
+// (Payslip numbers PS-YYYY-NNNN are assigned inside create_pay_run and have no
+// client series here.)
+// Kept in step with the prefix whitelist inside reserve_doc_numbers — the
+// function rejects anything else, so an addition here needs one there too.
+export type DocSeries = "QTE" | "INV" | "PO" | "CN" | "SI" | "EMP";
 
 export async function getNextDocNumber(
   supabase: SupabaseClient,
   businessId: string,
-  prefix: keyof typeof SERIES
+  prefix: DocSeries
 ): Promise<string> {
   return (await getNextDocNumbers(supabase, businessId, prefix, 1))[0];
 }
@@ -27,37 +21,43 @@ export async function getNextDocNumber(
 /**
  * The next `count` numbers in a series, in order.
  *
- * A CSV import inserts everyone in one statement, so it can't call the
- * single-number version per row — each call would read the same maximum back and
- * hand out the same number to all of them. Reading the maximum once and counting
- * up from it keeps the batch sequential.
+ * Reserved through the reserve_doc_numbers function, which increments a counter
+ * row in one INSERT ... ON CONFLICT DO UPDATE ... RETURNING statement. That
+ * matters: this used to SELECT the highest number already issued and add one,
+ * which is a read followed by a write with a gap in between. Two team members
+ * creating an invoice in the same moment read the same maximum and were handed
+ * the same number — and nothing rejected the second one, because doc_number
+ * carries no unique index. A single statement takes a row lock instead, so the
+ * second caller waits and reads the incremented value.
+ *
+ * The function returns the LAST number of the reserved block; the rest of the
+ * block is counted back from it. Reserving a block in one call is what lets the
+ * CSV import number a whole batch without going round again per row.
+ *
+ * Numbers reset per calendar year, which is now a fact of the counter's key
+ * rather than a property of a text filter.
  */
 export async function getNextDocNumbers(
   supabase: SupabaseClient,
   businessId: string,
-  prefix: keyof typeof SERIES,
+  prefix: DocSeries,
   count: number
 ): Promise<string[]> {
   const year = new Date().getFullYear();
-  const { table, column } = SERIES[prefix];
-  const yearPrefix = `${prefix}-${year}-`;
 
-  // Scoped by business (not the individual user) so every team member shares one
-  // sequence — two members generating a number concurrently should never collide
-  // within the same business.
-  const { data, error } = await supabase
-    .from(table)
-    .select(column)
-    .eq("business_id", businessId)
-    .like(column, `${yearPrefix}%`);
+  const { data, error } = await supabase.rpc("reserve_doc_numbers", {
+    p_business_id: businessId,
+    p_prefix: prefix,
+    p_year: year,
+    p_count: count,
+  });
   if (error) throw error;
 
-  const maxNum = ((data ?? []) as Array<Record<string, unknown>>).reduce((max, row) => {
-    const value = row[column];
-    const match = typeof value === "string" ? /(\d{4})$/.exec(value) : null;
-    const n = match ? parseInt(match[1], 10) : 0;
-    return n > max ? n : max;
-  }, 0);
+  const last = Number(data);
+  if (!Number.isFinite(last) || last < count) {
+    throw new Error(`Could not reserve ${prefix} numbers`);
+  }
 
-  return Array.from({ length: count }, (_, i) => `${yearPrefix}${String(maxNum + 1 + i).padStart(4, "0")}`);
+  const first = last - count + 1;
+  return Array.from({ length: count }, (_, i) => `${prefix}-${year}-${String(first + i).padStart(4, "0")}`);
 }
