@@ -3,6 +3,12 @@ import type { BankAccount } from "@/lib/supabase/hooks/useBankAccounts";
 type Movement = { account_id: string | null; amount: number; transaction_date: string };
 type TransferMovement = { from_account_id: string; to_account_id: string; amount: number; transfer_date: string };
 
+// Counting what points at an account needs the tag and nothing else — no
+// amount, no date. Kept narrow so a caller never has to assemble a fuller row
+// than the question asks for.
+type Tagged = { account_id: string | null };
+type TransferLegs = { from_account_id: string; to_account_id: string };
+
 // A bank account's running balance is a cash figure: opening balance, plus the
 // gross money in, minus the gross money out, plus transfers in, minus transfers
 // out — for rows tagged to it and dated strictly AFTER the opening date (a null
@@ -37,6 +43,27 @@ export function accountBalance(
     if (t.from_account_id === account.id) balance -= Number(t.amount) || 0;
   }
   return balance;
+}
+
+/**
+ * How many records point at this account.
+ *
+ * Nothing may delete an account this counts above zero: the rows would be left
+ * pointing at an id that no longer resolves, and every balance and report built
+ * on them would quietly lose its account name. An account nothing has touched
+ * has no history to protect, so it can go for good.
+ */
+export function movementCount(
+  accountId: string,
+  income: Tagged[],
+  expenses: Tagged[],
+  transfers: TransferLegs[]
+): number {
+  return (
+    income.filter((r) => r.account_id === accountId).length +
+    expenses.filter((r) => r.account_id === accountId).length +
+    transfers.filter((t) => t.from_account_id === accountId || t.to_account_id === accountId).length
+  );
 }
 
 export type StatementMeta = { bank_name?: string; account_number?: string } | null | undefined;

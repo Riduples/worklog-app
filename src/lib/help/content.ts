@@ -2315,7 +2315,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
     "slug": "set-up-bank-accounts",
     "category": "Money",
     "title": "Set up your bank accounts",
-    "summary": "Add the bank, savings, cash and card accounts your business uses, so you can track each balance on its own or all of them together.",
+    "summary": "Add the bank, savings, cash and card accounts your business uses, by hand or from a spreadsheet, so you can track each balance on its own or all of them together.",
     "sections": [
       {
         "heading": "What this is for",
@@ -2346,13 +2346,13 @@ export const HELP_ARTICLES: HelpArticle[] = [
             "type": "steps",
             "items": [
               "Open the Business Hub (the button at the top right of your home screen) and tap the \"Bank accounts\" card.",
-              "Tap + Add account.",
+              "Tap + Add at the top right.",
               "In Account name, type a name you will recognise, for example FNB Cheque or Till float.",
+              "Under Type, pick one: Bank, Savings, Card, Cash or Other. A blue note under the pills explains the kind you picked and lists the payment methods Log income and Log expense will offer once you tag money to it.",
               "Bank - optional: type the bank, for example FNB. You can leave this blank.",
               "Account number - optional: the last 4 digits are enough. This lets Worklog match an uploaded bank statement to this account automatically.",
-              "Under Type, pick one: Bank, Savings, Credit card, Cash or Other.",
-              "In Balance today (opening balance), type what the account holds right now.",
-              "Check the As of date. It defaults to today, which is usually what you want.",
+              "In Opening balance, type what the account holds, and check the As of date below it. The date defaults to today, which is usually what you want.",
+              "Tick Use as the default account for new entries if this is the one you use most.",
               "Tap Add account to save."
             ]
           },
@@ -2426,19 +2426,70 @@ export const HELP_ARTICLES: HelpArticle[] = [
         ]
       },
       {
-        "heading": "Close an account you no longer use",
+        "heading": "Find an account in a long list",
         "blocks": [
+          {
+            "type": "paragraph",
+            "text": "Once you have accounts saved, a search box appears above the list. It searches the name, the bank and the account number, so typing FNB or the last four digits finds it."
+          },
+          {
+            "type": "paragraph",
+            "text": "If you have more than one kind of account, a row of pills lets you show only Bank, Savings, Card, Cash or Other. Next to the count you can sort by A–Z, Balance (biggest first) or Recent, and the count line also totals the balances of everything currently showing."
+          }
+        ]
+      },
+      {
+        "heading": "Import your accounts from a spreadsheet",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "If you already have your accounts listed somewhere, Import brings them in instead of typing each one. The columns are the same fields as the Add account form."
+          },
           {
             "type": "steps",
             "items": [
-              "Open Bank accounts and tap the account.",
-              "Scroll down and tap Close this account.",
-              "Read the note, then tap Close account to confirm."
+              "On the Bank accounts screen, tap ⬆ Import at the top right.",
+              "Tap Download template CSV and fill it in, or match its columns in your own file: name, type, bank_name, account_number, opening_balance, opening_balance_date.",
+              "Tap Choose CSV file and pick your file.",
+              "Check the preview. It shows how many will import and how many are duplicates of accounts you already have, and flags anything it could not read.",
+              "Tap Import to finish."
+            ]
+          },
+          {
+            "type": "tip",
+            "text": "type accepts bank, savings, card, cash or other, and understands common wording like cheque or credit card. Dates go in as YYYY-MM-DD. Anything it cannot read is flagged before you import, never guessed at silently."
+          },
+          {
+            "type": "paragraph",
+            "text": "Imported accounts are never made the default, because only one account can hold that and a spreadsheet should not decide which. Set it yourself afterwards on the one you meant."
+          }
+        ]
+      },
+      {
+        "heading": "Delete or deactivate an account",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "Which one you get depends on whether the account has been used. Worklog decides for you and says why."
+          },
+          {
+            "type": "bullets",
+            "items": [
+              "Nothing logged against it — added by mistake, or a duplicate from an import: you can delete it outright, and it is gone for good.",
+              "It has transactions against it: it can only be deactivated. Deleting would leave those transactions pointing at an account that no longer exists."
+            ]
+          },
+          {
+            "type": "steps",
+            "items": [
+              "Open Bank accounts and tap the account, or tap the ✕ on its row.",
+              "The button reads Delete this account or Deactivate this account, depending on which applies.",
+              "Read the note — it tells you how many transactions the account has — then confirm."
             ]
           },
           {
             "type": "warning",
-            "text": "Closing hides the account from your lists and pickers, but it does not delete anything. Its past transactions stay in your records and still count under All accounts, so your history stays complete."
+            "text": "Deactivating hides the account from your lists and pickers, but it does not delete anything. Its past transactions stay in your records and still count under All accounts, so your history stays complete."
           }
         ]
       }

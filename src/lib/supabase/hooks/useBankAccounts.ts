@@ -99,3 +99,24 @@ export function useDeleteBankAccount() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEY }),
   });
 }
+
+/**
+ * Remove an account outright. Only ever offered for one nothing points at.
+ *
+ * Deactivating is the right answer for an account that has traded — its rows
+ * still need somewhere to point, and the history has to keep footing. But an
+ * account added by mistake, or a duplicate from an import, has no history to
+ * protect, and leaving a tombstone for it is just a row nobody can ever see or
+ * clear. The caller checks for movement; this does the deleting.
+ */
+export function useHardDeleteBankAccount() {
+  const supabase = createClient();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("bank_accounts").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEY }),
+  });
+}

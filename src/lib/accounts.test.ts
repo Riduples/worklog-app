@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { accountBalance, last4, matchStatementAccount } from "./accounts";
+import { accountBalance, last4, matchStatementAccount, movementCount } from "./accounts";
 import type { BankAccount } from "@/lib/supabase/hooks/useBankAccounts";
 
 const mkAccount = (over: Partial<BankAccount>): BankAccount => ({
@@ -123,5 +123,30 @@ describe("accountBalance", () => {
     ];
     // 1000 + 500 (Feb income) − 200 (Mar expense) − 300 (out) + 50 (in) = 1050
     expect(accountBalance(acc, income, expenses, transfers)).toBe(1050);
+  });
+});
+
+describe("movementCount", () => {
+  const inc = [{ account_id: "a1" }, { account_id: "a2" }, { account_id: null }];
+  const exp = [{ account_id: "a1" }, { account_id: "a1" }];
+  const tfs = [{ from_account_id: "a1", to_account_id: "a3" }, { from_account_id: "a2", to_account_id: "a3" }];
+
+  it("counts income, expenses and transfers on either leg", () => {
+    // a1: one receipt, two payments, one transfer out.
+    expect(movementCount("a1", inc, exp, tfs)).toBe(4);
+  });
+
+  it("counts an account that only ever received a transfer", () => {
+    // a3 has no income or expenses of its own — but two transfers landed in it,
+    // and deleting it would strand both.
+    expect(movementCount("a3", inc, exp, tfs)).toBe(2);
+  });
+
+  it("returns 0 for an account nothing points at, which is what makes it deletable", () => {
+    expect(movementCount("a9", inc, exp, tfs)).toBe(0);
+  });
+
+  it("does not count untagged rows against any account", () => {
+    expect(movementCount("", inc, exp, tfs)).toBe(0);
   });
 });

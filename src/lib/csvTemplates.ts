@@ -1,4 +1,4 @@
-export type CsvImportType = "stock" | "client" | "supplier" | "staff";
+export type CsvImportType = "stock" | "client" | "supplier" | "staff" | "account";
 
 type ColumnSpec = {
   csvHeader: string;
@@ -49,6 +49,30 @@ export const CSV_TEMPLATES: Record<CsvImportType, CsvTemplate> = {
       { csvHeader: "reorder_level" },
     ],
     sampleRow: { description: "Cement 50kg", item_type: "material", qty: "20", cost_price: "85", sell_price: "120", reorder_level: "5" },
+  },
+  // The columns are the Add account form, field for field and in its order, so a
+  // filled-in template and a typed-in account land identically. type accepts the
+  // words on the pills (bank, savings, card, cash, other) and the obvious
+  // synonyms — see normaliseAccountType.
+  account: {
+    label: "Bank accounts",
+    filename: "worklog-accounts-template.csv",
+    columns: [
+      { csvHeader: "name", required: true },
+      { csvHeader: "type" },
+      { csvHeader: "bank_name" },
+      { csvHeader: "account_number" },
+      { csvHeader: "opening_balance" },
+      { csvHeader: "opening_balance_date" },
+    ],
+    sampleRow: {
+      name: "FNB Cheque",
+      type: "bank",
+      bank_name: "FNB",
+      account_number: "1234",
+      opening_balance: "2500",
+      opening_balance_date: "2026-01-01",
+    },
   },
   client: {
     label: "Clients",

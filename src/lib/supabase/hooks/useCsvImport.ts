@@ -10,7 +10,8 @@ import { getNextDocNumbers } from "@/lib/docNumber";
 type ImportPayload =
   | { type: "stock"; rows: Omit<TablesInsert<"stock_items">, "user_id" | "business_id">[] }
   | { type: "client" | "supplier"; rows: Omit<TablesInsert<"contacts">, "user_id" | "business_id">[] }
-  | { type: "staff"; rows: Omit<TablesInsert<"staff_register">, "user_id" | "business_id">[] };
+  | { type: "staff"; rows: Omit<TablesInsert<"staff_register">, "user_id" | "business_id">[] }
+  | { type: "account"; rows: Omit<TablesInsert<"bank_accounts">, "user_id" | "business_id">[] };
 
 export function useCsvImport() {
   const supabase = createClient();
@@ -27,6 +28,19 @@ export function useCsvImport() {
         const { data, error } = await supabase
           .from("stock_items")
           .insert(payload.rows.map((r) => ({ ...r, user_id: user.id, business_id: businessId })))
+          .select();
+        if (error) throw error;
+        return data.length;
+      }
+
+      // Imported accounts never claim the default flag. One partial unique index
+      // allows a single default per business, so a file with two would fail the
+      // whole batch — and which of them should own it is not a spreadsheet's
+      // decision. Set it afterwards on the one you meant.
+      if (payload.type === "account") {
+        const { data, error } = await supabase
+          .from("bank_accounts")
+          .insert(payload.rows.map((r) => ({ ...r, is_default: false, user_id: user.id, business_id: businessId })))
           .select();
         if (error) throw error;
         return data.length;
@@ -63,6 +77,8 @@ export function useCsvImport() {
         queryClient.invalidateQueries({ queryKey: ["stock_items"] });
       } else if (variables.type === "staff") {
         queryClient.invalidateQueries({ queryKey: ["staff_register"] });
+      } else if (variables.type === "account") {
+        queryClient.invalidateQueries({ queryKey: ["bank_accounts"] });
       } else {
         queryClient.invalidateQueries({ queryKey: ["contacts"] });
       }
@@ -79,6 +95,8 @@ export async function fetchExistingNames(type: CsvImportType): Promise<Set<strin
       ? (await supabase.from("stock_items").select("name").is("deleted_at", null)).data
       : type === "staff"
         ? (await supabase.from("staff_register").select("name:full_name").is("deleted_at", null)).data
-        : (await supabase.from("contacts").select("name").eq("contact_type", type).is("deleted_at", null)).data;
+        : type === "account"
+          ? (await supabase.from("bank_accounts").select("name").is("deleted_at", null)).data
+          : (await supabase.from("contacts").select("name").eq("contact_type", type).is("deleted_at", null)).data;
   return new Set((rows ?? []).map((r) => r.name.trim().toLowerCase()));
 }

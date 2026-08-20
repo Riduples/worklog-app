@@ -16,12 +16,14 @@ import {
 } from "@/lib/csvTemplates";
 import { useCsvImport, fetchExistingNames } from "@/lib/supabase/hooks/useCsvImport";
 import { normaliseItemType, ITEM_TYPE_META } from "@/lib/itemTypes";
+import { ACCOUNT_TYPES, ACCOUNT_TYPE_META, normaliseAccountType } from "@/lib/accountTypes";
 import { parseStaffCsvRow, type StaffCsvRow } from "@/lib/staffCsv";
 import type { TablesInsert } from "@/lib/types/database";
 
 type StockRow = Omit<TablesInsert<"stock_items">, "user_id" | "business_id">;
 type ContactRow = Omit<TablesInsert<"contacts">, "user_id" | "business_id">;
-type ParsedRow = { row: StockRow | ContactRow | StaffCsvRow; name: string; issues: string[]; duplicate: boolean };
+type AccountRow = Omit<TablesInsert<"bank_accounts">, "user_id" | "business_id">;
+type ParsedRow = { row: StockRow | ContactRow | AccountRow | StaffCsvRow; name: string; issues: string[]; duplicate: boolean };
 
 // SA/continental-tolerant number parsing (currency marks, space/comma thousands,
 // comma-or-dot decimal), shared with the staff importer so "R120", "1 200,00" and
@@ -89,8 +91,25 @@ export function CSVImportModal({ type, slotsLeft, onClose }: { type: CsvImportTy
           const duplicate = existing.has(key) || seenInFile.has(key);
           seenInFile.add(key);
 
-          let row: StockRow | ContactRow;
-          if (type === "stock") {
+          let row: StockRow | ContactRow | AccountRow;
+          if (type === "account") {
+            const rawType = (raw.type ?? "").trim();
+            if (rawType && normaliseAccountType(rawType) === "bank" && !/^(bank|cheque|current|transmission)$/i.test(rawType)) {
+              issues.push(`type "${rawType}" not recognised — will be imported as Bank`);
+            }
+            const openingDate = (raw.opening_balance_date ?? "").trim();
+            if (openingDate && !/^\d{4}-\d{2}-\d{2}$/.test(openingDate)) {
+              issues.push(`opening_balance_date "${openingDate}" isn't YYYY-MM-DD — will be left blank`);
+            }
+            row = {
+              name,
+              account_type: normaliseAccountType(rawType),
+              bank_name: (raw.bank_name ?? "").trim() || null,
+              account_number: (raw.account_number ?? "").trim() || null,
+              opening_balance: num(raw.opening_balance),
+              opening_balance_date: /^\d{4}-\d{2}-\d{2}$/.test(openingDate) ? openingDate : null,
+            };
+          } else if (type === "stock") {
             const cost = num(raw.cost_price);
             const sell = num(raw.sell_price);
             const itemType = normaliseItemType(raw.item_type);
@@ -164,7 +183,9 @@ export function CSVImportModal({ type, slotsLeft, onClose }: { type: CsvImportTy
         ? ({ type: "stock", rows: toImport as StockRow[] } as const)
         : type === "staff"
           ? ({ type: "staff", rows: toImport as StaffCsvRow[] } as const)
-          : ({ type, rows: toImport as ContactRow[] } as const);
+          : type === "account"
+            ? ({ type: "account", rows: toImport as AccountRow[] } as const)
+            : ({ type, rows: toImport as ContactRow[] } as const);
     csvImport.mutate(payload, {
       onSuccess: (count) => {
         setImportedCount(count);
@@ -200,6 +221,26 @@ export function CSVImportModal({ type, slotsLeft, onClose }: { type: CsvImportTy
               </div>
               <div style={{ marginTop: 6 }}>
                 Anything it can&apos;t read is flagged before you import, never guessed at silently. Employee numbers are assigned on save, the same as adding someone by hand.
+              </div>
+            </div>
+          )}
+
+          {type === "account" && (
+            <div style={{ background: "#f8fafc", border: "1.5px solid #e2e8f0", borderRadius: 12, padding: "12px 14px", marginBottom: 12, fontSize: 12, color: "#64748b", lineHeight: 1.6 }}>
+              <div>
+                <strong style={{ color: "#374151" }}>type:</strong>{" "}
+                {ACCOUNT_TYPES.map((t) => ACCOUNT_TYPE_META[t].label.toLowerCase()).join(", ")} — the same kinds the Add
+                account form offers. Common wording like &quot;cheque&quot; or &quot;credit card&quot; is understood.
+              </div>
+              <div>
+                <strong style={{ color: "#374151" }}>opening_balance:</strong> what the account held on the date below.
+                Money in and out is added from that date on.
+              </div>
+              <div>
+                <strong style={{ color: "#374151" }}>opening_balance_date:</strong> YYYY-MM-DD, e.g. 2026-01-15
+              </div>
+              <div style={{ marginTop: 6 }}>
+                Imported accounts are never made the default — set that yourself on the one you meant, afterwards.
               </div>
             </div>
           )}
