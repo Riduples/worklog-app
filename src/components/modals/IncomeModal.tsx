@@ -15,7 +15,8 @@ import { VAT_SUPPLY_TYPES, carriesVat, type VatSupplyType } from "@/lib/vatSuppl
 import { Chips } from "@/components/ui/Chips";
 import { fmt, todayStr } from "@/lib/format";
 import { useTaxRates } from "@/lib/taxRates";
-import { useCreateIncome } from "@/lib/supabase/hooks/useIncome";
+import { useCreateIncome, useUpdateIncome } from "@/lib/supabase/hooks/useIncome";
+import type { Tables } from "@/lib/types/database";
 import { useInvoices, useUpdateInvoice } from "@/lib/supabase/hooks/useInvoices";
 import { useLedgerEntries, useUpdateLedgerEntry } from "@/lib/supabase/hooks/useLedger";
 import { useContacts } from "@/lib/supabase/hooks/useContacts";
@@ -23,29 +24,58 @@ import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 import { useBankAccounts } from "@/lib/supabase/hooks/useBankAccounts";
 import { BankAccountPicker } from "@/components/ui/BankAccountPicker";
 
-export function IncomeModal({ onClose }: { onClose: () => void }) {
-  const [amount, setAmount] = useState("");
-  const [whatFor, setWhatFor] = useState("");
+/**
+ * `banner` is Banking's type switch, rendered above the first field so one form
+ * can change what it is without the switch living inside every variant.
+ *
+ * `variant="other"` is money with no customer and no invoice behind it — bank
+ * charges, interest, a refund from nowhere. The party picker and both matchers
+ * come off, because asking for a name you do not have is what taught people to
+ * leave the whole thing blank; what is left is the amount, the account and the
+ * category, which is the entire question.
+ *
+ * `existing` edits a row in place instead of writing a new one.
+ */
+export function IncomeModal({
+  onClose,
+  banner,
+  variant = "full",
+  existing,
+}: {
+  onClose: () => void;
+  banner?: React.ReactNode;
+  variant?: "full" | "other";
+  existing?: Tables<"income"> | null;
+}) {
+  const isOther = variant === "other";
+  const isEdit = !!existing;
+  const [amount, setAmount] = useState(existing ? String(existing.amount) : "");
+  const [whatFor, setWhatFor] = useState(existing?.what_for ?? "");
   const [sarsCategory, setSarsCategory] = useState<SarsCategory | null>(null);
   const [showSarsSuggestions, setShowSarsSuggestions] = useState(false);
-  const [receivedFrom, setReceivedFrom] = useState("");
-  const [receivedFromContactId, setReceivedFromContactId] = useState<string | null>(null);
-  const [details, setDetails] = useState("");
-  const [method, setMethod] = useState("Cash");
-  const [supplyType, setSupplyType] = useState<VatSupplyType>("standard");
-  const [date, setDate] = useState(todayStr());
-  const [matchedInvoiceId, setMatchedInvoiceId] = useState<string | null>(null);
+  const [receivedFrom, setReceivedFrom] = useState(existing?.received_from ?? "");
+  const [receivedFromContactId, setReceivedFromContactId] = useState<string | null>(existing?.received_from_contact_id ?? null);
+  const [details, setDetails] = useState(existing?.details ?? "");
+  const [method, setMethod] = useState(existing?.payment_method ?? "Cash");
+  const [supplyType, setSupplyType] = useState<VatSupplyType>((existing?.vat_supply_type as VatSupplyType) ?? "standard");
+  const [date, setDate] = useState(existing?.transaction_date ?? todayStr());
+  const [matchedInvoiceId, setMatchedInvoiceId] = useState<string | null>(existing?.matched_invoice_id ?? null);
   const [markPaid, setMarkPaid] = useState(false);
-  const [matchedLedgerEntryId, setMatchedLedgerEntryId] = useState<string | null>(null);
+  const [matchedLedgerEntryId, setMatchedLedgerEntryId] = useState<string | null>(existing?.matched_ledger_entry_id ?? null);
   const [markEntryPaid, setMarkEntryPaid] = useState(false);
-  const [accountId, setAccountId] = useState<string | null>(null);
-  const [isPersonal, setIsPersonal] = useState(false);
+  const [accountId, setAccountId] = useState<string | null>(existing?.account_id ?? null);
+  const [isPersonal, setIsPersonal] = useState(!!existing?.is_personal);
+  // An edited row keeps the category it was saved with until someone types over
+  // it — the picker only ever holds a freshly chosen one.
+  const [keptCategory] = useState<string | null>(existing?.sars_category ?? null);
   const [error, setError] = useState("");
 
   const { data: contacts } = useContacts();
   const { data: invoices } = useInvoices();
   const { data: business } = useBusinessProfile();
   const createIncome = useCreateIncome();
+  const updateIncome = useUpdateIncome();
+  const saving = createIncome.isPending || updateIncome.isPending;
   const updateInvoice = useUpdateInvoice();
   const { data: ledgerEntries } = useLedgerEntries();
   const updateLedgerEntry = useUpdateLedgerEntry();
@@ -55,7 +85,9 @@ export function IncomeModal({ onClose }: { onClose: () => void }) {
   // Default new entries to the business's default account, once, so tagging is
   // zero-effort for the common single-primary-account case — without overriding
   // a deliberate clear.
-  const didInitAccount = useRef(false);
+  // An existing row already knows its account, so it starts already initialised
+  // and the default never overwrites what was saved.
+  const didInitAccount = useRef(!!existing);
   useEffect(() => {
     if (!didInitAccount.current && accounts) {
       didInitAccount.current = true;
@@ -89,7 +121,10 @@ export function IncomeModal({ onClose }: { onClose: () => void }) {
   // Linked to either kind of document? Then that document is the record and
   // carries the category, so the "what for" step is skipped — the same rule the
   // expense side follows.
-  const isMatched = !!(matchedInvoiceId || matchedLedgerEntryId);
+  // "Other" money has no document by definition, so nothing can be matched to
+  // it — the category IS the record, and asking again would offer a link the
+  // variant deliberately hides.
+  const isMatched = !isOther && !!(matchedInvoiceId || matchedLedgerEntryId);
 
   // Tagging the entry to an account narrows the payment methods to what that
   // account can do; the chosen method is kept if it still fits, otherwise the
@@ -106,8 +141,7 @@ export function IncomeModal({ onClose }: { onClose: () => void }) {
     }
     setError("");
 
-    createIncome.mutate(
-      {
+    const payload = {
         amount: amountNum,
         // A matched payment is described by the invoice it settles, so its own
         // "what for" / category would just duplicate that and are left null. The
@@ -115,7 +149,7 @@ export function IncomeModal({ onClose }: { onClose: () => void }) {
         // Jar tracker); VAT201 and Profit & Loss already exclude matched rows, so
         // nothing is double-counted.
         what_for: isMatched ? null : whatFor.trim() || null,
-        sars_category: isPersonal || isMatched ? null : sarsCategory?.sars ?? null,
+        sars_category: isPersonal || isMatched ? null : sarsCategory?.sars ?? keptCategory,
         details: details.trim() || null,
         received_from: receivedFrom.trim() || null,
         received_from_contact_id: receivedFromContactId,
@@ -134,35 +168,40 @@ export function IncomeModal({ onClose }: { onClose: () => void }) {
         account_id: accountId,
         source: "manual",
         is_personal: isPersonal,
-      },
-      {
-        onSuccess: async () => {
-          // Settle the invoice only once the income row is safely saved. If
-          // this fails the payment is still recorded and the invoice can be
-          // marked paid by hand, which beats losing the income entry.
-          if (matchedInvoiceId && markPaid && settlesInvoice) {
-            await updateInvoice
-              .mutateAsync({ id: matchedInvoiceId, changes: { status: "paid", paid_date: date, balance_due: 0 } })
-              .catch(() => {});
-          }
-          // Same for a credit-book entry, and re-checked rather than trusting the
-          // checkbox: the amount can be edited after ticking it, and marking a
-          // R5,000 debt settled because someone paid R50 is the kind of wrong
-          // that only surfaces at year end. The income is saved either way — the
-          // link is what keeps the report right, this is the convenience on top.
-          if (matchedLedgerEntryId && markEntryPaid && settlesEntry) {
-            await updateLedgerEntry
-              .mutateAsync({ id: matchedLedgerEntryId, changes: { status: "paid", paid_date: date } })
-              .catch(() => {});
-          }
-          onClose();
-        },
+    };
+
+    const settleLinked = async () => {
+      // Settle the invoice only once the income row is safely saved. If this
+      // fails the payment is still recorded and the invoice can be marked paid
+      // by hand, which beats losing the income entry.
+      if (matchedInvoiceId && markPaid && settlesInvoice) {
+        await updateInvoice
+          .mutateAsync({ id: matchedInvoiceId, changes: { status: "paid", paid_date: date, balance_due: 0 } })
+          .catch(() => {});
       }
-    );
+      // Same for a credit-book entry, and re-checked rather than trusting the
+      // checkbox: the amount can be edited after ticking it, and marking a
+      // R5,000 debt settled because someone paid R50 is the kind of wrong that
+      // only surfaces at year end. The income is saved either way — the link is
+      // what keeps the report right, this is the convenience on top.
+      if (matchedLedgerEntryId && markEntryPaid && settlesEntry) {
+        await updateLedgerEntry
+          .mutateAsync({ id: matchedLedgerEntryId, changes: { status: "paid", paid_date: date } })
+          .catch(() => {});
+      }
+      onClose();
+    };
+
+    if (isEdit && existing) {
+      updateIncome.mutate({ id: existing.id, changes: payload }, { onSuccess: settleLinked });
+    } else {
+      createIncome.mutate(payload, { onSuccess: settleLinked });
+    }
   };
 
   return (
-    <Modal title="Log income" onClose={onClose}>
+    <Modal title={isEdit ? "Edit money in" : isOther ? "Money in" : "Log income"} onClose={onClose}>
+      {banner}
       {/* Ordered the way the money is actually described out loud: how much, when,
           whose money it is, who it came from, where it landed and how, what it
           settles, and only then what it was for. The personal question sits third
@@ -208,6 +247,7 @@ export function IncomeModal({ onClose }: { onClose: () => void }) {
         </span>
       </button>
 
+      {!isOther && (
       <ContactPicker
         label="Received from - Customer / Company name"
         value={receivedFrom}
@@ -218,6 +258,7 @@ export function IncomeModal({ onClose }: { onClose: () => void }) {
         contacts={contacts ?? []}
         placeholder="Type a name or pick from your customers"
       />
+      )}
 
       {/* Where it landed and how it came in, together — the account narrows the
           methods to what it can physically do, so they only make sense side by
@@ -226,7 +267,7 @@ export function IncomeModal({ onClose }: { onClose: () => void }) {
 
       <PaymentMethodPicker selected={effectiveMethod} onSelect={setMethod} methods={paymentMethods} />
 
-      {!isPersonal && (<>
+      {!isPersonal && !isOther && (<>
       {/* Matching comes before "what for" on purpose — a payment that settles an
           invoice takes its description and VAT from that invoice, so the "what
           for" + VAT step only appears for a genuine cash sale. */}
@@ -388,7 +429,11 @@ export function IncomeModal({ onClose }: { onClose: () => void }) {
       )}
 
       {error && <p style={{ color: "#dc2626", fontSize: 13, marginBottom: 12 }}>{error}</p>}
-      <SaveBtn label={createIncome.isPending ? "Saving..." : "Log income"} onClick={handleSave} disabled={createIncome.isPending} />
+      <SaveBtn
+        label={saving ? "Saving..." : isEdit ? "Save changes" : isOther ? "Save money in" : "Log income"}
+        onClick={handleSave}
+        disabled={saving}
+      />
     </Modal>
   );
 }

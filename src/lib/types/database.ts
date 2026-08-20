@@ -23,6 +23,7 @@ export type Database = {
           from_account_id: string
           id: string
           note: string | null
+          reconciled_at: string | null
           to_account_id: string
           transfer_date: string
           user_id: string
@@ -35,6 +36,7 @@ export type Database = {
           from_account_id: string
           id?: string
           note?: string | null
+          reconciled_at?: string | null
           to_account_id: string
           transfer_date: string
           user_id: string
@@ -47,6 +49,7 @@ export type Database = {
           from_account_id?: string
           id?: string
           note?: string | null
+          reconciled_at?: string | null
           to_account_id?: string
           transfer_date?: string
           user_id?: string
@@ -768,6 +771,7 @@ export type Database = {
           paid_to_contact_id: string | null
           pay_run_id: string | null
           payment_method: string | null
+          reconciled_at: string | null
           sars_category: string | null
           source: string | null
           transaction_date: string
@@ -796,6 +800,7 @@ export type Database = {
           paid_to_contact_id?: string | null
           pay_run_id?: string | null
           payment_method?: string | null
+          reconciled_at?: string | null
           sars_category?: string | null
           source?: string | null
           transaction_date: string
@@ -824,6 +829,7 @@ export type Database = {
           paid_to_contact_id?: string | null
           pay_run_id?: string | null
           payment_method?: string | null
+          reconciled_at?: string | null
           sars_category?: string | null
           source?: string | null
           transaction_date?: string
@@ -935,6 +941,7 @@ export type Database = {
           matched_invoice_id: string | null
           matched_ledger_entry_id: string | null
           payment_method: string | null
+          reconciled_at: string | null
           received_from: string | null
           received_from_contact_id: string | null
           sars_category: string | null
@@ -962,6 +969,7 @@ export type Database = {
           matched_invoice_id?: string | null
           matched_ledger_entry_id?: string | null
           payment_method?: string | null
+          reconciled_at?: string | null
           received_from?: string | null
           received_from_contact_id?: string | null
           sars_category?: string | null
@@ -989,6 +997,7 @@ export type Database = {
           matched_invoice_id?: string | null
           matched_ledger_entry_id?: string | null
           payment_method?: string | null
+          reconciled_at?: string | null
           received_from?: string | null
           received_from_contact_id?: string | null
           sars_category?: string | null

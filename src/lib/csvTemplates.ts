@@ -1,4 +1,4 @@
-export type CsvImportType = "stock" | "client" | "supplier" | "staff" | "account";
+export type CsvImportType = "stock" | "client" | "supplier" | "staff" | "account" | "banking";
 
 type ColumnSpec = {
   csvHeader: string;
@@ -72,6 +72,32 @@ export const CSV_TEMPLATES: Record<CsvImportType, CsvTemplate> = {
       account_number: "1234",
       opening_balance: "2500",
       opening_balance_date: "2026-01-01",
+    },
+  },
+  // A bank statement, or anything shaped like one. Deliberately forgiving: date
+  // and amount are the only columns a statement always has, and everything else
+  // is an allocation the owner can make afterwards from the Needs a home filter.
+  // A negative amount means money out, so an exported statement imports as-is.
+  banking: {
+    label: "Transactions",
+    filename: "worklog-transactions-template.csv",
+    columns: [
+      { csvHeader: "date", required: true },
+      { csvHeader: "amount" },
+      { csvHeader: "type" },
+      { csvHeader: "description" },
+      { csvHeader: "party" },
+      { csvHeader: "category" },
+      { csvHeader: "reference" },
+    ],
+    sampleRow: {
+      date: "2026-08-20",
+      amount: "-650.00",
+      type: "out",
+      description: "Fuel at Engen Woodmead",
+      party: "Engen",
+      category: "Motor vehicle — Fuel & oil",
+      reference: "CARD 4821",
     },
   },
   client: {

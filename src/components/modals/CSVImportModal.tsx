@@ -17,13 +17,23 @@ import {
 import { useCsvImport, fetchExistingNames } from "@/lib/supabase/hooks/useCsvImport";
 import { normaliseItemType, ITEM_TYPE_META } from "@/lib/itemTypes";
 import { ACCOUNT_TYPES, ACCOUNT_TYPE_META, normaliseAccountType } from "@/lib/accountTypes";
+import { findSarsCategory } from "@/lib/sarsCategories";
 import { parseStaffCsvRow, type StaffCsvRow } from "@/lib/staffCsv";
 import type { TablesInsert } from "@/lib/types/database";
 
 type StockRow = Omit<TablesInsert<"stock_items">, "user_id" | "business_id">;
 type ContactRow = Omit<TablesInsert<"contacts">, "user_id" | "business_id">;
 type AccountRow = Omit<TablesInsert<"bank_accounts">, "user_id" | "business_id">;
-type ParsedRow = { row: StockRow | ContactRow | AccountRow | StaffCsvRow; name: string; issues: string[]; duplicate: boolean };
+type BankingIncomeRow = Omit<TablesInsert<"income">, "user_id" | "business_id">;
+type BankingExpenseRow = Omit<TablesInsert<"expenses">, "user_id" | "business_id">;
+/** A parsed statement line, tagged with which table it belongs in. */
+type BankingRow = { dir: "in"; row: BankingIncomeRow } | { dir: "out"; row: BankingExpenseRow };
+type ParsedRow = {
+  row: StockRow | ContactRow | AccountRow | StaffCsvRow | BankingRow;
+  name: string;
+  issues: string[];
+  duplicate: boolean;
+};
 
 // SA/continental-tolerant number parsing (currency marks, space/comma thousands,
 // comma-or-dot decimal), shared with the staff importer so "R120", "1 200,00" and
@@ -79,6 +89,60 @@ export function CSVImportModal({ type, slotsLeft, onClose }: { type: CsvImportTy
             const dup = existing.has(staffKey) || seenInFile.has(staffKey);
             seenInFile.add(staffKey);
             rows.push({ row: parsedStaff.row, name: parsedStaff.name, issues: parsedStaff.issues, duplicate: dup });
+            continue;
+          }
+
+          // A transaction has no name to be identified by — its identity is when
+          // it happened, for how much, and what the statement called it. So it
+          // parses ahead of the shared name logic and dedupes on its own key.
+          if (type === "banking") {
+            const date = (raw.date ?? "").trim();
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) continue; // no usable date, no row
+            const rawAmount = num(raw.amount);
+            const desc = (raw.description ?? "").trim();
+            const party = (raw.party ?? "").trim();
+            const issues: string[] = [];
+
+            // Direction: an explicit type column wins, otherwise the sign does —
+            // which is how every exported statement already says it.
+            const typed = (raw.type ?? "").trim().toLowerCase();
+            const dir: "in" | "out" = /^(in|income|credit|cr|deposit|received)$/.test(typed)
+              ? "in"
+              : /^(out|expense|debit|dr|payment|paid)$/.test(typed)
+                ? "out"
+                : rawAmount < 0
+                  ? "out"
+                  : "in";
+            if (typed && !/^(in|income|credit|cr|deposit|received|out|expense|debit|dr|payment|paid)$/.test(typed)) {
+              issues.push(`type "${typed}" not recognised — read as money ${dir} from the amount`);
+            }
+            const amount = Math.abs(rawAmount);
+            if (amount === 0) issues.push("amount is zero — check the file");
+
+            // A category only sticks if it resolves to a real SARS heading;
+            // free text would import as a category nobody can find again.
+            const rawCat = (raw.category ?? "").trim();
+            const cat = rawCat ? findSarsCategory(rawCat) : null;
+            if (rawCat && !cat) issues.push(`category "${rawCat}" not recognised — will need a home after import`);
+
+            const label = [date, party || desc || `R${amount.toFixed(2)}`].filter(Boolean).join(" · ");
+            const key = `${date}|${amount.toFixed(2)}|${(party || desc).toLowerCase()}`;
+            const duplicate = existing.has(key) || seenInFile.has(key);
+            seenInFile.add(key);
+
+            const shared = {
+              amount,
+              transaction_date: date,
+              details: [desc, (raw.reference ?? "").trim()].filter(Boolean).join(" · ") || null,
+              what_for: desc || null,
+              sars_category: cat?.sars ?? null,
+              source: "csv_import",
+            };
+            const bankingRow: BankingRow =
+              dir === "in"
+                ? { dir, row: { ...shared, received_from: party || null } }
+                : { dir, row: { ...shared, paid_to: party || null } };
+            rows.push({ row: bankingRow, name: label, issues, duplicate });
             continue;
           }
 
@@ -185,6 +249,8 @@ export function CSVImportModal({ type, slotsLeft, onClose }: { type: CsvImportTy
           ? ({ type: "staff", rows: toImport as StaffCsvRow[] } as const)
           : type === "account"
             ? ({ type: "account", rows: toImport as AccountRow[] } as const)
+            : type === "banking"
+              ? ({ type: "banking", rows: toImport as BankingRow[] } as const)
             : ({ type, rows: toImport as ContactRow[] } as const);
     csvImport.mutate(payload, {
       onSuccess: (count) => {
@@ -221,6 +287,27 @@ export function CSVImportModal({ type, slotsLeft, onClose }: { type: CsvImportTy
               </div>
               <div style={{ marginTop: 6 }}>
                 Anything it can&apos;t read is flagged before you import, never guessed at silently. Employee numbers are assigned on save, the same as adding someone by hand.
+              </div>
+            </div>
+          )}
+
+          {type === "banking" && (
+            <div style={{ background: "#f8fafc", border: "1.5px solid #e2e8f0", borderRadius: 12, padding: "12px 14px", marginBottom: 12, fontSize: 12, color: "#64748b", lineHeight: 1.6 }}>
+              <div>
+                <strong style={{ color: "#374151" }}>date:</strong> YYYY-MM-DD, e.g. 2026-08-20. A line without one is skipped.
+              </div>
+              <div>
+                <strong style={{ color: "#374151" }}>amount:</strong> a minus means money out, so an exported statement
+                imports as it stands. Or say so in the <strong>type</strong> column: in / out, credit / debit.
+              </div>
+              <div>
+                <strong style={{ color: "#374151" }}>category:</strong> optional. It only sticks if it matches a real SARS
+                heading — anything else is flagged and left for you to allocate.
+              </div>
+              <div style={{ marginTop: 6 }}>
+                Everything imports unallocated unless you say otherwise. Work the pile down afterwards from the{" "}
+                <strong>Needs a home</strong> filter, where you can match each one to an invoice or bill, or book it
+                straight to a heading.
               </div>
             </div>
           )}

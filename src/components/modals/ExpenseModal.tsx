@@ -16,37 +16,55 @@ import { Chips } from "@/components/ui/Chips";
 import { fmt, todayStr } from "@/lib/format";
 import { useTaxRates } from "@/lib/taxRates";
 import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
-import { useCreateExpense } from "@/lib/supabase/hooks/useExpenses";
+import { useCreateExpense, useUpdateExpense } from "@/lib/supabase/hooks/useExpenses";
+import type { Tables } from "@/lib/types/database";
 import { useContacts } from "@/lib/supabase/hooks/useContacts";
 import { useLedgerEntries, useUpdateLedgerEntry } from "@/lib/supabase/hooks/useLedger";
 import { useSupplierInvoices, useUpdateSupplierInvoice } from "@/lib/supabase/hooks/useSupplierInvoices";
 import { useBankAccounts } from "@/lib/supabase/hooks/useBankAccounts";
 import { BankAccountPicker } from "@/components/ui/BankAccountPicker";
 
-export function ExpenseModal({ onClose }: { onClose: () => void }) {
-  const [amount, setAmount] = useState("");
-  const [whatFor, setWhatFor] = useState("");
+/** See IncomeModal — same three props, same reasons, mirrored for money out. */
+export function ExpenseModal({
+  onClose,
+  banner,
+  variant = "full",
+  existing,
+}: {
+  onClose: () => void;
+  banner?: React.ReactNode;
+  variant?: "full" | "other";
+  existing?: Tables<"expenses"> | null;
+}) {
+  const isOther = variant === "other";
+  const isEdit = !!existing;
+  const [amount, setAmount] = useState(existing ? String(existing.amount) : "");
+  const [whatFor, setWhatFor] = useState(existing?.what_for ?? "");
   const [sarsCategory, setSarsCategory] = useState<SarsCategory | null>(null);
   const [showSarsSuggestions, setShowSarsSuggestions] = useState(false);
-  const [paidTo, setPaidTo] = useState("");
-  const [paidToContactId, setPaidToContactId] = useState<string | null>(null);
-  const [details, setDetails] = useState("");
-  const [method, setMethod] = useState("Cash");
-  const [date, setDate] = useState(todayStr());
-  const [matchedLedgerEntryId, setMatchedLedgerEntryId] = useState<string | null>(null);
+  const [paidTo, setPaidTo] = useState(existing?.paid_to ?? "");
+  const [paidToContactId, setPaidToContactId] = useState<string | null>(existing?.paid_to_contact_id ?? null);
+  const [details, setDetails] = useState(existing?.details ?? "");
+  const [method, setMethod] = useState(existing?.payment_method ?? "Cash");
+  const [date, setDate] = useState(existing?.transaction_date ?? todayStr());
+  const [matchedLedgerEntryId, setMatchedLedgerEntryId] = useState<string | null>(existing?.matched_ledger_entry_id ?? null);
   const [markPaid, setMarkPaid] = useState(false);
-  const [matchedSupplierInvoiceId, setMatchedSupplierInvoiceId] = useState<string | null>(null);
+  const [matchedSupplierInvoiceId, setMatchedSupplierInvoiceId] = useState<string | null>(existing?.matched_supplier_invoice_id ?? null);
   const [markSiPaid, setMarkSiPaid] = useState(false);
-  const [accountId, setAccountId] = useState<string | null>(null);
-  const [isPersonal, setIsPersonal] = useState(false);
-  const [hasReceipt, setHasReceipt] = useState(false);
-  const [supplyType, setSupplyType] = useState<VatSupplyType>("standard");
+  const [accountId, setAccountId] = useState<string | null>(existing?.account_id ?? null);
+  const [isPersonal, setIsPersonal] = useState(!!existing?.is_personal);
+  const [hasReceipt, setHasReceipt] = useState(!!existing?.has_receipt);
+  const [supplyType, setSupplyType] = useState<VatSupplyType>((existing?.vat_supply_type as VatSupplyType) ?? "standard");
+  // An edited row keeps the category it was saved with until someone types over it.
+  const [keptCategory] = useState<string | null>(existing?.sars_category ?? null);
   const [error, setError] = useState("");
 
   const { data: contacts } = useContacts();
   const { data: ledgerEntries } = useLedgerEntries();
   const { data: supplierInvoices } = useSupplierInvoices();
   const createExpense = useCreateExpense();
+  const updateExpense = useUpdateExpense();
+  const saving = createExpense.isPending || updateExpense.isPending;
   const updateLedgerEntry = useUpdateLedgerEntry();
   const updateSupplierInvoice = useUpdateSupplierInvoice();
   const { data: accounts } = useBankAccounts();
@@ -54,7 +72,8 @@ export function ExpenseModal({ onClose }: { onClose: () => void }) {
   const { VAT_RATE, vatFromGross } = useTaxRates();
 
   // Default new entries to the business's default account, once.
-  const didInitAccount = useRef(false);
+  // An existing row already knows its account — see IncomeModal.
+  const didInitAccount = useRef(!!existing);
   useEffect(() => {
     if (!didInitAccount.current && accounts) {
       didInitAccount.current = true;
@@ -86,7 +105,8 @@ export function ExpenseModal({ onClose }: { onClose: () => void }) {
   // Linked to a bill (a ledger credit or a supplier invoice)? Then that document
   // is the record — it carries the category and any VAT — so the "what for" step
   // is skipped, exactly like the income side.
-  const isMatched = !!(matchedLedgerEntryId || matchedSupplierInvoiceId);
+  // "Other" money has no bill behind it by definition — the category is the record.
+  const isMatched = !isOther && !!(matchedLedgerEntryId || matchedSupplierInvoiceId);
 
   // Tagging the entry to an account narrows the payment methods to what that
   // account can do; the chosen method is kept if it still fits, otherwise the
@@ -103,15 +123,14 @@ export function ExpenseModal({ onClose }: { onClose: () => void }) {
     }
     setError("");
 
-    createExpense.mutate(
-      {
+    const payload = {
         amount: amountNum,
         // A matched expense is described by the bill it settles, so its own
         // "what for" / category would duplicate that and stay null. In Profit &
         // Loss the matched cash is netted out and the bill carries the cost, so
         // nothing is lost by not categorising the payment itself.
         what_for: isMatched ? null : whatFor.trim() || null,
-        sars_category: isPersonal || isMatched ? null : sarsCategory?.sars ?? null,
+        sars_category: isPersonal || isMatched ? null : sarsCategory?.sars ?? keptCategory,
         details: details.trim() || null,
         paid_to: paidTo.trim() || null,
         paid_to_contact_id: paidToContactId,
@@ -133,39 +152,44 @@ export function ExpenseModal({ onClose }: { onClose: () => void }) {
         // isn't claimed against anything, so the answer is dropped with the rest
         // of the business framing rather than saved as a stale true.
         has_receipt: isPersonal ? false : hasReceipt,
-      },
-      {
-        onSuccess: async () => {
+    };
+
+    const settleLinked = async () => {
           // Re-check the settle rather than trusting the checkbox alone: the
           // amount can be edited after ticking it, and marking a R5,000 debt
           // settled because someone paid R50 is the kind of wrong that only
           // shows up at year end. The expense is saved either way — the link is
           // what keeps the report right, and this is only the convenience on
           // top, so a failure here must not lose the expense.
-          if (matchedLedgerEntryId && markPaid && settlesEntry) {
-            await updateLedgerEntry
-              .mutateAsync({ id: matchedLedgerEntryId, changes: { status: "paid", paid_date: date } })
-              .catch(() => {});
-          }
+      if (matchedLedgerEntryId && markPaid && settlesEntry) {
+        await updateLedgerEntry
+          .mutateAsync({ id: matchedLedgerEntryId, changes: { status: "paid", paid_date: date } })
+          .catch(() => {});
+      }
           // Same for a supplier invoice: settling it zeroes the balance and
           // stamps paid_amount, so what-you-owe views stop listing it. paid_amount
           // is the ex-VAT invoice_amount, matching the actions modal's Mark Paid.
-          if (matchedSupplierInvoiceId && markSiPaid && settlesSi && matchedSi) {
-            await updateSupplierInvoice
-              .mutateAsync({
-                id: matchedSupplierInvoiceId,
-                changes: { status: "paid", paid_date: date, paid_amount: matchedSi.invoice_amount, balance_due: 0 },
-              })
-              .catch(() => {});
-          }
-          onClose();
-        },
+      if (matchedSupplierInvoiceId && markSiPaid && settlesSi && matchedSi) {
+        await updateSupplierInvoice
+          .mutateAsync({
+            id: matchedSupplierInvoiceId,
+            changes: { status: "paid", paid_date: date, paid_amount: matchedSi.invoice_amount, balance_due: 0 },
+          })
+          .catch(() => {});
       }
-    );
+      onClose();
+    };
+
+    if (isEdit && existing) {
+      updateExpense.mutate({ id: existing.id, changes: payload }, { onSuccess: settleLinked });
+    } else {
+      createExpense.mutate(payload, { onSuccess: settleLinked });
+    }
   };
 
   return (
-    <Modal title="Log expense" onClose={onClose}>
+    <Modal title={isEdit ? "Edit money out" : isOther ? "Money out" : "Log expense"} onClose={onClose}>
+      {banner}
       {/* Same order as Log income, for the same reason: how much, when, whose
           money it is, who it went to, where from and how, what it settles, and
           only then what it was for. The personal question sits third because it
@@ -210,6 +234,7 @@ export function ExpenseModal({ onClose }: { onClose: () => void }) {
         </span>
       </button>
 
+      {!isOther && (
       <ContactPicker
         label="Paid to - Supplier"
         value={paidTo}
@@ -220,6 +245,7 @@ export function ExpenseModal({ onClose }: { onClose: () => void }) {
         contacts={contacts ?? []}
         placeholder="Type a name or pick from your suppliers"
       />
+      )}
 
       {/* Where it came out of and how it was paid, together — the account narrows
           the methods to what it can physically do. */}
@@ -227,7 +253,7 @@ export function ExpenseModal({ onClose }: { onClose: () => void }) {
 
       <PaymentMethodPicker selected={effectiveMethod} onSelect={setMethod} methods={paymentMethods} />
 
-      {!isPersonal && (<>
+      {!isPersonal && !isOther && (<>
       {/* Matching leads — a matched expense takes its category from the bill, so
           "what for" only shows for an unmatched spend. */}
       <LedgerEntryMatcher
@@ -400,7 +426,11 @@ export function ExpenseModal({ onClose }: { onClose: () => void }) {
       )}
 
       {error && <p style={{ color: "#dc2626", fontSize: 13, marginBottom: 12 }}>{error}</p>}
-      <SaveBtn label={createExpense.isPending ? "Saving..." : "Log expense"} onClick={handleSave} disabled={createExpense.isPending} />
+      <SaveBtn
+        label={saving ? "Saving..." : isEdit ? "Save changes" : isOther ? "Save money out" : "Log expense"}
+        onClick={handleSave}
+        disabled={saving}
+      />
     </Modal>
   );
 }
