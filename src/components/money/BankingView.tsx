@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { BackLink } from "@/components/ui/BackLink";
 import { ReadOnlyNotice } from "@/components/ui/ReadOnlyNotice";
 import { BankingModal } from "@/components/modals/BankingModal";
@@ -103,9 +104,26 @@ export function BankingView() {
         )}
       </div>
 
-      <p style={{ fontSize: 13, color: "#64748b", lineHeight: 1.5, margin: "10px 0 16px" }}>
+      <p style={{ fontSize: 13, color: "#64748b", lineHeight: 1.5, margin: "10px 0 12px" }}>
         Every rand that moved through your accounts — in, out and between. Tap any row to change it.
       </p>
+
+      {/* Import here takes a CSV. A real bank statement — a PDF, a photo, a
+          download — goes through the reader, which lands its lines in this same
+          list. Two doors because they are genuinely different jobs, but the
+          second one has to be findable from the first or nobody will find it. */}
+      {access.canEdit && (
+        <Link
+          href="/bank-statement"
+          style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, background: "#F0F9FF", border: "1.5px solid #BAE6FD", borderRadius: 12, padding: "11px 13px", marginBottom: 16, textDecoration: "none" }}
+        >
+          <span style={{ fontSize: 12.5, color: "#0369A1", lineHeight: 1.5 }}>
+            📄 Got a bank statement? <strong>Let Worklog read it</strong> — a PDF, a photo or a download, and its lines
+            land here.
+          </span>
+          <span style={{ color: "#7dd3fc", fontSize: 18, flexShrink: 0 }}>›</span>
+        </Link>
+      )}
 
       {!access.loading && !access.canEdit && <ReadOnlyNotice level={access.level} what="transactions" />}
 
