@@ -1,0 +1,24 @@
+-- 0122: let a member undo a "mark as filed".
+--
+-- 0119's Payroll Compliance work added useUnmarkFiled — an undo for a return
+-- ticked off against the wrong period, or one whose pay run changed after the
+-- fact. tax_filings carried only select_member and insert_member, and RLS denies
+-- what no policy permits, so the delete matched zero rows.
+--
+-- It failed silently rather than loudly, which is the part worth naming: the
+-- table GRANT does allow DELETE, so PostgREST returned success having removed
+-- nothing. The hook checked only `error`, so the confirmation closed and the
+-- refetch put the row straight back, still marked as filed.
+--
+-- The predicate is the insert's, exactly: anyone who may record a filing may undo
+-- one. That is deliberately NOT bare membership — this table gates per tool
+-- rather than per business (select_member wants has_tool_access(..., 'view'),
+-- insert_member wants 'edit' plus plan_allows), so membership alone would let
+-- someone with no access to a return, or on a plan without it, delete the marker
+-- for a filing they cannot even see. Undo is the inverse of the insert and
+-- carries the same test. DELETE takes USING; there is no new row to check.
+--
+-- A tax_filings row is only a marker — it never reached SARS — so removing it
+-- reverses nothing but the tick.
+CREATE POLICY "delete_member" ON tax_filings FOR DELETE
+  USING (has_tool_access(business_id, filing_type, 'edit') AND plan_allows(business_id, filing_type));

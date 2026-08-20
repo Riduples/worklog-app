@@ -8,6 +8,7 @@ import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 import { useTaxFilings } from "@/lib/supabase/hooks/useTaxFilings";
 import { useTaxRates } from "@/lib/taxRates";
 import { fmt } from "@/lib/format";
+import { currentTaxYearStartYear, taxYearDateLabel, taxYearLabel, taxYearRange } from "@/lib/period";
 import { shareReport } from "@/lib/docgen/shareReport";
 import { buildCoidaHTML, type CoidaPdfData } from "@/lib/docgen/buildLedgerHTML";
 import { FilingActions, FilingHistory } from "@/components/reports/FilingActions";
@@ -19,6 +20,12 @@ import { asAtLabel } from "@/components/reports/ReportShell";
 // yearly, admin-editable on the tax_rates table). The screen and PDF show the cap
 // they applied, so a stale figure is visible rather than silent. A year stepper
 // rather than a month one — this return is annual.
+//
+// The year it steps through is the ASSESSMENT year: 1 March–end February, the
+// same span the EMP501 reconciles and the one the gazetted cap is set for. It
+// summed a calendar year until this fix, which filed every January and February
+// wage under the wrong year. taxYearRange() also gets the leap-day right, which
+// is the sort of thing a hand-rolled `startsWith` never does.
 // `embedded` = rendered as a tab inside the Payroll Compliance hub — drops its
 // own back-link, title and outer padding (the hub supplies them).
 export function CoidaView({ embedded = false }: { embedded?: boolean } = {}) {
@@ -28,11 +35,12 @@ export function CoidaView({ embedded = false }: { embedded?: boolean } = {}) {
   const { data: filings } = useTaxFilings();
   const { OID_EARNINGS_THRESHOLD: cap } = useTaxRates();
 
-  const today = new Date();
-  const [year, setYear] = useState(today.getFullYear());
-  const label = String(year);
+  const [startYear, setStartYear] = useState(currentTaxYearStartYear());
+  const label = taxYearLabel(startYear);
+  const spanLabel = taxYearDateLabel(startYear);
 
-  const yearRuns = (payRuns ?? []).filter((p) => p.pay_date.startsWith(`${year}-`));
+  const { from, to } = taxYearRange(startYear);
+  const yearRuns = (payRuns ?? []).filter((p) => p.pay_date >= from && p.pay_date <= to);
 
   // Earnings per person, keyed on staff where possible so two workers who happen
   // to share a name don't collapse into one line.
@@ -88,7 +96,7 @@ export function CoidaView({ embedded = false }: { embedded?: boolean } = {}) {
           <Link href="/payroll" style={{ color: "#0C4A6E", fontWeight: 700 }}>
             Pay Run
           </Link>{" "}
-          — your Return of Earnings adds up the wages paid across the year.
+          — your Return of Earnings adds up the wages paid across the assessment year (1 March–end February).
         </div>
       </div>
     );
@@ -106,11 +114,14 @@ export function CoidaView({ embedded = false }: { embedded?: boolean } = {}) {
       )}
 
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-        <button onClick={() => setYear((y) => y - 1)} style={{ background: "#f1f5f9", border: "none", borderRadius: 10, padding: "8px 14px", fontSize: 16, cursor: "pointer" }}>
+        <button onClick={() => setStartYear((y) => y - 1)} style={{ background: "#f1f5f9", border: "none", borderRadius: 10, padding: "8px 14px", fontSize: 16, cursor: "pointer" }}>
           ‹
         </button>
-        <div style={{ fontSize: 15, fontWeight: 700, color: "#111" }}>{label}</div>
-        <button onClick={() => setYear((y) => y + 1)} style={{ background: "#f1f5f9", border: "none", borderRadius: 10, padding: "8px 14px", fontSize: 16, cursor: "pointer" }}>
+        <div style={{ textAlign: "center" }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: "#111" }}>{label}</div>
+          <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>{spanLabel}</div>
+        </div>
+        <button onClick={() => setStartYear((y) => y + 1)} style={{ background: "#f1f5f9", border: "none", borderRadius: 10, padding: "8px 14px", fontSize: 16, cursor: "pointer" }}>
           ›
         </button>
       </div>
@@ -130,11 +141,11 @@ export function CoidaView({ embedded = false }: { embedded?: boolean } = {}) {
       </div>
 
       <div style={{ background: "#fffbeb", border: "1.5px solid #fde68a", borderRadius: 10, padding: "10px 14px", marginBottom: 14, fontSize: 12, color: "#92400e", lineHeight: 1.5 }}>
-        ⚠️ Each employee&apos;s earnings are capped at the OID maximum of <strong>{fmt(cap)}</strong> for the year (a Labour figure that changes yearly).
+        ⚠️ Each employee&apos;s earnings are capped at the OID maximum of <strong>{fmt(cap)}</strong> for the assessment year (a Labour figure that changes yearly).
         {cappedCount > 0
-          ? ` ${cappedCount} employee${cappedCount !== 1 ? "s were" : " was"} over it — gross wages this year were ${fmt(totalRaw)}.`
+          ? ` ${cappedCount} employee${cappedCount !== 1 ? "s were" : " was"} over it — gross wages for the year were ${fmt(totalRaw)}.`
           : " No one is over it this year."}{" "}
-        Confirm the current-year limit with your accountant.
+        This screen applies the limit currently on file, not the one gazetted for the year you are viewing — check an earlier year&apos;s figure with your accountant.
       </div>
 
       <FilingActions
@@ -145,7 +156,7 @@ export function CoidaView({ embedded = false }: { embedded?: boolean } = {}) {
         hasData={yearRuns.length > 0}
         emptyLabel={`No wages recorded for ${label}.`}
         note="File the Return of Earnings on CompEasy — this is a calculation aid, not a filing. Due annually (historically end of March, extended in recent years)."
-        filename={`coida-roe-${label}`}
+        filename={`coida-roe-${label.replace("/", "-")}`}
         pdf={() => ({ kind: "coida", data: coidaPdfData(), asAt: asAtLabel() })}
         fallbackHtml={(b, w) => buildCoidaHTML(b, coidaPdfData(), asAtLabel(), w)}
         share={handleShare}

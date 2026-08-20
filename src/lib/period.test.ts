@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { inPeriod } from "./period";
+import { currentTaxYearStartYear, inPeriod, taxYearRange, taxYearStartYearOf } from "./period";
 import { toLocalIsoDate, todayStr } from "./format";
 
 // These run at Africa/Johannesburg (vitest.config.ts) because that is where the
@@ -188,5 +188,38 @@ describe("inPeriod('all')", () => {
     const all = inPeriod("all");
     expect(all("1999-01-01")).toBe(true);
     expect(all("2099-12-31")).toBe(true);
+  });
+});
+
+// The SA tax year (1 March–end February) is what the EMP501 reconciles and what
+// the COIDA Return of Earnings is assessed over. COIDA summed a CALENDAR year
+// until 0122's review, which filed every January and February wage under the
+// wrong assessment year — so the boundary is worth pinning down rather than
+// trusting to a `startsWith` on the year.
+describe("tax year (1 March–end February)", () => {
+  it("puts January and February in the year that opened the PREVIOUS March", () => {
+    expect(taxYearStartYearOf("2026-01-31")).toBe(2025);
+    expect(taxYearStartYearOf("2026-02-28")).toBe(2025);
+    // 1 March opens the new one — the boundary the calendar-year filter got wrong.
+    expect(taxYearStartYearOf("2026-03-01")).toBe(2026);
+    expect(taxYearStartYearOf("2026-12-31")).toBe(2026);
+  });
+
+  it("spans 1 March to the last day of February", () => {
+    expect(taxYearRange(2025)).toEqual({ from: "2025-03-01", to: "2026-02-28" });
+  });
+
+  it("ends on the 29th when the closing February is a leap month", () => {
+    // 2028 is a leap year, so the 2027/28 year ends a day later. A hand-rolled
+    // "-02-28" would silently drop a pay run dated the 29th.
+    expect(taxYearRange(2027)).toEqual({ from: "2027-03-01", to: "2028-02-29" });
+  });
+
+  it("reads the current tax year off the frozen clock, both sides of March", () => {
+    vi.useFakeTimers();
+    at("2026-02-15T09:00:00Z");
+    expect(currentTaxYearStartYear()).toBe(2025);
+    at("2026-03-15T09:00:00Z");
+    expect(currentTaxYearStartYear()).toBe(2026);
   });
 });

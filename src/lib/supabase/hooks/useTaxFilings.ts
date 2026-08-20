@@ -52,14 +52,22 @@ export function useMarkFiled() {
 // changed after filing and the total no longer matches. Deletes the marker row
 // only; it never touched a real SARS submission, so there's nothing else to
 // reverse (unlike voiding a pay run). RLS scopes the delete to the caller's
-// business, the same as the insert.
+// business, the same as the insert (policy in 0122).
 export function useUnmarkFiled() {
   const supabase = createClient();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("tax_filings").delete().eq("id", id);
+      // .select() so the deleted rows come back and a no-op is visible. A delete
+      // RLS refuses is not an error — PostgREST reports success having removed
+      // nothing — so without this the caller's onSuccess fires, the confirmation
+      // closes, and the refetch puts the row back still marked as filed. That is
+      // exactly what shipped before 0122 added the delete policy; treating an
+      // empty result as a failure means a missing policy surfaces instead of
+      // being swallowed.
+      const { data, error } = await supabase.from("tax_filings").delete().eq("id", id).select("id");
       if (error) throw error;
+      if (!data || data.length === 0) throw new Error("Couldn't undo the filing — nothing was removed.");
       return id;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEY }),
