@@ -2217,9 +2217,9 @@ export const HELP_ARTICLES: HelpArticle[] = [
             "items": [
               "Open Daily Cash-Up under Money.",
               "Check the Date. It starts on today. Tap it to pick another day if you are catching up.",
-              "Look at the grey box. It shows Cash in (logged today), Cash out (logged today) and Expected in till. Expected in till is the cash you should have.",
+              "Look at the grey box. It shows Cash in (logged this day), Cash out (logged this day) and Expected in till. Expected in till is the cash you should have.",
               "Count the real money in your till.",
-              "Type that total into Counted cash (what's actually in the till).",
+              "Type that total into Counted cash - what's actually in the till.",
               "Add a Notes line if something explains a difference, for example gave change short or forgot to log a sale. This is optional.",
               "Tap Save Cash-Up."
             ]
@@ -2252,7 +2252,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
         "blocks": [
           {
             "type": "paragraph",
-            "text": "Under Recent cash-ups you can see your latest cash-ups, each showing the date, the expected and counted amounts, the difference (✅ Exact, or how far off with a + or −) and any notes. It keeps a running record so you can spot a till that is regularly short."
+            "text": "Under Recent cash-ups you can see your latest cash-ups, each showing the date, the expected and counted amounts, the difference (✅ Exact, or how far off with a + or −) and any notes. Once you have more than ten, a Show all button opens the full history. It keeps a running record so you can spot a till that is regularly short."
           },
           {
             "type": "paragraph",
@@ -2260,7 +2260,37 @@ export const HELP_ARTICLES: HelpArticle[] = [
           },
           {
             "type": "warning",
-            "text": "Editing a cash-up changes that record in place. But if you start a brand-new cash-up for a date that already has one, Worklog shows a note just under the Date with what was counted, and saving adds another record for the same day rather than replacing the first. So to fix a cash-up, open it from Recent cash-ups instead of saving a fresh one."
+            "text": "Editing a cash-up changes that record in place. If you pick a date that already has one, an amber note under the Date says so and offers a Fix that one instead link that opens it for editing — use that. Saving a fresh one on a date already counted adds a second record for the same day rather than replacing the first."
+          }
+        ]
+      },
+      {
+        "heading": "Your total to date",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "Above the list, All cash-ups to date adds up every day you have counted. The big number is the net over or short — all your daily differences added together — with how many days were exact, over and short underneath, plus the total cash in and cash out across those days."
+          },
+          {
+            "type": "tip",
+            "text": "This is the number to watch. One R20 evening is nothing, but forty of them adds up to a real loss that no single day would ever show you."
+          },
+          {
+            "type": "paragraph",
+            "text": "The counted amounts are deliberately not added up. Each one is what was in the till that evening, so adding them would count the same float over and over."
+          }
+        ]
+      },
+      {
+        "heading": "The reminder on your dashboard",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "On a day that cash actually moved through your till, Needs you today on the dashboard shows \"Today's cash-up isn't done\" with the cash that went through, and tapping it opens this page. It disappears as soon as you save the cash-up for that day."
+          },
+          {
+            "type": "paragraph",
+            "text": "On a day with no cash income or cash expenses — a card-only day, or a day you did not trade — nothing is shown, because there is no till to count."
           }
         ]
       },

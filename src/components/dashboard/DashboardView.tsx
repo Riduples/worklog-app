@@ -10,6 +10,7 @@ import { useStockItems } from "@/lib/supabase/hooks/useStock";
 import { useBookings } from "@/lib/supabase/hooks/useBookings";
 import { useBankAccounts } from "@/lib/supabase/hooks/useBankAccounts";
 import { useStaffRegister } from "@/lib/supabase/hooks/useStaffRegister";
+import { useCashUps } from "@/lib/supabase/hooks/useCashUps";
 import { QuickLogModal } from "@/components/modals/QuickLogModal";
 import { UpgradeModal } from "@/components/modals/UpgradeModal";
 import { useLoggy } from "@/components/shell/LoggyAssistant";
@@ -39,6 +40,7 @@ export function DashboardView({ businessName }: { businessName: string }) {
   const { data: bookings } = useBookings();
   const { data: accounts } = useBankAccounts();
   const { data: staff } = useStaffRegister();
+  const { data: cashUps } = useCashUps();
   const [modal, setModal] = useState<"quicklog" | null>(null);
   const { open: openLoggy } = useLoggy();
   const [period, setPeriod] = useState<"month" | "year" | "all">("year");
@@ -149,6 +151,28 @@ export function DashboardView({ businessName }: { businessName: string }) {
       href: `/diary?open=${b.id}`,
     });
   }
+  // The till counted itself into the day's takings and nobody counted it back.
+  // Only raised on a day cash actually moved: a card-only day has no till to
+  // count, and a nudge that fires every evening regardless is one people learn
+  // to scroll past — including on the evenings it matters.
+  const cashThroughTillToday =
+    (income ?? [])
+      .filter((r) => r.transaction_date === today && r.payment_method === "Cash")
+      .reduce((s, r) => s + Number(r.amount || 0), 0) +
+    (expenses ?? [])
+      .filter((r) => r.transaction_date === today && r.payment_method === "Cash")
+      .reduce((s, r) => s + Number(r.amount || 0), 0);
+  if (gate("cashup") && cashThroughTillToday > 0 && !(cashUps ?? []).some((c) => c.cash_up_date === today)) {
+    needs.push({
+      key: "cashup",
+      icon: "🧮",
+      bg: "#F0F9FF",
+      title: "Today's cash-up isn't done",
+      sub: `${fmt(cashThroughTillToday)} cash through the till — tap to count it`,
+      href: "/cash-up",
+    });
+  }
+
   if (gate("stock") && lowStock.length > 0) {
     needs.push({
       key: "lowstock",
