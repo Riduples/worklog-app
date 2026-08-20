@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 // Each numbered series has a prefix. The numbers themselves come from the
-// doc_sequences counter (migration 0120), not from reading the documents back —
+// doc_sequences counter (migration 0121), not from reading the documents back —
 // see the note on getNextDocNumbers below for why that distinction matters.
 //
 // (Payslip numbers PS-YYYY-NNNN are assigned inside create_pay_run and have no

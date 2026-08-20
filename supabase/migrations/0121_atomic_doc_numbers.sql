@@ -1,4 +1,4 @@
--- 0120: make document numbering race-safe.
+-- 0121: make document numbering race-safe.
 --
 -- getNextDocNumber (src/lib/docNumber.ts) reads the highest existing number for a
 -- business/prefix/year from the CLIENT and adds one. Two team members creating an
@@ -95,7 +95,11 @@ GROUP BY business_id, prefix, year;
 -- until commit and a concurrent caller reads the already-incremented value.
 --
 -- SECURITY INVOKER, so the RLS policies above apply and a caller can only mint
--- numbers for a business they belong to.
+-- numbers for a business they belong to. search_path is pinned empty and the
+-- table reference schema-qualified, as every function since 0091 is — the
+-- ON CONFLICT target is still named `doc_sequences` because that clause refers
+-- to the insert target by its bare name, and now() is in pg_catalog, which is
+-- searched regardless.
 CREATE OR REPLACE FUNCTION reserve_doc_numbers(
   p_business_id uuid,
   p_prefix text,
@@ -105,6 +109,7 @@ CREATE OR REPLACE FUNCTION reserve_doc_numbers(
 RETURNS int
 LANGUAGE plpgsql
 SECURITY INVOKER
+SET search_path = ''
 AS $$
 DECLARE
   v_last int;
@@ -116,7 +121,7 @@ BEGIN
     RAISE EXCEPTION 'Unknown series %', p_prefix;
   END IF;
 
-  INSERT INTO doc_sequences (business_id, prefix, year, last_number)
+  INSERT INTO public.doc_sequences (business_id, prefix, year, last_number)
   VALUES (p_business_id, p_prefix, p_year, p_count)
   ON CONFLICT (business_id, prefix, year) DO UPDATE
     SET last_number = doc_sequences.last_number + p_count,

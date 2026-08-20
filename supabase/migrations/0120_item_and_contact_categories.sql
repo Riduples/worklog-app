@@ -1,4 +1,4 @@
--- 0119: SARS categories on price-list items and contacts.
+-- 0120: SARS categories on price-list items and contacts.
 --
 -- Today only a loose income/expense row carries a sars_category. Every document
 -- that generates a number — invoice, supplier invoice, ledger entry, credit note
