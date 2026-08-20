@@ -35,6 +35,7 @@ export function ExpenseModal({ onClose }: { onClose: () => void }) {
   const [markSiPaid, setMarkSiPaid] = useState(false);
   const [accountId, setAccountId] = useState<string | null>(null);
   const [isPersonal, setIsPersonal] = useState(false);
+  const [hasReceipt, setHasReceipt] = useState(false);
   const [error, setError] = useState("");
 
   const { data: contacts } = useContacts();
@@ -107,6 +108,10 @@ export function ExpenseModal({ onClose }: { onClose: () => void }) {
         account_id: accountId,
         source: "manual",
         is_personal: isPersonal,
+        // Only a claimed business cost needs proof. Money the owner took out
+        // isn't claimed against anything, so the answer is dropped with the rest
+        // of the business framing rather than saved as a stale true.
+        has_receipt: isPersonal ? false : hasReceipt,
       },
       {
         onSuccess: async () => {
@@ -140,39 +145,70 @@ export function ExpenseModal({ onClose }: { onClose: () => void }) {
 
   return (
     <Modal title="Log expense" onClose={onClose}>
-      {/* Same capture order as Log income: account, date, amount, who, then
-          whether it settles a bill. Matching leads — a matched expense takes its
-          category from the bill, so "what for" only shows for an unmatched spend. */}
-      {(accounts?.length ?? 0) > 0 && <BankAccountPicker value={accountId} onChange={setAccountId} />}
+      {/* Same order as Log income, for the same reason: how much, when, whose
+          money it is, who it went to, where from and how, what it settles, and
+          only then what it was for. The personal question sits third because it
+          decides whether any of the business steps below apply at all. */}
+      <Field label="Amount (R)">
+        <Input value={amount} onChange={setAmount} type="number" placeholder="0.00" autoFocus />
+      </Field>
 
       <Field label="Date">
         <Input value={date} onChange={setDate} type="date" />
       </Field>
 
-      <Field label="Amount">
-        <Input value={amount} onChange={setAmount} type="number" placeholder="0.00" autoFocus />
-      </Field>
-
       <button
         type="button"
+        aria-pressed={isPersonal}
         onClick={() => setIsPersonal((p) => !p)}
-        style={{ width: "100%", textAlign: "left", padding: "11px 14px", borderRadius: 12, border: `1.5px solid ${isPersonal ? "#0C4A6E" : "#e2e8f0"}`, background: isPersonal ? "#F0F9FF" : "#fff", cursor: "pointer", fontFamily: "inherit", fontSize: 12.5, fontWeight: 600, color: isPersonal ? "#0C4A6E" : "#64748b", marginBottom: 12, lineHeight: 1.5 }}
+        style={{
+          width: "100%",
+          display: "flex",
+          alignItems: "flex-start",
+          gap: 10,
+          textAlign: "left",
+          padding: "12px 14px",
+          borderRadius: 12,
+          border: `1.5px solid ${isPersonal ? "#0C4A6E" : "#e2e8f0"}`,
+          background: isPersonal ? "#F0F9FF" : "#fff",
+          cursor: "pointer",
+          fontFamily: "inherit",
+          marginBottom: 16,
+        }}
       >
-        {isPersonal ? "✓ " : ""}This is my own money coming out (owner&apos;s drawing) — not a business expense
+        <span style={{ fontSize: 16, lineHeight: 1.25, flexShrink: 0, color: isPersonal ? "#0C4A6E" : "#94a3b8" }}>
+          {isPersonal ? "☑" : "☐"}
+        </span>
+        <span style={{ minWidth: 0 }}>
+          <span style={{ display: "block", fontSize: 13, fontWeight: 700, color: isPersonal ? "#0C4A6E" : "#334155", marginBottom: 3 }}>
+            This is personal money, not a business expense
+          </span>
+          <span style={{ display: "block", fontSize: 11.5, fontWeight: 500, color: "#64748b", lineHeight: 1.5 }}>
+            e.g. money you take out of the business for yourself (drawings). Kept separate from business totals &amp; tax.
+          </span>
+        </span>
       </button>
 
       <ContactPicker
-        label="Paid to"
+        label="Paid to - Supplier"
         value={paidTo}
         onChange={(v, id) => {
           setPaidTo(v);
           setPaidToContactId(id);
         }}
         contacts={contacts ?? []}
-        placeholder="Name - optional"
+        placeholder="Type a name or pick from your suppliers"
       />
 
+      {/* Where it came out of and how it was paid, together — the account narrows
+          the methods to what it can physically do. */}
+      {(accounts?.length ?? 0) > 0 && <BankAccountPicker value={accountId} onChange={setAccountId} />}
+
+      <PaymentMethodPicker selected={effectiveMethod} onSelect={setMethod} methods={paymentMethods} />
+
       {!isPersonal && (<>
+      {/* Matching leads — a matched expense takes its category from the bill, so
+          "what for" only shows for an unmatched spend. */}
       <LedgerEntryMatcher
         entries={supplierEntries}
         matchedId={matchedLedgerEntryId}
@@ -241,8 +277,46 @@ export function ExpenseModal({ onClose }: { onClose: () => void }) {
         </div>
       )}
 
+      {/* Asked here, next to the claim it backs, and only for a business cost —
+          a drawing is not claimed against anything, so there is nothing to prove.
+          Nothing is uploaded: the answer alone is what makes a missing slip
+          findable a year later, when nobody remembers which ones they kept. */}
+      {!isPersonal && (
+        <button
+          type="button"
+          aria-pressed={hasReceipt}
+          onClick={() => setHasReceipt((p) => !p)}
+          style={{
+            width: "100%",
+            display: "flex",
+            alignItems: "flex-start",
+            gap: 10,
+            textAlign: "left",
+            padding: "12px 14px",
+            borderRadius: 12,
+            border: `1.5px solid ${hasReceipt ? "#0C4A6E" : "#e2e8f0"}`,
+            background: hasReceipt ? "#F0F9FF" : "#fff",
+            cursor: "pointer",
+            fontFamily: "inherit",
+            marginBottom: 16,
+          }}
+        >
+          <span style={{ fontSize: 16, lineHeight: 1.25, flexShrink: 0, color: hasReceipt ? "#0C4A6E" : "#94a3b8" }}>
+            {hasReceipt ? "☑" : "☐"}
+          </span>
+          <span style={{ minWidth: 0 }}>
+            <span style={{ display: "block", fontSize: 13, fontWeight: 700, color: hasReceipt ? "#0C4A6E" : "#334155", marginBottom: 3 }}>
+              I have a receipt or proof for this
+            </span>
+            <span style={{ display: "block", fontSize: 11.5, fontWeight: 500, color: "#64748b", lineHeight: 1.5 }}>
+              SARS can ask for proof of any expense you claim. It does not need to be uploaded — just keep it somewhere safe.
+            </span>
+          </span>
+        </button>
+      )}
+
       <Field label="Details - optional">
-        <Input value={details} onChange={setDetails} placeholder="Extra description" />
+        <Input value={details} onChange={setDetails} placeholder="Type any extra details" />
       </Field>
 
       {/* No bill matched and no account tagged — the entry has nothing to
@@ -252,8 +326,6 @@ export function ExpenseModal({ onClose }: { onClose: () => void }) {
           ⚠️ This isn&apos;t linked to a bill or a bank account — tag the account it was paid from so it reconciles against your statement later.
         </div>
       )}
-
-      <PaymentMethodPicker selected={effectiveMethod} onSelect={setMethod} methods={paymentMethods} />
 
       {error && <p style={{ color: "#dc2626", fontSize: 13, marginBottom: 12 }}>{error}</p>}
       <SaveBtn label={createExpense.isPending ? "Saving..." : "Log expense"} onClick={handleSave} disabled={createExpense.isPending} />

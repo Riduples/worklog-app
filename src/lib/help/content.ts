@@ -388,15 +388,15 @@ export const HELP_ARTICLES: HelpArticle[] = [
             "type": "steps",
             "items": [
               "Open Log income.",
-              "In Amount, type what you received, for example 450. This is the full amount that landed in your hand or account.",
-              "Just below Amount is a toggle that says \"This is my own money going in (owner's contribution) — keep it out of income & tax\". Leave it off for a normal sale. Only tap it when you are putting your own money into the business.",
-              "Under Received from, start typing the customer's name. If they are already a saved contact you can pick them from the list; otherwise just type the name. This field is optional.",
+              "In Amount (R), type what you received, for example 450. This is the full amount that landed in your hand or account.",
+              "Check the Date. It defaults to today.",
+              "Next is a tick box that says \"This is personal money, not business income\". Leave it off for a normal sale. Only tap it when you are putting your own money into the business from your own pocket — that is kept separate from your business totals and tax.",
+              "Under Received from, start typing the customer or company name. If they are already a saved contact you can pick them from the list with the List button; otherwise just type the name. This field is optional.",
+              "If you have bank accounts set up, choose which account the money went into, then choose a Payment method — the chips are Cash, EFT / Bank transfer, Card, Debit order, Voucher / Gift card and Other. The account you picked hides any method it cannot do.",
               "If the payment settles an invoice you sent, pick it in the invoice matcher that appears. Worklog ticks the option to mark that invoice paid for you when the payment covers it — leave it ticked, or untick it if you do not want that yet.",
               "If it is not against an invoice, type a short description in What for?, like Gate fix or Braai catering. As you type, Worklog may suggest a SARS category underneath — tap one to use it, or just carry on typing.",
               "If you are VAT registered, a VAT treatment choice appears on a cash sale — Standard-rated (15%), Zero-rated (0%) or Exempt. Leave it on Standard-rated for a normal sale.",
-              "Choose a Payment method — the chips are Cash, EFT / Bank transfer, Card, Voucher / Gift card and Other. Cash is chosen to start with.",
-              "If you have bank accounts set up, choose which account the money went into.",
-              "Check the Date (it defaults to today) and add anything extra under Details if you like.",
+              "Add anything extra under Details if you like.",
               "Tap Log income to save."
             ]
           },
@@ -417,14 +417,15 @@ export const HELP_ARTICLES: HelpArticle[] = [
             "type": "steps",
             "items": [
               "Open Log expense.",
-              "In Amount, type what you paid.",
-              "Just below Amount is a toggle that says \"This is my own money coming out (owner's drawing) — not a business expense\". Leave it off for a normal business cost. Only tap it when you are taking your own money out of the business.",
-              "Under Paid to, type or pick the supplier or person you paid. This is optional.",
+              "In Amount (R), type what you paid.",
+              "Check the Date. It defaults to today.",
+              "Next is a tick box that says \"This is personal money, not a business expense\". Leave it off for a normal business cost. Only tap it when you are taking money out of the business for yourself — that is kept separate from your business totals and tax.",
+              "Under Paid to, type or pick the supplier you paid, using the List button to choose a saved one. This is optional.",
+              "If you have bank accounts set up, choose which account the money came out of, then choose a Payment method — the chips are Cash, EFT / Bank transfer, Card, Debit order, Voucher / Gift card and Other. The account you picked hides any method it cannot do.",
               "If this payment clears something you owe — an entry in your ledgers, or a supplier invoice you recorded — pick it in the matcher that appears and tick the option to mark it paid.",
               "If it is not against a bill, type what it was for in What for?, like Fuel at Engen or Cement. Worklog may suggest a SARS category as you type — tap one if it fits.",
-              "Choose a Payment method — the chips are Cash, EFT / Bank transfer, Card (debit), Card (credit), Debit order and Other.",
-              "If you have bank accounts set up, choose which account the money came out of.",
-              "Check the Date and add extra notes under Details if you want.",
+              "Tick \"I have a receipt or proof for this\" if you kept the slip. Nothing is uploaded — Worklog only records that you have it, so you can find the claims with no proof behind them later.",
+              "Add extra notes under Details if you want.",
               "Tap Log expense to save."
             ]
           }

@@ -123,11 +123,19 @@ export const INCOME_PAYMENT_METHODS = [
 export const EXPENSE_PAYMENT_METHODS = [
   "Cash",
   "EFT / Bank transfer",
-  "Card (debit)",
-  "Card (credit)",
+  // One Card chip, not two. Debit or credit is a property of the account the
+  // card belongs to — which the entry already carries — so asking again at the
+  // till only invites a wrong answer on a card people do not think of either way.
+  "Card",
   "Debit order",
+  "Voucher / Gift card",
   "Other",
 ];
+
+// Retired chips. Nobody can pick these any more, but rows captured before the
+// two card chips became one still hold them, and the AI ingest routes have to
+// keep validating what is already in the table.
+const LEGACY_PAYMENT_METHODS = ["Card (debit)", "Card (credit)"];
 
 // The union of both directions, deduped and order-preserving. The AI ingest
 // routes (quick-log, parse-statement) classify income AND expenses in one enum,
@@ -135,6 +143,7 @@ export const EXPENSE_PAYMENT_METHODS = [
 export const ALL_PAYMENT_METHODS = [
   ...INCOME_PAYMENT_METHODS,
   ...EXPENSE_PAYMENT_METHODS.filter((m) => !INCOME_PAYMENT_METHODS.includes(m)),
+  ...LEGACY_PAYMENT_METHODS,
 ];
 
 // Once an entry is tagged to a specific account, the methods narrow to what that
@@ -142,7 +151,9 @@ export const ALL_PAYMENT_METHODS = [
 // credit-card account can't pay cash. We FILTER the direction list (INCOME/
 // EXPENSE) rather than replace it, so the income-vs-expense split is preserved
 // and only the labels that don't fit the account drop out. "Other" is always
-// kept as an escape hatch; an untagged or unknown account narrows nothing.
+// kept as an escape hatch, and so is a voucher — a gift card is its own tender
+// and comes out of no account at all, so no account can rule it out.
+// An untagged or unknown account narrows nothing.
 // account_type values come from AccountsView: bank | savings | credit | cash | other.
 const ACCOUNT_ALLOWED_METHODS: Record<string, readonly string[]> = {
   cash: ["Cash", "Voucher / Gift card"],
@@ -157,7 +168,7 @@ export function narrowMethodsForAccount(
 ): string[] {
   const allowed = accountType ? ACCOUNT_ALLOWED_METHODS[accountType] : undefined;
   if (!allowed) return [...methods];
-  return methods.filter((m) => m === "Other" || allowed.includes(m));
+  return methods.filter((m) => m === "Other" || m === "Voucher / Gift card" || allowed.includes(m));
 }
 
 function getSarsMatchFromList(list: SarsCategory[], text: string) {

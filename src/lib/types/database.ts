@@ -758,6 +758,7 @@ export type Database = {
           credit_note_id: string | null
           deleted_at: string | null
           details: string | null
+          has_receipt: boolean
           id: string
           is_credit_settlement: boolean
           is_personal: boolean
@@ -782,6 +783,7 @@ export type Database = {
           credit_note_id?: string | null
           deleted_at?: string | null
           details?: string | null
+          has_receipt?: boolean
           id?: string
           is_credit_settlement?: boolean
           is_personal?: boolean
@@ -806,6 +808,7 @@ export type Database = {
           credit_note_id?: string | null
           deleted_at?: string | null
           details?: string | null
+          has_receipt?: boolean
           id?: string
           is_credit_settlement?: boolean
           is_personal?: boolean
