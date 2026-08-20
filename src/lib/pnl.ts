@@ -9,7 +9,8 @@ import { salesLineTotal } from "@/lib/lineItems";
 // profits for the same month. Now both call this.
 //
 // Accrual, and ex-VAT throughout:
-//   revenue = invoices issued + cash income not already tied to an invoice
+//   revenue = invoices issued + client credit extended
+//              + cash income not already settling one of those
 //   costs   = supplier invoices issued + supplier credit incurred
 //              + cash expenses not already settling one of those
 // A payment matched to the document it settles is netted out, because the
@@ -36,6 +37,8 @@ export type PnlInputs = {
 export type Pnl = {
   // revenue side
   invoicesIssued: number;
+  /** Credit sales raised in the period — the client half of the ledger book. */
+  clientCreditExtended: number;
   cashIncomeNotInvoiced: number;
   revenue: number;
   // cost side
@@ -72,11 +75,15 @@ export function computePnl(inputs: PnlInputs, within: (dateStr: string) => boole
   const cashIncome = (income ?? [])
     .filter((r) => within(r.transaction_date) && !r.is_credit_settlement && !r.is_personal)
     .reduce((s, r) => s + incomeNet(r), 0);
-  const incomeLinkedToInvoice = (income ?? [])
-    .filter((r) => within(r.transaction_date) && r.matched_invoice_id && !r.is_credit_settlement && !r.is_personal)
+  // A receipt settling an invoice OR a client ledger entry is netted out once —
+  // the document it settles already counted the amount. A row could in principle
+  // carry both links, so match on OR and subtract it a single time; summing two
+  // per-column totals would double-subtract it and understate revenue. Same
+  // shape as expenseSettlingAccrual on the cost side.
+  const incomeSettlingAccrual = (income ?? [])
+    .filter((r) => within(r.transaction_date) && !r.is_credit_settlement && !r.is_personal && (r.matched_invoice_id || r.matched_ledger_entry_id))
     .reduce((s, r) => s + incomeNet(r), 0);
-  const cashIncomeNotInvoiced = cashIncome - incomeLinkedToInvoice;
-  const revenue = invoicesIssued + cashIncomeNotInvoiced;
+  const cashIncomeNotInvoiced = cashIncome - incomeSettlingAccrual;
 
   // ── costs ──
   const cashExpense = (expenses ?? [])
@@ -87,6 +94,7 @@ export function computePnl(inputs: PnlInputs, within: (dateStr: string) => boole
   if (opts?.cashBasis) {
     return {
       invoicesIssued: 0,
+      clientCreditExtended: 0,
       cashIncomeNotInvoiced: cashIncome,
       revenue: cashIncome,
       supplierInvoicesIssued: 0,
@@ -96,6 +104,22 @@ export function computePnl(inputs: PnlInputs, within: (dateStr: string) => boole
       profit: cashIncome - cashExpense,
     };
   }
+
+  // A credit sale is revenue when the credit is extended, the same way a supplier
+  // entry is a cost when it is incurred. Until this existed the book was lopsided:
+  // buying on credit hit the report immediately, selling on credit reached it
+  // nowhere at all, so the more a business sold on account the smaller its
+  // revenue looked. ledger_type is 'client' — that is the value the CHECK
+  // constraint in 0017 allows, not 'customer'.
+  //
+  // Face value, not ex-VAT. A ledger entry is a bare amount owed with no VAT
+  // breakdown to extract, so this matches the supplier side rather than inventing
+  // a split. For a VAT-registered business a credit sale is better raised as an
+  // invoice, which does carry the VAT.
+  const clientCreditExtended = (ledger ?? [])
+    .filter((e) => e.ledger_type === "client" && within(e.entry_date))
+    .reduce((s, e) => s + Number(e.amount), 0);
+  const revenue = invoicesIssued + clientCreditExtended + cashIncomeNotInvoiced;
 
   const supplierInvoicesIssued = (supplierInvoices ?? [])
     .filter((si) => within(si.issue_date))
@@ -130,6 +154,7 @@ export function computePnl(inputs: PnlInputs, within: (dateStr: string) => boole
 
   return {
     invoicesIssued,
+    clientCreditExtended,
     cashIncomeNotInvoiced,
     revenue: revenueNetOfCredits,
     supplierInvoicesIssued,
@@ -215,17 +240,18 @@ function sorted(totals: Map<string, Bucket>): CategoryBreakdown[] {
 /**
  * Revenue by category. Sums to `computePnl(...).revenue` for the same inputs.
  *
- * Invoices carry their categories on their lines; cash income that isn't settling
- * an invoice carries its own; a customer credit note is contra-revenue and is
- * pushed back against the categories of the invoice it credits, so crediting a
- * sale unwinds it from the same heading it landed under.
+ * Invoices carry their categories on their lines; a client ledger entry carries
+ * none at all and lands under Uncategorised; cash income that isn't settling one
+ * of those carries its own; and a customer credit note is contra-revenue, pushed
+ * back against the categories of the invoice it credits, so crediting a sale
+ * unwinds it from the same heading it landed under.
  */
 export function revenueCategoryTotals(
   inputs: PnlInputs,
   within: (dateStr: string) => boolean,
   opts?: { cashBasis?: boolean }
 ): CategoryBreakdown[] {
-  const { income, invoices, creditNotes } = inputs;
+  const { income, invoices, ledger, creditNotes } = inputs;
   const totals = new Map<string, Bucket>();
 
   // Cash basis (a single account): every rand received is revenue under its own
@@ -246,10 +272,21 @@ export function revenueCategoryTotals(
     allocate(totals, Number(inv.invoice_amount), inv.line_items as LineLike[] | null);
   }
 
-  // Cash income not already tied to an invoice — the money row is the record here,
-  // so its own category is the right one. Ex-VAT, as everywhere in this file.
+  // Client ledger entries have no category to give — the credit book records an
+  // amount owed and nothing about what was sold — so they land under
+  // Uncategorised, exactly as supplier entries do on the cost side. They must
+  // still appear, or the breakdown stops adding up to the revenue above it.
+  for (const e of ledger ?? []) {
+    if (e.ledger_type !== "client" || !within(e.entry_date)) continue;
+    bump(totals, UNCATEGORISED, Number(e.amount));
+  }
+
+  // Cash income not already tied to an invoice or a ledger entry — the money row
+  // is the record here, so its own category is the right one. Ex-VAT, as
+  // everywhere in this file.
   for (const r of income ?? []) {
-    if (!within(r.transaction_date) || r.is_credit_settlement || r.is_personal || r.matched_invoice_id) continue;
+    if (!within(r.transaction_date) || r.is_credit_settlement || r.is_personal) continue;
+    if (r.matched_invoice_id || r.matched_ledger_entry_id) continue;
     bump(totals, r.sars_category || UNCATEGORISED, incomeNet(r));
   }
 

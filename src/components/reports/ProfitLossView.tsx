@@ -86,6 +86,9 @@ export function ProfitLossView() {
         {isAll ? (
           <>
             <Row label="Invoices issued" value={fmt(pnl.invoicesIssued)} />
+            {/* Shown only when there is any, matching how the cost side lists
+                supplier credit — an empty line on every report would be noise. */}
+            {pnl.clientCreditExtended > 0 && <Row label="Credit sales" value={fmt(pnl.clientCreditExtended)} />}
             <Row label="+ Other cash income" value={fmt(pnl.cashIncomeNotInvoiced)} />
             <Row label="Total revenue" value={fmt(pnl.revenue)} bold />
             <div style={{ height: 12 }} />

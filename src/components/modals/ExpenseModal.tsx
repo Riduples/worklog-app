@@ -8,7 +8,7 @@ import { SaveBtn } from "@/components/ui/SaveBtn";
 import { ContactPicker } from "@/components/ui/ContactPicker";
 import { PaymentMethodPicker } from "@/components/ui/PaymentMethodPicker";
 import { SarsSuggestionDropdown } from "@/components/ui/SarsSuggestionDropdown";
-import { LedgerEntryMatcher, expenseSettlesEntry } from "@/components/ui/LedgerEntryMatcher";
+import { LedgerEntryMatcher, paymentSettlesEntry } from "@/components/ui/LedgerEntryMatcher";
 import { SupplierInvoiceMatcher, expenseSettlesSupplierInvoice } from "@/components/ui/SupplierInvoiceMatcher";
 import { getSarsMatch, EXPENSE_PAYMENT_METHODS, narrowMethodsForAccount, type SarsCategory } from "@/lib/sarsCategories";
 import { todayStr } from "@/lib/format";
@@ -61,7 +61,7 @@ export function ExpenseModal({ onClose }: { onClose: () => void }) {
   // payment can still be linked, exactly as the invoice matcher does.
   const supplierEntries = (ledgerEntries ?? []).filter((e) => e.ledger_type === "supplier");
   const matchedEntry = supplierEntries.find((e) => e.id === matchedLedgerEntryId) ?? null;
-  const settlesEntry = expenseSettlesEntry(matchedEntry, amountNum);
+  const settlesEntry = paymentSettlesEntry(matchedEntry, amountNum);
 
   const matchedSi = (supplierInvoices ?? []).find((si) => si.id === matchedSupplierInvoiceId) ?? null;
   const settlesSi = expenseSettlesSupplierInvoice(matchedSi, amountNum);
@@ -188,7 +188,7 @@ export function ExpenseModal({ onClose }: { onClose: () => void }) {
         }}
         filterByParty={paidTo}
         onAutoFillParty={setPaidTo}
-        expenseAmount={amountNum}
+        paymentAmount={amountNum}
         markPaid={markPaid}
         onMarkPaidChange={setMarkPaid}
       />

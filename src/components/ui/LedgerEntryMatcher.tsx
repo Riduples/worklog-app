@@ -5,10 +5,15 @@ import { Field } from "@/components/ui/Field";
 import { fmt } from "@/lib/format";
 import type { LedgerEntry } from "@/lib/supabase/hooks/useLedger";
 
-// The expense-side twin of InvoiceMatcher. Same job from the other end: an
+// The credit-book twin of InvoiceMatcher, and it serves BOTH directions. An
 // invoice counts revenue when issued, so the payment against it must not count
-// again; a supplier ledger entry counts a cost when incurred, so the expense
-// that settles it must not count again either.
+// again; a ledger entry counts when it is raised — a supplier entry as cost, a
+// client entry as revenue — so the money that settles it must not count again
+// either.
+//
+// `side` only changes wording. The arithmetic is identical in both directions
+// because a ledger entry is a bare amount owed, so "does this settle it" is the
+// same comparison whoever owes whom.
 //
 // Simpler than the invoice case in one way — ledger entries carry no VAT
 // breakdown, just an amount — so "does this settle it" is a plain comparison
@@ -25,13 +30,14 @@ export function ledgerEntryOutstanding(e: LedgerEntry): number {
 }
 
 /**
- * Whether an expense settles a supplier entry outright. Shared by the modal
- * that writes status='paid' and the matcher that offers the checkbox, so the
- * two cannot drift. A cent short is still settled.
+ * Whether a payment settles an entry outright — an expense against a supplier
+ * entry, or a receipt against a client one. Shared by the modals that write
+ * status='paid' and the matcher that offers the checkbox, so the two cannot
+ * drift. A cent short is still settled.
  */
-export function expenseSettlesEntry(e: LedgerEntry | null | undefined, expenseAmount: number): boolean {
-  if (!e || e.status === "paid" || expenseAmount <= 0) return false;
-  return expenseAmount + 0.01 >= ledgerEntryOutstanding(e);
+export function paymentSettlesEntry(e: LedgerEntry | null | undefined, paymentAmount: number): boolean {
+  if (!e || e.status === "paid" || paymentAmount <= 0) return false;
+  return paymentAmount + 0.01 >= ledgerEntryOutstanding(e);
 }
 
 export function LedgerEntryMatcher({
@@ -40,28 +46,51 @@ export function LedgerEntryMatcher({
   onMatch,
   filterByParty,
   onAutoFillParty,
-  expenseAmount = 0,
+  paymentAmount = 0,
   markPaid = false,
   onMarkPaidChange,
+  side = "supplier",
 }: {
-  /** Supplier entries only — a client entry is money owed TO the business. */
+  /** One side's entries. The caller filters by ledger_type; mixing the two here
+   *  would offer to settle a debt with money moving the wrong way. */
   entries: LedgerEntry[];
   matchedId: string | null;
   onMatch: (id: string | null) => void;
   filterByParty?: string;
   onAutoFillParty?: (party: string) => void;
-  /** The expense being logged, used to see whether it settles the entry. */
-  expenseAmount?: number;
+  /** The payment being logged, used to see whether it settles the entry. */
+  paymentAmount?: number;
   markPaid?: boolean;
   onMarkPaidChange?: (next: boolean) => void;
+  /** Which book: money you owe, or money owed to you. Wording only. */
+  side?: "supplier" | "client";
 }) {
   const [show, setShow] = useState(false);
   const [search, setSearch] = useState("");
 
+  // The only thing `side` changes. Kept as one table rather than sprinkled
+  // ternaries so a future third book adds a row instead of a hunt.
+  const copy =
+    side === "client"
+      ? {
+          label: "Is this a customer paying off their credit? - optional",
+          badge: "Owes you",
+          searchPlaceholder: "Search by customer, note or amount...",
+          hintNone: "Tap to find a credit entry...",
+          markPaid: "Mark this credit entry as settled",
+        }
+      : {
+          label: "Is this paying off something in your credit book? - optional",
+          badge: "You owe",
+          searchPlaceholder: "Search by supplier, note or amount...",
+          hintNone: "Tap to find a credit entry...",
+          markPaid: "Mark this credit entry as paid",
+        };
+
   if (entries.length === 0) return null;
 
   const matched = entries.find((e) => e.id === matchedId) ?? null;
-  const settles = expenseSettlesEntry(matched, expenseAmount);
+  const settles = paymentSettlesEntry(matched, paymentAmount);
 
   const named = (filterByParty ?? "").trim().toLowerCase();
   const isFor = (e: LedgerEntry) => (e.party_name ?? "").toLowerCase() === named;
@@ -120,7 +149,7 @@ export function LedgerEntryMatcher({
           {paid ? (
             <div style={{ fontSize: 11, color: "#0369A1", fontWeight: 600 }}>✓ Paid</div>
           ) : (
-            <div style={{ fontSize: 11, color: "#b45309", fontWeight: 600 }}>You owe</div>
+            <div style={{ fontSize: 11, color: "#b45309", fontWeight: 600 }}>{copy.badge}</div>
           )}
         </div>
       </button>
@@ -130,10 +159,10 @@ export function LedgerEntryMatcher({
   const hint =
     named && partyEntries.length > 0
       ? `⚡ ${partyEntries.length} entr${partyEntries.length === 1 ? "y" : "ies"} for ${filterByParty} — tap to view`
-      : "Tap to find a credit entry...";
+      : copy.hintNone;
 
   return (
-    <Field label="Is this paying off something in your credit book? - optional">
+    <Field label={copy.label}>
       <div style={{ position: "relative" }}>
         <button
           onClick={() => {
@@ -180,7 +209,7 @@ export function LedgerEntryMatcher({
                 autoFocus
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search by supplier, note or amount..."
+                placeholder={copy.searchPlaceholder}
                 style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 13, boxSizing: "border-box" }}
               />
             </div>
@@ -224,7 +253,9 @@ export function LedgerEntryMatcher({
         <div style={{ marginTop: 6, padding: "7px 12px", background: "#F0F9FF", borderRadius: 8, fontSize: 11, color: "#0C4A6E", fontWeight: 600, lineHeight: 1.5 }}>
           {/* One template string, not JSX text: JSX eats the space between an
               expression and the text following it. */}
-          {`✅ Linked to what you owe ${matched.party_name} — kept out of Profit & Loss so this cost isn't counted twice.`}
+          {side === "client"
+            ? `✅ Linked to what ${matched.party_name} owes you — kept out of Profit & Loss so this sale isn't counted twice.`
+            : `✅ Linked to what you owe ${matched.party_name} — kept out of Profit & Loss so this cost isn't counted twice.`}
         </div>
       )}
 
@@ -247,7 +278,9 @@ export function LedgerEntryMatcher({
         >
           <span style={{ fontSize: 14, color: markPaid ? "#0C4A6E" : "#cbd5e1" }}>{markPaid ? "☑" : "☐"}</span>
           <span style={{ fontSize: 11, color: "#0369A1", fontWeight: 700, lineHeight: 1.5 }}>
-            {`This covers the full ${fmt(ledgerEntryOutstanding(matched))} — mark what you owe ${matched.party_name} as settled`}
+            {side === "client"
+              ? `This covers the full ${fmt(ledgerEntryOutstanding(matched))} — mark what ${matched.party_name} owes you as settled`
+              : `This covers the full ${fmt(ledgerEntryOutstanding(matched))} — mark what you owe ${matched.party_name} as settled`}
           </span>
         </button>
       )}
@@ -257,9 +290,9 @@ export function LedgerEntryMatcher({
           something was paid without recording how much — and the next screen to
           read it would have to guess. Linking still keeps the cost out of the
           report, which is the part that matters. */}
-      {matched && !settles && matched.status !== "paid" && expenseAmount > 0 && (
+      {matched && !settles && matched.status !== "paid" && paymentAmount > 0 && (
         <div style={{ marginTop: 6, padding: "7px 12px", background: "#fff7ed", borderRadius: 8, fontSize: 11, color: "#92400e", fontWeight: 600, lineHeight: 1.5 }}>
-          {`Part payment — ${fmt(ledgerEntryOutstanding(matched) - expenseAmount)} of the ${fmt(ledgerEntryOutstanding(matched))} would still be owed, so this entry stays open.`}
+          {`Part payment — ${fmt(ledgerEntryOutstanding(matched) - paymentAmount)} of the ${fmt(ledgerEntryOutstanding(matched))} would still be owed, so this entry stays open.`}
         </div>
       )}
     </Field>

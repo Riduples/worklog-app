@@ -18,7 +18,7 @@ import { BackLink } from "@/components/ui/BackLink";
 import { BankAccountPicker } from "@/components/ui/BankAccountPicker";
 import { InvoiceMatcher, paymentSettlesInvoice } from "@/components/ui/InvoiceMatcher";
 import { SupplierInvoiceMatcher, expenseSettlesSupplierInvoice } from "@/components/ui/SupplierInvoiceMatcher";
-import { LedgerEntryMatcher, expenseSettlesEntry } from "@/components/ui/LedgerEntryMatcher";
+import { LedgerEntryMatcher, paymentSettlesEntry } from "@/components/ui/LedgerEntryMatcher";
 
 type ParsedTxn = {
   date: string;
@@ -95,6 +95,10 @@ export function BankStatementView() {
   // Supplier entries only — a client entry is money owed TO the business, which
   // a bank payment out can never settle.
   const supplierEntries = (ledgerEntries ?? []).filter((e) => e.ledger_type === "supplier");
+  // The revenue-side twin: a client entry books the sale when the credit is
+  // extended, so a deposit settling one has to name it or Profit & Loss counts
+  // the sale twice — the same reason a deposit names the invoice it settles.
+  const clientEntries = (ledgerEntries ?? []).filter((e) => e.ledger_type === "client");
 
   const [step, setStep] = useState<Step>("consent");
   const [fileData, setFileData] = useState<{ base64: string; mediaType: string } | null>(null);
@@ -106,6 +110,8 @@ export function BankStatementView() {
   // double-counting against the invoice that already booked the revenue.
   const [matchByIndex, setMatchByIndex] = useState<Record<number, string | null>>({});
   const [markPaidByIndex, setMarkPaidByIndex] = useState<Record<number, boolean>>({});
+  const [incLedgerByIndex, setIncLedgerByIndex] = useState<Record<number, string | null>>({});
+  const [incLedgerPaidByIndex, setIncLedgerPaidByIndex] = useState<Record<number, boolean>>({});
   const [expLinksByIndex, setExpLinksByIndex] = useState<Record<number, ExpLinks>>({});
   const setExpLinks = (i: number, patch: Partial<ExpLinks>) =>
     setExpLinksByIndex((p) => ({ ...p, [i]: { ...(p[i] ?? EMPTY_EXP), ...patch } }));
@@ -283,6 +289,7 @@ export function BankStatementView() {
             vat_amount: vatAmount,
             tax_jar_amount: net * TAX_JAR_RATE,
             matched_invoice_id: matchedInvoiceId,
+            matched_ledger_entry_id: incLedgerByIndex[i] ?? null,
           });
           // Settle the linked invoice only once the income row is safely saved,
           // and only when the deposit covers the full balance (mirrors
@@ -294,6 +301,16 @@ export function BankStatementView() {
             if (inv && paymentSettlesInvoice(inv, t.amount)) {
               await updateInvoice
                 .mutateAsync({ id: matchedInvoiceId, changes: { status: "paid", paid_date: t.date, balance_due: 0 } })
+                .catch(() => {});
+            }
+          }
+          // Same treatment for a credit-book entry the deposit settles.
+          const incLedgerId = incLedgerByIndex[i] ?? null;
+          if (incLedgerId && incLedgerPaidByIndex[i]) {
+            const entry = clientEntries.find((e) => e.id === incLedgerId);
+            if (entry && paymentSettlesEntry(entry, t.amount)) {
+              await updateLedgerEntry
+                .mutateAsync({ id: incLedgerId, changes: { status: "paid", paid_date: t.date } })
                 .catch(() => {});
             }
           }
@@ -318,7 +335,7 @@ export function BankStatementView() {
           // (mirrors ExpenseModal). A shortfall stays linked but leaves it open.
           if (links.ledgerId && links.ledgerPaid) {
             const entry = supplierEntries.find((e) => e.id === links.ledgerId);
-            if (entry && expenseSettlesEntry(entry, t.amount)) {
+            if (entry && paymentSettlesEntry(entry, t.amount)) {
               await updateLedgerEntry
                 .mutateAsync({ id: links.ledgerId, changes: { status: "paid", paid_date: t.date } })
                 .catch(() => {});
@@ -672,7 +689,7 @@ export function BankStatementView() {
             </div>
           </button>
 
-          {on && t.type === "income" && (invoices?.length ?? 0) > 0 && (
+          {on && t.type === "income" && ((invoices?.length ?? 0) > 0 || clientEntries.length > 0) && (
             <div style={{ padding: "8px 6px 2px" }}>
               <InvoiceMatcher
                 invoices={invoices ?? []}
@@ -687,6 +704,18 @@ export function BankStatementView() {
                 markPaid={!!markPaidByIndex[i]}
                 onMarkPaidChange={(next) => setMarkPaidByIndex((p) => ({ ...p, [i]: next }))}
               />
+              <LedgerEntryMatcher
+                side="client"
+                entries={clientEntries}
+                matchedId={incLedgerByIndex[i] ?? null}
+                onMatch={(id) => {
+                  setIncLedgerByIndex((p) => ({ ...p, [i]: id }));
+                  setIncLedgerPaidByIndex((p) => ({ ...p, [i]: !!id }));
+                }}
+                paymentAmount={t.amount}
+                markPaid={!!incLedgerPaidByIndex[i]}
+                onMarkPaidChange={(next) => setIncLedgerPaidByIndex((p) => ({ ...p, [i]: next }))}
+              />
             </div>
           )}
 
@@ -696,7 +725,7 @@ export function BankStatementView() {
                 entries={supplierEntries}
                 matchedId={(expLinksByIndex[i] ?? EMPTY_EXP).ledgerId}
                 onMatch={(id) => setExpLinks(i, { ledgerId: id, ledgerPaid: !!id })}
-                expenseAmount={t.amount}
+                paymentAmount={t.amount}
                 markPaid={(expLinksByIndex[i] ?? EMPTY_EXP).ledgerPaid}
                 onMarkPaidChange={(next) => setExpLinks(i, { ledgerPaid: next })}
               />

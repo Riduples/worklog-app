@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { expenseSettlesEntry, ledgerEntryOutstanding } from "@/components/ui/LedgerEntryMatcher";
+import { paymentSettlesEntry, ledgerEntryOutstanding } from "@/components/ui/LedgerEntryMatcher";
 import { paymentSettlesInvoice, invoiceBalanceInclVat } from "@/components/ui/InvoiceMatcher";
 import { expenseSettlesSupplierInvoice, supplierInvoiceOutstanding } from "@/components/ui/SupplierInvoiceMatcher";
 import type { LedgerEntry } from "@/lib/supabase/hooks/useLedger";
@@ -38,35 +38,35 @@ describe("ledgerEntryOutstanding", () => {
   });
 });
 
-describe("expenseSettlesEntry", () => {
+describe("paymentSettlesEntry", () => {
   it("settles when the expense covers what is owed", () => {
-    expect(expenseSettlesEntry(entry({ amount: 1000 }), 1000)).toBe(true);
+    expect(paymentSettlesEntry(entry({ amount: 1000 }), 1000)).toBe(true);
   });
 
   it("settles when it more than covers it", () => {
-    expect(expenseSettlesEntry(entry({ amount: 1000 }), 1200)).toBe(true);
+    expect(paymentSettlesEntry(entry({ amount: 1000 }), 1200)).toBe(true);
   });
 
   it("does not settle a part payment", () => {
-    expect(expenseSettlesEntry(entry({ amount: 1000 }), 999)).toBe(false);
+    expect(paymentSettlesEntry(entry({ amount: 1000 }), 999)).toBe(false);
   });
 
   it("forgives a cent, so float noise never blocks a settled debt", () => {
-    expect(expenseSettlesEntry(entry({ amount: 1000 }), 999.995)).toBe(true);
+    expect(paymentSettlesEntry(entry({ amount: 1000 }), 999.995)).toBe(true);
   });
 
   it("refuses an entry that is already paid", () => {
-    expect(expenseSettlesEntry(entry({ status: "paid" }), 5000)).toBe(false);
+    expect(paymentSettlesEntry(entry({ status: "paid" }), 5000)).toBe(false);
   });
 
   it("refuses a zero or negative expense", () => {
-    expect(expenseSettlesEntry(entry(), 0)).toBe(false);
-    expect(expenseSettlesEntry(entry(), -100)).toBe(false);
+    expect(paymentSettlesEntry(entry(), 0)).toBe(false);
+    expect(paymentSettlesEntry(entry(), -100)).toBe(false);
   });
 
   it("refuses when nothing is matched", () => {
-    expect(expenseSettlesEntry(null, 1000)).toBe(false);
-    expect(expenseSettlesEntry(undefined, 1000)).toBe(false);
+    expect(paymentSettlesEntry(null, 1000)).toBe(false);
+    expect(paymentSettlesEntry(undefined, 1000)).toBe(false);
   });
 });
 
@@ -157,8 +157,8 @@ describe("the two halves agree", () => {
   // They are mirrors: same rule, opposite direction. If one grows a cent of
   // tolerance or loses it, this notices.
   it("both forgive exactly one cent and no more", () => {
-    expect(expenseSettlesEntry(entry({ amount: 1000 }), 999.99)).toBe(true);
-    expect(expenseSettlesEntry(entry({ amount: 1000 }), 999.98)).toBe(false);
+    expect(paymentSettlesEntry(entry({ amount: 1000 }), 999.99)).toBe(true);
+    expect(paymentSettlesEntry(entry({ amount: 1000 }), 999.98)).toBe(false);
     expect(paymentSettlesInvoice(invoice({ balance_due: 1000, vat_amount: 0 }), 999.99)).toBe(true);
     expect(paymentSettlesInvoice(invoice({ balance_due: 1000, vat_amount: 0 }), 999.98)).toBe(false);
   });

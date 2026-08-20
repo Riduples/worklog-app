@@ -5,7 +5,7 @@ import type { Tables } from "@/lib/types/database";
 
 // Only the fields computePnl reads; the rest of each row is noise here.
 const income = (over: Partial<Tables<"income">> = {}) =>
-  ({ id: "in1", transaction_date: "2026-07-10", amount: 1150, vat_amount: 150, matched_invoice_id: null, ...over }) as Tables<"income">;
+  ({ id: "in1", transaction_date: "2026-07-10", amount: 1150, vat_amount: 150, matched_invoice_id: null, matched_ledger_entry_id: null, ...over }) as Tables<"income">;
 const expense = (over: Partial<Tables<"expenses">> = {}) =>
   ({ id: "ex1", transaction_date: "2026-07-10", amount: 500, matched_ledger_entry_id: null, matched_supplier_invoice_id: null, ...over }) as Tables<"expenses">;
 const invoice = (over: Partial<Tables<"invoices">> = {}) =>
@@ -69,10 +69,57 @@ describe("computePnl", () => {
     expect(p.costs).toBe(800);
   });
 
-  it("ignores a customer ledger entry on the cost side — that's money owed TO you", () => {
-    const p = computePnl({ ledger: [ledgerEntry({ ledger_type: "customer", amount: 800 })] }, all);
+  it("ignores a client ledger entry on the cost side — that's money owed TO you", () => {
+    // 'client', not 'customer': that is the value 0017's CHECK constraint allows.
+    // This test asserted against 'customer' until 0123, so it passed for the
+    // wrong reason — any unrecognised value falls out of a === "supplier" filter.
+    const p = computePnl({ ledger: [ledgerEntry({ ledger_type: "client", amount: 800 })] }, all);
     expect(p.supplierCreditIncurred).toBe(0);
     expect(p.costs).toBe(0);
+  });
+
+  it("counts a client ledger entry as revenue when the credit is extended", () => {
+    // The asymmetry 0123 closes: a supplier entry was a cost the moment it was
+    // raised, while a credit sale reached revenue nowhere at all.
+    const p = computePnl({ ledger: [ledgerEntry({ ledger_type: "client", amount: 1500 })] }, all);
+    expect(p.clientCreditExtended).toBe(1500);
+    expect(p.revenue).toBe(1500);
+    expect(p.profit).toBe(1500);
+  });
+
+  it("does not count a client ledger entry and the receipt that settles it twice", () => {
+    // The mirror of the supplier case above, and the reason the matched column
+    // had to ship WITH the revenue change: counting the entry without netting the
+    // receipt would turn an under-count into a double-count.
+    const p = computePnl(
+      {
+        ledger: [ledgerEntry({ ledger_type: "client", amount: 1500 })],
+        income: [income({ amount: 1500, vat_amount: 0, matched_ledger_entry_id: "le1" })],
+      },
+      all
+    );
+    expect(p.revenue).toBe(1500);
+  });
+
+  it("still counts an unlinked receipt on top — it is a different sale", () => {
+    // Netting is per link, never a blanket "ignore cash when a ledger entry
+    // exists". Two customers, one on credit and one paying cash, is 2500.
+    const p = computePnl(
+      {
+        ledger: [ledgerEntry({ ledger_type: "client", amount: 1500 })],
+        income: [income({ id: "i9", amount: 1000, vat_amount: 0 })],
+      },
+      all
+    );
+    expect(p.revenue).toBe(2500);
+  });
+
+  it("keeps a client ledger entry out of the single-account cash view", () => {
+    // Cash basis is one account's own movements; a credit sale is a business-wide
+    // claim that is not money in any account yet.
+    const p = computePnl({ ledger: [ledgerEntry({ ledger_type: "client", amount: 1500 })] }, all, { cashBasis: true });
+    expect(p.clientCreditExtended).toBe(0);
+    expect(p.revenue).toBe(0);
   });
 
   it("profit is revenue minus costs", () => {
@@ -202,6 +249,32 @@ describe("revenueCategoryTotals", () => {
       creditNotes: [creditNote({ invoice_id: "iv1", amount: 575, vat_amount: 75 })],
     };
     expect(sum(revenueCategoryTotals(inputs, all))).toBeCloseTo(computePnl(inputs, all).revenue, 6);
+  });
+
+  it("puts a client ledger entry under Uncategorised and still reconciles", () => {
+    // The credit book records an amount owed and nothing about what was sold, so
+    // there is no category to read. Showing it as Uncategorised is what keeps the
+    // breakdown adding up to the revenue printed above it; dropping it would put
+    // the list quietly under the total, which is the failure this pairing exists
+    // to prevent.
+    const inputs = {
+      ledger: [ledgerEntry({ ledger_type: "client", amount: 1500 })],
+      income: [income({ id: "i1", amount: 1150, vat_amount: 150, sars_category: "Other income — Interest received" })],
+    };
+    const rows = revenueCategoryTotals(inputs, all);
+    expect(rows.find((r) => r.category === UNCATEGORISED)?.amount).toBe(1500);
+    expect(sum(rows)).toBeCloseTo(computePnl(inputs, all).revenue, 6);
+  });
+
+  it("leaves out the receipt that settles a ledger entry, as the total does", () => {
+    const inputs = {
+      ledger: [ledgerEntry({ ledger_type: "client", amount: 1500 })],
+      income: [income({ amount: 1500, vat_amount: 0, matched_ledger_entry_id: "le1", sars_category: "Other income — Interest received" })],
+    };
+    const rows = revenueCategoryTotals(inputs, all);
+    // Only the entry itself, under Uncategorised — not the receipt's category too.
+    expect(rows).toEqual([{ category: UNCATEGORISED, amount: 1500, count: 1 }]);
+    expect(sum(rows)).toBeCloseTo(computePnl(inputs, all).revenue, 6);
   });
 });
 
