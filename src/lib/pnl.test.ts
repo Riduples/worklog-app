@@ -374,3 +374,45 @@ describe("expenseCategoryTotals", () => {
     expect(amountOf(rows, "Admin — Stationery & printing")).toBe(250);
   });
 });
+
+describe("cash purchases are counted ex-VAT", () => {
+  it("takes the VAT out of a cash expense, the way it does for a cash sale", () => {
+    // R1,150 paid, R150 of it VAT the business claims back from SARS — so the
+    // cost it actually bore is R1,000. Counting the gross overstated it.
+    const p = computePnl({ expenses: [expense({ amount: 1150, vat_amount: 150 })] }, all);
+    expect(p.costs).toBe(1000);
+  });
+
+  it("leaves a pre-VAT expense row exactly as it was", () => {
+    // vat_amount 0 on every row logged before expenses carried VAT, so no
+    // historic report moves.
+    const p = computePnl({ expenses: [expense({ amount: 500 })] }, all);
+    expect(p.costs).toBe(500);
+  });
+
+  it("nets a matched payment at the same ex-VAT value it was counted at", () => {
+    // The supplier invoice carries the cost; the payment settling it must cancel
+    // out exactly, or a stray few rand of VAT survives as phantom cost.
+    const p = computePnl(
+      {
+        supplierInvoices: [supplierInvoice({ id: "si1", invoice_amount: 1000 })],
+        expenses: [expense({ amount: 1150, vat_amount: 150, matched_supplier_invoice_id: "si1" })],
+      },
+      all
+    );
+    expect(p.costs).toBe(1000);
+  });
+
+  it("keeps the category breakdown footing to the total", () => {
+    // The invariant the file promises: expenseCategoryTotals sums to costs.
+    const inputs = {
+      expenses: [
+        expense({ id: "1", amount: 1150, vat_amount: 150, sars_category: "Cost of sales — Materials" }),
+        expense({ id: "2", amount: 575, vat_amount: 75, sars_category: "Motor vehicle — Fuel & oil" }),
+      ],
+    };
+    const total = expenseCategoryTotals(inputs, all).reduce((s, r) => s + r.amount, 0);
+    expect(total).toBeCloseTo(computePnl(inputs, all).costs, 6);
+    expect(total).toBe(1500);
+  });
+});

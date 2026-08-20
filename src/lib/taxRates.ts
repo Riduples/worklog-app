@@ -382,3 +382,20 @@ export { vatFromGross };
 export function incomeNet(row: { amount: number | string; vat_amount?: number | string | null }): number {
   return Number(row.amount) - Number(row.vat_amount ?? 0);
 }
+
+/**
+ * Net (ex-VAT) cost in a cash expense row.
+ *
+ * The same arithmetic as incomeNet, and needed for the same reason: a purchase
+ * is recorded gross, but the VAT inside it is money reclaimed from SARS, not a
+ * cost the business bore. Profit & Loss reads costs ex-VAT everywhere else — a
+ * supplier invoice contributes its ex-VAT amount — so a cash purchase has to
+ * come through here or a VAT-registered business overstates its costs by the
+ * VAT on everything it did not happen to receive an invoice for.
+ *
+ * Every expense logged before VAT capture existed holds vat_amount 0, so this
+ * returns the gross amount for them — exactly what they claimed before.
+ */
+export function expenseNet(row: { amount: number | string; vat_amount?: number | string | null }): number {
+  return Number(row.amount) - Number(row.vat_amount ?? 0);
+}

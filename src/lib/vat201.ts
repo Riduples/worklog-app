@@ -29,6 +29,62 @@ type CreditNoteRow = {
   vat_amount?: number | string | null;
 };
 
+type ExpenseRow = {
+  amount: number | string;
+  vat_amount?: number | string | null;
+  transaction_date: string;
+  matched_supplier_invoice_id?: string | null;
+  is_personal?: boolean | null;
+  is_credit_settlement?: boolean | null;
+};
+
+type SupplierInvoiceRow = {
+  issue_date: string;
+  vat_amount?: number | string | null;
+};
+
+/**
+ * Input VAT for the period — everything claimable on what the business bought.
+ *
+ * Two sources, for the same reason output VAT has two: a purchase either arrives
+ * as a supplier invoice or it doesn't, and the ones that don't are just as
+ * claimable. Cement paid for in cash and fuel tapped on a card carry input VAT
+ * whether or not anyone recorded a bill for them, and reading supplier invoices
+ * alone quietly forfeited every one of those claims.
+ *
+ * An expense linked to a supplier invoice is excluded: that invoice already
+ * contributed its own vat_amount, so counting the payment as well would claim
+ * the same VAT twice. Exactly the rule cash sales follow against invoices on the
+ * output side.
+ *
+ * Owner's drawings aren't business purchases, and a refund settlement is the
+ * cash leg of a supplier credit note whose VAT the caller nets separately — both
+ * would otherwise be claimed for a second time.
+ */
+export function inputVatTotal(
+  supplierInvoices: SupplierInvoiceRow[] | null | undefined,
+  expenses: ExpenseRow[] | null | undefined,
+  fromDate: string,
+  toDate: string
+): number {
+  const invoiced = (supplierInvoices ?? [])
+    .filter((r) => r.issue_date >= fromDate && r.issue_date <= toDate)
+    .reduce((s, r) => s + Number(r.vat_amount ?? 0), 0);
+
+  const cashPurchases = (expenses ?? [])
+    .filter(
+      (r) =>
+        !r.matched_supplier_invoice_id &&
+        !r.is_personal &&
+        !r.is_credit_settlement &&
+        r.transaction_date >= fromDate &&
+        r.transaction_date <= toDate
+    )
+    .reduce((s, r) => s + Number(r.vat_amount ?? 0), 0);
+
+  return invoiced + cashPurchases;
+}
+
 export type Supplies = {
   standard: number;
   zero_rated: number;

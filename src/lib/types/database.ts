@@ -773,6 +773,9 @@ export type Database = {
           transaction_date: string
           updated_at: string | null
           user_id: string
+          vat_amount: number
+          vat_rate: number | null
+          vat_supply_type: string | null
           what_for: string | null
         }
         Insert: {
@@ -798,6 +801,9 @@ export type Database = {
           transaction_date: string
           updated_at?: string | null
           user_id: string
+          vat_amount?: number
+          vat_rate?: number | null
+          vat_supply_type?: string | null
           what_for?: string | null
         }
         Update: {
@@ -823,6 +829,9 @@ export type Database = {
           transaction_date?: string
           updated_at?: string | null
           user_id?: string
+          vat_amount?: number
+          vat_rate?: number | null
+          vat_supply_type?: string | null
           what_for?: string | null
         }
         Relationships: [

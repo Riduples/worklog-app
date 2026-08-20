@@ -403,6 +403,10 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "tip",
             "text": "Whenever you enter an amount, a blue note shows how much Worklog is setting aside for SARS in your tax jar. If you are VAT-registered, a second blue box appears above it showing the VAT included in the amount and what is left as your actual income. You do not need to do anything with these — they are worked out for you."
+          },
+          {
+            "type": "tip",
+            "text": "The same happens in reverse on Log expense: if you are VAT-registered, the VAT inside what you paid is worked out and claimed back on your VAT201. You no longer have to record a supplier invoice just to claim VAT on something you bought with cash or a card. A payment that settles a supplier invoice is the one exception — that invoice already carries the VAT, so the payment does not claim it again."
           }
         ]
       },
@@ -424,6 +428,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
               "If you have bank accounts set up, choose which account the money came out of, then choose a Payment method — the chips are Cash, EFT / Bank transfer, Card, Debit order, Voucher / Gift card and Other. The account you picked hides any method it cannot do.",
               "If this payment clears something you owe — an entry in your ledgers, or a supplier invoice you recorded — pick it in the matcher that appears and tick the option to mark it paid.",
               "If it is not against a bill, type what it was for in What for?, like Fuel at Engen or Cement. Worklog may suggest a SARS category as you type — tap one if it fits.",
+              "If you are VAT registered, a VAT treatment choice appears — Standard-rated (15%), Zero-rated (0%) or Exempt. Leave it on Standard-rated for a normal purchase, and a blue box shows the VAT inside the amount that you claim back on your VAT201.",
               "Tick \"I have a receipt or proof for this\" if you kept the slip. Nothing is uploaded — Worklog only records that you have it, so you can find the claims with no proof behind them later.",
               "Add extra notes under Details if you want.",
               "Tap Log expense to save."

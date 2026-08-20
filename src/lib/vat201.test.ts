@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { suppliesByType } from "./vat201";
+import { suppliesByType, inputVatTotal } from "./vat201";
 
 // The bug these guard: the VAT201 output-VAT figure nets customer credit notes,
 // but the supply values it declares (fields 1–3) used to stay gross — so a period
@@ -126,5 +126,76 @@ describe("suppliesByType — customer credit notes net their invoice's bucket", 
     );
     // standard: 1000 + 200 − 100 = 1100; zero: 500 − 200 = 300; exempt: 300
     expect(s).toEqual({ standard: 1100, zero_rated: 300, exempt: 300, total: 1700 });
+  });
+});
+
+describe("inputVatTotal", () => {
+  const si = (over: Partial<{ issue_date: string; vat_amount: number }> = {}) => ({
+    issue_date: "2026-07-10",
+    vat_amount: 150,
+    ...over,
+  });
+  const exp = (
+    over: Partial<{
+      transaction_date: string;
+      amount: number;
+      vat_amount: number;
+      matched_supplier_invoice_id: string | null;
+      is_personal: boolean;
+      is_credit_settlement: boolean;
+    }> = {}
+  ) => ({ transaction_date: "2026-07-10", amount: 1150, vat_amount: 150, ...over });
+
+  const period = ["2026-07-01", "2026-07-31"] as const;
+
+  it("claims VAT off supplier invoices, as it always did", () => {
+    expect(inputVatTotal([si({ vat_amount: 150 })], [], ...period)).toBe(150);
+  });
+
+  it("also claims VAT on a purchase with no supplier invoice behind it", () => {
+    // The whole point: cement paid for in cash carries claimable VAT, and
+    // reading supplier invoices alone gave it away.
+    expect(inputVatTotal([], [exp({ vat_amount: 150 })], ...period)).toBe(150);
+  });
+
+  it("adds both sources together", () => {
+    expect(inputVatTotal([si({ vat_amount: 100 })], [exp({ vat_amount: 50 })], ...period)).toBe(150);
+  });
+
+  it("never claims the same VAT twice when a payment settles a supplier invoice", () => {
+    // The invoice already contributed its VAT; the payment must not claim it too.
+    const out = inputVatTotal(
+      [si({ vat_amount: 150 })],
+      [exp({ vat_amount: 150, matched_supplier_invoice_id: "si1" })],
+      ...period
+    );
+    expect(out).toBe(150);
+  });
+
+  it("leaves out owner's drawings — not a business purchase", () => {
+    expect(inputVatTotal([], [exp({ vat_amount: 150, is_personal: true })], ...period)).toBe(0);
+  });
+
+  it("leaves out a refund settlement, whose VAT nets via the credit note", () => {
+    expect(inputVatTotal([], [exp({ vat_amount: 150, is_credit_settlement: true })], ...period)).toBe(0);
+  });
+
+  it("counts only what falls inside the period, on both sources", () => {
+    const out = inputVatTotal(
+      [si({ issue_date: "2026-06-30", vat_amount: 999 })],
+      [exp({ transaction_date: "2026-08-01", vat_amount: 999 })],
+      ...period
+    );
+    expect(out).toBe(0);
+  });
+
+  it("treats a pre-VAT expense row as carrying none", () => {
+    // Every expense logged before the column existed reads vat_amount 0, so no
+    // historic return moves.
+    expect(inputVatTotal([], [{ transaction_date: "2026-07-10", amount: 500 }], ...period)).toBe(0);
+  });
+
+  it("handles nothing at all", () => {
+    expect(inputVatTotal(null, undefined, ...period)).toBe(0);
   });
 });

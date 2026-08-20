@@ -1,6 +1,6 @@
 import type { Tables } from "@/lib/types/database";
 import type { CreditNote } from "@/lib/creditNotes";
-import { incomeNet } from "@/lib/taxRates";
+import { incomeNet, expenseNet } from "@/lib/taxRates";
 import { salesLineTotal } from "@/lib/lineItems";
 
 // The one place profit is defined, so the dashboard and the Profit & Loss report
@@ -86,9 +86,13 @@ export function computePnl(inputs: PnlInputs, within: (dateStr: string) => boole
   const cashIncomeNotInvoiced = cashIncome - incomeSettlingAccrual;
 
   // ── costs ──
+  // Ex-VAT, through expenseNet, for the same reason revenue goes through
+  // incomeNet: the VAT inside a purchase is reclaimed from SARS, not a cost the
+  // business bore, and a supplier invoice already contributes its ex-VAT amount.
+  // Rows logged before expenses carried VAT hold vat_amount 0 and are unchanged.
   const cashExpense = (expenses ?? [])
     .filter((r) => within(r.transaction_date) && !r.is_credit_settlement && !r.is_personal)
-    .reduce((s, r) => s + Number(r.amount), 0);
+    .reduce((s, r) => s + expenseNet(r), 0);
 
   // Cash basis: plain money-in/money-out for one account, no accrual netting.
   if (opts?.cashBasis) {
@@ -133,7 +137,7 @@ export function computePnl(inputs: PnlInputs, within: (dateStr: string) => boole
   // per-column totals would double-subtract it and understate costs.
   const expenseSettlingAccrual = (expenses ?? [])
     .filter((r) => within(r.transaction_date) && !r.is_credit_settlement && !r.is_personal && (r.matched_ledger_entry_id || r.matched_supplier_invoice_id))
-    .reduce((s, r) => s + Number(r.amount), 0);
+    .reduce((s, r) => s + expenseNet(r), 0);
   const cashExpensesNotMatched = cashExpense - expenseSettlingAccrual;
 
   // Credit notes are contra-revenue / contra-cost the moment they are raised: a
@@ -327,7 +331,7 @@ export function expenseCategoryTotals(
   if (opts?.cashBasis) {
     for (const r of expenses ?? []) {
       if (!within(r.transaction_date) || r.is_credit_settlement || r.is_personal) continue;
-      bump(totals, ownCategory(r), Number(r.amount));
+      bump(totals, ownCategory(r), expenseNet(r));
     }
     return sorted(totals);
   }
@@ -350,7 +354,9 @@ export function expenseCategoryTotals(
   for (const r of expenses ?? []) {
     if (!within(r.transaction_date) || r.is_credit_settlement || r.is_personal) continue;
     if (r.matched_ledger_entry_id || r.matched_supplier_invoice_id) continue;
-    bump(totals, ownCategory(r), Number(r.amount));
+    // Ex-VAT, exactly as computePnl counts it — this breakdown has to foot to
+    // that total, so the two can never read an expense row differently.
+    bump(totals, ownCategory(r), expenseNet(r));
   }
 
   for (const cn of creditNotes ?? []) {

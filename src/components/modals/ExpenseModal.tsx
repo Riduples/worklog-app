@@ -11,7 +11,11 @@ import { SarsSuggestionDropdown } from "@/components/ui/SarsSuggestionDropdown";
 import { LedgerEntryMatcher, paymentSettlesEntry } from "@/components/ui/LedgerEntryMatcher";
 import { SupplierInvoiceMatcher, expenseSettlesSupplierInvoice } from "@/components/ui/SupplierInvoiceMatcher";
 import { getSarsMatch, EXPENSE_PAYMENT_METHODS, narrowMethodsForAccount, type SarsCategory } from "@/lib/sarsCategories";
-import { todayStr } from "@/lib/format";
+import { VAT_SUPPLY_TYPES, carriesVat, type VatSupplyType } from "@/lib/vatSupplyTypes";
+import { Chips } from "@/components/ui/Chips";
+import { fmt, todayStr } from "@/lib/format";
+import { useTaxRates } from "@/lib/taxRates";
+import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 import { useCreateExpense } from "@/lib/supabase/hooks/useExpenses";
 import { useContacts } from "@/lib/supabase/hooks/useContacts";
 import { useLedgerEntries, useUpdateLedgerEntry } from "@/lib/supabase/hooks/useLedger";
@@ -36,6 +40,7 @@ export function ExpenseModal({ onClose }: { onClose: () => void }) {
   const [accountId, setAccountId] = useState<string | null>(null);
   const [isPersonal, setIsPersonal] = useState(false);
   const [hasReceipt, setHasReceipt] = useState(false);
+  const [supplyType, setSupplyType] = useState<VatSupplyType>("standard");
   const [error, setError] = useState("");
 
   const { data: contacts } = useContacts();
@@ -45,6 +50,8 @@ export function ExpenseModal({ onClose }: { onClose: () => void }) {
   const updateLedgerEntry = useUpdateLedgerEntry();
   const updateSupplierInvoice = useUpdateSupplierInvoice();
   const { data: accounts } = useBankAccounts();
+  const { data: business } = useBusinessProfile();
+  const { VAT_RATE, vatFromGross } = useTaxRates();
 
   // Default new entries to the business's default account, once.
   const didInitAccount = useRef(false);
@@ -56,6 +63,15 @@ export function ExpenseModal({ onClose }: { onClose: () => void }) {
   }, [accounts]);
 
   const amountNum = parseFloat(amount) || 0;
+
+  // The amount paid is what left the account, so any VAT is already inside it and
+  // has to be taken back out — the mirror of the income side. A purchase settling
+  // a supplier invoice carries no VAT of its own: that invoice already holds it,
+  // and claiming both would claim the same VAT twice.
+  const isVatRegistered = !!business?.vat_number;
+  const claimsOwnVat = isVatRegistered && !matchedSupplierInvoiceId && !isPersonal && carriesVat(supplyType);
+  const vatAmount = claimsOwnVat ? vatFromGross(amountNum, VAT_RATE) : 0;
+  const netAmount = amountNum - vatAmount;
 
   // Supplier entries only: a client entry is money owed TO the business, which
   // an expense can never settle. Settled entries stay listed so an older
@@ -108,6 +124,11 @@ export function ExpenseModal({ onClose }: { onClose: () => void }) {
         account_id: accountId,
         source: "manual",
         is_personal: isPersonal,
+        // Input VAT to claim on the VAT201. Zero unless this purchase is the
+        // record for itself — see claimsOwnVat.
+        vat_amount: vatAmount,
+        vat_rate: claimsOwnVat ? VAT_RATE : isVatRegistered && !isPersonal ? 0 : null,
+        vat_supply_type: supplyType,
         // Only a claimed business cost needs proof. Money the owner took out
         // isn't claimed against anything, so the answer is dropped with the rest
         // of the business framing rather than saved as a stale true.
@@ -277,6 +298,22 @@ export function ExpenseModal({ onClose }: { onClose: () => void }) {
         </div>
       )}
 
+      {/* VAT treatment, on the same footing as the sale side: only a registered
+          business is asked, only an unmatched business purchase carries VAT of
+          its own, and only a standard-rated one holds any. */}
+      {isVatRegistered && !isPersonal && !matchedSupplierInvoiceId && (
+        <Field label="VAT treatment">
+          <Chips
+            options={VAT_SUPPLY_TYPES.map((v) => v.label)}
+            selected={VAT_SUPPLY_TYPES.find((v) => v.id === supplyType)?.label ?? ""}
+            onSelect={(label) => {
+              const found = VAT_SUPPLY_TYPES.find((v) => v.label === label);
+              if (found) setSupplyType(found.id);
+            }}
+          />
+        </Field>
+      )}
+
       {/* Asked here, next to the claim it backs, and only for a business cost —
           a drawing is not claimed against anything, so there is nothing to prove.
           Nothing is uploaded: the answer alone is what makes a missing slip
@@ -318,6 +355,41 @@ export function ExpenseModal({ onClose }: { onClose: () => void }) {
       <Field label="Details - optional">
         <Input value={details} onChange={setDetails} placeholder="Type any extra details" />
       </Field>
+
+      {amountNum > 0 && claimsOwnVat && (
+        <div style={{ background: "#F0F9FF", border: "1.5px solid #BAE6FD", borderRadius: 12, padding: "12px 14px", marginBottom: 12, fontSize: 12, color: "#0C4A6E", lineHeight: 1.6 }}>
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <span>Paid</span>
+            <span style={{ fontWeight: 700 }}>{fmt(amountNum)}</span>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <span>{`VAT included (${(VAT_RATE * 100).toFixed(0)}%)`}</span>
+            <span style={{ fontWeight: 700 }}>−{fmt(vatAmount)}</span>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", borderTop: "1px solid #BAE6FD", marginTop: 6, paddingTop: 6 }}>
+            <span style={{ fontWeight: 700 }}>Your cost</span>
+            <span style={{ fontWeight: 800 }}>{fmt(netAmount)}</span>
+          </div>
+          <div style={{ fontSize: 11, color: "#0369A1", marginTop: 6 }}>
+            You claim the {fmt(vatAmount)} back on your VAT201 — keep the slip, SARS can ask for it.
+          </div>
+        </div>
+      )}
+
+      {amountNum > 0 && isVatRegistered && !isPersonal && !matchedSupplierInvoiceId && !carriesVat(supplyType) && (
+        <div style={{ background: "#F0F9FF", border: "1.5px solid #BAE6FD", borderRadius: 12, padding: "12px 14px", marginBottom: 12, fontSize: 12, color: "#0C4A6E", lineHeight: 1.6 }}>
+          {supplyType === "zero_rated"
+            ? "Zero-rated purchase — no VAT was charged, so there is nothing to claim back."
+            : "Exempt purchase — outside VAT. No VAT was charged and none can be claimed."}
+        </div>
+      )}
+
+      {matchedSupplierInvoiceId && isVatRegistered && !isPersonal && (
+        <div style={{ background: "#F0F9FF", border: "1.5px solid #BAE6FD", borderRadius: 12, padding: "12px 14px", marginBottom: 12, fontSize: 12, color: "#0C4A6E", lineHeight: 1.6 }}>
+          ✅ The VAT on this purchase is claimed on the supplier invoice it settles. This payment only records the
+          money leaving — the VAT is never claimed twice.
+        </div>
+      )}
 
       {/* No bill matched and no account tagged — the entry has nothing to
           reconcile against. A non-blocking nudge to give it a home. */}

@@ -5,12 +5,13 @@ import Link from "next/link";
 import { useInvoices } from "@/lib/supabase/hooks/useInvoices";
 import { useIncome } from "@/lib/supabase/hooks/useIncome";
 import { useSupplierInvoices } from "@/lib/supabase/hooks/useSupplierInvoices";
+import { useExpenses } from "@/lib/supabase/hooks/useExpenses";
 import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 import { useTaxFilings } from "@/lib/supabase/hooks/useTaxFilings";
 import { useCreditNotes } from "@/lib/supabase/hooks/useCreditNotes";
 import { sumCreditVat } from "@/lib/creditNotes";
 import { fmt, toLocalIsoDate } from "@/lib/format";
-import { suppliesByType } from "@/lib/vat201";
+import { suppliesByType, inputVatTotal } from "@/lib/vat201";
 import { shareReport } from "@/lib/docgen/shareReport";
 import { buildVat201HTML, type Vat201PdfData } from "@/lib/docgen/buildLedgerHTML";
 import { FilingActions, FilingHistory } from "@/components/reports/FilingActions";
@@ -44,6 +45,7 @@ export function Vat201View() {
   const { data: invoices } = useInvoices();
   const { data: income } = useIncome();
   const { data: supplierInvoices } = useSupplierInvoices();
+  const { data: expenses } = useExpenses();
   const { data: creditNotes } = useCreditNotes();
   const { data: filings } = useTaxFilings();
 
@@ -93,9 +95,10 @@ export function Vat201View() {
   const hasCustCredits = periodCredits.some((c) => c.ledger === "customer");
 
   const outputVAT = invoicedVAT + cashSalesVAT - custCreditVat;
-  const inputVAT = (supplierInvoices ?? [])
-    .filter((r) => r.issue_date >= fromDate && r.issue_date <= toDate)
-    .reduce((s, r) => s + Number(r.vat_amount ?? 0), 0) - suppCreditVat;
+  // Supplier invoices AND cash purchases — see inputVatTotal. A purchase paid for
+  // without a bill behind it is claimable too, and reading invoices alone gave
+  // that VAT away.
+  const inputVAT = inputVatTotal(supplierInvoices, expenses, fromDate, toDate) - suppCreditVat;
   const vatDue = outputVAT - inputVAT;
 
   // Turnover split by VAT supply type — VAT201 fields 1 (standard), 2 (zero-
