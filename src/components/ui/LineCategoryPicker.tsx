@@ -21,7 +21,7 @@ export function LineCategoryPicker({
   value,
   onChange,
   inheritedFrom,
-  required = false,
+  warnWhenEmpty = false,
 }: {
   /** Which list to search: what the business earns, or what it spends on. */
   kind: "income" | "expense";
@@ -31,9 +31,10 @@ export function LineCategoryPicker({
   /** Where an unedited value came from, e.g. "this supplier" — shown so an
    *  inherited category doesn't look like something the user typed here. */
   inheritedFrom?: string;
-  /** Nothing set is a gap the reports will show as Uncategorised, so say so in
-   *  amber rather than offering it as an optional extra. */
-  required?: boolean;
+  /** Draw the empty state in amber instead of grey. Nothing set is not an error
+   *  — the reports still foot, they just file it under Uncategorised — so this
+   *  marks it as a gap worth closing, and the caller says so in words nearby. */
+  warnWhenEmpty?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
@@ -55,11 +56,11 @@ export function LineCategoryPicker({
           marginTop: 6,
           padding: "7px 9px",
           borderRadius: 8,
-          border: `1px solid ${saved ? "#BAE6FD" : required ? "#fed7aa" : "#e2e8f0"}`,
-          background: saved ? "#F0F9FF" : required ? "#fff7ed" : "#fff",
-          color: saved ? "#0369A1" : required ? "#b45309" : "#94a3b8",
+          border: `1px solid ${saved ? "#BAE6FD" : warnWhenEmpty ? "#fed7aa" : "#e2e8f0"}`,
+          background: saved ? "#F0F9FF" : warnWhenEmpty ? "#fff7ed" : "#fff",
+          color: saved ? "#0369A1" : warnWhenEmpty ? "#b45309" : "#94a3b8",
           fontSize: 11.5,
-          fontWeight: saved || required ? 700 : 500,
+          fontWeight: saved || warnWhenEmpty ? 700 : 500,
           fontFamily: "inherit",
           cursor: "pointer",
           lineHeight: 1.4,
@@ -70,8 +71,8 @@ export function LineCategoryPicker({
             🏷️ {saved.label}
             {inheritedFrom && <span style={{ fontWeight: 500, color: "#7dd3fc" }}> · from {inheritedFrom}</span>}
           </>
-        ) : required ? (
-          "🏷️ Set category — required"
+        ) : warnWhenEmpty ? (
+          "🏷️ Set category"
         ) : (
           "🏷️ Set category — optional"
         )}

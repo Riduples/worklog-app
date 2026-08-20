@@ -80,17 +80,6 @@ export function ContactModal({
       setError("Name is required.");
       return;
     }
-    // Every document raised against this contact seeds its lines from here, so a
-    // contact saved without one leaves those lines to land under Uncategorised on
-    // the Profit & Loss. Cheaper to ask once, now, than to re-file a year later.
-    if (!defaultCategory) {
-      setError(
-        isClient
-          ? "Pick the income category this customer's sales usually file under."
-          : "Pick the expense category this supplier's bills usually file under."
-      );
-      return;
-    }
     setError("");
 
     const changes = {
@@ -212,15 +201,29 @@ export function ContactModal({
           document line raised against this contact starts out already filed — a
           customer searches income headings only, a supplier expense headings only,
           so neither can be given the other's. Remounted per type, because a value
-          picked before the toggle flipped belongs to the wrong list. */}
+          picked before the toggle flipped belongs to the wrong list.
+
+          Not enforced. Leaving it blank costs nothing today and the reports still
+          add up, so blocking the save would be a lie about the stakes; it only
+          means the lines file under Uncategorised until someone says otherwise.
+          The warning below says exactly that, and the contact saves either way —
+          which is also what an older contact that predates this field gets. */}
       <div style={{ marginBottom: 16 }}>
         <LineCategoryPicker
           key={contactType}
           kind={isClient ? "income" : "expense"}
           value={defaultCategory}
           onChange={setDefaultCategory}
-          required
+          warnWhenEmpty
         />
+        {!defaultCategory && (
+          <p style={{ fontSize: 11.5, color: "#b45309", margin: "6px 0 0", lineHeight: 1.5 }}>
+            You can save without this. Until it is set, lines on{" "}
+            {isClient ? "invoices and quotes for this customer" : "bills and orders from this supplier"} start with
+            no category and show under &ldquo;Uncategorised&rdquo; on your Profit &amp; Loss — you can still pick one
+            on each line as you go.
+          </p>
+        )}
       </div>
 
       {error && <p style={{ color: "#dc2626", fontSize: 13, marginBottom: 12 }}>{error}</p>}

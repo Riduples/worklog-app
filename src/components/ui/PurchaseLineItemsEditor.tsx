@@ -27,6 +27,9 @@ export function PurchaseLineItemsEditor({
     onChange(items.map((it, i) => (i === index ? { ...it, ...changes } : it)));
   };
   const removeItem = (index: number) => onChange(items.filter((_, i) => i !== index));
+  // Flagged, never blocked: the document saves either way — the warning below
+  // just names what an uncategorised line costs on the reports.
+  const uncategorised = items.filter((it) => !it.sars_category).length;
   const addItem = () => onChange([...items, { desc: "", qty: 1, unit_price: 0, sars_category: defaultCategory }]);
 
   return (
@@ -138,12 +141,32 @@ export function PurchaseLineItemsEditor({
               value={item.sars_category}
               onChange={(sars) => updateItem(i, { sars_category: sars })}
               inheritedFrom={item.sars_category && item.sars_category === defaultCategory ? defaultCategorySource : undefined}
-              required
+              warnWhenEmpty
             />
             <div style={{ textAlign: "right", fontSize: 12, color: "#64748b", marginTop: 6 }}>Line total: {fmt(lineTotal)}</div>
           </div>
         );
       })}
+
+      {uncategorised > 0 && (
+        <div
+          style={{
+            background: "#fff7ed",
+            border: "1.5px solid #fed7aa",
+            borderRadius: 12,
+            padding: "10px 12px",
+            fontSize: 12,
+            color: "#92400e",
+            lineHeight: 1.5,
+          }}
+        >
+          ⚠️ {uncategorised === 1 ? "1 line has" : `${uncategorised} lines have`} no category.{" "}
+          {uncategorised === 1 ? "It" : "They"} will save fine and your totals stay right, but{" "}
+          {uncategorised === 1 ? "it lands" : "they land"} under &ldquo;Uncategorised&rdquo; on your Profit &amp;
+          Loss instead of a SARS heading. Tap the amber tag on {uncategorised === 1 ? "the line" : "each line"} to
+          set {uncategorised === 1 ? "it" : "them"}, or set the supplier up with a usual category so every line starts filled in.
+        </div>
+      )}
     </div>
   );
 }
