@@ -113,6 +113,9 @@ export const INCOME_PAYMENT_METHODS = [
   "Cash",
   "EFT / Bank transfer",
   "Card",
+  // Money can arrive by debit order too — a subscription or a retainer the
+  // business collects off its customer, not only one it pays out.
+  "Debit order",
   "Voucher / Gift card",
   "Other",
 ];

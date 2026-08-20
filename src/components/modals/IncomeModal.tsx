@@ -163,41 +163,73 @@ export function IncomeModal({ onClose }: { onClose: () => void }) {
 
   return (
     <Modal title="Log income" onClose={onClose}>
-      {/* Order follows how a transaction is actually captured: which account it
-          moved through, when, how much, from whom, then whether it settles an
-          invoice. Matching comes before "what for" on purpose — a payment that
-          settles an invoice takes its description and VAT from that invoice, so
-          the "what for" + VAT step only appears for a genuine cash sale. */}
-      {(accounts?.length ?? 0) > 0 && <BankAccountPicker value={accountId} onChange={setAccountId} />}
+      {/* Ordered the way the money is actually described out loud: how much, when,
+          whose money it is, who it came from, where it landed and how, what it
+          settles, and only then what it was for. The personal question sits third
+          on purpose — it decides whether any of the business steps below apply at
+          all, so asking it late means filling in a form that then disappears. */}
+      <Field label="Amount (R)">
+        <Input value={amount} onChange={setAmount} type="number" placeholder="0.00" autoFocus />
+      </Field>
 
       <Field label="Date">
         <Input value={date} onChange={setDate} type="date" />
       </Field>
 
-      <Field label="Amount">
-        <Input value={amount} onChange={setAmount} type="number" placeholder="0.00" autoFocus />
-      </Field>
-
       <button
         type="button"
+        aria-pressed={isPersonal}
         onClick={() => setIsPersonal((p) => !p)}
-        style={{ width: "100%", textAlign: "left", padding: "11px 14px", borderRadius: 12, border: `1.5px solid ${isPersonal ? "#0C4A6E" : "#e2e8f0"}`, background: isPersonal ? "#F0F9FF" : "#fff", cursor: "pointer", fontFamily: "inherit", fontSize: 12.5, fontWeight: 600, color: isPersonal ? "#0C4A6E" : "#64748b", marginBottom: 12, lineHeight: 1.5 }}
+        style={{
+          width: "100%",
+          display: "flex",
+          alignItems: "flex-start",
+          gap: 10,
+          textAlign: "left",
+          padding: "12px 14px",
+          borderRadius: 12,
+          border: `1.5px solid ${isPersonal ? "#0C4A6E" : "#e2e8f0"}`,
+          background: isPersonal ? "#F0F9FF" : "#fff",
+          cursor: "pointer",
+          fontFamily: "inherit",
+          marginBottom: 16,
+        }}
       >
-        {isPersonal ? "✓ " : ""}This is my own money going in (owner&apos;s contribution) — keep it out of income &amp; tax
+        <span style={{ fontSize: 16, lineHeight: 1.25, flexShrink: 0, color: isPersonal ? "#0C4A6E" : "#94a3b8" }}>
+          {isPersonal ? "☑" : "☐"}
+        </span>
+        <span style={{ minWidth: 0 }}>
+          <span style={{ display: "block", fontSize: 13, fontWeight: 700, color: isPersonal ? "#0C4A6E" : "#334155", marginBottom: 3 }}>
+            This is personal money, not business income
+          </span>
+          <span style={{ display: "block", fontSize: 11.5, fontWeight: 500, color: "#64748b", lineHeight: 1.5 }}>
+            e.g. money you put into the business from your own pocket. Kept separate from business totals &amp; tax.
+          </span>
+        </span>
       </button>
 
       <ContactPicker
-        label="Received from"
+        label="Received from - Customer / Company name"
         value={receivedFrom}
         onChange={(v, id) => {
           setReceivedFrom(v);
           setReceivedFromContactId(id);
         }}
         contacts={contacts ?? []}
-        placeholder="Name - optional"
+        placeholder="Type a name or pick from your customers"
       />
 
+      {/* Where it landed and how it came in, together — the account narrows the
+          methods to what it can physically do, so they only make sense side by
+          side. */}
+      {(accounts?.length ?? 0) > 0 && <BankAccountPicker value={accountId} onChange={setAccountId} />}
+
+      <PaymentMethodPicker selected={effectiveMethod} onSelect={setMethod} methods={paymentMethods} />
+
       {!isPersonal && (<>
+      {/* Matching comes before "what for" on purpose — a payment that settles an
+          invoice takes its description and VAT from that invoice, so the "what
+          for" + VAT step only appears for a genuine cash sale. */}
       <InvoiceMatcher
         invoices={invoices ?? []}
         matchedId={matchedInvoiceId}
@@ -290,7 +322,18 @@ export function IncomeModal({ onClose }: { onClose: () => void }) {
               />
             </Field>
           )}
+        </>
+      )}
 
+      <Field label="Details - optional">
+        <Input value={details} onChange={setDetails} placeholder="Type any extra details" />
+      </Field>
+
+      {/* Everything above is what was entered; everything below is what it means —
+          the VAT split, the tax jar, and anything left hanging. Last, so it reads
+          as the answer rather than another question. */}
+      {!isMatched && !isPersonal && (
+        <>
           {amountNum > 0 && isVatRegistered && !carriesVat(supplyType) && (
             <div style={{ background: "#F0F9FF", border: "1.5px solid #BAE6FD", borderRadius: 12, padding: "12px 14px", marginBottom: 10, fontSize: 12, color: "#0C4A6E", lineHeight: 1.6 }}>
               {supplyType === "zero_rated"
@@ -335,10 +378,6 @@ export function IncomeModal({ onClose }: { onClose: () => void }) {
         </div>
       )}
 
-      <Field label="Details - optional">
-        <Input value={details} onChange={setDetails} placeholder="Extra description" />
-      </Field>
-
       {/* Nothing matched and no account tagged — the entry has nothing to
           reconcile against. A non-blocking nudge to give it a home. A receipt
           that settles a credit-book entry counts as matched here too. */}
@@ -347,8 +386,6 @@ export function IncomeModal({ onClose }: { onClose: () => void }) {
           ⚠️ This isn&apos;t linked to an invoice, a credit entry or a bank account — tag the account it came into so it reconciles against your statement later.
         </div>
       )}
-
-      <PaymentMethodPicker selected={effectiveMethod} onSelect={setMethod} methods={paymentMethods} />
 
       {error && <p style={{ color: "#dc2626", fontSize: 13, marginBottom: 12 }}>{error}</p>}
       <SaveBtn label={createIncome.isPending ? "Saving..." : "Log income"} onClick={handleSave} disabled={createIncome.isPending} />
