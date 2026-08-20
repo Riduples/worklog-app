@@ -19,7 +19,7 @@ export const ACCOUNT_TYPE_META: Record<AccountType, { label: string; icon: strin
   bank: { label: "Bank", icon: "🏦", hint: "A cheque or current account — the everyday one money moves through." },
   savings: { label: "Savings", icon: "🐷", hint: "Money put away. Transfers in and out, not day-to-day trading." },
   credit: { label: "Card", icon: "💳", hint: "A credit or store card. Spending here is money you owe, not money you hold." },
-  cash: { label: "Cash", icon: "💵", hint: "A till, a cash box, the notes in your pocket. What the Daily Cash-Up counts." },
+  cash: { label: "Cash", icon: "💵", hint: "A till, a cash box, the notes in your pocket. What Cash-ups counts." },
   other: { label: "Other", icon: "📁", hint: "Anything that isn't one of the above — a wallet app, a loan account." },
 };
 

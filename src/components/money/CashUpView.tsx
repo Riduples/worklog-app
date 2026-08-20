@@ -47,9 +47,9 @@ export function CashUpView() {
   const alreadyDone = !isEdit && (cashUps ?? []).find((c) => c.cash_up_date === date);
 
   // The running total, and the only one worth running. Counted cash is a
-  // snapshot of one evening's till — adding those up across days counts the same
+  // snapshot of one evening's cash — adding those up across days counts the same
   // float over and over and means nothing. The variances DO add up: each is a
-  // real gain or loss on the day, so their sum is what the till has actually cost
+  // real gain or loss on the day, so their sum is what the cash has actually cost
   // or made since you started. Cash in and out foot the same way.
   const all = cashUps ?? [];
   const netVariance = all.reduce((s, c) => s + Number(c.variance || 0), 0);
@@ -124,10 +124,10 @@ export function CashUpView() {
   return (
     <div style={{ padding: "20px 16px 100px" }}>
       <BackLink />
-      <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 18px" }}>Daily Cash-Up</h1>
+      <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 18px" }}>Cash-ups</h1>
 
       <div style={{ background: "#F0F9FF", border: "1.5px solid #7DD3FC", borderRadius: 12, padding: "12px 14px", marginBottom: 18, fontSize: 12, color: "#0369A1", lineHeight: 1.5 }}>
-        <span style={{ fontWeight: 700 }}>🧮 Cash-Up</span> — Count the cash in your till at the end of the day and check it matches what you logged. Small differences are normal; big ones are worth a second look.
+        <span style={{ fontWeight: 700 }}>🧮 Cash-Up</span> — Count your cash at the end of the day and check it matches what you logged. Small differences are normal; big ones are worth a second look.
       </div>
 
       <Field label="Date">
@@ -160,21 +160,21 @@ export function CashUpView() {
       <div style={{ background: "#f8fafc", border: "1.5px solid #e2e8f0", borderRadius: 12, padding: "12px 14px", marginBottom: 14 }}>
         <Row label="Cash in (logged this day)" value={fmt(cashIn)} />
         <Row label="Cash out (logged this day)" value={fmt(cashOut)} />
-        <Row label="Expected in till" value={fmt(expected)} bold />
+        <Row label="Expected in cash" value={fmt(expected)} bold />
         <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 8, lineHeight: 1.5 }}>
           Every Log income and Log expense entry dated {date} with Cash as its payment method — including a cash
-          payment you matched to an invoice. Card and EFT never reach the till, so they are left out.
+          payment you matched to an invoice. Card and EFT never reach your cash, so they are left out.
         </div>
       </div>
 
-      <Field label="Counted cash - what's actually in the till">
+      <Field label="Counted cash - what's actually there">
         <Input type="number" value={counted} onChange={setCounted} placeholder="0.00" />
       </Field>
 
       {variance !== null && varianceStyle && (
         <div style={{ background: varianceStyle.bg, border: `1.5px solid ${varianceStyle.border}`, borderRadius: 12, padding: "12px 14px", marginBottom: 14, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <span style={{ fontSize: 13, fontWeight: 700, color: varianceStyle.fg }}>
-            {variance === 0 ? "✅ Matches exactly" : variance > 0 ? "Till has more than expected" : "Till has less than expected"}
+            {variance === 0 ? "✅ Matches exactly" : variance > 0 ? "More cash than expected" : "Less cash than expected"}
           </span>
           <span style={{ fontSize: 17, fontWeight: 800, color: varianceStyle.fg }}>{fmt(Math.abs(variance))}</span>
         </div>
@@ -250,7 +250,7 @@ export function CashUpView() {
               <Row label="Cash out, all days" value={fmt(totalCashOut)} />
             </div>
             <div style={{ fontSize: 10.5, color: "#94a3b8", marginTop: 6, lineHeight: 1.5 }}>
-              The counted amounts aren&apos;t added up — each one is that evening&apos;s till, and the same float would
+              The counted amounts aren&apos;t added up — each one is that evening&apos;s cash, and the same float would
               be counted again every day.
             </div>
           </div>

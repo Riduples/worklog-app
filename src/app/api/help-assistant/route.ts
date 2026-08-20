@@ -57,7 +57,7 @@ Worklog TOOLS:
 4. PURCHASES — Purchase Orders · Supplier Invoices (input VAT) · Remittance Advice · Age Analysis (what you still owe suppliers, aged by overdue days)
 5. SCHEDULING — Diary (appointments) · Time Log (hours per customer) · Travel Log (SARS per-km deduction) · Time & Travel Reports (Hours vs Estimate + Travel)
 6. PAYROLL — Staff Register · Pay Run (5-step wizard, calculates UIF/PAYE/SDL, generates payslips) · Advances (employee loans) · Leave (BCEA tracking)
-7. MONEY — Log Income · Log Expense · Import Statement (AI reads your bank statement) · Daily Cash-Up (till reconciliation) · Cash Flow
+7. MONEY — Log Income · Log Expense · Import Statement (AI reads your bank statement) · Cash-ups (counting your cash against what you logged) · Cash Flow
 8. COMPLIANCE & FINANCIALS — Tax & SARS · Profit & Loss · VAT201 · EMP201 · Provisional Tax (IRP6) · Compliance Dashboard
 
 KEY FACTS:

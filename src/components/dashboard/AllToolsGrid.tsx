@@ -100,7 +100,7 @@ const NAV_CATEGORIES: { id: string; items: NavItem[] }[] = [
     id: "money", // Money
     items: [
       { href: "/bank-statement", icon: "🏦", label: "Import Statement", toolId: "bankstatement" },
-      { href: "/cash-up", icon: "🧮", label: "Daily Cash-Up", toolId: "cashup" },
+      { href: "/cash-up", icon: "🧮", label: "Cash-ups", toolId: "cashup" },
       { href: "/ledger", icon: "📒", label: "Ledgers", toolId: "ledger" },
       { href: "/cashflow", icon: "📊", label: "Cash Flow", toolId: "profit" },
       { logKind: "income", icon: "💰", label: "Log income", toolId: "income" },

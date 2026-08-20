@@ -2184,15 +2184,15 @@ export const HELP_ARTICLES: HelpArticle[] = [
   {
     "slug": "daily-cash-up",
     "category": "Money",
-    "title": "Do a daily cash-up",
-    "summary": "Count the cash in your till at the end of the day and check it matches what you logged in Worklog.",
+    "title": "Do a cash-up",
+    "summary": "Count your cash at the end of the day and check it matches what you logged in Worklog.",
     "sections": [
       {
         "heading": "What a cash-up is for",
         "blocks": [
           {
             "type": "paragraph",
-            "text": "At the end of a trading day you count the actual cash in your till or cash box. Worklog compares that against the cash you logged during the day and shows you the difference. Small differences happen. A big one is worth a second look before you close up."
+            "text": "At the end of a trading day you count the actual cash you hold — the till, the cash box, the notes in your pocket. Worklog compares that against the cash you logged during the day and shows you the difference. Small differences happen. A big one is worth a second look before you close up."
           }
         ]
       },
@@ -2205,7 +2205,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           },
           {
             "type": "tip",
-            "text": "Card, EFT and other non-cash entries are left out on purpose. A cash-up is only about the physical money in the till."
+            "text": "Card, EFT and other non-cash entries are left out on purpose. A cash-up is only about the physical money you hold."
           }
         ]
       },
@@ -2215,11 +2215,11 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "steps",
             "items": [
-              "Open Daily Cash-Up under Money.",
+              "Open Cash-ups under Money.",
               "Check the Date. It starts on today. Tap it to pick another day if you are catching up.",
-              "Look at the grey box. It shows Cash in (logged this day), Cash out (logged this day) and Expected in till. Expected in till is the cash you should have.",
-              "Count the real money in your till.",
-              "Type that total into Counted cash - what's actually in the till.",
+              "Look at the grey box. It shows Cash in (logged this day), Cash out (logged this day) and Expected in cash. Expected in cash is what you should be holding.",
+              "Count the real money you are holding.",
+              "Type that total into Counted cash - what's actually there.",
               "Add a Notes line if something explains a difference, for example gave change short or forgot to log a sale. This is optional.",
               "Tap Save Cash-Up."
             ]
@@ -2231,13 +2231,13 @@ export const HELP_ARTICLES: HelpArticle[] = [
         "blocks": [
           {
             "type": "paragraph",
-            "text": "As soon as you type a counted amount, Worklog shows a coloured banner comparing it to what was expected. It tells you whether the till matches exactly, has more than expected, or has less than expected, and by how much."
+            "text": "As soon as you type a counted amount, Worklog shows a coloured banner comparing it to what was expected. It tells you whether your cash matches exactly, is more than expected, or is less than expected, and by how much."
           },
           {
             "type": "bullets",
             "items": [
               "Matches exactly, or off by less than a rand: shown in blue, all good.",
-              "Till has more or less than expected, up to about R20 out: shown in amber, a small difference.",
+              "More or less cash than expected, up to about R20 out: shown in amber, a small difference.",
               "More than about R20 out: shown in red, worth checking before you save."
             ]
           },
@@ -2252,7 +2252,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
         "blocks": [
           {
             "type": "paragraph",
-            "text": "Under Recent cash-ups you can see your latest cash-ups, each showing the date, the expected and counted amounts, the difference (✅ Exact, or how far off with a + or −) and any notes. Once you have more than ten, a Show all button opens the full history. It keeps a running record so you can spot a till that is regularly short."
+            "text": "Under Recent cash-ups you can see your latest cash-ups, each showing the date, the expected and counted amounts, the difference (✅ Exact, or how far off with a + or −) and any notes. Once you have more than ten, a Show all button opens the full history. It keeps a running record so you can spot a cash box that is regularly short."
           },
           {
             "type": "paragraph",

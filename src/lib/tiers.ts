@@ -42,7 +42,7 @@ export const PLAN_FEATURES: Record<Plan, { tagline: string; features: string[] }
     features: [
       "Log income & expenses in seconds",
       "Quick Log — type, speak or snap a photo",
-      "Daily cash-up, quotes & invoices",
+      "Cash-ups, quotes & invoices",
       "Snap & save receipts",
       "Monthly summary & VAT threshold alerts",
     ],

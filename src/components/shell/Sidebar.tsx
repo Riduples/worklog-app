@@ -60,7 +60,7 @@ const GROUPS: Group[] = [
     title: "Money",
     items: [
       { tool: "bankstatement", href: "/bank-statement", icon: "🏦", label: "Import Statement" },
-      { tool: "cashup", href: "/cash-up", icon: "🧮", label: "Daily Cash-Up" },
+      { tool: "cashup", href: "/cash-up", icon: "🧮", label: "Cash-ups" },
       { tool: "ledger", href: "/ledger", icon: "📒", label: "Ledgers" },
       { tool: "profit", href: "/cashflow", icon: "📊", label: "Cash Flow" },
     ],
