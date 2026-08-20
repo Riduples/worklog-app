@@ -48,6 +48,12 @@ export function QuoteModal({ quote, onClose }: { quote?: Quote; onClose: () => v
     if (!isEdit && business.default_quote_terms) setTerms(business.default_quote_terms);
   }
 
+  // The customer's usual revenue heading seeds each new line, so the ordinary job
+  // needs no category picked at all — and any line stays overridable for the
+  // document that mixes labour with a product sale.
+  const clientDefaultCategory =
+    (contacts ?? []).find((c) => c.id === clientContactId)?.default_sars_category ?? null;
+
   const subtotal = salesLinesSubtotal(items);
   const isVatRegistered = !!business?.vat_number;
   const vatAmount = isVatRegistered ? subtotal * VAT_RATE : 0;
@@ -140,7 +146,12 @@ export function QuoteModal({ quote, onClose }: { quote?: Quote; onClose: () => v
         <Input value={validUntil} onChange={setValidUntil} type="date" />
       </Field>
 
-      <SalesLineItemsEditor items={items} onChange={setItems} />
+      <SalesLineItemsEditor
+        items={items}
+        onChange={setItems}
+        defaultCategory={clientDefaultCategory}
+        defaultCategorySource="this customer"
+      />
 
       <Field label="Deposit to request (R) - Optional">
         <Input value={deposit} onChange={setDeposit} type="number" placeholder="0.00" />

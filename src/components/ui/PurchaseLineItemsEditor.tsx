@@ -138,6 +138,7 @@ export function PurchaseLineItemsEditor({
               value={item.sars_category}
               onChange={(sars) => updateItem(i, { sars_category: sars })}
               inheritedFrom={item.sars_category && item.sars_category === defaultCategory ? defaultCategorySource : undefined}
+              required
             />
             <div style={{ textAlign: "right", fontSize: 12, color: "#64748b", marginTop: 6 }}>Line total: {fmt(lineTotal)}</div>
           </div>

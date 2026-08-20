@@ -53,6 +53,12 @@ export function InvoiceModal({ sourceQuote, onClose }: { sourceQuote?: Quote; on
     if (business.default_invoice_terms) setTerms(business.default_invoice_terms);
   }
 
+  // The customer's usual revenue heading seeds each new line, so the ordinary job
+  // needs no category picked at all — and any line stays overridable for the
+  // document that mixes labour with a product sale.
+  const clientDefaultCategory =
+    (contacts ?? []).find((c) => c.id === clientContactId)?.default_sars_category ?? null;
+
   const subtotal = salesLinesSubtotal(items);
   const isVatRegistered = !!business?.vat_number;
   // Zero-rated and exempt supplies carry no output VAT even when registered.
@@ -220,7 +226,12 @@ export function InvoiceModal({ sourceQuote, onClose }: { sourceQuote?: Quote; on
         </Field>
       )}
 
-      <SalesLineItemsEditor items={items} onChange={setItems} />
+      <SalesLineItemsEditor
+        items={items}
+        onChange={setItems}
+        defaultCategory={clientDefaultCategory}
+        defaultCategorySource="this customer"
+      />
 
       {/* VAT treatment is a whole-invoice choice, applied to a fresh invoice and a
           conversion alike — convert_quote_to_invoice carries it through (0109). */}

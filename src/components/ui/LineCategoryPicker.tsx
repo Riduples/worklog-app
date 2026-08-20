@@ -4,13 +4,14 @@ import { useState } from "react";
 import { SarsSuggestionDropdown } from "@/components/ui/SarsSuggestionDropdown";
 import { getSarsMatch, getSarsIncomeMatch, findSarsCategory } from "@/lib/sarsCategories";
 
-// The category on a single document line, sized to sit inside a line-item row.
+// The category on a single document line, sized to sit inside a line-item row —
+// and, at the other end, the one a customer or supplier is set up with.
 //
-// A default on the supplier gets most bills right, but not one where the stuff on
-// it differs — cleaning and stationery bought from the same shop belong under two
-// headings, and no per-supplier default can know that. So the default seeds the
-// line and this overrides it, per line, without making anyone touch a line that
-// was already correct.
+// A default on the contact gets most documents right, but not one where the stuff
+// on it differs — cleaning and stationery bought from the same shop belong under
+// two headings, and no per-contact default can know that. So the default seeds
+// every line and this overrides it, per line, without making anyone touch a line
+// that was already correct.
 //
 // Collapsed to a single line of text until tapped, because on the common bill
 // every line is already right and a row of open search boxes would be noise.
@@ -20,15 +21,19 @@ export function LineCategoryPicker({
   value,
   onChange,
   inheritedFrom,
+  required = false,
 }: {
   /** Which list to search: what the business earns, or what it spends on. */
   kind: "income" | "expense";
   /** The stored `sars` string for this line, or null. */
   value: string | null | undefined;
   onChange: (sars: string | null) => void;
-  /** Where an unedited value came from, e.g. "supplier" — shown so an inherited
-   *  category doesn't look like something the user typed here. */
+  /** Where an unedited value came from, e.g. "this supplier" — shown so an
+   *  inherited category doesn't look like something the user typed here. */
   inheritedFrom?: string;
+  /** Nothing set is a gap the reports will show as Uncategorised, so say so in
+   *  amber rather than offering it as an optional extra. */
+  required?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
@@ -50,11 +55,11 @@ export function LineCategoryPicker({
           marginTop: 6,
           padding: "7px 9px",
           borderRadius: 8,
-          border: `1px solid ${saved ? "#BAE6FD" : "#e2e8f0"}`,
-          background: saved ? "#F0F9FF" : "#fff",
-          color: saved ? "#0369A1" : "#94a3b8",
+          border: `1px solid ${saved ? "#BAE6FD" : required ? "#fed7aa" : "#e2e8f0"}`,
+          background: saved ? "#F0F9FF" : required ? "#fff7ed" : "#fff",
+          color: saved ? "#0369A1" : required ? "#b45309" : "#94a3b8",
           fontSize: 11.5,
-          fontWeight: saved ? 700 : 500,
+          fontWeight: saved || required ? 700 : 500,
           fontFamily: "inherit",
           cursor: "pointer",
           lineHeight: 1.4,
@@ -65,6 +70,8 @@ export function LineCategoryPicker({
             🏷️ {saved.label}
             {inheritedFrom && <span style={{ fontWeight: 500, color: "#7dd3fc" }}> · from {inheritedFrom}</span>}
           </>
+        ) : required ? (
+          "🏷️ Set category — required"
         ) : (
           "🏷️ Set category — optional"
         )}

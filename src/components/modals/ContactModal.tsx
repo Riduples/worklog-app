@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Chips } from "@/components/ui/Chips";
 import { SaveBtn } from "@/components/ui/SaveBtn";
-import { SarsCategoryField } from "@/components/ui/SarsCategoryField";
+import { LineCategoryPicker } from "@/components/ui/LineCategoryPicker";
 import { useCreateContact, useUpdateContact, type Contact } from "@/lib/supabase/hooks/useContacts";
 
 const PAYMENT_BEHAVIOURS = ["Good payer", "Slow payer", "Problem payer"];
@@ -78,6 +78,17 @@ export function ContactModal({
   const handleSave = () => {
     if (!name.trim()) {
       setError("Name is required.");
+      return;
+    }
+    // Every document raised against this contact seeds its lines from here, so a
+    // contact saved without one leaves those lines to land under Uncategorised on
+    // the Profit & Loss. Cheaper to ask once, now, than to re-file a year later.
+    if (!defaultCategory) {
+      setError(
+        isClient
+          ? "Pick the income category this customer's sales usually file under."
+          : "Pick the expense category this supplier's bills usually file under."
+      );
       return;
     }
     setError("");
@@ -196,23 +207,21 @@ export function ContactModal({
         </>
       )}
 
-      {/* Most of a small business's spend is a dozen repeat suppliers, and the
-          same supplier almost always files under the same category. Set once here
-          and money against this contact knows where it belongs from then on.
-          Remounted per type: the two read different category lists. */}
-      <SarsCategoryField
-        key={contactType}
-        label={isClient ? "Usual income category — optional" : "Usual expense category — optional"}
-        kind={isClient ? "income" : "expense"}
-        value={defaultCategory}
-        onChange={setDefaultCategory}
-        placeholder={isClient ? "e.g. service, product sale" : "e.g. materials, electricity, fuel"}
-        hint={
-          isClient
-            ? "Where sales to this customer usually land on your Profit & Loss."
-            : "Where money paid to this supplier usually lands on your Profit & Loss."
-        }
-      />
+      {/* Most of a small business's trade is a few dozen repeat names, and the same
+          name almost always files under the same category. Set once here and every
+          document line raised against this contact starts out already filed — a
+          customer searches income headings only, a supplier expense headings only,
+          so neither can be given the other's. Remounted per type, because a value
+          picked before the toggle flipped belongs to the wrong list. */}
+      <div style={{ marginBottom: 16 }}>
+        <LineCategoryPicker
+          key={contactType}
+          kind={isClient ? "income" : "expense"}
+          value={defaultCategory}
+          onChange={setDefaultCategory}
+          required
+        />
+      </div>
 
       {error && <p style={{ color: "#dc2626", fontSize: 13, marginBottom: 12 }}>{error}</p>}
       <SaveBtn label={saving ? "Saving..." : `Save ${t.noun}`} icon={t.icon} onClick={handleSave} disabled={saving} />

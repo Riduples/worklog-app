@@ -8,16 +8,24 @@ import { useStockItems } from "@/lib/supabase/hooks/useStock";
 export function SalesLineItemsEditor({
   items,
   onChange,
+  defaultCategory = null,
+  defaultCategorySource,
 }: {
   items: QuoteLineItem[];
   onChange: (items: QuoteLineItem[]) => void;
+  /** The customer's usual revenue heading — seeds every new line, so the common
+   *  job needs no category picked at all. Each line stays overridable for the
+   *  invoice that mixes labour with a product sale. */
+  defaultCategory?: string | null;
+  /** Named on the line so an inherited category doesn't read as typed here. */
+  defaultCategorySource?: string;
 }) {
   const { data: stock } = useStockItems();
   const updateItem = (index: number, changes: Partial<QuoteLineItem>) => {
     onChange(items.map((it, i) => (i === index ? { ...it, ...changes } : it)));
   };
   const removeItem = (index: number) => onChange(items.filter((_, i) => i !== index));
-  const addItem = () => onChange([...items, { desc: "", qty: 1, unit_price: 0 }]);
+  const addItem = () => onChange([...items, { desc: "", qty: 1, unit_price: 0, sars_category: defaultCategory }]);
 
   return (
     <div style={{ marginBottom: 16 }}>
@@ -41,10 +49,10 @@ export function SalesLineItemsEditor({
           onChange={(e) => {
             const s = (stock ?? []).find((it) => it.id === e.target.value);
             if (!s) return;
-            // No category rides along from the item. The same item code can be
-            // bought and sold, so a heading stored on the item files the wrong
-            // way round as often as the right one — it gets picked per line.
-            onChange([...items, { desc: s.name, qty: 1, unit_price: Number(s.sell_price || 0), est_hours: Number(s.estimated_hours || 0) }]);
+            // The category comes from the customer, never the item: the same item
+            // code can be bought and sold, so a heading stored on the item files
+            // the wrong way round as often as the right one.
+            onChange([...items, { desc: s.name, qty: 1, unit_price: Number(s.sell_price || 0), est_hours: Number(s.estimated_hours || 0), sars_category: defaultCategory }]);
             e.target.value = "";
           }}
           style={{
@@ -138,6 +146,8 @@ export function SalesLineItemsEditor({
               kind="income"
               value={item.sars_category}
               onChange={(sars) => updateItem(i, { sars_category: sars })}
+              inheritedFrom={item.sars_category && item.sars_category === defaultCategory ? defaultCategorySource : undefined}
+              required
             />
             <div style={{ textAlign: "right", fontSize: 12, color: "#64748b", marginTop: 6 }}>Line total: {fmt(lineTotal)}</div>
           </div>
