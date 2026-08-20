@@ -41,9 +41,10 @@ export function SalesLineItemsEditor({
           onChange={(e) => {
             const s = (stock ?? []).find((it) => it.id === e.target.value);
             if (!s) return;
-            // The item carries the heading it earns under, so picking it here is
-            // the last time anyone thinks about the category for this sale.
-            onChange([...items, { desc: s.name, qty: 1, unit_price: Number(s.sell_price || 0), est_hours: Number(s.estimated_hours || 0), sars_category: s.sars_category }]);
+            // No category rides along from the item. The same item code can be
+            // bought and sold, so a heading stored on the item files the wrong
+            // way round as often as the right one — it gets picked per line.
+            onChange([...items, { desc: s.name, qty: 1, unit_price: Number(s.sell_price || 0), est_hours: Number(s.estimated_hours || 0) }]);
             e.target.value = "";
           }}
           style={{
@@ -137,7 +138,6 @@ export function SalesLineItemsEditor({
               kind="income"
               value={item.sars_category}
               onChange={(sars) => updateItem(i, { sars_category: sars })}
-              inheritedFrom={item.sars_category ? "your price list" : undefined}
             />
             <div style={{ textAlign: "right", fontSize: 12, color: "#64748b", marginTop: 6 }}>Line total: {fmt(lineTotal)}</div>
           </div>
