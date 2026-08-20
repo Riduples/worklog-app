@@ -6,7 +6,7 @@ import { usePayRuns } from "@/lib/supabase/hooks/usePayRuns";
 import { useStaffRegister } from "@/lib/supabase/hooks/useStaffRegister";
 import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 import { useTaxFilings } from "@/lib/supabase/hooks/useTaxFilings";
-import { useTaxRates } from "@/lib/taxRates";
+import { useTaxRatesFor } from "@/lib/taxRates";
 import { fmt } from "@/lib/format";
 import { currentTaxYearStartYear, taxYearDateLabel, taxYearLabel, taxYearRange } from "@/lib/period";
 import { shareReport } from "@/lib/docgen/shareReport";
@@ -33,14 +33,19 @@ export function CoidaView({ embedded = false }: { embedded?: boolean } = {}) {
   const { data: staff } = useStaffRegister();
   const { data: payRuns } = usePayRuns();
   const { data: filings } = useTaxFilings();
-  const { OID_EARNINGS_THRESHOLD: cap } = useTaxRates();
-
   const [startYear, setStartYear] = useState(currentTaxYearStartYear());
   const label = taxYearLabel(startYear);
   const spanLabel = taxYearDateLabel(startYear);
 
   const { from, to } = taxYearRange(startYear);
   const yearRuns = (payRuns ?? []).filter((p) => p.pay_date >= from && p.pay_date <= to);
+
+  // The cap is gazetted per assessment year, so it is read as at that year — not
+  // as at today. Stepping back to 2025/26 now caps at the 2025/26 figure; it used
+  // to cap at whatever the current row said, which put the wrong number on a
+  // return being filed. `hasCapForYear` is what lets the caveat below say which
+  // of the two it is showing rather than implying the gazetted one either way.
+  const { OID_EARNINGS_THRESHOLD: cap, hasRowForDate: hasCapForYear } = useTaxRatesFor(from);
 
   // Earnings per person, keyed on staff where possible so two workers who happen
   // to share a name don't collapse into one line.
@@ -68,7 +73,7 @@ export function CoidaView({ embedded = false }: { embedded?: boolean } = {}) {
       ``,
       ...rows.map((r) => `${r.name}: ${fmt(r.earnings)}${r.raw > r.earnings + 0.005 ? ` (capped from ${fmt(r.raw)})` : ""}`),
     ];
-    void shareReport("COIDA Return of Earnings", `${label} · capped at ${fmt(cap)}`, lines, business);
+    void shareReport("COIDA Return of Earnings", `${label} · capped at ${fmt(cap)} per employee`, lines, business);
   };
 
   const coidaPdfData = (): CoidaPdfData => ({
@@ -141,11 +146,13 @@ export function CoidaView({ embedded = false }: { embedded?: boolean } = {}) {
       </div>
 
       <div style={{ background: "#fffbeb", border: "1.5px solid #fde68a", borderRadius: 10, padding: "10px 14px", marginBottom: 14, fontSize: 12, color: "#92400e", lineHeight: 1.5 }}>
-        ⚠️ Each employee&apos;s earnings are capped at the OID maximum of <strong>{fmt(cap)}</strong> for the assessment year (a Labour figure that changes yearly).
+        ⚠️ Each employee&apos;s earnings are capped at the OID maximum of <strong>{fmt(cap)}</strong> for {label} (a Labour figure that changes yearly).
         {cappedCount > 0
           ? ` ${cappedCount} employee${cappedCount !== 1 ? "s were" : " was"} over it — gross wages for the year were ${fmt(totalRaw)}.`
           : " No one is over it this year."}{" "}
-        This screen applies the limit currently on file, not the one gazetted for the year you are viewing — check an earlier year&apos;s figure with your accountant.
+        {hasCapForYear
+          ? `That is the limit on file for ${label}.`
+          : `No tax figures are on file for ${label}, so this is the built-in default rather than that year's gazetted limit — confirm it before you file.`}
       </div>
 
       <FilingActions

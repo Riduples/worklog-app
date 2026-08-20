@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
+import type { Tables } from "@/lib/types/database";
 import {
   TAX_RATES,
+  pickRateRow,
   calcMedicalCredit,
   calcMonthlyPAYE,
   calcPAYE,
@@ -401,5 +403,50 @@ describe("incomeNet", () => {
   it("copes with numerics arriving as strings", () => {
     // Postgres NUMERIC comes back over the wire as a string.
     expect(incomeNet({ amount: "1150.00", vat_amount: "150.00" })).toBe(1_000);
+  });
+});
+
+// The COIDA cap is gazetted per assessment year, so the Return of Earnings has
+// to read the row for the year being VIEWED, not the row covering today. The
+// boundaries are the whole risk: a year runs 1 March–end February, and the two
+// rows meet with no gap between them.
+describe("pickRateRow", () => {
+  const row = (tax_year: string, effective_from: string, effective_to: string) =>
+    ({ tax_year, effective_from, effective_to }) as Tables<"tax_rates">;
+
+  const rows = [
+    row("2026/27", "2026-03-01", "2027-02-28"),
+    row("2025/26", "2025-03-01", "2026-02-28"),
+  ];
+
+  it("picks the row whose range covers the date", () => {
+    expect(pickRateRow(rows, "2026-08-20")?.tax_year).toBe("2026/27");
+    expect(pickRateRow(rows, "2025-08-20")?.tax_year).toBe("2025/26");
+  });
+
+  it("includes both ends of the range", () => {
+    expect(pickRateRow(rows, "2026-03-01")?.tax_year).toBe("2026/27");
+    expect(pickRateRow(rows, "2027-02-28")?.tax_year).toBe("2026/27");
+  });
+
+  it("hands the boundary day to exactly one year", () => {
+    // 28 Feb closes 2025/26 and 1 March opens 2026/27 — no day belongs to both,
+    // and none falls between them.
+    expect(pickRateRow(rows, "2026-02-28")?.tax_year).toBe("2025/26");
+    expect(pickRateRow(rows, "2026-03-01")?.tax_year).toBe("2026/27");
+  });
+
+  it("returns null when no row covers the date, rather than the nearest one", () => {
+    // The caller shows the built-in default and says so. Silently handing back an
+    // adjacent year would put a figure on a filed return that was never gazetted
+    // for it — the bug this function exists to prevent.
+    expect(pickRateRow(rows, "2020-06-01")).toBeNull();
+    expect(pickRateRow(rows, "2030-06-01")).toBeNull();
+  });
+
+  it("copes with no rows at all", () => {
+    expect(pickRateRow([], "2026-08-20")).toBeNull();
+    expect(pickRateRow(null, "2026-08-20")).toBeNull();
+    expect(pickRateRow(undefined, "2026-08-20")).toBeNull();
   });
 });

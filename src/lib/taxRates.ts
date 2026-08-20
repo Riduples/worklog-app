@@ -325,6 +325,53 @@ export function useTaxRates() {
   };
 }
 
+/**
+ * The tax_rates row whose range covers `dateStr`, or null when none does.
+ *
+ * Pure, so the boundary behaviour can be tested without a database. Ranges are
+ * inclusive at both ends, matching the `lte/gte` predicate useTaxRates uses, and
+ * YYYY-MM-DD strings compare lexicographically so no Date parsing is involved.
+ */
+export function pickRateRow(
+  rows: Tables<"tax_rates">[] | null | undefined,
+  dateStr: string
+): Tables<"tax_rates"> | null {
+  return (rows ?? []).find((r) => r.effective_from <= dateStr && dateStr <= r.effective_to) ?? null;
+}
+
+/**
+ * Rates as they stood on a given date, rather than as they stand today.
+ *
+ * useTaxRates() answers "what applies now", which is right for capturing money
+ * — an invoice raised today uses today's VAT rate. It is wrong for a screen that
+ * steps through past years: the COIDA Return of Earnings caps each employee at a
+ * figure gazetted per assessment year, so viewing 2025/26 with the 2026/27 cap
+ * quietly reports the wrong number on something being filed.
+ *
+ * Every row is fetched once and the covering one picked here, so stepping a year
+ * costs no round trip and the caller can tell "that year's figure" from "no
+ * figures on file" — which is the distinction the screen has to be honest about.
+ * `hasRowForDate` is false when nothing covers the date, and the rates fall back
+ * to the hardcoded set exactly as they do when the table is unreachable.
+ */
+export function useTaxRatesFor(dateStr: string) {
+  const supabase = createClient();
+  const { data } = useQuery({
+    queryKey: ["tax-rates", "all"],
+    queryFn: async (): Promise<Tables<"tax_rates">[]> => {
+      const { data, error } = await supabase
+        .from("tax_rates")
+        .select("*")
+        .order("effective_from", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as Tables<"tax_rates">[];
+    },
+    staleTime: 60 * 60 * 1000, // rates change once a year
+  });
+  const row = pickRateRow(data, dateStr);
+  return { ...resolveTaxRates(row), hasRowForDate: !!row };
+}
+
 // Reports read income rows straight from the database rather than through the
 // hook, so expose the same arithmetic as plain functions. vat_amount is a
 // snapshot: a row keeps the VAT worked out at the rate that applied when it was
