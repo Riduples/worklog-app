@@ -26,6 +26,7 @@ import { BankAccountSelector, ALL_ACCOUNTS, type AccountFilter } from "@/compone
 import { fmt, greeting, todayStr } from "@/lib/format";
 import { useMoneySummary } from "@/lib/useMoneySummary";
 import { balanceInclVat } from "@/lib/balance";
+import { isIncomeTaxPayment } from "@/lib/sarsCategories";
 import { useToolGate } from "@/lib/useToolGate";
 import { upcomingDeadlines } from "@/lib/compliance";
 import { type TaxEntityType } from "@/lib/entityTypes";
@@ -110,7 +111,13 @@ export function DashboardView({ businessName }: { businessName: string }) {
   const heroIn = isAllAccounts ? pnl.revenue : acctIn;
   const heroOut = isAllAccounts ? pnl.costs : acctOut;
 
-  const taxJar = (income ?? []).reduce((s, r) => s + Number(r.tax_jar_amount || 0), 0);
+  // The NET jar — what's provisioned minus the income tax already paid to SARS —
+  // matching TaxView/TaxJarView. Showing the gross lifetime provision here made the
+  // dashboard and the Tax pages report different figures under the same label once
+  // a payment was logged.
+  const taxJarGross = (income ?? []).reduce((s, r) => s + Number(r.tax_jar_amount || 0), 0);
+  const taxPaidToSARS = (expenses ?? []).filter((e) => isIncomeTaxPayment(e.sars_category)).reduce((s, e) => s + Number(e.amount || 0), 0);
+  const taxJar = taxJarGross - taxPaidToSARS;
   const lowStock = (stock ?? []).filter((s) => s.reorder_level != null && s.reorder_level > 0 && s.qty <= s.reorder_level);
 
   // ── Needs you today ── the buildable three: overdue/unpaid invoices, today's

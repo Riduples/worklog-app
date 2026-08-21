@@ -283,11 +283,3 @@ export function bankingTotals(rows: BankingTx[]): BankingTotals {
   }
   return { in: inSum, out: outSum, net: inSum - outSum, transfers: tfSum };
 }
-
-export const ALLOCATION_META: Record<Allocation, { label: string; tone: "doc" | "cat" | "todo" | "quiet" }> = {
-  matched: { label: "Matched", tone: "doc" },
-  categorised: { label: "Categorised", tone: "cat" },
-  personal: { label: "Personal", tone: "quiet" },
-  transfer: { label: "Transfer", tone: "quiet" },
-  unallocated: { label: "Needs a home", tone: "todo" },
-};

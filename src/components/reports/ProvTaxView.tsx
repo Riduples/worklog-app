@@ -8,7 +8,7 @@ import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 import { Field } from "@/components/ui/Field";
 import { Input } from "@/components/ui/Input";
 import { Chips } from "@/components/ui/Chips";
-import { useTaxRates, incomeNet, AGE_BANDS, type AgeBand } from "@/lib/taxRates";
+import { useTaxRates, incomeNet, expenseNet, AGE_BANDS, type AgeBand } from "@/lib/taxRates";
 import { TAX_ENTITY_TYPES, canQualifySbc, isIndividuallyTaxed, type TaxEntityType } from "@/lib/entityTypes";
 import { fmt } from "@/lib/format";
 
@@ -63,15 +63,22 @@ export function ProvTaxView() {
   const taxYear = parseInt(period.split("-")[0]);
   const periodNum = period.split("-")[1];
 
+  // Owner's capital/drawings (is_personal) aren't business income or cost, and a
+  // credit-note settlement (a refund) is not turnover — exclude both, the same as
+  // Profit & Loss, VAT201 and the compliance threshold do, so the estimate isn't
+  // distorted by money that isn't trading.
+  const businessIncome = (income ?? []).filter((r) => !r.is_personal && !r.is_credit_settlement);
+  const businessExpenses = (expenses ?? []).filter((r) => !r.is_personal && !r.is_credit_settlement);
   // Net of VAT: VAT collected on a sale is SARS's money passing through, never
   // the owner's income, so taxing it would overstate the estimate. Same reason
-  // Profit & Loss uses incomeNet. Rows with no VAT are unaffected.
-  const ytdIncome = (income ?? []).reduce((s, r) => s + incomeNet(r), 0);
+  // Profit & Loss uses incomeNet/expenseNet — and both sides must use it, or a
+  // VAT vendor's deductible costs read gross while income reads net.
+  const ytdIncome = businessIncome.reduce((s, r) => s + incomeNet(r), 0);
   // Turnover Tax is levied on gross taxable turnover (receipts), not net profit,
   // so it needs the total amount rather than incomeNet. A micro business on
   // turnover tax is usually not VAT-registered, so the two normally coincide.
-  const ytdTurnover = (income ?? []).reduce((s, r) => s + Number(r.amount), 0);
-  const ytdExpense = (expenses ?? []).reduce((s, r) => s + Number(r.amount), 0);
+  const ytdTurnover = businessIncome.reduce((s, r) => s + Number(r.amount), 0);
+  const ytdExpense = businessExpenses.reduce((s, r) => s + expenseNet(r), 0);
   const ytdProfit = ytdIncome - ytdExpense;
   // P1 covers the first six months, so double it for the annual estimate.
   const annualisedProfit = periodNum === "P1" ? ytdProfit * 2 : ytdProfit;

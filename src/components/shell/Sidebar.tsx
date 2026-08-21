@@ -193,7 +193,12 @@ export function Sidebar() {
               {group.title}
             </div>
             {visible.map((item) =>
-              tierLocked(item.tool) ? (
+              // Don't derive a tier lock from the single representative tool of an
+              // anyOf row (the report rows): a report reachable via "expense" is open
+              // to Solo even though its representative "supplierinvoice"/"staffregister"
+              // is Trade+ — the page is ungated and AllToolsGrid locks none of them, so
+              // locking it here alone made desktop and mobile disagree.
+              tierLocked(item.tool) && !item.anyOf ? (
                 // Locked tools stay visible — the upsell is the point — and hand
                 // off to the dashboard's existing UpgradeModal via ?upgrade=,
                 // the same route requirePlanAccess() uses when it bounces

@@ -186,7 +186,6 @@ export function computePnl(inputs: PnlInputs, within: (dateStr: string) => boole
 
 export const UNCATEGORISED = "Uncategorised";
 
-export type CategoryTotal = { category: string; amount: number };
 /** A category with how many entries fed it — the schedule an accountant reads. */
 export type CategoryBreakdown = { category: string; amount: number; count: number };
 
