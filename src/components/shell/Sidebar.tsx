@@ -61,6 +61,10 @@ const GROUPS: Group[] = [
     items: [
       { tool: "income", anyOf: ["income", "expense", "bankstatement"], href: "/banking", icon: "🏦", label: "Banking" },
       { tool: "cashup", href: "/cash-up", icon: "🧮", label: "Cash-ups" },
+      // Ledgers (the credit book) is a separate tool from Banking — Banking is the
+      // cash that moved, this is credit owed both ways. It stays reachable rather
+      // than orphaned at /ledger with no way in.
+      { tool: "ledger", href: "/ledger", icon: "📒", label: "Ledgers" },
       { tool: "profit", href: "/cashflow", icon: "📊", label: "Cash Flow" },
     ],
   },

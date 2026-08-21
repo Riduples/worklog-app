@@ -132,12 +132,15 @@ export async function fetchExistingNames(type: CsvImportType): Promise<Set<strin
       supabase.from("income").select("transaction_date, amount, received_from, what_for").is("deleted_at", null),
       supabase.from("expenses").select("transaction_date, amount, paid_to, what_for").is("deleted_at", null),
     ]);
+    // Direction is part of the key: a payment out and a refund in for the same
+    // amount, party and day are two different transactions, not a duplicate — the
+    // key must tell them apart or the second one is silently dropped.
     const keys = new Set<string>();
     for (const r of inc.data ?? []) {
-      keys.add(`${r.transaction_date}|${Number(r.amount).toFixed(2)}|${(r.received_from ?? r.what_for ?? "").toLowerCase()}`);
+      keys.add(`in|${r.transaction_date}|${Number(r.amount).toFixed(2)}|${(r.received_from ?? r.what_for ?? "").toLowerCase()}`);
     }
     for (const r of exp.data ?? []) {
-      keys.add(`${r.transaction_date}|${Number(r.amount).toFixed(2)}|${(r.paid_to ?? r.what_for ?? "").toLowerCase()}`);
+      keys.add(`out|${r.transaction_date}|${Number(r.amount).toFixed(2)}|${(r.paid_to ?? r.what_for ?? "").toLowerCase()}`);
     }
     return keys;
   }

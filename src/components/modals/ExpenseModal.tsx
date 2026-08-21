@@ -85,10 +85,14 @@ export function ExpenseModal({
 
   // The amount paid is what left the account, so any VAT is already inside it and
   // has to be taken back out — the mirror of the income side. A purchase settling
-  // a supplier invoice carries no VAT of its own: that invoice already holds it,
-  // and claiming both would claim the same VAT twice.
+  // a bill — a supplier invoice OR a supplier ledger credit — carries no VAT of
+  // its own: the bill is the record. Claiming the expense's own VAT on top would
+  // either double-count (supplier invoice, which holds its own vat_amount) or
+  // reclaim VAT the P&L still counts gross (a ledger credit has no VAT split), so
+  // the two would disagree. A VAT-registered business wanting to reclaim raises a
+  // supplier invoice, which carries the ex-VAT split.
   const isVatRegistered = !!business?.vat_number;
-  const claimsOwnVat = isVatRegistered && !matchedSupplierInvoiceId && !isPersonal && carriesVat(supplyType);
+  const claimsOwnVat = isVatRegistered && !matchedSupplierInvoiceId && !matchedLedgerEntryId && !isPersonal && carriesVat(supplyType);
   const vatAmount = claimsOwnVat ? vatFromGross(amountNum, VAT_RATE) : 0;
   const netAmount = amountNum - vatAmount;
 
@@ -327,7 +331,7 @@ export function ExpenseModal({
       {/* VAT treatment, on the same footing as the sale side: only a registered
           business is asked, only an unmatched business purchase carries VAT of
           its own, and only a standard-rated one holds any. */}
-      {isVatRegistered && !isPersonal && !matchedSupplierInvoiceId && (
+      {isVatRegistered && !isPersonal && !matchedSupplierInvoiceId && !matchedLedgerEntryId && (
         <Field label="VAT treatment">
           <Chips
             options={VAT_SUPPLY_TYPES.map((v) => v.label)}

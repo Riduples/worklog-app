@@ -141,6 +141,7 @@ describe("inputVatTotal", () => {
       amount: number;
       vat_amount: number;
       matched_supplier_invoice_id: string | null;
+      matched_ledger_entry_id: string | null;
       is_personal: boolean;
       is_credit_settlement: boolean;
     }> = {}
@@ -170,6 +171,12 @@ describe("inputVatTotal", () => {
       ...period
     );
     expect(out).toBe(150);
+  });
+
+  it("never claims VAT when a payment settles a supplier ledger credit either", () => {
+    // A ledger credit carries no VAT split and the P&L counts it gross, so the
+    // matched payment must not claim its own VAT — else P&L and VAT201 disagree.
+    expect(inputVatTotal([], [exp({ vat_amount: 150, matched_ledger_entry_id: "le1" })], ...period)).toBe(0);
   });
 
   it("leaves out owner's drawings — not a business purchase", () => {

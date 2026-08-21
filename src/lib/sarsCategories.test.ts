@@ -14,6 +14,14 @@ describe("findSarsCategory", () => {
     expect(findSarsCategory("Other income — Interest received")?.label).toBe("Interest received");
   });
 
+  it("with a direction, only that side resolves — so an import can't file out under income", () => {
+    // A money-out row must never pick up an income heading, or vice versa.
+    expect(findSarsCategory("Motor vehicle — Fuel & oil", "out")?.label).toBe("Fuel & oil");
+    expect(findSarsCategory("Motor vehicle — Fuel & oil", "in")).toBeNull();
+    expect(findSarsCategory("Trading income — Services rendered", "in")).not.toBeNull();
+    expect(findSarsCategory("Trading income — Services rendered", "out")).toBeNull();
+  });
+
   it("is null for nothing set, so an unset field stays unset", () => {
     expect(findSarsCategory(null)).toBeNull();
     expect(findSarsCategory(undefined)).toBeNull();

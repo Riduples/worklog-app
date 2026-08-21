@@ -1634,7 +1634,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           {
             "type": "steps",
             "items": [
-              "Go to Import Statement and follow the steps to upload and read your statement.",
+              "Open Banking, tap \"Let Worklog read it\", and follow the steps to upload and read your statement.",
               "On the review screen you see every transaction Worklog found, each with a tick so you choose which ones to keep.",
               "If you have invoices on file, a note shows: 'Was a payment settling an invoice or bill you already logged? Link it below so the same money isn't counted twice in Profit & Loss.'",
               "Under a money-in row you keep ticked, tap the 'Is this payment for an invoice? - optional' box and pick the invoice it settles, just like in Log Income.",
@@ -1914,7 +1914,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
           },
           {
             "type": "paragraph",
-            "text": "You can also link a payment to a bill while working through Import Statement, when Worklog reads your bank statement and you go through the transactions one by one."
+            "text": "You can also link a payment to a bill while working through Banking's statement reader, when Worklog reads your bank statement and you go through the transactions one by one."
           },
           {
             "type": "tip",
@@ -2050,7 +2050,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
         "blocks": [
           {
             "type": "paragraph",
-            "text": "Instead of typing every line off your bank statement, you upload the statement and let Worklog read it for you. It pulls out every transaction, sorts them into money in and money out, and lets you pick which ones to keep before anything is saved. You'll find it under Money, as Import Statement."
+            "text": "Instead of typing every line off your bank statement, you upload the statement and let Worklog read it for you. It pulls out every transaction, sorts them into money in and money out, and lets you pick which ones to keep before anything is saved. You'll find it in Banking — tap \"Let Worklog read it\"."
           },
           {
             "type": "paragraph",

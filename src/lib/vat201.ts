@@ -34,6 +34,7 @@ type ExpenseRow = {
   vat_amount?: number | string | null;
   transaction_date: string;
   matched_supplier_invoice_id?: string | null;
+  matched_ledger_entry_id?: string | null;
   is_personal?: boolean | null;
   is_credit_settlement?: boolean | null;
 };
@@ -74,7 +75,12 @@ export function inputVatTotal(
   const cashPurchases = (expenses ?? [])
     .filter(
       (r) =>
+        // A purchase settling a bill (supplier invoice or supplier ledger credit)
+        // carries no VAT of its own — the bill is the record. The modal saves
+        // vat_amount = 0 on those, but exclude them here too so the input-VAT
+        // total can't be inflated by a row from any other path.
         !r.matched_supplier_invoice_id &&
+        !r.matched_ledger_entry_id &&
         !r.is_personal &&
         !r.is_credit_settlement &&
         r.transaction_date >= fromDate &&

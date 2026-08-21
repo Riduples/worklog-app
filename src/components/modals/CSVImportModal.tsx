@@ -117,16 +117,18 @@ export function CSVImportModal({ type, slotsLeft, onClose }: { type: CsvImportTy
               issues.push(`type "${typed}" not recognised — read as money ${dir} from the amount`);
             }
             const amount = Math.abs(rawAmount);
-            if (amount === 0) issues.push("amount is zero — check the file");
+            if (amount === 0) continue; // a zero-amount statement line is noise, not a transaction to import
 
             // A category only sticks if it resolves to a real SARS heading;
             // free text would import as a category nobody can find again.
             const rawCat = (raw.category ?? "").trim();
-            const cat = rawCat ? findSarsCategory(rawCat) : null;
+            const cat = rawCat ? findSarsCategory(rawCat, dir) : null;
             if (rawCat && !cat) issues.push(`category "${rawCat}" not recognised — will need a home after import`);
 
             const label = [date, party || desc || `R${amount.toFixed(2)}`].filter(Boolean).join(" · ");
-            const key = `${date}|${amount.toFixed(2)}|${(party || desc).toLowerCase()}`;
+            // Direction is part of the key (see fetchExistingNames): a payment and
+            // a same-amount refund on the same day are two transactions, not a dupe.
+            const key = `${dir}|${date}|${amount.toFixed(2)}|${(party || desc).toLowerCase()}`;
             const duplicate = existing.has(key) || seenInFile.has(key);
             seenInFile.add(key);
 
@@ -158,7 +160,10 @@ export function CSVImportModal({ type, slotsLeft, onClose }: { type: CsvImportTy
           let row: StockRow | ContactRow | AccountRow;
           if (type === "account") {
             const rawType = (raw.type ?? "").trim();
-            if (rawType && normaliseAccountType(rawType) === "bank" && !/^(bank|cheque|current|transmission)$/i.test(rawType)) {
+            // Warn only when the value genuinely fell back to Bank — not when it
+            // matched a bank synonym normaliseAccountType understands (e.g.
+            // "Cheque account"). Substring, mirroring the normaliser's own bank test.
+            if (rawType && normaliseAccountType(rawType) === "bank" && !/bank|cheque|current|transmission/i.test(rawType)) {
               issues.push(`type "${rawType}" not recognised — will be imported as Bank`);
             }
             const openingDate = (raw.opening_balance_date ?? "").trim();

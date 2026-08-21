@@ -204,8 +204,13 @@ export function getSarsIncomeMatch(text: string) {
  * Searches both lists because a caller holding only a stored string doesn't
  * necessarily know which side it came from; the two lists share no `sars` values.
  */
-export function findSarsCategory(sars: string | null | undefined): SarsCategory | null {
+export function findSarsCategory(sars: string | null | undefined, direction?: "in" | "out"): SarsCategory | null {
   if (!sars) return null;
+  // With a known direction, only that side's list is searched — so a money-out
+  // row can never be filed under an income heading (or vice versa) just because
+  // the string happened to resolve.
+  if (direction === "in") return SARS_INCOME_CATEGORIES.find((c) => c.sars === sars) ?? null;
+  if (direction === "out") return SARS_CATEGORIES.find((c) => c.sars === sars) ?? null;
   return (
     SARS_INCOME_CATEGORIES.find((c) => c.sars === sars) ??
     SARS_CATEGORIES.find((c) => c.sars === sars) ??
