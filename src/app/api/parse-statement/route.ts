@@ -76,7 +76,7 @@ Rules:
 - type: "income" for credits/deposits/money received, "expense" for debits/purchases/money paid out.
 - amount: a positive number, no currency symbol, regardless of type.
 - method: exactly one of: ${ALL_PAYMENT_METHODS.join(", ")}
-- category: the best-guess SARS category, e.g. "Trading income", "Materials", "Fuel", "Telephone", "Rent", "Wages", "Bank charges", "Insurance".
+- category: a short, standard SARS category name the app will map to its official list. For an expense e.g. "Materials", "Fuel", "Rent", "Wages", "Bank charges", "Insurance", "Telephone"; for income e.g. "Services rendered", "Sale of goods", "Interest received", "Rental income". Use "" if you genuinely cannot tell.
 - confidence: "high" if the row is clearly legible, "low" if you had to guess any field.
 - If the statement is supplied as several images, they are consecutive pages of ONE statement, in order. Read them as one continuous statement, keep the dates in order, and do not double-count header rows or opening/closing balances that repeat across pages.
 

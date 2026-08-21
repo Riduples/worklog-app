@@ -43,6 +43,19 @@ describe("findSarsCategory", () => {
       }
     }
   });
+
+  it("maps the bank-statement reader's bare AI labels to canonical Group — Detail values", () => {
+    // The AI statement reader returns free-text labels; BankStatementView maps the
+    // first match's .sars so grouped reports don't split a bare label from its
+    // real category. Lock the mappings for the values that had drifted in prod.
+    expect(getSarsMatch("Bank charges")[0]?.sars).toBe("Finance — Bank charges & fees");
+    expect(getSarsMatch("Telephone")[0]?.sars).toBe("Communication — Telephone");
+    expect(getSarsMatch("Fuel")[0]?.sars).toBe("Motor vehicle — Fuel & oil");
+    expect(getSarsIncomeMatch("Interest received")[0]?.sars).toBe("Other income — Interest received");
+    // No confident match → empty list → the reader stores null ("needs a home"),
+    // never a bare off-taxonomy string.
+    expect(getSarsMatch("Zxqwv nonsense")[0]?.sars ?? null).toBeNull();
+  });
 });
 
 describe("category search", () => {

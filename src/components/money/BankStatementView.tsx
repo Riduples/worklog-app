@@ -14,6 +14,7 @@ import { fmt } from "@/lib/format";
 import { inPeriod } from "@/lib/period";
 import { renderEncryptedPdf, pdfIsEncrypted } from "@/lib/pdf/decryptStatement";
 import { matchStatementAccount, type StatementMeta } from "@/lib/accounts";
+import { getSarsMatch, getSarsIncomeMatch } from "@/lib/sarsCategories";
 import { BackLink } from "@/components/ui/BackLink";
 import { BankAccountPicker } from "@/components/ui/BankAccountPicker";
 import { InvoiceMatcher, paymentSettlesInvoice } from "@/components/ui/InvoiceMatcher";
@@ -177,7 +178,15 @@ export function BankStatementView() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Couldn't read the statement.");
-      const txns = data.transactions as ParsedTxn[];
+      // The AI returns a best-guess category as free text ("Bank charges",
+      // "Fuel", "Trading income"). Map each to a canonical "Group — Detail" SARS
+      // value on its own side (income vs expense) so grouped reports don't split
+      // a bare label from its real category. No confident match → left blank, and
+      // it surfaces in the "needs a home" flow rather than saved off-taxonomy.
+      const txns = (data.transactions as ParsedTxn[]).map((t) => ({
+        ...t,
+        category: (t.type === "income" ? getSarsIncomeMatch(t.category) : getSarsMatch(t.category))[0]?.sars ?? "",
+      }));
       const match = matchStatementAccount(data.statement as StatementMeta, accounts ?? []);
       setImportAccountId(match.accountId);
       setDetection(match.note ? { note: match.note, matched: match.matched } : null);
@@ -282,7 +291,7 @@ export function BankStatementView() {
             what_for: t.description,
             received_from: t.description,
             payment_method: t.method,
-            sars_category: t.category,
+            sars_category: t.category || null,
             source: "bank_statement",
             account_id: importAccountId,
             vat_rate: isVatRegistered ? VAT_RATE : null,
@@ -325,7 +334,7 @@ export function BankStatementView() {
             what_for: t.description,
             paid_to: t.description,
             payment_method: t.method,
-            sars_category: t.category,
+            sars_category: t.category || null,
             source: "bank_statement",
             account_id: importAccountId,
             matched_ledger_entry_id: links.ledgerId,
