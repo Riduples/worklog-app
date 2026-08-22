@@ -437,6 +437,31 @@ export const HELP_ARTICLES: HelpArticle[] = [
         ]
       },
       {
+        "heading": "Move money between your own accounts",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "Moving your own money from one account to another \u2014 cash into savings, a top-up from the cheque account \u2014 is a transfer, not income and not an expense. It never touches your Profit & Loss or your tax; it only shifts each account's balance. You need at least two accounts saved in Bank accounts for this."
+          },
+          {
+            "type": "steps",
+            "items": [
+              "Open Banking and tap + Add.",
+              "Under What kind of movement?, tap Transfer.",
+              "Under From, tap the account the money is leaving.",
+              "Under To, tap the account the money is going into.",
+              "Enter the Amount.",
+              "Check the Date, and add a Note if you like, for example moved to savings.",
+              "Tap Move money."
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "The transfer then sits in your Banking list with everything else that moved, marked with a Transfer tag. Tap it to change any of it and tap Save changes, or use the Transfer pill above the list to see only transfers. To remove one logged by mistake, tap the \u00d7 on its row."
+          }
+        ]
+      },
+      {
         "heading": "Quick Log — the fastest way",
         "blocks": [
           {
@@ -2414,19 +2439,12 @@ export const HELP_ARTICLES: HelpArticle[] = [
             "text": "When you move your own money from one account to another, for example putting cash into savings, log it as a transfer. A transfer is not income or an expense. It just shifts the balance out of one account and into the other."
           },
           {
-            "type": "steps",
-            "items": [
-              "On the Bank accounts screen, tap Move money between accounts. This button appears once you have at least two accounts.",
-              "Under From, tap the account the money is leaving.",
-              "Under To, tap the account the money is going into.",
-              "Enter the Amount.",
-              "Check the Date, and add a Note if you like, for example moved to savings.",
-              "Tap Move money."
-            ]
+            "type": "paragraph",
+            "text": "You do this in Banking, where every transaction lives \u2014 tap + Add, then Transfer. Once you have two or more accounts, this screen shows a link straight to it. Your transfers are listed in Banking alongside the money in and out, where you can search them, filter to just transfers, tap one to correct it, or remove one you logged by mistake. See Log money in and out for the full steps."
           },
           {
             "type": "paragraph",
-            "text": "Your recent transfers are listed under Recent transfers on the same screen. To remove one you logged by mistake, tap the small × next to it."
+            "text": "Each account's balance on this screen already counts the transfers in and out of it, so what you see here stays right the moment a transfer is saved."
           }
         ]
       },

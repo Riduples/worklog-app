@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/Input";
 import { SaveBtn } from "@/components/ui/SaveBtn";
 import { todayStr } from "@/lib/format";
 import type { BankAccount } from "@/lib/supabase/hooks/useBankAccounts";
-import { useCreateTransfer } from "@/lib/supabase/hooks/useAccountTransfers";
+import { useCreateTransfer, useUpdateTransfer, type AccountTransfer } from "@/lib/supabase/hooks/useAccountTransfers";
 
 const pill = (on: boolean): CSSProperties => ({
   padding: "8px 14px",
@@ -20,26 +20,33 @@ const pill = (on: boolean): CSSProperties => ({
   cursor: "pointer",
 });
 
-// Moving money between the business's own accounts. Lives on its own so both
-// Bank accounts and Banking can open the same form — one implementation of a
+// Moving money between the business's own accounts — one implementation of a
 // movement that is neither income nor expense and must never reach the P&L.
+// Banking owns it: creating one, listing it, correcting it and removing it all
+// happen there, alongside the money in and out it sits between.
 export function TransferModal({
   accounts,
   banner,
+  existing,
   onClose,
 }: {
   accounts: BankAccount[];
   /** Banking's type switch, rendered above the first field. */
   banner?: React.ReactNode;
+  /** The transfer being corrected, when one was tapped in Banking. */
+  existing?: AccountTransfer | null;
   onClose: () => void;
 }) {
   const create = useCreateTransfer();
-  const [fromId, setFromId] = useState<string>(accounts[0]?.id ?? "");
-  const [toId, setToId] = useState<string>(accounts[1]?.id ?? "");
-  const [amount, setAmount] = useState("");
-  const [date, setDate] = useState(todayStr());
-  const [note, setNote] = useState("");
+  const update = useUpdateTransfer();
+  const isEdit = !!existing;
+  const [fromId, setFromId] = useState<string>(existing?.from_account_id ?? accounts[0]?.id ?? "");
+  const [toId, setToId] = useState<string>(existing?.to_account_id ?? accounts[1]?.id ?? "");
+  const [amount, setAmount] = useState(existing ? String(existing.amount) : "");
+  const [date, setDate] = useState(existing?.transfer_date ?? todayStr());
+  const [note, setNote] = useState(existing?.note ?? "");
   const [error, setError] = useState("");
+  const pending = create.isPending || update.isPending;
 
   const pickFrom = (id: string) => {
     setFromId(id);
@@ -61,14 +68,16 @@ export function TransferModal({
       return;
     }
     setError("");
-    create.mutate(
-      { from_account_id: fromId, to_account_id: toId, amount: amt, transfer_date: date, note: note.trim() || null },
-      { onSuccess: onClose }
-    );
+    const changes = { from_account_id: fromId, to_account_id: toId, amount: amt, transfer_date: date, note: note.trim() || null };
+    if (existing) {
+      update.mutate({ id: existing.id, changes }, { onSuccess: onClose, onError: (e) => setError(e instanceof Error ? e.message : "Couldn't save the change.") });
+      return;
+    }
+    create.mutate(changes, { onSuccess: onClose, onError: (e) => setError(e instanceof Error ? e.message : "Couldn't save the transfer.") });
   };
 
   return (
-    <Modal title="Move money" onClose={onClose}>
+    <Modal title={isEdit ? "Edit transfer" : "Move money"} onClose={onClose}>
       {banner}
       <div style={{ fontSize: 12, color: "#64748b", marginBottom: 12, lineHeight: 1.5 }}>
         Moving money between your own accounts. This isn&apos;t income or expense — it just shifts each account&apos;s balance.
@@ -107,7 +116,7 @@ export function TransferModal({
         <Input value={note} onChange={setNote} placeholder="e.g. moved to savings" />
       </Field>
       {error && <p style={{ color: "#dc2626", fontSize: 13, marginBottom: 12 }}>{error}</p>}
-      <SaveBtn label={create.isPending ? "Saving..." : "Move money"} onClick={save} disabled={create.isPending} />
+      <SaveBtn label={pending ? "Saving..." : isEdit ? "Save changes" : "Move money"} onClick={save} disabled={pending} />
     </Modal>
   );
 }

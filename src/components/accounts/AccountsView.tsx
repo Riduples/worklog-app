@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, type CSSProperties } from "react";
+import Link from "next/link";
 import { BackLink } from "@/components/ui/BackLink";
 import { Modal } from "@/components/ui/Modal";
 import { Field } from "@/components/ui/Field";
 import { Input } from "@/components/ui/Input";
 import { SaveBtn } from "@/components/ui/SaveBtn";
 import { CSVImportModal } from "@/components/modals/CSVImportModal";
-import { TransferModal } from "@/components/modals/TransferModal";
 import { fmt, todayStr } from "@/lib/format";
 import { accountBalance, movementCount } from "@/lib/accounts";
 import { ACCOUNT_TYPES, ACCOUNT_TYPE_META, accountTypeMeta, methodsForAccountType, normaliseAccountType, type AccountType } from "@/lib/accountTypes";
@@ -21,7 +21,7 @@ import {
   useHardDeleteBankAccount,
   type BankAccount,
 } from "@/lib/supabase/hooks/useBankAccounts";
-import { useAccountTransfers, useDeleteTransfer } from "@/lib/supabase/hooks/useAccountTransfers";
+import { useAccountTransfers } from "@/lib/supabase/hooks/useAccountTransfers";
 
 const pill = (on: boolean): CSSProperties => ({
   padding: "8px 14px",
@@ -41,12 +41,13 @@ export function AccountsView() {
   const { data: accounts, isLoading } = useBankAccounts();
   const { data: income } = useIncome();
   const { data: expenses } = useExpenses();
+  // Transfers are read here only because they move an account's balance and
+  // count as movements against it. Logging, correcting and removing one is
+  // Banking's job — see the note by the link below.
   const { data: transfers } = useAccountTransfers();
-  const deleteTransfer = useDeleteTransfer();
   const deactivate = useDeleteBankAccount();
   const hardDelete = useHardDeleteBankAccount();
   const [editing, setEditing] = useState<BankAccount | "new" | null>(null);
-  const [showTransfer, setShowTransfer] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
@@ -56,7 +57,6 @@ export function AccountsView() {
   const inc = income ?? [];
   const exp = expenses ?? [];
   const tfs = transfers ?? [];
-  const accountName = (id: string) => list.find((a) => a.id === id)?.name ?? "Closed account";
 
   // Only offer a pill for a kind the business actually has — a filter that can
   // only ever show nothing is clutter.
@@ -237,44 +237,28 @@ export function AccountsView() {
         );
       })}
 
+      {/* Moving money between accounts is a TRANSACTION, and every transaction
+          lives in Banking — logged there, listed there beside the money in and
+          out, corrected there, removed there. This screen is where accounts are
+          set up, so it had a second door onto the same form and its own little
+          transfer list that could only delete. Two doors onto one form meant two
+          places to keep right; the list here showed the last eight with no
+          search, no filter and no way to fix a typo. Both are gone. What stays
+          is the signpost, so the job is still findable from where people looked
+          for it. */}
       {list.length >= 2 && (
-        <button
-          onClick={() => setShowTransfer(true)}
-          style={{ width: "100%", background: "#fff", border: "1.5px solid #0C4A6E", borderRadius: 14, padding: 13, fontSize: 14, fontWeight: 700, color: "#0C4A6E", cursor: "pointer", marginTop: 10 }}
+        <Link
+          href="/banking"
+          style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, background: "#F0F9FF", border: "1.5px solid #BAE6FD", borderRadius: 14, padding: "12px 14px", marginTop: 14, textDecoration: "none" }}
         >
-          ↔ Move money between accounts
-        </button>
-      )}
-
-      {tfs.length > 0 && (
-        <div style={{ marginTop: 24 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>
-            Recent transfers
-          </div>
-          {tfs.slice(0, 8).map((t) => (
-            <div key={t.id} style={{ background: "#fff", border: "1.5px solid #e2e8f0", borderRadius: 12, padding: "10px 14px", marginBottom: 8, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
-              <div style={{ minWidth: 0, flex: 1 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "#111" }}>
-                  {accountName(t.from_account_id)} → {accountName(t.to_account_id)}
-                </div>
-                <div style={{ fontSize: 11, color: "#94a3b8" }}>
-                  {t.transfer_date}
-                  {t.note ? ` · ${t.note}` : ""}
-                </div>
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
-                <span style={{ fontSize: 14, fontWeight: 800, color: "#0C4A6E" }}>{fmt(Number(t.amount))}</span>
-                <button
-                  onClick={() => deleteTransfer.mutate(t.id)}
-                  title="Delete transfer"
-                  style={{ background: "none", border: "none", color: "#cbd5e1", fontSize: 18, cursor: "pointer", lineHeight: 1 }}
-                >
-                  ×
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
+          <span style={{ fontSize: 12.5, color: "#0369A1", lineHeight: 1.5 }}>
+            <span style={{ fontWeight: 700 }}>↔ Moving money between your accounts?</span>
+            <br />
+            Log it in Banking — tap <strong>+ Add</strong>, then <strong>Transfer</strong>. Your transfers are listed
+            there with everything else that moved.
+          </span>
+          <span style={{ fontSize: 16, color: "#0369A1", flexShrink: 0 }}>→</span>
+        </Link>
       )}
 
       {editing && (
@@ -284,7 +268,6 @@ export function AccountsView() {
           onClose={() => setEditing(null)}
         />
       )}
-      {showTransfer && <TransferModal accounts={list} onClose={() => setShowTransfer(false)} />}
       {importOpen && <CSVImportModal type="account" onClose={() => setImportOpen(false)} />}
     </div>
   );

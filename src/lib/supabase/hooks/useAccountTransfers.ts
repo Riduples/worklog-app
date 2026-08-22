@@ -3,9 +3,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { getCurrentBusinessId } from "@/lib/supabase/currentBusiness";
-import type { Tables, TablesInsert } from "@/lib/types/database";
+import type { Tables, TablesInsert, TablesUpdate } from "@/lib/types/database";
 
-type AccountTransfer = Tables<"account_transfers">;
+export type AccountTransfer = Tables<"account_transfers">;
 
 const QUERY_KEY = ["account_transfers"];
 
@@ -45,6 +45,26 @@ export function useCreateTransfer() {
     },
     // Balances everywhere derive from transfers, so nudge the account-consuming
     // views too, not just the transfer list.
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEY }),
+  });
+}
+
+/**
+ * Correct a transfer that was logged wrong.
+ *
+ * Banking lets you tap any row to change it, and a transfer is a row like the
+ * others. Without this, opening one gave you an empty form that saved a SECOND
+ * transfer — so the fix for a typo doubled the money moved.
+ */
+export function useUpdateTransfer() {
+  const supabase = createClient();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, changes }: { id: string; changes: TablesUpdate<"account_transfers"> }) => {
+      const { data, error } = await supabase.from("account_transfers").update(changes).eq("id", id).select().single();
+      if (error) throw error;
+      return data as AccountTransfer;
+    },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEY }),
   });
 }

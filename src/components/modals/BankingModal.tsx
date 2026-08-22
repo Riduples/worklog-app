@@ -5,6 +5,7 @@ import { IncomeModal } from "@/components/modals/IncomeModal";
 import { ExpenseModal } from "@/components/modals/ExpenseModal";
 import { TransferModal } from "@/components/modals/TransferModal";
 import { useBankAccounts } from "@/lib/supabase/hooks/useBankAccounts";
+import { useAccountTransfers } from "@/lib/supabase/hooks/useAccountTransfers";
 import { useIncome } from "@/lib/supabase/hooks/useIncome";
 import { useExpenses } from "@/lib/supabase/hooks/useExpenses";
 import type { BankingTx } from "@/lib/banking";
@@ -39,6 +40,7 @@ export function BankingModal({ tx, onClose }: { tx?: BankingTx | null; onClose: 
   const { data: accounts } = useBankAccounts();
   const { data: income } = useIncome();
   const { data: expenses } = useExpenses();
+  const { data: transfers } = useAccountTransfers();
 
   // Editing opens on the type the row already is, and the switch is hidden —
   // a saved receipt cannot become a transfer, because they live in different
@@ -59,6 +61,9 @@ export function BankingModal({ tx, onClose }: { tx?: BankingTx | null; onClose: 
 
   const existingIncome = tx?.source === "income" ? (income ?? []).find((r) => r.id === tx.id) ?? null : null;
   const existingExpense = tx?.source === "expense" ? (expenses ?? []).find((r) => r.id === tx.id) ?? null : null;
+  // Without this the tapped transfer opened a BLANK form, and saving it logged a
+  // second transfer instead of correcting the first.
+  const existingTransfer = tx?.source === "transfer" ? (transfers ?? []).find((r) => r.id === tx.id) ?? null : null;
 
   const isOther = type === "other-in" || type === "other-out";
 
@@ -164,7 +169,7 @@ export function BankingModal({ tx, onClose }: { tx?: BankingTx | null; onClose: 
   );
 
   if (type === "transfer") {
-    return <TransferModal accounts={accounts ?? []} banner={banner} onClose={onClose} />;
+    return <TransferModal accounts={accounts ?? []} banner={banner} existing={existingTransfer} onClose={onClose} />;
   }
 
   if (type === "in" || type === "other-in") {
