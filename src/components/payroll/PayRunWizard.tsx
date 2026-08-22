@@ -14,15 +14,19 @@ import { Input } from "@/components/ui/Input";
 import { Chips } from "@/components/ui/Chips";
 import { Row } from "@/components/ui/Row";
 import { DocumentActions } from "@/components/ui/DocumentActions";
+import { EarningsCard, DeductionsCard } from "@/components/payroll/PayRunEmployeeCards";
+import { PayslipPreview } from "@/components/payroll/PayslipPreview";
 import { fmt, todayStr } from "@/lib/format";
-import { calcLeaveBalances, getLoanBalance } from "@/lib/payroll";
+import { calcLeaveBalances } from "@/lib/payroll";
+import { periodForPayDate, type PayPeriod } from "@/lib/payrunCalc";
+import { computeRun, draftForWorker, loanBalanceOf, EMPTY_DRAFT, type ComputedRun, type Draft } from "@/lib/payrunDraft";
+import { buildPayslipDoc } from "@/lib/payslipDoc";
 import { canApprove } from "@/lib/permissions";
 import { isRestricted, TIERS, type Plan } from "@/lib/tiers";
 import { useTaxRates } from "@/lib/taxRates";
-import type { DocForRender } from "@/lib/docgen/buildDocumentHTML";
 import { BackButton } from "@/components/ui/BackLink";
 
-const STEP_LABELS = ["Employee", "Period", "Earnings", "Deductions", "Summary"];
+const STEP_LABELS = ["Employees", "Period", "Earnings", "Deductions", "Summary"];
 
 function StepBar({ step }: { step: number }) {
   return (
@@ -51,11 +55,12 @@ function NextBtn({ label, onClick, disabled }: { label?: string; onClick: () => 
 
 // The wizard's header. Its back arrow returns to the pay-run list (onExit),
 // not out of the tool — the list is now the tool's home.
-const Header = ({ onExit }: { onExit: () => void }) => (
+const Header = ({ onExit, count }: { onExit: () => void; count: number }) => (
   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
     <div>
       <BackButton onClick={onExit} />
       <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "8px 0 0" }}>New Pay Run</h1>
+      {count > 0 && <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>{count} employee{count === 1 ? "" : "s"} in this run</div>}
     </div>
   </div>
 );
@@ -71,6 +76,16 @@ function BackBtn({ onClick }: { onClick: () => void }) {
   );
 }
 
+/**
+ * One pay run, any number of employees.
+ *
+ * It used to be one person per run, so paying a crew of six meant walking the
+ * same five steps six times over and reconciling the totals by hand. Now the
+ * period is chosen once and each person gets their own card under Earnings and
+ * Deductions, their own payslip on the Summary, and their own pay_runs row on
+ * save — the batch is a wizard convenience, not a new kind of record, so every
+ * payslip, EMP201 line and void still works exactly as it did.
+ */
 export function PayRunWizard({ onExit }: { onExit: () => void }) {
   const { data: staff } = useStaffRegister();
   const { data: loans } = useWorkerLoans();
@@ -82,198 +97,203 @@ export function PayRunWizard({ onExit }: { onExit: () => void }) {
   const createPayRun = useCreatePayRun();
 
   const [step, setStep] = useState(1);
-  const [saved, setSaved] = useState(false);
-  const [savedPayRunId, setSavedPayRunId] = useState<string | null>(null);
-  const [savedPayslipNumber, setSavedPayslipNumber] = useState<string | null>(null);
-  const [showPayslip, setShowPayslip] = useState(false);
-  const [showUpgrade, setShowUpgrade] = useState(false);
-  const [error, setError] = useState("");
-
-  const [staffId, setStaffId] = useState("");
-  const [payPeriod, setPayPeriod] = useState<"Weekly" | "Fortnightly" | "Monthly">("Monthly");
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [drafts, setDrafts] = useState<Record<string, Draft>>({});
+  const [payPeriod, setPayPeriod] = useState<PayPeriod>("Monthly");
   const [payDate, setPayDate] = useState(todayStr());
-  const [unitsWorked, setUnitsWorked] = useState("");
-  const [showOT, setShowOT] = useState(false);
-  const [overtimeUnits, setOvertimeUnits] = useState("");
-  const [overtimeRate, setOvertimeRate] = useState("1.5");
-  const [showAllowance, setShowAllowance] = useState(false);
-  const [allowances, setAllowances] = useState("");
-  const [allowanceDesc, setAllowanceDesc] = useState("Allowance");
-  const [loanDeduction, setLoanDeduction] = useState("");
-  const [showOtherDed, setShowOtherDed] = useState(false);
-  const [otherDeductions, setOtherDeductions] = useState("");
-  const [otherDeductionDesc, setOtherDeductionDesc] = useState("Deduction");
-  const [showLeave, setShowLeave] = useState(false);
-  const [leaveDays, setLeaveDays] = useState("");
-  const [leaveType, setLeaveType] = useState("Annual");
+  const initialPeriod = periodForPayDate(todayStr(), "Monthly");
+  const [periodStart, setPeriodStart] = useState(initialPeriod.start);
+  const [periodEnd, setPeriodEnd] = useState(initialPeriod.end);
+  // Once the dates are touched by hand they stop following the pay date around —
+  // an owner who set 26 July → 25 August meant it.
+  const [periodEdited, setPeriodEdited] = useState(false);
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [savedRuns, setSavedRuns] = useState<Record<string, { id: string; payslip_number: string | null }>>({});
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [showUpgrade, setShowUpgrade] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
 
   const plan = (business?.plan ?? "solo") as Plan;
   const payRunRestriction = isRestricted(plan, "payrun");
   const member = currentMember ?? { role: "owner", permissions: {} };
   const canApproveRun = canApprove(member, "payrun");
 
-  const selectedWorker = (staff ?? []).find((w) => w.id === staffId) ?? null;
-  const staffLoans = (loans ?? []).filter((l) => l.staff_id === staffId);
-  const loanBalance = getLoanBalance(staffLoans);
+  const allStaff = staff ?? [];
+  const selected = allStaff.filter((w) => selectedIds.includes(w.id));
+  const savedCount = Object.keys(savedRuns).length;
+  const allSaved = selected.length > 0 && selected.every((w) => savedRuns[w.id]);
 
-  // Most recent advance (loans arrive entry_date-desc) that carries an agreed
-  // per-run repayment — drives the Step-4 pre-fill and its note.
-  const agreedRepayLoan = staffLoans.find((l) => l.loan_type === "advance" && l.repay_per_run != null) ?? null;
-  const agreedRepay = agreedRepayLoan && loanBalance > 0 ? Math.min(Number(agreedRepayLoan.repay_per_run), loanBalance) : null;
-  const recurringAllowance = selectedWorker?.recurring_allowance ?? 0;
-  const allowanceIsPulled = recurringAllowance > 0 && allowances === String(recurringAllowance);
+  const loansFor = (id: string) => (loans ?? []).filter((l) => l.staff_id === id);
+  const leaveFor = (id: string) => (leaveRecords ?? []).filter((l) => l.staff_id === id);
 
-  // Pull the worker's standing setup onto the run when they're picked. Done in
-  // the selection handler (not an effect) so it fires exactly on selection and
-  // resets cleanly between workers — switching person doesn't carry the previous
-  // one's allowance or deduction across. Re-picking the same worker is a no-op so
-  // it never wipes edits made mid-run. Every value stays editable per run.
-  const selectWorker = (w: StaffMember) => {
-    if (w.id === staffId) return;
-    setStaffId(w.id);
-    const rec = w.recurring_allowance ?? 0;
-    setShowAllowance(rec > 0);
-    setAllowances(rec > 0 ? String(rec) : "");
-    setAllowanceDesc(w.recurring_allowance_desc ?? "");
-    const wLoans = (loans ?? []).filter((l) => l.staff_id === w.id);
-    const bal = getLoanBalance(wLoans);
-    const plan = wLoans.find((l) => l.loan_type === "advance" && l.repay_per_run != null);
-    const repay = plan && bal > 0 ? Math.min(Number(plan.repay_per_run), bal) : null;
-    setLoanDeduction(repay != null ? String(repay) : "");
-  };
-  const isContractor = selectedWorker?.is_contractor ?? false;
-  const unitLabel = selectedWorker?.pay_type === "Hourly" ? "hours" : "days";
-  const daysPerMonth = (selectedWorker?.days_per_week ?? 5) * 4.33;
-  const baseRate = !selectedWorker
-    ? 0
-    : selectedWorker.pay_type === "Hourly"
-      ? (selectedWorker.hourly_rate ?? 0)
-      : selectedWorker.pay_type === "Monthly"
-        ? (selectedWorker.monthly_salary ?? 0) / (daysPerMonth || 22)
-        : (selectedWorker.daily_wage ?? 0);
+  const setDraft = (id: string, patch: Partial<Draft>) =>
+    setDrafts((d) => ({ ...d, [id]: { ...(d[id] ?? EMPTY_DRAFT), ...patch } }));
 
-  const suggestedUnits = (() => {
-    if (!selectedWorker) return "";
-    const dPW = selectedWorker.days_per_week ?? 5;
-    if (payPeriod === "Weekly") return String(dPW);
-    if (payPeriod === "Fortnightly") return String(dPW * 2);
-    if (payPeriod === "Monthly") {
-      return selectedWorker.pay_type === "Hourly" ? String(Math.round(daysPerMonth * (selectedWorker.hours_per_day ?? 8))) : String(Math.round(daysPerMonth));
+  // Ticking someone pulls their standing setup (allowance, agreed advance
+  // repayment) into a fresh draft; unticking drops it. A draft they've already
+  // edited survives a re-tick within the same run.
+  const toggleWorker = (w: StaffMember) => {
+    if (selectedIds.includes(w.id)) {
+      setSelectedIds((ids) => ids.filter((i) => i !== w.id));
+      return;
     }
-    return "";
-  })();
-
-  const units = parseFloat(unitsWorked || "0");
-  const grossBase = baseRate * units;
-  const overtimeAmt = parseFloat(overtimeUnits || "0") * baseRate * parseFloat(overtimeRate || "1.5");
-  const allowancesAmt = parseFloat(allowances || "0");
-  const grossWages = grossBase + overtimeAmt + allowancesAmt;
-  const uifCalc = !isContractor ? taxRates.calcUIF(grossWages) : { employee: 0, employer: 0, total: 0 };
-  // SDL is employer-only and applies once the business registers for it
-  // (required over ~R500k annual payroll). Contractors are exempt.
-  const sdl = !isContractor && business?.sdl_registered ? grossWages * taxRates.SDL_RATE : 0;
-  const monthlyEquiv = payPeriod === "Weekly" ? grossWages * 4.33 : payPeriod === "Fortnightly" ? grossWages * 2.17 : grossWages;
-  // PAYE is worked out on the annualised (monthly-equivalent) gross, then scaled
-  // back to THIS run's period — so a weekly/fortnightly run deducts one period's
-  // PAYE, not a whole month's. Passing "Monthly" here subtracted a full month's
-  // PAYE from a single week's wage (worker underpaid, EMP201 overstated ~4.33x).
-  const paye = !isContractor ? taxRates.calcMonthlyPAYE(monthlyEquiv, payPeriod) : 0;
-  const loanDeductionAmt = parseFloat(loanDeduction || "0");
-  const otherDeductionsAmt = parseFloat(otherDeductions || "0");
-  const leaveDaysAmt = parseFloat(leaveDays || "0");
-  // Only "Unpaid" leave reduces pay; paid leave (annual/sick/family) is recorded
-  // for balances only and doesn't touch the wage. baseRate is per-hour for hourly
-  // staff, so scale by their hours/day to get a day's pay; it is already per-day
-  // for daily/monthly workers.
-  const dailyRateForLeave = selectedWorker?.pay_type === "Hourly" ? baseRate * (selectedWorker.hours_per_day ?? 8) : baseRate;
-  const unpaidLeaveAmt = leaveType === "Unpaid" ? leaveDaysAmt * dailyRateForLeave : 0;
-  const netPay = grossWages - uifCalc.employee - paye - loanDeductionAmt - otherDeductionsAmt - unpaidLeaveAmt;
-
-  const leaveEntries = [
-    ...(leaveRecords ?? []).filter((l) => l.staff_id === staffId).map((l) => ({ leave_type: l.leave_type, days: l.days, date: l.start_date })),
-    ...(payRuns ?? [])
-      .filter((p) => p.staff_id === staffId && (p.leave_days ?? 0) > 0)
-      .map((p) => ({ leave_type: p.leave_type ?? "Annual", days: p.leave_days ?? 0, date: p.pay_date })),
-  ];
-  const lb = selectedWorker && !isContractor ? calcLeaveBalances(selectedWorker.start_date, leaveEntries) : null;
-
-  const pendingLeaveDays = (leaveRecords ?? [])
-    .filter((l) => l.staff_id === staffId && l.start_date.startsWith(payDate.slice(0, 7)))
-    .reduce((s, l) => s + l.days, 0);
-  const pendingLeaveType = (leaveRecords ?? []).find((l) => l.staff_id === staffId && l.start_date.startsWith(payDate.slice(0, 7)))?.leave_type ?? "Annual";
-
-  const handleSave = (status: "prepared" | "approved") => {
-    if (!selectedWorker) return;
-    setError("");
-    createPayRun.mutate(
-      {
-        staffId: selectedWorker.id,
-        workerName: selectedWorker.full_name,
-        payPeriod,
-        payDate,
-        unitsWorked: units,
-        baseRate,
-        overtimeAmount: overtimeAmt,
-        allowancesAmount: allowancesAmt,
-        grossWages,
-        uifEmployee: uifCalc.employee,
-        uifEmployer: uifCalc.employer,
-        paye,
-        sdl,
-        loanDeducted: loanDeductionAmt,
-        otherDeductions: otherDeductionsAmt,
-        otherDeductionDesc: otherDeductionsAmt > 0 ? otherDeductionDesc : null,
-        leaveDays: leaveDaysAmt,
-        leaveType: leaveDaysAmt > 0 ? leaveType : null,
-        unpaidLeaveAmount: unpaidLeaveAmt,
-        netPay,
-        status,
-      },
-      {
-        onSuccess: (pr) => {
-          setSaved(true);
-          setSavedPayRunId(pr.id);
-          setSavedPayslipNumber(pr.payslip_number);
-        },
-        onError: (e) => setError(e instanceof Error ? e.message : "Couldn't save the pay run."),
-      }
-    );
+    setDrafts((d) => (d[w.id] ? d : { ...d, [w.id]: draftForWorker(w, loansFor(w.id)) }));
+    setSelectedIds((ids) => (ids.includes(w.id) ? ids : [...ids, w.id]));
   };
 
-  const payslipDoc: DocForRender | null = selectedWorker
-    ? {
-        doc_number: savedPayslipNumber ?? `PAY-${payDate}-${selectedWorker.full_name.replace(/\s+/g, "").slice(0, 6).toUpperCase()}`,
-        issue_date: payDate,
-        recipient_name: selectedWorker.full_name,
-        line_items: [
-          { desc: `Basic pay — ${units} ${unitLabel} × ${fmt(baseRate)}`, labour: grossBase, materials: 0, qty: 1 },
-          overtimeAmt > 0 ? { desc: `Overtime — ${overtimeUnits} hrs × ${overtimeRate}x rate`, labour: overtimeAmt, materials: 0, qty: 1 } : null,
-          allowancesAmt > 0 ? { desc: allowanceDesc, labour: allowancesAmt, materials: 0, qty: 1 } : null,
-          leaveDaysAmt > 0 && leaveType !== "Unpaid" ? { desc: `${leaveType} leave — ${leaveDaysAmt} day${leaveDaysAmt !== 1 ? "s" : ""} (noted)`, labour: 0, materials: 0, qty: leaveDaysAmt } : null,
-          unpaidLeaveAmt > 0 ? { desc: `Unpaid leave — ${leaveDaysAmt} day${leaveDaysAmt !== 1 ? "s" : ""}`, labour: -unpaidLeaveAmt, materials: 0, qty: leaveDaysAmt } : null,
-          { desc: "UIF deduction (employee 1%)", labour: -uifCalc.employee, materials: 0, qty: 1 },
-          paye > 0 ? { desc: "PAYE income tax", labour: -paye, materials: 0, qty: 1 } : null,
-          loanDeductionAmt > 0 ? { desc: "Loan / advance repayment", labour: -loanDeductionAmt, materials: 0, qty: 1 } : null,
-          otherDeductionsAmt > 0 ? { desc: otherDeductionDesc, labour: -otherDeductionsAmt, materials: 0, qty: 1 } : null,
-        ].filter((i): i is NonNullable<typeof i> => i !== null),
-        subtotal: netPay,
-        vat_rate: null,
-        vat_amount: 0,
-        deposit: 0,
-        balance_due: null,
-        due_date: payDate,
-        valid_until: null,
-      }
-    : null;
+  const selectAll = () => {
+    const payable = allStaff.filter((w) => !w.terminated);
+    setDrafts((d) => {
+      const next = { ...d };
+      for (const w of payable) if (!next[w.id]) next[w.id] = draftForWorker(w, loansFor(w.id));
+      return next;
+    });
+    setSelectedIds(payable.map((w) => w.id));
+  };
 
-  // ── STEP 1: EMPLOYEE ──
+  const applyPeriod = (date: string, type: PayPeriod) => {
+    if (periodEdited) return;
+    const p = periodForPayDate(date, type);
+    setPeriodStart(p.start);
+    setPeriodEnd(p.end);
+  };
+  const changePayDate = (v: string) => {
+    setPayDate(v);
+    applyPeriod(v, payPeriod);
+  };
+  const changePayPeriod = (v: PayPeriod) => {
+    setPayPeriod(v);
+    applyPeriod(payDate, v);
+  };
+  const resetPeriod = () => {
+    const p = periodForPayDate(payDate, payPeriod);
+    setPeriodStart(p.start);
+    setPeriodEnd(p.end);
+    setPeriodEdited(false);
+  };
+  const autoPeriod = periodForPayDate(payDate, payPeriod);
+  const periodIsAuto = periodStart === autoPeriod.start && periodEnd === autoPeriod.end;
+
+  const rows: ComputedRun[] = selected.map((w) =>
+    computeRun({
+      worker: w,
+      draft: drafts[w.id] ?? EMPTY_DRAFT,
+      periodStart,
+      periodEnd,
+      payPeriod,
+      leaveRecords: leaveFor(w.id),
+      loanBalance: loanBalanceOf(loansFor(w.id)),
+      sdlRegistered: !!business?.sdl_registered,
+      sdlRate: taxRates.SDL_RATE,
+      calcUIF: taxRates.calcUIF,
+      calcPAYE: taxRates.calcMonthlyPAYE,
+    })
+  );
+
+  const totals = rows.reduce(
+    (t, r) => ({
+      gross: t.gross + r.money.gross,
+      net: t.net + r.money.net,
+      paye: t.paye + r.money.paye,
+      uifEmployee: t.uifEmployee + r.money.uifEmployee,
+      uifEmployer: t.uifEmployer + r.money.uifEmployer,
+      sdl: t.sdl + r.money.sdl,
+      loans: t.loans + r.money.loanDeduction,
+    }),
+    { gross: 0, net: 0, paye: 0, uifEmployee: 0, uifEmployer: 0, sdl: 0, loans: 0 }
+  );
+
+  const leaveBalancesFor = (r: ComputedRun) => {
+    if (r.worker.is_contractor) return null;
+    const entries = [
+      ...leaveFor(r.worker.id).map((l) => ({ leave_type: l.leave_type, days: l.days, date: l.start_date })),
+      ...(payRuns ?? [])
+        .filter((p) => p.staff_id === r.worker.id && (p.leave_days ?? 0) > 0)
+        .map((p) => ({ leave_type: p.leave_type ?? "Annual", days: p.leave_days ?? 0, date: p.pay_date })),
+    ];
+    return calcLeaveBalances(r.worker.start_date ?? null, entries);
+  };
+
+  /**
+   * Save every employee's run.
+   *
+   * One at a time, deliberately: create_pay_run numbers each payslip from
+   * MAX(payslip_number) + 1, so firing six of them at once can hand two people
+   * the same number. Already-saved people are skipped, so a retry after a
+   * mid-batch failure finishes the batch instead of double-paying the first half.
+   */
+  const handleSaveAll = async (status: "prepared" | "approved") => {
+    if (rows.length === 0) return;
+    setSaving(true);
+    setError("");
+    try {
+      for (const r of rows) {
+        if (savedRuns[r.worker.id]) continue;
+        // Only leave that ISN'T already in the Leave tool is recorded by the run —
+        // the register's own rows already lowered the balance, and writing them
+        // back here would count those days twice.
+        const extraDays = r.extraUnpaidLeaveDays > 0 ? r.extraUnpaidLeaveDays : r.extraPaidLeaveDays;
+        const extraType = r.extraUnpaidLeaveDays > 0 ? "Unpaid" : r.draft.extraLeaveType;
+        const pr = await createPayRun.mutateAsync({
+          staffId: r.worker.id,
+          workerName: r.worker.full_name,
+          payPeriod,
+          payDate,
+          unitsWorked: r.units,
+          baseRate: r.rates.unitRate,
+          overtimeAmount: r.money.overtime,
+          allowancesAmount: r.money.allowance,
+          grossWages: r.money.gross,
+          uifEmployee: r.money.uifEmployee,
+          uifEmployer: r.money.uifEmployer,
+          paye: r.money.paye,
+          sdl: r.money.sdl,
+          loanDeducted: r.money.loanDeduction,
+          otherDeductions: r.money.otherDeduction,
+          otherDeductionDesc: r.money.otherDeduction > 0 ? r.draft.otherDeductionDesc : null,
+          leaveDays: extraDays,
+          leaveType: extraDays > 0 ? extraType : null,
+          // For the record only. The unpaid days are already out of unitsWorked,
+          // so the gross, UIF, PAYE and the wage expense are all the real ones —
+          // this is not deducted again.
+          unpaidLeaveAmount: r.unpaidLeaveValue,
+          netPay: r.money.net,
+          status,
+        });
+        setSavedRuns((s) => ({ ...s, [r.worker.id]: { id: pr.id, payslip_number: pr.payslip_number } }));
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Couldn't save the pay run.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // ── STEP 1: EMPLOYEES ──
   if (step === 1) {
     return (
       <div style={{ padding: "20px 16px 100px" }}>
-        <Header onExit={onExit} />
+        <Header onExit={onExit} count={selectedIds.length} />
         <StepBar step={step} />
-        <div style={{ fontSize: 14, fontWeight: 700, color: "#111", marginBottom: 12 }}>Who are you paying?</div>
-        {(staff ?? []).length === 0 ? (
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, gap: 10 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: "#111" }}>Who are you paying?</div>
+          {allStaff.length > 1 && (
+            <div style={{ display: "flex", gap: 6 }}>
+              <button onClick={selectAll} style={{ background: "#F0F9FF", border: "1.5px solid #BAE6FD", borderRadius: 20, padding: "5px 11px", fontSize: 11.5, fontWeight: 700, color: "#0369A1", cursor: "pointer" }}>
+                Select all
+              </button>
+              {selectedIds.length > 0 && (
+                <button onClick={() => setSelectedIds([])} style={{ background: "#f1f5f9", border: "1.5px solid #e2e8f0", borderRadius: 20, padding: "5px 11px", fontSize: 11.5, fontWeight: 700, color: "#64748b", cursor: "pointer" }}>
+                  Clear
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+        <div style={{ fontSize: 12, color: "#64748b", marginBottom: 12 }}>Tick everyone on this run — they all share one period and each gets their own payslip.</div>
+
+        {allStaff.length === 0 ? (
           <div style={{ background: "#f8fafc", borderRadius: 12, padding: 20, textAlign: "center", marginBottom: 14 }}>
             <div style={{ fontSize: 13, color: "#94a3b8" }}>
               No employees registered.{" "}
@@ -284,37 +304,43 @@ export function PayRunWizard({ onExit }: { onExit: () => void }) {
             </div>
           </div>
         ) : (
-          (staff ?? []).map((w) => {
+          allStaff.map((w) => {
             const lastWage = (payRuns ?? []).filter((p) => p.staff_id === w.id)[0];
-            const loanBal = getLoanBalance((loans ?? []).filter((l) => l.staff_id === w.id));
+            const loanBal = loanBalanceOf(loansFor(w.id));
             const rate = w.pay_type === "Hourly" ? `${fmt(w.hourly_rate ?? 0)}/hr` : w.pay_type === "Monthly" ? `${fmt(w.monthly_salary ?? 0)}/mo` : `${fmt(w.daily_wage ?? 0)}/day`;
-            const isSelected = staffId === w.id;
+            const isSelected = selectedIds.includes(w.id);
             return (
               <button
                 key={w.id}
-                onClick={() => selectWorker(w)}
-                style={{ width: "100%", background: isSelected ? "#F0F9FF" : "#fff", border: `2px solid ${isSelected ? "#0C4A6E" : "#e2e8f0"}`, borderRadius: 14, padding: "14px 16px", marginBottom: 8, cursor: "pointer", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center" }}
+                onClick={() => toggleWorker(w)}
+                style={{ width: "100%", background: isSelected ? "#F0F9FF" : "#fff", border: `2px solid ${isSelected ? "#0C4A6E" : "#e2e8f0"}`, borderRadius: 14, padding: "14px 16px", marginBottom: 8, cursor: "pointer", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}
               >
-                <div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
-                    <span style={{ fontSize: 15, fontWeight: 700, color: "#111" }}>{w.full_name}</span>
-                    {w.is_contractor && <span style={{ fontSize: 10, fontWeight: 700, padding: "1px 6px", borderRadius: 5, background: "#fff7ed", color: "#92400e", border: "1px solid #fed7aa" }}>🧾 Contractor</span>}
-                  </div>
-                  <div style={{ fontSize: 12, color: "#94a3b8" }}>
-                    {rate}
-                    {lastWage ? ` · Last paid ${lastWage.pay_date}` : " · Not paid yet"}
-                    {w.is_contractor ? " · No UIF or PAYE" : ""}
-                  </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 11, minWidth: 0 }}>
+                  <span
+                    aria-hidden
+                    style={{ width: 22, height: 22, borderRadius: 7, border: `2px solid ${isSelected ? "#0C4A6E" : "#cbd5e1"}`, background: isSelected ? "#0C4A6E" : "#fff", color: "#fff", fontSize: 13, fontWeight: 900, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}
+                  >
+                    {isSelected ? "✓" : ""}
+                  </span>
+                  <span style={{ minWidth: 0 }}>
+                    <span style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
+                      <span style={{ fontSize: 15, fontWeight: 700, color: "#111" }}>{w.full_name}</span>
+                      {w.is_contractor && <span style={{ fontSize: 10, fontWeight: 700, padding: "1px 6px", borderRadius: 5, background: "#fff7ed", color: "#92400e", border: "1px solid #fed7aa" }}>🧾 Contractor</span>}
+                      {w.terminated && <span style={{ fontSize: 10, fontWeight: 700, padding: "1px 6px", borderRadius: 5, background: "#fff1f2", color: "#be123c", border: "1px solid #fecdd3" }}>Left</span>}
+                    </span>
+                    <span style={{ display: "block", fontSize: 12, color: "#94a3b8" }}>
+                      {rate}
+                      {lastWage ? ` · Last paid ${lastWage.pay_date}` : " · Not paid yet"}
+                      {w.is_contractor ? " · No UIF or PAYE" : ""}
+                    </span>
+                  </span>
                 </div>
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
-                  {loanBal > 0 && <span style={{ fontSize: 11, fontWeight: 700, color: "#b45309", background: "#fff7ed", padding: "2px 8px", borderRadius: 8 }}>Loan {fmt(loanBal)}</span>}
-                  {isSelected && <span style={{ fontSize: 14, color: "#0C4A6E" }}>✓</span>}
-                </div>
+                {loanBal > 0 && <span style={{ fontSize: 11, fontWeight: 700, color: "#b45309", background: "#fff7ed", padding: "2px 8px", borderRadius: 8, whiteSpace: "nowrap" }}>Loan {fmt(loanBal)}</span>}
               </button>
             );
           })
         )}
-        <NextBtn label="Next → Period" disabled={!staffId} onClick={() => setStep(2)} />
+        <NextBtn label={selectedIds.length > 1 ? `Next → Period (${selectedIds.length} people)` : "Next → Period"} disabled={selectedIds.length === 0} onClick={() => setStep(2)} />
       </div>
     );
   }
@@ -323,234 +349,121 @@ export function PayRunWizard({ onExit }: { onExit: () => void }) {
   if (step === 2) {
     return (
       <div style={{ padding: "20px 16px 100px" }}>
-        <Header onExit={onExit} />
+        <Header onExit={onExit} count={selectedIds.length} />
         <StepBar step={step} />
         <BackBtn onClick={() => setStep(1)} />
-        <div style={{ background: "#F0F9FF", border: "1.5px solid #BAE6FD", borderRadius: 12, padding: "11px 14px", marginBottom: 16, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <span style={{ fontSize: 14, fontWeight: 700, color: "#0C4A6E" }}>{selectedWorker?.full_name}</span>
-          <span style={{ fontSize: 12, color: "#94a3b8" }}>{selectedWorker?.pay_type}</span>
+        <div style={{ background: "#F0F9FF", border: "1.5px solid #BAE6FD", borderRadius: 12, padding: "11px 14px", marginBottom: 16, fontSize: 13, fontWeight: 700, color: "#0C4A6E" }}>
+          {selected.map((w) => w.full_name).join(", ")}
         </div>
         <div style={{ fontSize: 14, fontWeight: 700, color: "#111", marginBottom: 12 }}>Pay period</div>
         <Field label="Period type">
-          <Chips options={["Weekly", "Fortnightly", "Monthly"]} selected={payPeriod} onSelect={(v) => v && setPayPeriod(v as typeof payPeriod)} />
+          <Chips options={["Weekly", "Fortnightly", "Monthly"]} selected={payPeriod} onSelect={(v) => v && changePayPeriod(v as PayPeriod)} />
         </Field>
         <Field label="Pay date">
-          <Input type="date" value={payDate} onChange={setPayDate} />
+          <Input type="date" value={payDate} onChange={changePayDate} />
         </Field>
-        <NextBtn
-          label="Next → Earnings"
-          onClick={() => {
-            if (!unitsWorked && suggestedUnits) setUnitsWorked(suggestedUnits);
-            setStep(3);
-          }}
-        />
-      </div>
-    );
-  }
 
-  // ── STEP 3: EARNINGS ──
-  if (step === 3) {
-    return (
-      <div style={{ padding: "20px 16px 100px" }}>
-        <Header onExit={onExit} />
-        <StepBar step={step} />
-        <BackBtn onClick={() => setStep(2)} />
-        <div style={{ fontSize: 14, fontWeight: 700, color: "#111", marginBottom: 12 }}>Earnings</div>
-        <Field label={`${unitLabel === "hours" ? "Hours" : "Days"} worked`}>
-          <Input type="number" value={unitsWorked} onChange={setUnitsWorked} placeholder={suggestedUnits || "0"} />
-          {suggestedUnits && !unitsWorked && <div style={{ fontSize: 11, color: "#0369A1", marginTop: 3 }}>Suggested: {suggestedUnits} {unitLabel} for {payPeriod.toLowerCase()} period</div>}
-        </Field>
-        {grossBase > 0 && (
-          <div style={{ background: "#F0F9FF", borderRadius: 10, padding: "9px 12px", marginBottom: 10, display: "flex", justifyContent: "space-between" }}>
-            <span style={{ fontSize: 12, color: "#0369A1" }}>Basic: {units} {unitLabel} × {fmt(baseRate)}</span>
-            <span style={{ fontSize: 14, fontWeight: 700, color: "#0C4A6E" }}>{fmt(grossBase)}</span>
-          </div>
-        )}
-
-        <button onClick={() => setShowOT((p) => !p)} style={{ width: "100%", background: showOT ? "#F0F9FF" : "#f8fafc", border: `1.5px solid ${showOT ? "#BAE6FD" : "#e2e8f0"}`, borderRadius: 10, padding: "10px 14px", marginBottom: 8, display: "flex", justifyContent: "space-between", cursor: "pointer" }}>
-          <span style={{ fontSize: 13, fontWeight: 600, color: "#64748b" }}>+ Add overtime / public holiday</span>
-          <span style={{ color: "#94a3b8" }}>{showOT ? "▲" : "▼"}</span>
-        </button>
-        {showOT && (
-          <div style={{ background: "#f8fafc", borderRadius: 10, padding: 12, marginBottom: 8 }}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-              <Field label={`OT / extra ${unitLabel}`}>
-                <Input type="number" value={overtimeUnits} onChange={setOvertimeUnits} placeholder="0" />
-              </Field>
-              <Field label="Rate">
-                <select value={overtimeRate} onChange={(e) => setOvertimeRate(e.target.value)} style={{ width: "100%", padding: "13px 12px", borderRadius: 10, border: "1.5px solid #e2e8f0", fontSize: 13, background: "#fff" }}>
-                  <option value="1.5">1.5× — Standard overtime</option>
-                  <option value="2">2× — Public holiday / Sunday worked</option>
-                </select>
-              </Field>
-            </div>
-            {overtimeRate === "2" && (
-              <div style={{ fontSize: 11, color: "#0369A1", marginTop: 8, lineHeight: 1.5 }}>
-                BCEA: work on a public holiday or Sunday is paid at double the normal rate.
-              </div>
-            )}
-          </div>
-        )}
-
-        <button onClick={() => setShowAllowance((p) => !p)} style={{ width: "100%", background: showAllowance ? "#F0F9FF" : "#f8fafc", border: `1.5px solid ${showAllowance ? "#BAE6FD" : "#e2e8f0"}`, borderRadius: 10, padding: "10px 14px", marginBottom: 8, display: "flex", justifyContent: "space-between", cursor: "pointer" }}>
-          <span style={{ fontSize: 13, fontWeight: 600, color: "#64748b" }}>+ Add allowance</span>
-          <span style={{ color: "#94a3b8" }}>{showAllowance ? "▲" : "▼"}</span>
-        </button>
-        {showAllowance && (
-          <div style={{ background: "#f8fafc", borderRadius: 10, padding: 12, marginBottom: 8 }}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-              <Field label="Amount (R)">
-                <Input type="number" value={allowances} onChange={setAllowances} placeholder="0" />
-              </Field>
-              <Field label="Description">
-                <Input value={allowanceDesc} onChange={setAllowanceDesc} placeholder="Travel, Meal..." />
-              </Field>
-            </div>
-            <div style={{ fontSize: 11, color: allowanceIsPulled ? "#0369A1" : "#94a3b8", marginTop: 8 }}>
-              {allowanceIsPulled
-                ? "🔁 Pulled from this person's setup — edit or clear for this run only (won't change their setup)"
-                : "One-off allowance for this pay run only; set a monthly one in Staff Register."}
-            </div>
-          </div>
-        )}
-
-        {grossWages > 0 && (
-          <div style={{ background: "#0C4A6E", borderRadius: 12, padding: "12px 16px", marginTop: 4, marginBottom: 4 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ fontSize: 13, color: "#38BDF8", fontWeight: 700 }}>Gross wages</span>
-              <span style={{ fontSize: 20, color: "#fff", fontWeight: 900 }}>{fmt(grossWages)}</span>
-            </div>
-          </div>
-        )}
-        <NextBtn label="Next → Deductions" disabled={!unitsWorked} onClick={() => setStep(4)} />
-      </div>
-    );
-  }
-
-  // ── STEP 4: DEDUCTIONS ──
-  if (step === 4) {
-    return (
-      <div style={{ padding: "20px 16px 100px" }}>
-        <Header onExit={onExit} />
-        <StepBar step={step} />
-        <BackBtn onClick={() => setStep(3)} />
-        <div style={{ background: "#F0F9FF", border: "1.5px solid #BAE6FD", borderRadius: 12, padding: "11px 14px", marginBottom: 16, display: "flex", justifyContent: "space-between" }}>
-          <span style={{ fontSize: 13, fontWeight: 700, color: "#0C4A6E" }}>{selectedWorker?.full_name} · Gross {fmt(grossWages)}</span>
-          <span style={{ fontSize: 12, color: "#94a3b8" }}>{payPeriod}</span>
-        </div>
-        <div style={{ fontSize: 14, fontWeight: 700, color: "#111", marginBottom: 4 }}>Deductions</div>
-        <div style={{ fontSize: 12, color: "#94a3b8", marginBottom: 12 }}>Statutory deductions are auto-calculated. Add any extras below.</div>
-
-        <div style={{ background: "#f8fafc", border: "1.5px solid #e2e8f0", borderRadius: 12, padding: "12px 14px", marginBottom: 10 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>Statutory (auto-calculated)</div>
-          {isContractor ? (
-            <div style={{ fontSize: 12, color: "#92400e", fontWeight: 600, background: "#fff7ed", borderRadius: 8, padding: "8px 10px" }}>
-              🧾 Independent contractor — no UIF, no PAYE deductions. They handle their own tax and UIF.
-            </div>
-          ) : (
-            <>
-              <Row label={`UIF (employee ${(taxRates.UIF_EMPLOYEE_RATE * 100).toFixed(0)}%)`} value={`−${fmt(uifCalc.employee)}`} />
-              {paye > 0 ? (
-                <Row label="PAYE" value={`−${fmt(paye)}`} bold />
-              ) : (
-                <div style={{ fontSize: 11, color: "#0369A1", marginTop: 4 }}>
-                  {`✅ No PAYE — below ${fmt(taxRates.PAYE_MONTHLY_THRESHOLD)}/month threshold`}
-                </div>
-              )}
-            </>
-          )}
-        </div>
-
-        {loanBalance > 0 && (
-          <div style={{ background: "#fff7ed", border: "1.5px solid #fed7aa", borderRadius: 12, padding: "12px 14px", marginBottom: 10 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: "#92400e", marginBottom: 8 }}>💰 Outstanding advance: {fmt(loanBalance)}</div>
-            <Field label="Deduct from this pay run (R)">
-              <Input type="number" value={loanDeduction} onChange={setLoanDeduction} placeholder="0.00" />
+        {/* The days worked are counted across these two dates, so they're on the
+            screen and editable rather than assumed. They follow the pay date until
+            you change them; "Reset" puts them back. */}
+        <div style={{ background: "#f8fafc", border: "1.5px solid #e2e8f0", borderRadius: 12, padding: 12, marginBottom: 14 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>Days are counted over this stretch</div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+            <Field label="Period from">
+              <Input
+                type="date"
+                value={periodStart}
+                onChange={(v) => {
+                  setPeriodStart(v);
+                  setPeriodEdited(true);
+                }}
+              />
             </Field>
-            <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
-              <button onClick={() => setLoanDeduction(String(Math.min(loanBalance, grossWages).toFixed(2)))} style={{ flex: 1, background: "#b45309", border: "none", borderRadius: 8, padding: 8, fontSize: 12, fontWeight: 700, cursor: "pointer", color: "#fff" }}>
-                Deduct all ({fmt(Math.min(loanBalance, grossWages))})
+            <Field label="Period to">
+              <Input
+                type="date"
+                value={periodEnd}
+                onChange={(v) => {
+                  setPeriodEnd(v);
+                  setPeriodEdited(true);
+                }}
+              />
+            </Field>
+          </div>
+          <div style={{ fontSize: 11, color: periodIsAuto ? "#0369A1" : "#b45309", lineHeight: 1.5 }}>
+            {periodIsAuto
+              ? `Set from the pay date — the ${payPeriod === "Monthly" ? "calendar month" : payPeriod === "Weekly" ? "7 days" : "14 days"} it falls in.`
+              : `You've set your own period. The suggestion was ${autoPeriod.start} → ${autoPeriod.end}.`}
+          </div>
+          {!periodIsAuto && (
+            <button onClick={resetPeriod} style={{ background: "#f1f5f9", border: "none", borderRadius: 8, padding: "6px 10px", fontSize: 11, fontWeight: 700, color: "#0369A1", cursor: "pointer", marginTop: 6 }}>
+              ↩︎ Reset to {autoPeriod.start} → {autoPeriod.end}
+            </button>
+          )}
+          {periodEnd < periodStart && <div style={{ fontSize: 12, color: "#be123c", fontWeight: 600, marginTop: 8 }}>The end date is before the start date.</div>}
+        </div>
+
+        <NextBtn label="Next → Earnings" disabled={periodEnd < periodStart} onClick={() => setStep(3)} />
+      </div>
+    );
+  }
+
+  // ── STEPS 3 & 4: one card per employee ──
+  if (step === 3 || step === 4) {
+    const isEarnings = step === 3;
+    return (
+      <div style={{ padding: "20px 16px 100px" }}>
+        <Header onExit={onExit} count={selectedIds.length} />
+        <StepBar step={step} />
+        <BackBtn onClick={() => setStep(step - 1)} />
+        <div style={{ fontSize: 14, fontWeight: 700, color: "#111", marginBottom: 4 }}>{isEarnings ? "Earnings" : "Deductions"}</div>
+        <div style={{ fontSize: 12, color: "#94a3b8", marginBottom: 12 }}>
+          {isEarnings
+            ? `Days, overtime and allowances for ${periodStart} → ${periodEnd}. Everything is worked out for you and everything stays editable.`
+            : "Statutory deductions are auto-calculated. Advances, leave and anything else go here."}
+        </div>
+
+        {rows.map((r) => {
+          const isOpen = (openId ?? rows[0]?.worker.id) === r.worker.id;
+          return (
+            <div key={r.worker.id} style={{ marginBottom: 10 }}>
+              <button
+                onClick={() => setOpenId(isOpen ? "" : r.worker.id)}
+                style={{ width: "100%", background: isOpen ? "#0C4A6E" : "#fff", border: `1.5px solid ${isOpen ? "#0C4A6E" : "#e2e8f0"}`, borderRadius: isOpen ? "14px 14px 0 0" : 14, padding: "12px 15px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, cursor: "pointer", textAlign: "left" }}
+              >
+                <span style={{ minWidth: 0 }}>
+                  <span style={{ display: "block", fontSize: 14, fontWeight: 700, color: isOpen ? "#fff" : "#111" }}>{r.worker.full_name}</span>
+                  <span style={{ display: "block", fontSize: 11.5, color: isOpen ? "#7DD3FC" : "#94a3b8", marginTop: 1 }}>
+                    {r.units} {r.rates.unitLabel} × {fmt(r.rates.unitRate)}
+                    {r.unpaidLeaveDays > 0 ? ` · ${r.unpaidLeaveDays}d unpaid leave` : ""}
+                  </span>
+                </span>
+                <span style={{ textAlign: "right", whiteSpace: "nowrap" }}>
+                  <span style={{ display: "block", fontSize: 15, fontWeight: 800, color: isOpen ? "#fff" : "#0C4A6E" }}>{fmt(isEarnings ? r.money.gross : r.money.net)}</span>
+                  <span style={{ display: "block", fontSize: 10, color: isOpen ? "#7DD3FC" : "#94a3b8" }}>{isEarnings ? "gross" : "net"}</span>
+                </span>
               </button>
-              <button onClick={() => setLoanDeduction("")} style={{ flex: 1, background: "#f1f5f9", border: "none", borderRadius: 8, padding: 8, fontSize: 12, fontWeight: 600, cursor: "pointer", color: "#64748b" }}>
-                None this time
-              </button>
+              {isOpen &&
+                (isEarnings ? (
+                  <EarningsCard run={r} onChange={(patch) => setDraft(r.worker.id, patch)} />
+                ) : (
+                  <DeductionsCard
+                    run={r}
+                    onChange={(patch) => setDraft(r.worker.id, patch)}
+                    uifRatePct={`${(taxRates.UIF_EMPLOYEE_RATE * 100).toFixed(0)}%`}
+                    payeThreshold={fmt(taxRates.PAYE_MONTHLY_THRESHOLD)}
+                    leaveBalances={leaveBalancesFor(r)}
+                  />
+                ))}
             </div>
-            {agreedRepay != null && (
-              <div style={{ fontSize: 11, color: "#92400e", marginTop: 8 }}>
-                🔁 Pre-filled {fmt(agreedRepay)} from the agreed repayment plan — edit for this run if needed{agreedRepay === loanBalance ? " (final repayment)" : ""}
-              </div>
-            )}
-          </div>
-        )}
+          );
+        })}
 
-        <button
-          onClick={() => {
-            if (!showLeave && pendingLeaveDays > 0 && !leaveDays) {
-              setLeaveDays(String(pendingLeaveDays));
-              setLeaveType(pendingLeaveType);
-            }
-            setShowLeave((p) => !p);
-          }}
-          style={{ width: "100%", background: showLeave ? "#F0F9FF" : "#f8fafc", border: `1.5px solid ${showLeave ? "#BAE6FD" : "#e2e8f0"}`, borderRadius: 10, padding: "10px 14px", marginBottom: 8, display: "flex", justifyContent: "space-between", cursor: "pointer" }}
-        >
-          <div>
-            <span style={{ fontSize: 13, fontWeight: 600, color: "#64748b" }}>🏖️ Leave taken this period?</span>
-            {lb && <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 1 }}>Annual {lb.annualBalance}d · Sick {lb.sickBalance}d · Family {lb.familyBalance}d</div>}
-            {pendingLeaveDays > 0 && !showLeave && <div style={{ fontSize: 11, color: "#b45309", marginTop: 1 }}>⚡ {pendingLeaveDays}d {pendingLeaveType} leave recorded this month — tap to include</div>}
-          </div>
-          <span style={{ color: "#94a3b8" }}>{showLeave ? "▲" : "▼"}</span>
-        </button>
-        {showLeave && (
-          <div style={{ background: "#f8fafc", borderRadius: 10, padding: 12, marginBottom: 8 }}>
-            {pendingLeaveDays > 0 && (
-              <div style={{ background: "#fff7ed", border: "1px solid #fed7aa", borderRadius: 8, padding: "8px 10px", marginBottom: 8, fontSize: 12, color: "#92400e" }}>
-                ⚡ {pendingLeaveDays}d {pendingLeaveType} leave was recorded in Leave tool this month
-              </div>
-            )}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-              <Field label="Leave type">
-                <select value={leaveType} onChange={(e) => setLeaveType(e.target.value)} style={{ width: "100%", padding: "11px 12px", borderRadius: 10, border: "1.5px solid #e2e8f0", fontSize: 13, background: "#fff" }}>
-                  <option value="Annual">Annual leave</option>
-                  <option value="Sick">Sick leave</option>
-                  <option value="Family">Family responsibility</option>
-                  <option value="Unpaid">Unpaid leave</option>
-                </select>
-              </Field>
-              <Field label="Days">
-                <Input type="number" value={leaveDays} onChange={setLeaveDays} placeholder="0" />
-              </Field>
-            </div>
-            <div style={{ fontSize: 11, color: leaveType === "Unpaid" ? "#b45309" : "#94a3b8", marginTop: 8, lineHeight: 1.5 }}>
-              {leaveType === "Unpaid"
-                ? "Unpaid leave reduces the wage — the days are deducted at the daily rate."
-                : "Paid leave doesn't change the wage — this just records it against their balance."}
-            </div>
-            {unpaidLeaveAmt > 0 && (
-              <div style={{ background: "#fff1f2", border: "1px solid #fecdd3", borderRadius: 8, padding: "8px 10px", marginTop: 8, fontSize: 12, color: "#be123c", fontWeight: 600 }}>
-                −{fmt(unpaidLeaveAmt)} = {leaveDaysAmt} day{leaveDaysAmt !== 1 ? "s" : ""} × {fmt(dailyRateForLeave)} daily rate
-              </div>
-            )}
-          </div>
-        )}
-
-        <button onClick={() => setShowOtherDed((p) => !p)} style={{ width: "100%", background: showOtherDed ? "#fff1f2" : "#f8fafc", border: `1.5px solid ${showOtherDed ? "#fecdd3" : "#e2e8f0"}`, borderRadius: 10, padding: "10px 14px", marginBottom: 8, display: "flex", justifyContent: "space-between", cursor: "pointer" }}>
-          <span style={{ fontSize: 13, fontWeight: 600, color: "#64748b" }}>− Other deduction</span>
-          <span style={{ color: "#94a3b8" }}>{showOtherDed ? "▲" : "▼"}</span>
-        </button>
-        {showOtherDed && (
-          <div style={{ background: "#f8fafc", borderRadius: 10, padding: 12, marginBottom: 8 }}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-              <Field label="Amount (R)">
-                <Input type="number" value={otherDeductions} onChange={setOtherDeductions} placeholder="0" />
-              </Field>
-              <Field label="Description">
-                <Input value={otherDeductionDesc} onChange={setOtherDeductionDesc} placeholder="Uniform, Tools..." />
-              </Field>
-            </div>
-          </div>
-        )}
-
-        <NextBtn label="Next → Summary" onClick={() => setStep(5)} />
+        <div style={{ background: "#0C4A6E", borderRadius: 12, padding: "12px 16px", marginTop: 14, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+          <span style={{ fontSize: 13, color: "#38BDF8", fontWeight: 700 }}>{isEarnings ? "Total gross" : "Total net pay"}</span>
+          <span style={{ fontSize: 20, color: "#fff", fontWeight: 900, whiteSpace: "nowrap" }}>{fmt(isEarnings ? totals.gross : totals.net)}</span>
+        </div>
+        <NextBtn label={isEarnings ? "Next → Deductions" : "Next → Summary"} onClick={() => setStep(step + 1)} />
       </div>
     );
   }
@@ -558,37 +471,64 @@ export function PayRunWizard({ onExit }: { onExit: () => void }) {
   // ── STEP 5: SUMMARY ──
   return (
     <div style={{ padding: "20px 16px 100px" }}>
-      <Header onExit={onExit} />
+      <Header onExit={onExit} count={selectedIds.length} />
       <StepBar step={step} />
       <BackBtn onClick={() => setStep(4)} />
 
-      <div style={{ background: "#0C4A6E", borderRadius: 16, padding: "18px 20px", marginBottom: 14 }}>
-        <div style={{ fontSize: 11, color: "#38BDF8", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 10 }}>Payslip preview</div>
-        <div style={{ fontSize: 17, fontWeight: 900, color: "#fff", marginBottom: 2 }}>{selectedWorker?.full_name}</div>
-        <div style={{ fontSize: 12, color: "#7DD3FC", marginBottom: 12 }}>{payPeriod} · {payDate}</div>
-        <Row label={`Basic (${units} ${unitLabel} × ${fmt(baseRate)})`} value={fmt(grossBase)} />
-        {overtimeAmt > 0 && <Row label={`Overtime (${overtimeUnits} × ${overtimeRate}x)`} value={fmt(overtimeAmt)} />}
-        {allowancesAmt > 0 && <Row label={allowanceDesc} value={fmt(allowancesAmt)} />}
-        <Row label="Gross wages" value={fmt(grossWages)} bold />
-        <div style={{ borderTop: "1px solid rgba(255,255,255,0.15)", marginTop: 8, paddingTop: 8 }}>
-          <Row label="UIF (employee 1%)" value={`−${fmt(uifCalc.employee)}`} />
-          {paye > 0 && <Row label="PAYE" value={`−${fmt(paye)}`} />}
-          {loanDeductionAmt > 0 && <Row label="Loan repayment" value={`−${fmt(loanDeductionAmt)}`} />}
-          {otherDeductionsAmt > 0 && <Row label={otherDeductionDesc} value={`−${fmt(otherDeductionsAmt)}`} />}
-          {leaveDaysAmt > 0 && leaveType !== "Unpaid" && <Row label={`${leaveType} leave (${leaveDaysAmt}d)`} value="noted" />}
-          {unpaidLeaveAmt > 0 && <Row label={`Unpaid leave (${leaveDaysAmt}d)`} value={`−${fmt(unpaidLeaveAmt)}`} />}
+      {rows.length > 1 && (
+        <div style={{ background: "#fff", border: "1.5px solid #e2e8f0", borderRadius: 14, padding: "14px 16px", marginBottom: 14 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>
+            This pay run · {rows.length} employees · {periodStart} → {periodEnd}
+          </div>
+          <Row label="Total gross wages" value={fmt(totals.gross)} />
+          <Row label="PAYE withheld" value={`−${fmt(totals.paye)}`} />
+          <Row label="UIF (employee)" value={`−${fmt(totals.uifEmployee)}`} />
+          {totals.loans > 0 && <Row label="Advance repayments" value={`−${fmt(totals.loans)}`} />}
+          <Row label="Total to pay out" value={fmt(totals.net)} bold />
         </div>
-        <div style={{ borderTop: "1px solid rgba(255,255,255,0.2)", marginTop: 10, paddingTop: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <span style={{ fontSize: 15, color: "#38BDF8", fontWeight: 700 }}>NET PAY (take-home)</span>
-          <span style={{ fontSize: 26, color: "#fff", fontWeight: 900 }}>{fmt(netPay)}</span>
+      )}
+
+      {rows.map((r) => (
+        <div key={r.worker.id}>
+          <PayslipPreview
+            run={r}
+            payPeriod={payPeriod}
+            payDate={payDate}
+            periodStart={periodStart}
+            periodEnd={periodEnd}
+            leaveBalances={leaveBalancesFor(r)}
+            onChange={(patch) => setDraft(r.worker.id, patch)}
+            editable={!savedRuns[r.worker.id]}
+          />
+          {savedRuns[r.worker.id] && shareOpen && plan !== "solo" && (
+            <div style={{ marginTop: -4, marginBottom: 14, background: "#fff", border: "1.5px solid #e2e8f0", borderRadius: 14, padding: 14 }}>
+              <div style={{ fontSize: 12.5, fontWeight: 700, color: "#111", marginBottom: 6 }}>
+                Payslip {savedRuns[r.worker.id].payslip_number} — {r.worker.full_name}
+              </div>
+              <DocumentActions
+                doc={buildPayslipDoc({
+                  run: r,
+                  docNumber: savedRuns[r.worker.id].payslip_number ?? `PAY-${payDate}`,
+                  payPeriod,
+                  payDate,
+                  periodStart,
+                  periodEnd,
+                  leaveBalances: leaveBalancesFor(r),
+                })}
+                kind="payslip"
+                sourceId={savedRuns[r.worker.id].id}
+                shareText={`Payslip for ${r.worker.full_name} — ${payPeriod} ${periodStart} to ${periodEnd}. Net pay: ${fmt(r.money.net)}.`}
+              />
+            </div>
+          )}
         </div>
-      </div>
+      ))}
 
       <div style={{ background: "#f8fafc", border: "1.5px solid #e2e8f0", borderRadius: 12, padding: "11px 14px", marginBottom: 14 }}>
         <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>Your cost to SARS — pay by 7th</div>
-        <Row label="UIF employer (1%)" value={fmt(uifCalc.employer)} />
-        {sdl > 0 && <Row label="SDL (1%)" value={fmt(sdl)} />}
-        <Row label="Total" value={fmt(uifCalc.total + sdl)} bold />
+        <Row label="UIF employer (1%)" value={fmt(totals.uifEmployer)} />
+        {totals.sdl > 0 && <Row label="SDL (1%)" value={fmt(totals.sdl)} />}
+        <Row label="Total" value={fmt(totals.uifEmployee + totals.uifEmployer + totals.sdl)} bold />
       </div>
 
       {payRunRestriction && (
@@ -599,39 +539,47 @@ export function PayRunWizard({ onExit }: { onExit: () => void }) {
 
       {error && <p style={{ color: "#dc2626", fontSize: 13, marginBottom: 10 }}>{error}</p>}
 
-      {saved && (
+      {savedCount > 0 && (
         <div style={{ background: "#F0F9FF", border: "1.5px solid #7DD3FC", borderRadius: 10, padding: "10px 14px", marginBottom: 10, display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#0369A1" }}>
           <span style={{ fontSize: 16 }}>✅</span>
           <span>
-            <span style={{ fontWeight: 700 }}>Pay run saved.</span> Share the payslip or start a new run.
+            <span style={{ fontWeight: 700 }}>
+              {savedCount} of {rows.length} pay run{rows.length === 1 ? "" : "s"} saved.
+            </span>{" "}
+            {allSaved ? "Share the payslips or start a new run." : "Tap save again to finish the rest."}
           </span>
         </div>
       )}
 
-      {!saved &&
+      {!allSaved &&
         (canApproveRun ? (
           <button
-            onClick={() => handleSave("approved")}
-            disabled={createPayRun.isPending}
-            style={{ width: "100%", background: "#0369A1", border: "none", borderRadius: 14, padding: 16, fontSize: 16, fontWeight: 700, cursor: createPayRun.isPending ? "default" : "pointer", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, boxShadow: "0 4px 12px rgba(3,105,161,0.3)" }}
+            onClick={() => handleSaveAll("approved")}
+            disabled={saving || rows.length === 0}
+            style={{ width: "100%", background: "#0369A1", border: "none", borderRadius: 14, padding: 16, fontSize: 16, fontWeight: 700, cursor: saving ? "default" : "pointer", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, boxShadow: "0 4px 12px rgba(3,105,161,0.3)", opacity: saving ? 0.7 : 1 }}
           >
-            ✔️ {createPayRun.isPending ? "Saving..." : "Approve & Save Pay Run"}
+            ✔️ {saving ? `Saving ${savedCount + 1} of ${rows.length}...` : `Approve & Save ${rows.length > 1 ? `${rows.length} Pay Runs` : "Pay Run"}`}
           </button>
         ) : (
-          <div style={{ background: "#F0F9FF", border: "1.5px solid #BAE6FD", borderRadius: 12, padding: "12px 16px", textAlign: "center", fontSize: 13, color: "#0369A1", fontWeight: 600 }}>
-            ✔️ Prepared — waiting for owner approval before wages are released
-          </div>
+          <button
+            onClick={() => handleSaveAll("prepared")}
+            disabled={saving || rows.length === 0}
+            style={{ width: "100%", background: "#fff", border: "2px solid #0C4A6E", borderRadius: 14, padding: 15, fontSize: 15, fontWeight: 700, cursor: saving ? "default" : "pointer", color: "#0C4A6E" }}
+          >
+            {saving ? "Saving..." : "Save as prepared — owner approves before wages go out"}
+          </button>
         ))}
 
       {plan !== "solo" ? (
         <button
-          onClick={() => {
-            if (!saved) handleSave(canApproveRun ? "approved" : "prepared");
-            setShowPayslip(true);
+          onClick={async () => {
+            if (!allSaved) await handleSaveAll(canApproveRun ? "approved" : "prepared");
+            setShareOpen(true);
           }}
-          style={{ width: "100%", background: saved ? "#0C4A6E" : "#fff", border: "2px solid #0C4A6E", borderRadius: 14, padding: 15, fontSize: 15, fontWeight: 700, cursor: "pointer", color: saved ? "#fff" : "#0C4A6E", marginTop: 8, display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}
+          disabled={saving}
+          style={{ width: "100%", background: allSaved ? "#0C4A6E" : "#fff", border: "2px solid #0C4A6E", borderRadius: 14, padding: 15, fontSize: 15, fontWeight: 700, cursor: saving ? "default" : "pointer", color: allSaved ? "#fff" : "#0C4A6E", marginTop: 8, display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}
         >
-          <span>📤</span> {saved ? "Share Payslip" : "Save & Share Payslip"}
+          <span>📤</span> {allSaved ? (rows.length > 1 ? "Share Payslips" : "Share Payslip") : "Save & Share Payslips"}
         </button>
       ) : (
         <button
@@ -642,27 +590,13 @@ export function PayRunWizard({ onExit }: { onExit: () => void }) {
         </button>
       )}
 
-      {saved && (
+      {allSaved && (
         <button onClick={onExit} style={{ width: "100%", background: "none", border: "none", color: "#64748b", fontSize: 13, fontWeight: 600, cursor: "pointer", marginTop: 8, padding: 8 }}>
           Done — back to pay runs
         </button>
       )}
 
-      {showPayslip && payslipDoc && savedPayRunId && (
-        <div style={{ marginTop: 16, background: "#fff", border: "1.5px solid #e2e8f0", borderRadius: 14, padding: 16 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: "#111", marginBottom: 4 }}>Payslip ready</div>
-          <DocumentActions
-            doc={payslipDoc}
-            kind="payslip"
-            sourceId={savedPayRunId}
-            shareText={`Payslip for ${selectedWorker?.full_name} — ${payPeriod} ${payDate}. Net pay: ${fmt(netPay)}.`}
-          />
-        </div>
-      )}
-
-      {showUpgrade && business && (
-        <UpgradeModal feature="payrun" currentPlan={plan} isOwner={member.role === "owner"} onClose={() => setShowUpgrade(false)} />
-      )}
+      {showUpgrade && business && <UpgradeModal feature="payrun" currentPlan={plan} isOwner={member.role === "owner"} onClose={() => setShowUpgrade(false)} />}
     </div>
   );
 }

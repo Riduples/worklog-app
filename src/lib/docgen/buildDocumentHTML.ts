@@ -28,6 +28,13 @@ export type DocForRender = {
   reference_doc_number?: string | null;
   reason?: string | null;
   terms?: string | null;
+  /**
+   * Payslip only: the run's own working — the period it covers, how the days
+   * were arrived at, the leave that moved them, what's left on their advance.
+   * A payslip that only lists amounts leaves the employee (and the owner, a
+   * month later) with no way to check any of it.
+   */
+  payslip_meta?: Array<{ label: string; value: string }> | null;
 };
 
 
@@ -105,6 +112,23 @@ export function buildDocumentHTML(doc: DocForRender, business: BusinessProfile, 
   const logoHTML = business.logo_url
     ? `<img src="${esc(business.logo_url)}" alt="" style="width:44px;height:44px;object-fit:contain;border-radius:8px;" />`
     : `<div class="brand-mark">${esc(initial)}</div>`;
+
+  // Payslip working, printed above the amounts it explains.
+  const payslipMeta = isPayslip && doc.payslip_meta && doc.payslip_meta.length > 0 ? doc.payslip_meta : null;
+  const payslipMetaHTML = payslipMeta
+    ? `
+  <div style="margin-bottom:20px;padding:12px 14px;background:#F0F9FF;border-radius:8px;border-left:4px solid #0C4A6E;">
+    <div style="font-size:11px;font-weight:700;color:#0C4A6E;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">This pay run</div>
+    <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:0;">
+      ${payslipMeta
+        .map(
+          (m) =>
+            `<tr><td style="padding:3px 0;color:#64748b;width:140px;vertical-align:top;">${esc(m.label)}</td><td style="padding:3px 0;color:#111;">${esc(m.value)}</td></tr>`
+        )
+        .join("")}
+    </table>
+  </div>`
+    : "";
 
   const hasBanking = !!business.bank_name && !!business.bank_account;
   const bankingHTML =
@@ -209,6 +233,7 @@ export function buildDocumentHTML(doc: DocForRender, business: BusinessProfile, 
     </div>
   </div>
 
+  ${payslipMetaHTML}
   <table>
     <thead>
       <tr><th>Description</th><th>Qty</th><th>Amount</th></tr>

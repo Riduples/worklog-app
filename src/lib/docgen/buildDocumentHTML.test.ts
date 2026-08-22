@@ -176,3 +176,35 @@ describe("escaping", () => {
     expect(html).toContain("Bob &amp; Sons &lt;Pty&gt; Ltd");
   });
 });
+
+describe("payslip working (payslip_meta)", () => {
+  const withMeta = (kind: DocKind) =>
+    buildDocumentHTML(
+      { ...doc, payslip_meta: [{ label: "Days paid", value: "19 days · 21 working days in the period" }, { label: "Advance balance", value: "R 1 200,00 owing → R 700,00 still owing" }] },
+      business(),
+      kind
+    );
+
+  it("prints the run's working on the payslip", () => {
+    const html = withMeta("payslip");
+    expect(html).toContain("This pay run");
+    expect(html).toContain("Days paid");
+    expect(html).toContain("19 days · 21 working days in the period");
+    expect(html).toContain("Advance balance");
+  });
+
+  it("escapes what it prints", () => {
+    const html = buildDocumentHTML({ ...doc, payslip_meta: [{ label: "Note", value: "<script>x</script>" }] }, business(), "payslip");
+    expect(html).not.toContain("<script>x</script>");
+    expect(html).toContain("&lt;script&gt;");
+  });
+
+  it("is a payslip-only block — never on an invoice or quote", () => {
+    expect(withMeta("invoice")).not.toContain("This pay run");
+    expect(withMeta("quote")).not.toContain("This pay run");
+  });
+
+  it("is omitted when the payslip carries no working", () => {
+    expect(build("payslip")).not.toContain("This pay run");
+  });
+});

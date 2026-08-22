@@ -5,7 +5,9 @@ import { Modal } from "@/components/ui/Modal";
 import { Row } from "@/components/ui/Row";
 import { DocumentActions } from "@/components/ui/DocumentActions";
 import { useStaffRegister } from "@/lib/supabase/hooks/useStaffRegister";
+import { useWorkerLoans } from "@/lib/supabase/hooks/useWorkerLoans";
 import { useDeletePayRun } from "@/lib/supabase/hooks/usePayRuns";
+import { loanBalanceOf } from "@/lib/payrunDraft";
 import { useToolAccess } from "@/lib/supabase/hooks/useToolAccess";
 import { fmt } from "@/lib/format";
 import type { Tables } from "@/lib/types/database";
@@ -19,6 +21,7 @@ type PayRun = Tables<"pay_runs">;
 // paid, even if the employee's rate has since changed.
 export function PayRunDetailModal({ payRun, onClose }: { payRun: PayRun; onClose: () => void }) {
   const { data: staff } = useStaffRegister();
+  const { data: loans } = useWorkerLoans();
   const access = useToolAccess("payrun");
   const deletePayRun = useDeletePayRun();
   const [showVoid, setShowVoid] = useState(false);
@@ -43,6 +46,19 @@ export function PayRunDetailModal({ payRun, onClose }: { payRun: PayRun; onClose
   const net = Number(payRun.net_pay || 0);
   const isApproved = payRun.status === "approved";
 
+  // Unpaid leave changed shape. Runs made before the change paid the full period
+  // and then took the unpaid days off the NET; runs made since leave them out of
+  // the days, so the gross, UIF and PAYE are already the real ones and nothing is
+  // taken off twice. Both are on the books, so the slip works out which it is
+  // looking at from the run's own figures rather than guessing from its date: if
+  // the net is short by exactly the unpaid amount, it was deducted.
+  const netBeforeUnpaid = gross - uifEmp - paye - loan - other;
+  const unpaidWasDeducted = unpaidLeave > 0 && Math.abs(netBeforeUnpaid - unpaidLeave - net) < 0.01;
+
+  // Where their advance stands now — the question that follows every deduction.
+  // Live, not a snapshot: it's shown as today's balance, not the run's.
+  const loanBalance = loanBalanceOf((loans ?? []).filter((l) => l.staff_id === payRun.staff_id));
+
   const payslipDoc: DocForRender = {
     doc_number: payRun.payslip_number ?? `PAY-${payRun.pay_date}`,
     issue_date: payRun.pay_date,
@@ -65,6 +81,15 @@ export function PayRunDetailModal({ payRun, onClose }: { payRun: PayRun; onClose
     balance_due: null,
     due_date: payRun.pay_date,
     valid_until: null,
+    payslip_meta: [
+      { desc: "Pay period", value: `${payRun.pay_period} · paid ${payRun.pay_date}` },
+      { desc: `${unitLabel === "hrs" ? "Hours" : "Days"} paid`, value: `${units} ${unitLabel} × ${fmt(baseRate)}` },
+      ...(leaveDays > 0 && payRun.leave_type !== "Unpaid" ? [{ desc: "Paid leave", value: `${leaveDays} day${leaveDays === 1 ? "" : "s"} ${payRun.leave_type ?? "Annual"} — paid in full` }] : []),
+      ...(unpaidLeave > 0
+        ? [{ desc: "Unpaid leave", value: unpaidWasDeducted ? `${fmt(unpaidLeave)} deducted` : `${fmt(unpaidLeave)} not earned — already off the days above` }]
+        : []),
+      ...(loanBalance > 0 || loan > 0 ? [{ desc: "Advance balance", value: `${fmt(loanBalance)} still owing today${loan > 0 ? ` (after ${fmt(loan)} off this run)` : ""}` }] : []),
+    ].map((m) => ({ label: m.desc, value: m.value })),
   };
 
   const handleVoid = () => {
@@ -100,22 +125,37 @@ export function PayRunDetailModal({ payRun, onClose }: { payRun: PayRun; onClose
             {isApproved ? "✔️ Approved" : "Prepared"}
           </span>
         </div>
-        <Row label={`Basic (${units} ${unitLabel} × ${fmt(baseRate)})`} value={fmt(basic)} />
-        {overtime > 0 && <Row label="Overtime" value={fmt(overtime)} />}
-        {allowances > 0 && <Row label="Allowance" value={fmt(allowances)} />}
-        <Row label="Gross wages" value={fmt(gross)} bold />
+        {/* tone="dark" throughout: Row's default palette is navy text, and this
+            card is navy — the whole slip used to be invisible on it bar the net. */}
+        <Row tone="dark" label={`Basic (${units} ${unitLabel} × ${fmt(baseRate)})`} value={fmt(basic)} />
+        {overtime > 0 && <Row tone="dark" label="Overtime" value={fmt(overtime)} />}
+        {allowances > 0 && <Row tone="dark" label="Allowance" value={fmt(allowances)} />}
+        <Row tone="dark" label="Gross wages" value={fmt(gross)} bold />
         <div style={{ borderTop: "1px solid rgba(255,255,255,0.15)", marginTop: 8, paddingTop: 8 }}>
-          <Row label="UIF (employee 1%)" value={`−${fmt(uifEmp)}`} />
-          {paye > 0 && <Row label="PAYE" value={`−${fmt(paye)}`} />}
-          {loan > 0 && <Row label="Loan repayment" value={`−${fmt(loan)}`} />}
-          {other > 0 && <Row label={payRun.other_deduction_desc || "Other deduction"} value={`−${fmt(other)}`} />}
-          {leaveDays > 0 && payRun.leave_type !== "Unpaid" && <Row label={`${payRun.leave_type ?? "Annual"} leave (${leaveDays}d)`} value="noted" />}
-          {unpaidLeave > 0 && <Row label={`Unpaid leave (${leaveDays}d)`} value={`−${fmt(unpaidLeave)}`} />}
+          <Row tone="dark" label="UIF (employee 1%)" value={`−${fmt(uifEmp)}`} />
+          {paye > 0 && <Row tone="dark" label="PAYE" value={`−${fmt(paye)}`} />}
+          {loan > 0 && <Row tone="dark" label="Advance repayment" value={`−${fmt(loan)}`} />}
+          {other > 0 && <Row tone="dark" label={payRun.other_deduction_desc || "Other deduction"} value={`−${fmt(other)}`} />}
+          {leaveDays > 0 && payRun.leave_type !== "Unpaid" && <Row tone="dark" label={`${payRun.leave_type ?? "Annual"} leave (${leaveDays}d)`} value="paid in full" />}
+          {unpaidLeave > 0 &&
+            (unpaidWasDeducted ? (
+              <Row tone="dark" label={`Unpaid leave (${leaveDays}d)`} value={`−${fmt(unpaidLeave)}`} />
+            ) : (
+              // Newer runs leave the unpaid days out of the days paid, so this is
+              // a note, not a deduction — no minus sign, or it reads as one.
+              <Row tone="dark" label={`Unpaid leave${leaveDays > 0 ? ` (${leaveDays}d)` : ""} — already off the days`} value={`${fmt(unpaidLeave)} not earned`} />
+            ))}
         </div>
         <div style={{ borderTop: "1px solid rgba(255,255,255,0.2)", marginTop: 10, paddingTop: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <span style={{ fontSize: 14, color: "#38BDF8", fontWeight: 700 }}>NET PAY (take-home)</span>
-          <span style={{ fontSize: 24, color: "#fff", fontWeight: 900 }}>{fmt(net)}</span>
+          <span style={{ fontSize: 24, color: "#fff", fontWeight: 900, whiteSpace: "nowrap" }}>{fmt(net)}</span>
         </div>
+        {(loanBalance > 0 || loan > 0) && (
+          <div style={{ background: "rgba(245,158,11,0.15)", borderRadius: 10, padding: "8px 11px", marginTop: 10, fontSize: 11.5, color: "#FCD34D", lineHeight: 1.5 }}>
+            💰 Advance: <span style={{ fontWeight: 800 }}>{fmt(loanBalance)}</span> still owing today
+            {loan > 0 ? ` · ${fmt(loan)} came off on this run` : ""}
+          </div>
+        )}
       </div>
 
       <div style={{ background: "#f8fafc", border: "1.5px solid #e2e8f0", borderRadius: 12, padding: "11px 14px", marginBottom: 14 }}>
