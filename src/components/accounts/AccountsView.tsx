@@ -101,7 +101,12 @@ export function AccountsView() {
 
   return (
     <div style={{ padding: "20px 16px 100px" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+      {/* No blurb under the heading. The Business Hub tile you tapped to get here
+          already says what this is for, and a first-timer with nothing saved gets
+          the empty state below, which tells them what to actually do. Repeating
+          the pitch to someone who has arrived only pushes their accounts down
+          the screen. */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
         <div>
           <BackLink />
           <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 0" }}>Bank accounts</h1>
@@ -121,11 +126,6 @@ export function AccountsView() {
           </button>
         </div>
       </div>
-
-      <p style={{ fontSize: 13, color: "#64748b", lineHeight: 1.5, marginBottom: 18 }}>
-        Add each account you use, then tag transactions to them. On the dashboard and reports you can switch between one
-        account and all of them combined.
-      </p>
 
       {!isLoading && list.length === 0 && (
         <div style={{ background: "#F0F9FF", border: "1.5px solid #BAE6FD", borderRadius: 12, padding: "16px", marginBottom: 16, fontSize: 13, color: "#0369A1", lineHeight: 1.5 }}>
