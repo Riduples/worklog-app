@@ -81,7 +81,11 @@ export function BankingView() {
 
   return (
     <div style={{ padding: "20px 16px 100px" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6, gap: 10 }}>
+      {/* No blurb under the heading — the tool tile that opens this page already
+          says "every rand in, out and between your accounts". Tapping a row to
+          change it is how every list in the app behaves, so it doesn't need
+          saying here either. */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, gap: 10 }}>
         <div>
           <BackLink />
           <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 0" }}>Banking</h1>
@@ -103,10 +107,6 @@ export function BankingView() {
           </div>
         )}
       </div>
-
-      <p style={{ fontSize: 13, color: "#64748b", lineHeight: 1.5, margin: "10px 0 12px" }}>
-        Every rand that moved through your accounts — in, out and between. Tap any row to change it.
-      </p>
 
       {/* Import here takes a CSV. A real bank statement — a PDF, a photo, a
           download — goes through the reader, which lands its lines in this same

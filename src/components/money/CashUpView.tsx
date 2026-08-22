@@ -126,10 +126,11 @@ export function CashUpView() {
       <BackLink />
       <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 18px" }}>Cash-ups</h1>
 
-      <div style={{ background: "#F0F9FF", border: "1.5px solid #7DD3FC", borderRadius: 12, padding: "12px 14px", marginBottom: 18, fontSize: 12, color: "#0369A1", lineHeight: 1.5 }}>
-        <span style={{ fontWeight: 700 }}>🧮 Cash-Up</span> — Count your cash at the end of the day and check it matches what you logged. Small differences are normal; big ones are worth a second look.
-      </div>
-
+      {/* No banner. Its first sentence was the tool tile's description word for
+          word, and its second — small differences are normal, big ones aren't —
+          is what the variance box below already says in colour: blue under R1,
+          amber to R20, red past it. The screen shows the judgement rather than
+          announcing it before you have counted anything. */}
       <Field label="Date">
         <Input type="date" value={date} onChange={setDate} />
       </Field>
