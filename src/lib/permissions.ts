@@ -11,7 +11,6 @@ export type ToolId =
   | "profit"
   | "bankstatement"
   | "cashup"
-  | "ledger"
   | "quote"
   | "invoice"
   | "statement"
@@ -75,12 +74,10 @@ export const TOOL_CATEGORIES: { id: string; label: string; icon: string; desc: s
   { id: "purchases", label: "Purchases", icon: "📥", desc: "Purchase orders, supplier invoices, remittances & supplier age analysis — everything on the buying side", tools: ["purchaseorder", "supplierinvoice", "remittance", "payables"] },
   { id: "bookings", label: "Scheduling System", icon: "📅", desc: "Appointments, time & travel — manage how you spend your day", tools: ["booking", "timetrack", "mileage"] },
   { id: "workers", label: "Payroll", icon: "💼", desc: "Employees, wages, payslips & advances", tools: ["staffregister", "payrun", "advances", "leave", "payrollcompliance"] },
-  // "ledger" isn't in the source prototype's categories (it dropped Ledgers
-  // from the matrix) but the tool exists here, so it needs a home to be gated.
-  // "profit" (Cash Flow) lives here too: it's the cash-in/out view of Money, and
+  // "profit" (Cash Flow) lives here: it's the cash-in/out view of Money, and
   // the phone's Money tab already opens it — its accrual sibling Profit & Loss
   // stays under Compliance & Financials.
-  { id: "money", label: "Money", icon: "💰", desc: "Track what comes in and goes out", tools: ["income", "expense", "bankstatement", "cashup", "ledger", "profit"] },
+  { id: "money", label: "Money", icon: "💰", desc: "Track what comes in and goes out", tools: ["income", "expense", "bankstatement", "cashup", "profit"] },
   // "taxdashboard" is deliberately absent: the /tax hub it described is gated
   // by "tax", so a second id for the same page was a toggle that controlled
   // nothing. Every id below reaches a real screen.
@@ -93,7 +90,6 @@ export const TOOL_LABELS: Partial<Record<ToolId, { icon: string; label: string; 
   profit: { icon: "💵", label: "Cash Flow", desc: "Actual cash in vs out — unpaid invoices and what you owe shown separately" },
   bankstatement: { icon: "🏦", label: "Import Statement", desc: "Upload your bank statement — auto-extracts every transaction" },
   cashup: { icon: "🧮", label: "Cash-ups", desc: "Count your cash at the end of the day and check it matches what you logged" },
-  ledger: { icon: "📒", label: "Ledgers", desc: "Track who owes you money and who you owe" },
   quote: { icon: "📋", label: "Quote", desc: "Send a price to a customer before the job" },
   invoice: { icon: "📤", label: "Invoice", desc: "Bill a customer and track payment" },
   statement: { icon: "📃", label: "Statement", desc: "A summary you can send a customer showing everything they've bought and what they still owe" },

@@ -101,7 +101,6 @@ const NAV_CATEGORIES: { id: string; items: NavItem[] }[] = [
     items: [
       { href: "/banking", icon: "🏦", label: "Banking", anyOf: ["income", "expense", "bankstatement"], desc: "Every rand in, out and between your accounts — one list, one form" },
       { href: "/cash-up", icon: "🧮", label: "Cash-ups", toolId: "cashup" },
-      { href: "/ledger", icon: "📒", label: "Ledgers", toolId: "ledger" },
       { href: "/cashflow", icon: "📊", label: "Cash Flow", toolId: "profit" },
     ],
   },

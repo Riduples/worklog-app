@@ -27,7 +27,7 @@ export const BUSINESS_TYPES: { id: BusinessType; label: string }[] = [
 //  - "other" maps to null = no filtering, same as show_all_tools.
 //
 // Note this genuinely hides Purchase Orders, Supplier Invoices, Remittance,
-// Cash Flow, Ledgers and the Compliance Dashboard from EVERY type by default —
+// Cash Flow and the Compliance Dashboard from EVERY type by default —
 // including trade, despite the build doc's example claiming a contractor sees
 // POs. The prototype disagrees with the doc; the prototype wins.
 const BUSINESS_TYPE_CORE_TOOLS: Record<BusinessType, ToolId[] | null> = {

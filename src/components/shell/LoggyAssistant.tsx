@@ -33,7 +33,6 @@ const TOOL_HREF: Partial<Record<ToolId, string>> = {
   leave: "/leave",
   bankstatement: "/bank-statement",
   cashup: "/cash-up",
-  ledger: "/ledger",
   profit: "/cashflow",
   profitloss: "/profit-loss",
   tax: "/tax",

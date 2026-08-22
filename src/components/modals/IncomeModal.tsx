@@ -9,7 +9,6 @@ import { ContactPicker } from "@/components/ui/ContactPicker";
 import { PaymentMethodPicker } from "@/components/ui/PaymentMethodPicker";
 import { SarsSuggestionDropdown } from "@/components/ui/SarsSuggestionDropdown";
 import { InvoiceMatcher, paymentSettlesInvoice } from "@/components/ui/InvoiceMatcher";
-import { LedgerEntryMatcher, paymentSettlesEntry } from "@/components/ui/LedgerEntryMatcher";
 import { getSarsIncomeMatch, INCOME_PAYMENT_METHODS, narrowMethodsForAccount, type SarsCategory } from "@/lib/sarsCategories";
 import { VAT_SUPPLY_TYPES, carriesVat, type VatSupplyType } from "@/lib/vatSupplyTypes";
 import { Chips } from "@/components/ui/Chips";
@@ -18,7 +17,6 @@ import { useTaxRates } from "@/lib/taxRates";
 import { useCreateIncome, useUpdateIncome } from "@/lib/supabase/hooks/useIncome";
 import type { Tables } from "@/lib/types/database";
 import { useInvoices, useUpdateInvoice } from "@/lib/supabase/hooks/useInvoices";
-import { useLedgerEntries, useUpdateLedgerEntry } from "@/lib/supabase/hooks/useLedger";
 import { useContacts } from "@/lib/supabase/hooks/useContacts";
 import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 import { useBankAccounts } from "@/lib/supabase/hooks/useBankAccounts";
@@ -61,8 +59,6 @@ export function IncomeModal({
   const [date, setDate] = useState(existing?.transaction_date ?? todayStr());
   const [matchedInvoiceId, setMatchedInvoiceId] = useState<string | null>(existing?.matched_invoice_id ?? null);
   const [markPaid, setMarkPaid] = useState(false);
-  const [matchedLedgerEntryId, setMatchedLedgerEntryId] = useState<string | null>(existing?.matched_ledger_entry_id ?? null);
-  const [markEntryPaid, setMarkEntryPaid] = useState(false);
   const [accountId, setAccountId] = useState<string | null>(existing?.account_id ?? null);
   const [isPersonal, setIsPersonal] = useState(!!existing?.is_personal);
   // An edited row keeps the category it was saved with until someone types over
@@ -77,8 +73,6 @@ export function IncomeModal({
   const updateIncome = useUpdateIncome();
   const saving = createIncome.isPending || updateIncome.isPending;
   const updateInvoice = useUpdateInvoice();
-  const { data: ledgerEntries } = useLedgerEntries();
-  const updateLedgerEntry = useUpdateLedgerEntry();
   const { TAX_JAR_RATE, VAT_RATE, vatFromGross } = useTaxRates();
   const { data: accounts } = useBankAccounts();
 
@@ -111,20 +105,13 @@ export function IncomeModal({
   const matchedInvoice = (invoices ?? []).find((i) => i.id === matchedInvoiceId) ?? null;
   const settlesInvoice = paymentSettlesInvoice(matchedInvoice, amountNum);
 
-  // Client entries only: a supplier entry is money the business OWES, which a
-  // receipt can never settle. Settled entries stay listed so a late-logged
-  // payment can still be linked, exactly as the invoice matcher does.
-  const clientEntries = (ledgerEntries ?? []).filter((e) => e.ledger_type === "client");
-  const matchedEntry = clientEntries.find((e) => e.id === matchedLedgerEntryId) ?? null;
-  const settlesEntry = paymentSettlesEntry(matchedEntry, amountNum);
-
-  // Linked to either kind of document? Then that document is the record and
-  // carries the category, so the "what for" step is skipped — the same rule the
-  // expense side follows.
+  // Linked to an invoice? Then that document is the record and carries the
+  // category, so the "what for" step is skipped — the same rule the expense
+  // side follows.
   // "Other" money has no document by definition, so nothing can be matched to
   // it — the category IS the record, and asking again would offer a link the
   // variant deliberately hides.
-  const isMatched = !isOther && !!(matchedInvoiceId || matchedLedgerEntryId);
+  const isMatched = !isOther && !!matchedInvoiceId;
 
   // Tagging the entry to an account narrows the payment methods to what that
   // account can do; the chosen method is kept if it still fits, otherwise the
@@ -162,9 +149,6 @@ export function IncomeModal({
         vat_amount: isPersonal ? 0 : vatAmount,
         vat_supply_type: supplyType,
         matched_invoice_id: isPersonal ? null : matchedInvoiceId,
-        // Owner's own contribution isn't a customer settling anything, so any
-        // link is dropped with the rest of the business framing.
-        matched_ledger_entry_id: isPersonal ? null : matchedLedgerEntryId,
         account_id: accountId,
         source: "manual",
         is_personal: isPersonal,
@@ -177,16 +161,6 @@ export function IncomeModal({
       if (matchedInvoiceId && markPaid && settlesInvoice) {
         await updateInvoice
           .mutateAsync({ id: matchedInvoiceId, changes: { status: "paid", paid_date: date, balance_due: 0 } })
-          .catch(() => {});
-      }
-      // Same for a credit-book entry, and re-checked rather than trusting the
-      // checkbox: the amount can be edited after ticking it, and marking a
-      // R5,000 debt settled because someone paid R50 is the kind of wrong that
-      // only surfaces at year end. The income is saved either way — the link is
-      // what keeps the report right, this is the convenience on top.
-      if (matchedLedgerEntryId && markEntryPaid && settlesEntry) {
-        await updateLedgerEntry
-          .mutateAsync({ id: matchedLedgerEntryId, changes: { status: "paid", paid_date: date } })
           .catch(() => {});
       }
       onClose();
@@ -296,31 +270,6 @@ export function IncomeModal({
         onMarkPaidChange={setMarkPaid}
       />
 
-      {/* The credit-book twin, and the reason the revenue side of the ledger can
-          be counted at all: a client entry is revenue when the credit is
-          extended, so the cash that arrives against it has to name the entry or
-          Profit & Loss would count the sale twice. */}
-      <LedgerEntryMatcher
-        side="client"
-        entries={clientEntries}
-        matchedId={matchedLedgerEntryId}
-        onMatch={(id) => {
-          setMatchedLedgerEntryId(id);
-          setMarkEntryPaid(!!id);
-          if (id) {
-            setWhatFor("");
-            setSarsCategory(null);
-            setShowSarsSuggestions(false);
-          }
-        }}
-        filterByParty={receivedFrom}
-        onAutoFillParty={(party) => {
-          if (!receivedFrom.trim()) setReceivedFrom(party);
-        }}
-        paymentAmount={amountNum}
-        markPaid={markEntryPaid}
-        onMarkPaidChange={setMarkEntryPaid}
-      />
       </>)}
 
       {/* Cash-sale path: no invoice to inherit from, so capture the category and

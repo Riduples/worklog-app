@@ -8,7 +8,6 @@ import { SaveBtn } from "@/components/ui/SaveBtn";
 import { ContactPicker } from "@/components/ui/ContactPicker";
 import { PaymentMethodPicker } from "@/components/ui/PaymentMethodPicker";
 import { SarsSuggestionDropdown } from "@/components/ui/SarsSuggestionDropdown";
-import { LedgerEntryMatcher, paymentSettlesEntry } from "@/components/ui/LedgerEntryMatcher";
 import { SupplierInvoiceMatcher, expenseSettlesSupplierInvoice } from "@/components/ui/SupplierInvoiceMatcher";
 import { getSarsMatch, EXPENSE_PAYMENT_METHODS, narrowMethodsForAccount, type SarsCategory } from "@/lib/sarsCategories";
 import { VAT_SUPPLY_TYPES, carriesVat, type VatSupplyType } from "@/lib/vatSupplyTypes";
@@ -19,7 +18,6 @@ import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 import { useCreateExpense, useUpdateExpense } from "@/lib/supabase/hooks/useExpenses";
 import type { Tables } from "@/lib/types/database";
 import { useContacts } from "@/lib/supabase/hooks/useContacts";
-import { useLedgerEntries, useUpdateLedgerEntry } from "@/lib/supabase/hooks/useLedger";
 import { useSupplierInvoices, useUpdateSupplierInvoice } from "@/lib/supabase/hooks/useSupplierInvoices";
 import { useBankAccounts } from "@/lib/supabase/hooks/useBankAccounts";
 import { BankAccountPicker } from "@/components/ui/BankAccountPicker";
@@ -47,8 +45,6 @@ export function ExpenseModal({
   const [details, setDetails] = useState(existing?.details ?? "");
   const [method, setMethod] = useState(existing?.payment_method ?? "Cash");
   const [date, setDate] = useState(existing?.transaction_date ?? todayStr());
-  const [matchedLedgerEntryId, setMatchedLedgerEntryId] = useState<string | null>(existing?.matched_ledger_entry_id ?? null);
-  const [markPaid, setMarkPaid] = useState(false);
   const [matchedSupplierInvoiceId, setMatchedSupplierInvoiceId] = useState<string | null>(existing?.matched_supplier_invoice_id ?? null);
   const [markSiPaid, setMarkSiPaid] = useState(false);
   const [accountId, setAccountId] = useState<string | null>(existing?.account_id ?? null);
@@ -60,12 +56,10 @@ export function ExpenseModal({
   const [error, setError] = useState("");
 
   const { data: contacts } = useContacts();
-  const { data: ledgerEntries } = useLedgerEntries();
   const { data: supplierInvoices } = useSupplierInvoices();
   const createExpense = useCreateExpense();
   const updateExpense = useUpdateExpense();
   const saving = createExpense.isPending || updateExpense.isPending;
-  const updateLedgerEntry = useUpdateLedgerEntry();
   const updateSupplierInvoice = useUpdateSupplierInvoice();
   const { data: accounts } = useBankAccounts();
   const { data: business } = useBusinessProfile();
@@ -85,32 +79,29 @@ export function ExpenseModal({
 
   // The amount paid is what left the account, so any VAT is already inside it and
   // has to be taken back out — the mirror of the income side. A purchase settling
-  // a bill — a supplier invoice OR a supplier ledger credit — carries no VAT of
+  // a bill — a supplier invoice — carries no VAT of
   // its own: the bill is the record. Claiming the expense's own VAT on top would
   // either double-count (supplier invoice, which holds its own vat_amount) or
-  // reclaim VAT the P&L still counts gross (a ledger credit has no VAT split), so
+  // reclaim VAT the P&L still counts gross, so
   // the two would disagree. A VAT-registered business wanting to reclaim raises a
   // supplier invoice, which carries the ex-VAT split.
   const isVatRegistered = !!business?.vat_number;
-  const claimsOwnVat = isVatRegistered && !matchedSupplierInvoiceId && !matchedLedgerEntryId && !isPersonal && carriesVat(supplyType);
+  const claimsOwnVat = isVatRegistered && !matchedSupplierInvoiceId && !isPersonal && carriesVat(supplyType);
   const vatAmount = claimsOwnVat ? vatFromGross(amountNum, VAT_RATE) : 0;
   const netAmount = amountNum - vatAmount;
 
   // Supplier entries only: a client entry is money owed TO the business, which
   // an expense can never settle. Settled entries stay listed so an older
   // payment can still be linked, exactly as the invoice matcher does.
-  const supplierEntries = (ledgerEntries ?? []).filter((e) => e.ledger_type === "supplier");
-  const matchedEntry = supplierEntries.find((e) => e.id === matchedLedgerEntryId) ?? null;
-  const settlesEntry = paymentSettlesEntry(matchedEntry, amountNum);
 
   const matchedSi = (supplierInvoices ?? []).find((si) => si.id === matchedSupplierInvoiceId) ?? null;
   const settlesSi = expenseSettlesSupplierInvoice(matchedSi, amountNum);
 
-  // Linked to a bill (a ledger credit or a supplier invoice)? Then that document
+  // Linked to a supplier invoice? Then that document
   // is the record — it carries the category and any VAT — so the "what for" step
   // is skipped, exactly like the income side.
   // "Other" money has no bill behind it by definition — the category is the record.
-  const isMatched = !isOther && !!(matchedLedgerEntryId || matchedSupplierInvoiceId);
+  const isMatched = !isOther && !!matchedSupplierInvoiceId;
 
   // Tagging the entry to an account narrows the payment methods to what that
   // account can do; the chosen method is kept if it still fits, otherwise the
@@ -142,7 +133,6 @@ export function ExpenseModal({
         transaction_date: date,
         // Owner's drawing — not a business expense, so it's not categorised and
         // P&L excludes it (see pnl.ts); any matcher link is dropped.
-        matched_ledger_entry_id: isPersonal ? null : matchedLedgerEntryId,
         matched_supplier_invoice_id: isPersonal ? null : matchedSupplierInvoiceId,
         account_id: accountId,
         source: "manual",
@@ -160,17 +150,12 @@ export function ExpenseModal({
 
     const settleLinked = async () => {
           // Re-check the settle rather than trusting the checkbox alone: the
-          // amount can be edited after ticking it, and marking a R5,000 debt
+          // amount can be edited after ticking it, and marking a R5,000 bill
           // settled because someone paid R50 is the kind of wrong that only
           // shows up at year end. The expense is saved either way — the link is
           // what keeps the report right, and this is only the convenience on
           // top, so a failure here must not lose the expense.
-      if (matchedLedgerEntryId && markPaid && settlesEntry) {
-        await updateLedgerEntry
-          .mutateAsync({ id: matchedLedgerEntryId, changes: { status: "paid", paid_date: date } })
-          .catch(() => {});
-      }
-          // Same for a supplier invoice: settling it zeroes the balance and
+          // Settling a supplier invoice zeroes the balance and
           // stamps paid_amount, so what-you-owe views stop listing it. paid_amount
           // is the ex-VAT invoice_amount, matching the actions modal's Mark Paid.
       if (matchedSupplierInvoiceId && markSiPaid && settlesSi && matchedSi) {
@@ -260,26 +245,6 @@ export function ExpenseModal({
       {!isPersonal && !isOther && (<>
       {/* Matching leads — a matched expense takes its category from the bill, so
           "what for" only shows for an unmatched spend. */}
-      <LedgerEntryMatcher
-        entries={supplierEntries}
-        matchedId={matchedLedgerEntryId}
-        onMatch={(id) => {
-          setMatchedLedgerEntryId(id);
-          if (!id) setMarkPaid(false);
-          // Linking a bill makes it the record — drop any half-started category.
-          if (id) {
-            setWhatFor("");
-            setSarsCategory(null);
-            setShowSarsSuggestions(false);
-          }
-        }}
-        filterByParty={paidTo}
-        onAutoFillParty={setPaidTo}
-        paymentAmount={amountNum}
-        markPaid={markPaid}
-        onMarkPaidChange={setMarkPaid}
-      />
-
       <SupplierInvoiceMatcher
         invoices={supplierInvoices ?? []}
         matchedId={matchedSupplierInvoiceId}
@@ -331,7 +296,7 @@ export function ExpenseModal({
       {/* VAT treatment, on the same footing as the sale side: only a registered
           business is asked, only an unmatched business purchase carries VAT of
           its own, and only a standard-rated one holds any. */}
-      {isVatRegistered && !isPersonal && !matchedSupplierInvoiceId && !matchedLedgerEntryId && (
+      {isVatRegistered && !isPersonal && !matchedSupplierInvoiceId && (
         <Field label="VAT treatment">
           <Chips
             options={VAT_SUPPLY_TYPES.map((v) => v.label)}

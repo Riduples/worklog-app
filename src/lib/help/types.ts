@@ -34,7 +34,7 @@ export const HELP_CATEGORIES: { name: string; icon: string; blurb: string }[] = 
   { name: "Price list & pricing", icon: "🏷️", blurb: "Your price list, and working out what to charge." },
   { name: "Sales", icon: "📤", blurb: "Quotes, invoices, statements and getting paid." },
   { name: "Purchases", icon: "📥", blurb: "Purchase orders, supplier bills and remittances." },
-  { name: "Money", icon: "🏦", blurb: "Bank statements, cash-up, accounts and ledgers." },
+  { name: "Money", icon: "🏦", blurb: "Banking, bank statements, cash-up and your accounts." },
   { name: "Scheduling", icon: "📅", blurb: "Diary, time and mileage." },
   { name: "Payroll & HR", icon: "👷", blurb: "Staff, pay runs, leave and advances." },
   { name: "Team & users", icon: "👥", blurb: "Invite people and set what they can access." },

@@ -4,7 +4,6 @@ import { useState } from "react";
 import { PeriodSelector } from "@/components/ui/PeriodSelector";
 import { useInvoices } from "@/lib/supabase/hooks/useInvoices";
 import { useSupplierInvoices } from "@/lib/supabase/hooks/useSupplierInvoices";
-import { useLedgerEntries } from "@/lib/supabase/hooks/useLedger";
 import { useStockItems } from "@/lib/supabase/hooks/useStock";
 import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 import { useCreditNotes } from "@/lib/supabase/hooks/useCreditNotes";
@@ -23,7 +22,6 @@ export function CashFlowView() {
   const [account, setAccount] = useState<AccountFilter>(ALL_ACCOUNTS);
   const { data: invoices } = useInvoices();
   const { data: supplierInvoices } = useSupplierInvoices();
-  const { data: ledger } = useLedgerEntries();
   const { data: stock } = useStockItems();
   const { data: business } = useBusinessProfile();
   const { data: creditNotes } = useCreditNotes();
@@ -48,23 +46,17 @@ export function CashFlowView() {
   const invoicesOwed = (invoices ?? [])
     .filter((i) => i.status !== "paid" && i.status !== "credited")
     .reduce((s, i) => s + balanceInclVat(i.balance_due, i.vat_amount), 0);
-  const clientLedgerOwed = (ledger ?? [])
-    .filter((e) => e.ledger_type === "client" && e.status !== "paid")
-    .reduce((s, e) => s + Number(e.amount), 0);
   // On-account customer credit is owed BACK to customers — a liability that nets
   // down what's owed to you.
   const customerCreditOnAccount = sumOnAccount(creditNotes ?? [], "customer");
-  const owedToYou = invoicesOwed + clientLedgerOwed - customerCreditOnAccount;
+  const owedToYou = invoicesOwed - customerCreditOnAccount;
 
   const supplierInvoicesOwed = (supplierInvoices ?? [])
     .filter((si) => si.status !== "paid" && si.status !== "credited")
     .reduce((s, si) => s + balanceInclVat(si.balance_due, si.vat_amount), 0);
-  const supplierLedgerOwed = (ledger ?? [])
-    .filter((e) => e.ledger_type === "supplier" && e.status !== "paid")
-    .reduce((s, e) => s + Number(e.amount), 0);
   // On-account supplier credit is owed TO you — nets down what you owe suppliers.
   const supplierCreditOnAccount = sumOnAccount(creditNotes ?? [], "supplier");
-  const youOwe = supplierInvoicesOwed + supplierLedgerOwed - supplierCreditOnAccount;
+  const youOwe = supplierInvoicesOwed - supplierCreditOnAccount;
 
   const position = adjustedPosition(cash, owedToYou, youOwe);
   const stockValue = (stock ?? []).reduce((s, item) => s + Number(item.cost_price || 0) * Number(item.qty || 0), 0);

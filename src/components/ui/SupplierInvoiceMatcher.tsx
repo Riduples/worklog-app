@@ -6,12 +6,11 @@ import { fmt } from "@/lib/format";
 import { balanceInclVat } from "@/lib/balance";
 import type { SupplierInvoice } from "@/lib/supabase/hooks/useSupplierInvoices";
 
-// The supplier-invoice twin of LedgerEntryMatcher, and the purchase-side mirror
-// of the customer InvoiceMatcher. A supplier invoice counts as a cost the moment
-// it is issued, so the cash expense that pays it must not count again — this is
-// where the payment names the invoice it settles, so Profit & Loss can leave it
-// out. Unlike the ledger, supplier invoices carry a VAT breakdown and real
-// partial-payment tracking, so outstanding is the incl-VAT balance still owed.
+// The purchase-side mirror of the customer InvoiceMatcher. A supplier invoice
+// counts as a cost the moment it is issued, so the cash expense that pays it must
+// not count again — this is where the payment names the invoice it settles, so
+// Profit & Loss can leave it out. Supplier invoices carry a VAT breakdown and
+// real partial-payment tracking, so outstanding is the incl-VAT balance owed.
 
 /** What is still owed on a supplier invoice, incl. VAT. balance_due goes to zero
  *  when paid while vat_amount stays, so this must go through balanceInclVat —

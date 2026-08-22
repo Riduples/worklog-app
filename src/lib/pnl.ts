@@ -30,6 +30,13 @@ export type PnlInputs = {
   expenses?: Expense[] | null;
   invoices?: Invoice[] | null;
   supplierInvoices?: SupplierInvoice[] | null;
+  /**
+   * Credit-book entries. The Ledgers tool that wrote these was removed, so
+   * nothing in the app passes this any more — the arms below stay so that any
+   * business whose books still hold ledger rows, or income/expenses matched to
+   * one, keeps the same Profit & Loss it has always had. Drop this, and the
+   * netting it drives, only together with the ledger_entries table itself.
+   */
   ledger?: LedgerEntry[] | null;
   creditNotes?: CreditNote[] | null;
 };

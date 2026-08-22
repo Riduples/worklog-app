@@ -4,7 +4,6 @@ import { useIncome } from "@/lib/supabase/hooks/useIncome";
 import { useExpenses } from "@/lib/supabase/hooks/useExpenses";
 import { useInvoices } from "@/lib/supabase/hooks/useInvoices";
 import { useSupplierInvoices } from "@/lib/supabase/hooks/useSupplierInvoices";
-import { useLedgerEntries } from "@/lib/supabase/hooks/useLedger";
 import { useCreditNotes } from "@/lib/supabase/hooks/useCreditNotes";
 import { useBankAccounts, type BankAccount } from "@/lib/supabase/hooks/useBankAccounts";
 import { useAccountTransfers } from "@/lib/supabase/hooks/useAccountTransfers";
@@ -73,7 +72,6 @@ export function useMoneySummary(period: Period, account: AccountFilter): MoneySu
   const { data: expenses } = useExpenses();
   const { data: invoices } = useInvoices();
   const { data: supplierInvoices } = useSupplierInvoices();
-  const { data: ledger } = useLedgerEntries();
   const { data: creditNotes } = useCreditNotes();
   const { data: accounts } = useBankAccounts();
   const { data: transfers } = useAccountTransfers();
@@ -94,7 +92,7 @@ export function useMoneySummary(period: Period, account: AccountFilter): MoneySu
   // would net every invoice-matched rand against documents that aren't in the
   // inputs, silently zeroing them.
   const pnlInputs: PnlInputs = isAllAccounts
-    ? { income, expenses, invoices, supplierInvoices, ledger, creditNotes }
+    ? { income, expenses, invoices, supplierInvoices, creditNotes }
     : { income: incomeRows, expenses: expenseRows };
 
   const pnl = isAllAccounts

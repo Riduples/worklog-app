@@ -426,7 +426,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
               "Next is a tick box that says \"This is personal money, not a business expense\". Leave it off for a normal business cost. Only tap it when you are taking money out of the business for yourself — that is kept separate from your business totals and tax.",
               "Under Paid to, type or pick the supplier you paid, using the List button to choose a saved one. This is optional.",
               "If you have bank accounts set up, choose which account the money came out of, then choose a Payment method — the chips are Cash, EFT / Bank transfer, Card, Debit order, Voucher / Gift card and Other. The account you picked hides any method it cannot do.",
-              "If this payment clears something you owe — an entry in your ledgers, or a supplier invoice you recorded — pick it in the matcher that appears and tick the option to mark it paid.",
+              "If this payment settles a supplier invoice you recorded, pick it in the matcher that appears and tick the option to mark it paid.",
               "If it is not against a bill, type what it was for in What for?, like Fuel at Engen or Cement. Worklog may suggest a SARS category as you type — tap one if it fits.",
               "If you are VAT registered, a VAT treatment choice appears — Standard-rated (15%), Zero-rated (0%) or Exempt. Leave it on Standard-rated for a normal purchase, and a blue box shows the VAT inside the amount that you claim back on your VAT201.",
               "Tick \"I have a receipt or proof for this\" if you kept the slip. Nothing is uploaded — Worklog only records that you have it, so you can find the claims with no proof behind them later.",
@@ -2170,7 +2170,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
         "blocks": [
           {
             "type": "paragraph",
-            "text": "If a deposit was a customer paying an invoice you already made, or a payment was you settling a supplier invoice or a credit-book (ledger) entry, you should link it. Linking stops the same money being counted twice in your Profit & Loss."
+            "text": "If a deposit was a customer paying an invoice you already made, or a payment was you settling a supplier invoice, you should link it. Linking stops the same money being counted twice in your Profit & Loss."
           },
           {
             "type": "steps",
@@ -2523,117 +2523,6 @@ export const HELP_ARTICLES: HelpArticle[] = [
       "daily-cash-up",
       "cash-flow",
       "business-hub"
-    ]
-  },
-  {
-    "slug": "ledgers-credit-book",
-    "category": "Money",
-    "title": "Use ledgers (your credit book)",
-    "summary": "Keep a simple credit book of what customers owe you and what you owe suppliers, and tick each one off when it's settled.",
-    "sections": [
-      {
-        "heading": "What ledgers are for",
-        "blocks": [
-          {
-            "type": "paragraph",
-            "text": "Ledgers is your credit book. It keeps track of money that hasn't changed hands yet: what a customer still owes you when you let them buy on credit, and what you still owe a supplier when you bought on credit. It is a running list you can tick off as people pay."
-          },
-          {
-            "type": "paragraph",
-            "text": "At the top of the screen you see two totals. Owed to you adds up everything customers still owe you. You owe adds up everything you still owe suppliers. Both totals only count entries that are not yet settled."
-          }
-        ]
-      },
-      {
-        "heading": "Before you start",
-        "blocks": [
-          {
-            "type": "bullets",
-            "items": [
-              "You reach it from Ledgers in the Money section.",
-              "You can pick a name from your saved Customers or Suppliers, but you don't have to. You can just type a name.",
-              "This is a simple record to remind you who owes what, not an invoice. If you want a proper invoice with VAT and line items, use Invoices instead."
-            ]
-          }
-        ]
-      },
-      {
-        "heading": "Add an entry to your credit book",
-        "blocks": [
-          {
-            "type": "steps",
-            "items": [
-              "On the Ledgers screen, tap the + New button in the top right.",
-              "Under Who owes whom?, choose client if a customer owes you, or supplier if you owe someone. A line underneath explains each one: client means a customer owes you (a credit sale), supplier means you owe a supplier (bought on credit).",
-              "In the Client or Supplier box, start typing the name. If they're already saved as a contact you can pick them from the list, otherwise just type the name in.",
-              "In Amount, type how much is owed.",
-              "In Note - optional, write what it was for, like paint and rollers or hair products. You can leave this empty.",
-              "Check the Date. It fills in today's date, but you can change it to the day the credit was given.",
-              "Tap Save entry."
-            ]
-          },
-          {
-            "type": "tip",
-            "text": "The note shows up next to the entry in your list, so a short reminder of what it was for makes the book much easier to read later."
-          }
-        ]
-      },
-      {
-        "heading": "Mark something as settled",
-        "blocks": [
-          {
-            "type": "paragraph",
-            "text": "When a customer pays you, or you pay a supplier, tick it off so your totals stay right."
-          },
-          {
-            "type": "steps",
-            "items": [
-              "Find the entry in the list on the Ledgers screen.",
-              "Tap Mark settled on the right of that entry.",
-              "It changes to a Settled tick and fades out, and the total at the top drops by that amount."
-            ]
-          },
-          {
-            "type": "tip",
-            "text": "Each entry shows the name, whether they owe you or you owe them, the date and your note, so you can scan the whole book at a glance."
-          }
-        ]
-      },
-      {
-        "heading": "Remove an entry",
-        "blocks": [
-          {
-            "type": "paragraph",
-            "text": "If you added something by mistake, you can take it off the list."
-          },
-          {
-            "type": "steps",
-            "items": [
-              "Tap the ✕ on the far right of the entry.",
-              "Confirm when it asks Remove this ledger entry?"
-            ]
-          },
-          {
-            "type": "warning",
-            "text": "Marking settled and removing are two different things. Mark settled when the debt was paid and you want a record of it. Only remove an entry that shouldn't have been there in the first place."
-          }
-        ]
-      },
-      {
-        "heading": "A note on tax",
-        "blocks": [
-          {
-            "type": "paragraph",
-            "text": "A ledger entry is just a reminder of who owes what. It is not the same as logging the actual money when it comes in or goes out, and it does not work out any VAT for you. When the money really moves, log it under Log Income or Log Expense so your books and tax figures stay correct. If you're unsure how to treat credit for tax, check with SARS or a registered accountant or tax practitioner."
-          }
-        ]
-      }
-    ],
-    "related": [
-      "age-analysis",
-      "log-money-in-and-out",
-      "create-and-send-an-invoice",
-      "add-customers-and-suppliers"
     ]
   },
   {
@@ -4791,8 +4680,8 @@ export const HELP_ARTICLES: HelpArticle[] = [
             "type": "bullets",
             "items": [
               "Net cash flow: the same figure from the blue card.",
-              "+ Owed to you: your unpaid invoices plus what customers owe you in your ledgers (credit book).",
-              "− You owe suppliers: your unpaid supplier invoices plus what you owe in your supplier ledgers.",
+              "+ Owed to you: your unpaid invoices, less any credit you owe customers on account.",
+              "− You owe suppliers: your unpaid supplier invoices, less any credit a supplier owes you on account.",
               "Adjusted position: the three lines added together."
             ]
           },
