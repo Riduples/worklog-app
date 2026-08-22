@@ -5074,7 +5074,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
     "slug": "payroll-compliance",
     "category": "Tax & SARS",
     "title": "See your payroll tax in one place (Payroll Compliance)",
-    "summary": "A single read-only view of your payroll statutory items — what you owe SARS this month, plus reminders for EMP501, UIF, COIDA and the SDL nudge.",
+    "summary": "A single read-only view of your payroll statutory items — every return in one place with what you owe SARS this month, plus EMP501, UIF, COIDA and the SDL nudge.",
     "sections": [
       {
         "heading": "What Payroll Compliance is for",
@@ -5094,42 +5094,37 @@ export const HELP_ARTICLES: HelpArticle[] = [
         ]
       },
       {
-        "heading": "Payable to SARS this month",
-        "blocks": [
-          {
-            "type": "paragraph",
-            "text": "The dark blue card at the top adds up what you owe SARS for the current month from your pay runs. It shows PAYE, then a Less: ETI claimed line if any of your staff qualify for the Employment Tax Incentive, then UIF (employee plus employer) and SDL where it applies. The Total payable at the bottom is PAYE (after ETI) plus UIF plus SDL."
-          },
-          {
-            "type": "bullets",
-            "items": [
-              "PAYE — the employee tax off this month's pay runs.",
-              "Less: ETI claimed — the Employment Tax Incentive for qualifying younger staff, capped so it can only reduce PAYE down to zero, never below.",
-              "UIF — the employee and employer shares together.",
-              "SDL — the skills levy, shown only if it applies to you."
-            ]
-          },
-          {
-            "type": "tip",
-            "text": "Tap Open EMP201 on the card to jump into the full monthly EMP201, where you can pick a different month, see the detail per worker, share the report and mark the return as filed."
-          }
-        ]
-      },
-      {
         "heading": "Returns and declarations",
         "blocks": [
           {
             "type": "paragraph",
-            "text": "Below the card, the Returns & declarations list is your reminder of every payroll return and when it is due:"
+            "text": "The Returns & declarations list is the whole of the Overview: every payroll return, when it is due, and Open to go and work on it. Two rows carry a figure as well \u2014 EMP201 shows what you owe SARS for the current month, and COIDA shows the earnings to report so far this year."
           },
           {
             "type": "bullets",
             "items": [
-              "EMP201 — monthly. PAYE, UIF and SDL, due by the 7th of the next month. Tap Open to work on it.",
-              "EMP501 — reconciliation. Reconciles your EMP201s and issues the IRP5s; the interim is due 31 October and the annual 31 May, done on e@syFile.",
-              "UIF declaration — monthly, on uFiling. Plus a UI-19 whenever someone joins or leaves your business.",
-              "COIDA — Return of Earnings. Filed once a year on CompEasy; Worklog shows the earnings to report, which is your total gross wages for the calendar year so far."
+              "EMP201 \u2014 monthly. PAYE, UIF and SDL for this month, due by the 7th of the next month. The amount on the row is what you owe; tap Open for the full working.",
+              "UIF declaration \u2014 monthly, on uFiling. Plus a UI-19 whenever someone joins or leaves your business.",
+              "EMP501 \u2014 reconciliation. Ties your EMP201s back to your pay runs; the interim is due 31 October and the annual 31 May, done on e@syFile. It does not issue the IRP5/IT3(a) certificates \u2014 those come from e@syFile.",
+              "COIDA \u2014 Return of Earnings. Filed once a year on CompEasy; Worklog shows the earnings to report, which is your total gross wages for the calendar year so far."
             ]
+          },
+          {
+            "type": "paragraph",
+            "text": "The EMP201 amount is PAYE (after any ETI) plus UIF plus SDL, worked out from this month's pay runs. Open the EMP201 tab to see it broken down:"
+          },
+          {
+            "type": "bullets",
+            "items": [
+              "PAYE \u2014 the employee tax off this month's pay runs.",
+              "Less: ETI claimed \u2014 the Employment Tax Incentive for qualifying younger staff, capped so it can only reduce PAYE down to zero, never below.",
+              "UIF \u2014 the employee and employer shares together.",
+              "SDL \u2014 the skills levy, shown only if it applies to you."
+            ]
+          },
+          {
+            "type": "tip",
+            "text": "In the EMP201 tab you can also pick a different month, see the detail per worker, share the report and mark the return as filed."
           }
         ]
       },
@@ -5138,7 +5133,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
         "blocks": [
           {
             "type": "paragraph",
-            "text": "SDL (the Skills Development Levy) only becomes payable once your payroll is big enough. If your wages for the month, spread across a full year, work past the SDL registration threshold and you have not switched SDL on yet, a yellow nudge appears here."
+            "text": "SDL (the Skills Development Levy) only becomes payable once your payroll is big enough. If your wages for the month, spread across a full year, work past the SDL registration threshold and you have not switched SDL on yet, a yellow nudge appears above the returns list."
           },
           {
             "type": "tip",

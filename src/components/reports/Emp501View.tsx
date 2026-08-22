@@ -141,10 +141,12 @@ export function Emp501View({ embedded = false }: { embedded?: boolean } = {}) {
         </Link>
       )}
       {!embedded && <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0C4A6E", margin: "4px 0 6px" }}>EMP501 reconciliation</h1>}
-      <p style={{ fontSize: 12, color: "#94a3b8", marginBottom: 16, lineHeight: 1.5 }}>
-        Checks your pay runs against the EMP201s you&apos;ve marked filed. It doesn&apos;t issue IRP5/IT3(a) certificates — do that on SARS e@syFile.
-      </p>
-
+      {/* No blurb here. The EMP501 row on the Payroll Compliance overview — the
+          only way onto this screen, since /emp501 redirects to it — already says
+          it reconciles your EMP201s on e@syFile, and the filing box below states
+          in full that this is a calculation aid that issues no IRP5/IT3(a)
+          certificates. Saying it a third time on arrival just pushed the
+          reconciliation down. */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
         <button onClick={() => setStartYear((y) => y - 1)} style={{ background: "#f1f5f9", border: "none", borderRadius: 10, padding: "8px 14px", fontSize: 16, cursor: "pointer" }}>
           ‹

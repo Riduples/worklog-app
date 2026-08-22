@@ -21,8 +21,8 @@ import { CoidaView } from "@/components/reports/CoidaView";
 // Every payroll return in one place, as tabs — the same shape as the Reports
 // tools. The individual EMP201 / UIF / EMP501 / COIDA screens render here as tab
 // panels (embedded), so there's one home for them rather than a scattered list of
-// links. Overview carries the month's payable-to-SARS summary; the rest are the
-// working returns.
+// links. Overview is the index of what's due where; the rest are the working
+// returns, and each one owns its own figures.
 const TABS = [
   { id: "overview", label: "📋 Overview" },
   { id: "emp201", label: "👷 EMP201" },
@@ -100,14 +100,13 @@ export function PayrollComplianceView() {
   const hasPayroll = staffList.length > 0 || runs.length > 0;
 
   const card: React.CSSProperties = { background: "#fff", border: "1.5px solid #e2e8f0", borderRadius: 14, padding: "14px 16px", marginBottom: 12 };
-  const rowStyle: React.CSSProperties = { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0" };
 
   const overview = (
     <>
-      <p style={{ fontSize: 12, color: "#94a3b8", marginBottom: 16, lineHeight: 1.5 }}>
-        Your payroll returns in one place. Figures are estimates to confirm with your accountant — filing happens on the SARS &amp; Labour portals.
-      </p>
-
+      {/* No blurb here. The tool tile that opens this page already says "all your
+          payroll returns in one place", and the caveat it carried — estimates,
+          and we don't file for you — is at the foot of the page where it stays
+          in view next to the returns it qualifies. */}
       {!hasPayroll ? (
         <div style={{ ...card, textAlign: "center", color: "#94a3b8" }}>
           <div style={{ fontSize: 32, marginBottom: 8 }}>💼</div>
@@ -119,40 +118,6 @@ export function PayrollComplianceView() {
         </div>
       ) : (
         <>
-          <div style={{ background: "#0C4A6E", borderRadius: 16, padding: "18px 20px", marginBottom: 14 }}>
-            <div style={{ fontSize: 11, color: "#38BDF8", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 10 }}>Payable to SARS · {monthLabel}</div>
-            <div style={{ ...rowStyle }}>
-              <span style={{ fontSize: 13, color: "#7DD3FC" }}>PAYE</span>
-              <span style={{ fontSize: 14, color: "#fff", fontWeight: 700 }}>{fmt(paye)}</span>
-            </div>
-            {eti > 0 && (
-              <div style={{ ...rowStyle }}>
-                <span style={{ fontSize: 13, color: "#7DD3FC" }}>Less: ETI claimed</span>
-                <span style={{ fontSize: 14, color: "#fff", fontWeight: 700 }}>−{fmt(eti)}</span>
-              </div>
-            )}
-            <div style={{ ...rowStyle }}>
-              <span style={{ fontSize: 13, color: "#7DD3FC" }}>UIF (employee + employer)</span>
-              <span style={{ fontSize: 14, color: "#fff", fontWeight: 700 }}>{fmt(uif)}</span>
-            </div>
-            {sdl > 0 && (
-              <div style={{ ...rowStyle }}>
-                <span style={{ fontSize: 13, color: "#7DD3FC" }}>SDL</span>
-                <span style={{ fontSize: 14, color: "#fff", fontWeight: 700 }}>{fmt(sdl)}</span>
-              </div>
-            )}
-            <div style={{ borderTop: "1px solid rgba(255,255,255,0.2)", marginTop: 8, paddingTop: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ fontSize: 14, color: "#38BDF8", fontWeight: 700 }}>Total payable</span>
-              <span style={{ fontSize: 22, color: "#fff", fontWeight: 900 }}>{fmt(payableToSars)}</span>
-            </div>
-            <button
-              onClick={() => setTab("emp201")}
-              style={{ width: "100%", marginTop: 12, background: "#38BDF8", color: "#0C4A6E", border: "none", borderRadius: 10, padding: "10px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
-            >
-              Open EMP201 →
-            </button>
-          </div>
-
           {sdlNudge && (
             <div style={{ background: "#fff7ed", border: "1.5px solid #fed7aa", borderRadius: 12, padding: "12px 14px", marginBottom: 12, fontSize: 12, color: "#92400e", lineHeight: 1.5 }}>
               ⚠️ <strong>SDL may now apply.</strong> Your payroll annualises above {fmt(SDL_ANNUAL_THRESHOLD)} but SDL isn&apos;t registered. Check with your accountant, then switch SDL on in{" "}
@@ -165,7 +130,15 @@ export function PayrollComplianceView() {
 
           <div style={card}>
             <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>Returns &amp; declarations</div>
-            <ReturnRow onOpen={() => setTab("emp201")} title="EMP201 — monthly" sub="PAYE, UIF & SDL · due by the 7th of next month" />
+            {/* The month's payable total lives here, on the row that opens the
+                return that works it out — not in a hero card above repeating a
+                cut-down version of the EMP201 tab. Same shape as COIDA below. */}
+            <ReturnRow
+              onOpen={() => setTab("emp201")}
+              title="EMP201 — monthly"
+              sub={`PAYE, UIF & SDL for ${monthLabel} · due by the 7th of next month`}
+              right={<span style={{ fontSize: 14, fontWeight: 800, color: "#0C4A6E" }}>{fmt(payableToSars)}</span>}
+            />
             <ReturnRow onOpen={() => setTab("uif")} title="UIF declaration — monthly" sub="uFiling · plus a UI-19 whenever someone joins or leaves" />
             <ReturnRow onOpen={() => setTab("emp501")} title="EMP501 — reconciliation" sub="Reconciles your EMP201s · interim 31 Oct, annual 31 May (e@syFile)" />
             <ReturnRow
@@ -178,7 +151,8 @@ export function PayrollComplianceView() {
           </div>
 
           <p style={{ fontSize: 11, color: "#94a3b8", lineHeight: 1.6 }}>
-            Worklog surfaces these figures — it doesn&apos;t file for you. For CIPC, POPIA and every other obligation, see the{" "}
+            Worklog surfaces these figures — they&apos;re estimates to confirm with your accountant, and filing happens on the
+            SARS &amp; Labour portals, not here. For CIPC, POPIA and every other obligation, see the{" "}
             <Link href="/compliance" style={{ color: "#0369A1", fontWeight: 600 }}>
               Compliance Dashboard
             </Link>
