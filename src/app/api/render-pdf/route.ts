@@ -35,6 +35,7 @@ import {
   buildUif201HTML,
   buildCoidaHTML,
   buildEmp501HTML,
+  buildCashFlowHTML,
   type StatementLine,
   type RemittanceLine,
   type StatementCredits,
@@ -73,6 +74,7 @@ import {
   type Uif201PdfData,
   type CoidaPdfData,
   type Emp501PdfData,
+  type CashFlowPdfData,
 } from "@/lib/docgen/buildLedgerHTML";
 import type { BusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 
@@ -282,6 +284,11 @@ type RenderRequest =
       kind: "emp501";
       data: Emp501PdfData;
       asAt: string;
+    }
+  | {
+      kind: "cashflow";
+      data: CashFlowPdfData;
+      asAt: string;
     };
 
 function buildHtml(body: RenderRequest, business: BusinessProfile, watermark: boolean): string | null {
@@ -350,6 +357,8 @@ function buildHtml(body: RenderRequest, business: BusinessProfile, watermark: bo
       return buildUif201HTML(business, body.data, body.asAt, watermark);
     case "coida":
       return buildCoidaHTML(business, body.data, body.asAt, watermark);
+    case "cashflow":
+      return buildCashFlowHTML(business, body.data, body.asAt, watermark);
     case "emp501":
       return buildEmp501HTML(business, body.data, body.asAt, watermark);
     default:

@@ -5,7 +5,6 @@ import { PeriodSelector } from "@/components/ui/PeriodSelector";
 import { useInvoices } from "@/lib/supabase/hooks/useInvoices";
 import { useSupplierInvoices } from "@/lib/supabase/hooks/useSupplierInvoices";
 import { useStockItems } from "@/lib/supabase/hooks/useStock";
-import { useBusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 import { useCreditNotes } from "@/lib/supabase/hooks/useCreditNotes";
 import { PERIOD_LABELS, type Period } from "@/lib/period";
 import { fmt } from "@/lib/format";
@@ -13,7 +12,8 @@ import { balanceInclVat } from "@/lib/balance";
 import { sumOnAccount } from "@/lib/creditNotes";
 import { adjustedPosition } from "@/lib/cashPosition";
 import { useMoneySummary } from "@/lib/useMoneySummary";
-import { shareReport } from "@/lib/docgen/shareReport";
+import { ReportActions, asAtLabel } from "@/components/reports/ReportShell";
+import { buildCashFlowHTML, type CashFlowPdfData } from "@/lib/docgen/buildLedgerHTML";
 import { BackLink } from "@/components/ui/BackLink";
 import { BankAccountSelector, ALL_ACCOUNTS, type AccountFilter } from "@/components/ui/BankAccountSelector";
 
@@ -23,7 +23,6 @@ export function CashFlowView() {
   const { data: invoices } = useInvoices();
   const { data: supplierInvoices } = useSupplierInvoices();
   const { data: stock } = useStockItems();
-  const { data: business } = useBusinessProfile();
   const { data: creditNotes } = useCreditNotes();
 
   // Money in/out and the balances come from the shared summary — the same
@@ -61,7 +60,23 @@ export function CashFlowView() {
   const position = adjustedPosition(cash, owedToYou, youOwe);
   const stockValue = (stock ?? []).reduce((s, item) => s + Number(item.cost_price || 0) * Number(item.qty || 0), 0);
 
-  const handleShare = () => {
+  const scope = isAll ? "All accounts" : (selectedAccount?.name ?? "account");
+
+  // One description of the report, read by the PDF, the print fallback and the
+  // text share alike — so the three can't drift into three different answers.
+  const pdfData = (): CashFlowPdfData => ({
+    periodLabel: PERIOD_LABELS[period],
+    scopeLabel: scope,
+    moneyIn,
+    moneyOut,
+    netCashFlow,
+    isAllAccounts: isAll,
+    ...(isAll
+      ? { cash, owedToYou, customerCreditOnAccount, youOwe, supplierCreditOnAccount, position, stockValue, hasAccounts }
+      : { accountBalance: acctBalance }),
+  });
+
+  const shareLines = () => {
     const lines = [
       `Money in: ${fmt(moneyIn)}`,
       `Money out: ${fmt(moneyOut)}`,
@@ -73,15 +88,11 @@ export function CashFlowView() {
       if (customerCreditOnAccount > 0) lines.push(`  Less credit on account (customers): ${fmt(customerCreditOnAccount)}`);
       lines.push(`You owe suppliers: ${fmt(youOwe)}`);
       if (supplierCreditOnAccount > 0) lines.push(`  Less credit on account (suppliers): ${fmt(supplierCreditOnAccount)}`);
-      lines.push(
-        `Adjusted position: ${fmt(position)}`,
-        `Stock on hand (at cost): ${fmt(stockValue)}`
-      );
+      lines.push(`Adjusted position: ${fmt(position)}`, `Stock on hand (at cost): ${fmt(stockValue)}`);
     } else {
       lines.push(`${selectedAccount?.name ?? "Account"} balance now: ${fmt(acctBalance)}`);
     }
-    const scope = isAll ? "All accounts" : (selectedAccount?.name ?? "account");
-    void shareReport("Cash Flow", `${PERIOD_LABELS[period]} · ${scope}`, lines, business);
+    return { title: "Cash Flow", subtitle: `${PERIOD_LABELS[period]} · ${scope}`, lines };
   };
 
   return (
@@ -146,12 +157,16 @@ export function CashFlowView() {
         </div>
       )}
 
-      <button
-        onClick={handleShare}
-        style={{ width: "100%", marginTop: 16, background: "#F0F9FF", color: "#0C4A6E", border: "1.5px solid #BAE6FD", borderRadius: 12, padding: 13, fontWeight: 700, fontSize: 13, cursor: "pointer" }}
-      >
-        📤 Share report
-      </button>
+      {/* The same Download PDF / Share pair every other report ends with —
+          Cash Flow only ever offered the text share. */}
+      <div style={{ marginTop: 16 }}>
+        <ReportActions
+          pdf={() => ({ kind: "cashflow", data: pdfData(), asAt: asAtLabel() })}
+          filename={`cash-flow-${period}`}
+          fallbackHtml={(bus, watermark) => buildCashFlowHTML(bus, pdfData(), asAtLabel(), watermark)}
+          share={shareLines}
+        />
+      </div>
     </div>
   );
 }

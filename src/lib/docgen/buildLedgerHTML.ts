@@ -2264,3 +2264,87 @@ export function buildEmp501HTML(business: BusinessProfile, data: Emp501PdfData, 
 </body>
 </html>`;
 }
+
+// ── Cash Flow ────────────────────────────────────────────────────────────────
+// The report reads in two halves and the PDF keeps them apart, because they
+// answer different questions. The movement table is the period you picked; the
+// position box is where you stand right now and does NOT move with it — the
+// on-screen report says so in words, so the printed one has to as well, or a
+// printed "adjusted position" reads as a period figure.
+export type CashFlowPdfData = {
+  periodLabel: string;
+  scopeLabel: string;
+  moneyIn: number;
+  moneyOut: number;
+  netCashFlow: number;
+  isAllAccounts: boolean;
+  /** All-accounts only — the whole-business position. */
+  cash?: number;
+  owedToYou?: number;
+  customerCreditOnAccount?: number;
+  youOwe?: number;
+  supplierCreditOnAccount?: number;
+  position?: number;
+  stockValue?: number;
+  /** Single-account only — that account's running balance. */
+  accountBalance?: number;
+  /** False when no accounts are captured, which makes cash on hand an estimate. */
+  hasAccounts?: boolean;
+};
+
+export function buildCashFlowHTML(business: BusinessProfile, data: CashFlowPdfData, asAt: string, watermark = false): string {
+  const n = (v: number | undefined) => fmt(v ?? 0);
+  const positionRows = data.isAllAccounts
+    ? `
+      <div class="totals-row"><span>Cash on hand</span><span>${n(data.cash)}</span></div>
+      <div class="totals-row"><span>+ Owed to you</span><span>${n(data.owedToYou)}</span></div>
+      ${(data.customerCreditOnAccount ?? 0) > 0 ? `<div class="totals-row"><span style="padding-left:12px;color:#94a3b8;">credit owed to customers, already deducted above</span><span style="color:#94a3b8;">${n(data.customerCreditOnAccount)}</span></div>` : ""}
+      <div class="totals-row"><span>− You owe suppliers</span><span>${n(data.youOwe)}</span></div>
+      ${(data.supplierCreditOnAccount ?? 0) > 0 ? `<div class="totals-row"><span style="padding-left:12px;color:#94a3b8;">credit suppliers owe you, already deducted above</span><span style="color:#94a3b8;">${n(data.supplierCreditOnAccount)}</span></div>` : ""}
+      <div class="totals-row final"><span>Adjusted position</span><span>${n(data.position)}</span></div>`
+    : `<div class="totals-row final"><span>${esc(data.scopeLabel)} balance now</span><span>${n(data.accountBalance)}</span></div>`;
+
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" /><title>Cash Flow</title><style>${SHARED_CSS}</style></head>
+<body>
+  ${watermark ? `<div class="wm">TRIAL — NOT FINAL</div>` : ""}
+  ${header(business, "CASH FLOW", `${esc(data.periodLabel)} · as at ${asAt}`)}
+  <div class="meta-row">
+    ${fromBlock(business, "Business")}
+    <div style="text-align:right;">
+      <div class="meta-label">Period</div>
+      <div style="font-size:20px;font-weight:800;">${esc(data.periodLabel)}</div>
+      <div style="font-size:12px;color:#64748b;margin-top:2px;">${esc(data.scopeLabel)}</div>
+    </div>
+  </div>
+  <table>
+    <thead>
+      <tr><th>Movement in ${esc(data.periodLabel.toLowerCase())}</th><th style="text-align:right;">Amount</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Money in</td><td style="text-align:right;">${fmt(data.moneyIn)}</td></tr>
+      <tr><td>Money out</td><td style="text-align:right;">−${fmt(data.moneyOut)}</td></tr>
+      <tr><td style="font-weight:800;">Net cash flow</td><td style="text-align:right;font-weight:800;color:${data.netCashFlow >= 0 ? "#0C4A6E" : "#be123c"};">${fmt(data.netCashFlow)}</td></tr>
+    </tbody>
+  </table>
+  <div class="meta-label" style="margin-bottom:6px;">Where you stand right now — not affected by the period above</div>
+  <div class="totals">
+    <div class="totals-box">
+      ${positionRows}
+    </div>
+  </div>
+  ${
+    data.isAllAccounts && (data.stockValue ?? 0) > 0
+      ? `<div class="vat-note" style="margin-top:10px;">Stock on hand (at cost): ${n(data.stockValue)} — not counted in the cash position, it is value tied up in inventory.</div>`
+      : ""
+  }
+  ${data.isAllAccounts && data.hasAccounts === false ? `<div class="vat-note">Cash on hand is money in less money out — add your bank accounts for an exact figure.</div>` : ""}
+  <div class="footer">
+    Cash flow for ${esc(data.periodLabel.toLowerCase())} (${esc(data.scopeLabel)}), as at ${esc(asAt)}. Money in and out are the movements in the period; the position below them is today's, and includes what is still owed both ways.<br/>Generated via Worklog — worklog.co.za${
+      watermark ? `<br/><strong style="color:#dc2626;">Draft — made on a free Worklog trial.</strong>` : ""
+    }
+  </div>
+</body>
+</html>`;
+}

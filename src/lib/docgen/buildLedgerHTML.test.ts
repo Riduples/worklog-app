@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildStatementHTML, buildRemittanceHTML, type StatementLine, type RemittanceLine } from "./buildLedgerHTML";
+import { buildStatementHTML, buildRemittanceHTML, buildCashFlowHTML, type StatementLine, type RemittanceLine } from "./buildLedgerHTML";
 import type { BusinessProfile } from "@/lib/supabase/hooks/useBusinessProfile";
 
 // Only the fields the template reads, same as buildDocumentHTML.test.ts.
@@ -143,5 +143,56 @@ describe("the ledger itself", () => {
     expect(html).toContain("SUP-914");
     expect(html).toContain("Pipe Co");
     expect(html).toContain("EFT");
+  });
+});
+
+describe("buildCashFlowHTML", () => {
+  const data = {
+    periodLabel: "This month",
+    scopeLabel: "All accounts",
+    moneyIn: 84250.5,
+    moneyOut: 61330.75,
+    netCashFlow: 22919.75,
+    isAllAccounts: true,
+    cash: 47210.2,
+    owedToYou: 38400,
+    customerCreditOnAccount: 1200,
+    youOwe: 21750.4,
+    supplierCreditOnAccount: 800,
+    position: 63859.8,
+    stockValue: 12400,
+    hasAccounts: true,
+  };
+
+  it("prints the period's movement and today's position", () => {
+    const html = buildCashFlowHTML(business(), data, "22 August 2026");
+    expect(html).toContain("CASH FLOW");
+    expect(html).toContain("Money in");
+    expect(html).toContain("Adjusted position");
+    expect(html).toContain("All accounts");
+  });
+
+  it("says the position is not the period's, because the two are read together", () => {
+    // The on-screen report carries this sentence; a printed copy without it
+    // reads "adjusted position" as a figure for the chosen period.
+    expect(buildCashFlowHTML(business(), data, "22 August 2026")).toContain("not affected by the period above");
+  });
+
+  it("states on-account credit as already deducted, never as a second subtraction", () => {
+    // owedToYou and youOwe arrive net of it (see CashFlowView), so a minus in
+    // the amount column would show the same money coming off twice.
+    const html = buildCashFlowHTML(business(), data, "22 August 2026");
+    expect(html).toContain("already deducted above");
+    expect(html).not.toContain("−R 1 200,00");
+  });
+
+  it("shows one account's balance instead of the position when scoped to it", () => {
+    const html = buildCashFlowHTML(business(), { ...data, isAllAccounts: false, scopeLabel: "FNB Cheque", accountBalance: 4820 }, "22 August 2026");
+    expect(html).toContain("FNB Cheque balance now");
+    expect(html).not.toContain("Adjusted position");
+  });
+
+  it("flags an estimated cash figure when no accounts are captured", () => {
+    expect(buildCashFlowHTML(business(), { ...data, hasAccounts: false }, "22 August 2026")).toContain("add your bank accounts");
   });
 });
